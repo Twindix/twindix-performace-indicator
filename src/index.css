@@ -1,0 +1,197 @@
+@import "tailwindcss";
+
+:root {
+    --raw-background: #F8FAFC;
+    --raw-surface: #FFFFFF;
+    --raw-surface-elevated: #FFFFFF;
+
+    --raw-primary: #2563EB;
+    --raw-primary-dark: #1D4ED8;
+    --raw-primary-light: #3B82F6;
+    --raw-primary-lighter: #DBEAFE;
+    --raw-primary-medium: #1E40AF;
+    --raw-primary-foreground: #FFFFFF;
+
+    --raw-secondary: #6366F1;
+    --raw-secondary-foreground: #FFFFFF;
+
+    --raw-success: #16A34A;
+    --raw-success-light: #DCFCE7;
+    --raw-warning: #F59E0B;
+    --raw-warning-light: #FEF3C7;
+    --raw-error: #DC2626;
+    --raw-error-light: #FEE2E2;
+    --raw-info: #3B82F6;
+    --raw-info-light: #DBEAFE;
+
+    --raw-friction-requirements: #DC2626;
+    --raw-friction-communication: #F59E0B;
+    --raw-friction-ownership: #7C3AED;
+    --raw-friction-dependencies: #E11D48;
+    --raw-friction-process: #EA580C;
+    --raw-friction-team: #8B5CF6;
+
+    --raw-text-primary: #0F172A;
+    --raw-text-secondary: #475569;
+    --raw-text-muted: #94A3B8;
+    --raw-text-dark: #020617;
+
+    --raw-border: #E2E8F0;
+    --raw-input: #E2E8F0;
+    --raw-ring: #2563EB;
+    --raw-muted: #F1F5F9;
+    --raw-muted-foreground: #64748B;
+    --raw-accent: #F1F5F9;
+    --raw-accent-foreground: #0F172A;
+    --raw-popover: #FFFFFF;
+    --raw-popover-foreground: #0F172A;
+    --raw-destructive: #DC2626;
+    --raw-destructive-foreground: #FFFFFF;
+    --raw-card: #FFFFFF;
+    --raw-card-foreground: #0F172A;
+}
+
+.dark {
+    --raw-background: #0B1120;
+    --raw-surface: #111827;
+    --raw-surface-elevated: #1E293B;
+
+    --raw-primary: #3B82F6;
+    --raw-primary-dark: #60A5FA;
+    --raw-primary-light: #2563EB;
+    --raw-primary-lighter: #1E3A5F;
+    --raw-primary-medium: #93C5FD;
+    --raw-primary-foreground: #FFFFFF;
+
+    --raw-secondary: #818CF8;
+    --raw-secondary-foreground: #FFFFFF;
+
+    --raw-success: #34D399;
+    --raw-success-light: #064E3B;
+    --raw-warning: #FBBF24;
+    --raw-warning-light: #78350F;
+    --raw-error: #F87171;
+    --raw-error-light: #7F1D1D;
+    --raw-info: #60A5FA;
+    --raw-info-light: #1E3A5F;
+
+    --raw-friction-requirements: #F87171;
+    --raw-friction-communication: #FBBF24;
+    --raw-friction-ownership: #A78BFA;
+    --raw-friction-dependencies: #FB7185;
+    --raw-friction-process: #FB923C;
+    --raw-friction-team: #C4B5FD;
+
+    --raw-text-primary: #F1F5F9;
+    --raw-text-secondary: #94A3B8;
+    --raw-text-muted: #64748B;
+    --raw-text-dark: #F8FAFC;
+
+    --raw-border: #1E293B;
+    --raw-input: #1E293B;
+    --raw-ring: #3B82F6;
+    --raw-muted: #1E293B;
+    --raw-muted-foreground: #94A3B8;
+    --raw-accent: #1E293B;
+    --raw-accent-foreground: #F8FAFC;
+    --raw-popover: #111827;
+    --raw-popover-foreground: #F8FAFC;
+    --raw-destructive: #F87171;
+    --raw-destructive-foreground: #111827;
+    --raw-card: #111827;
+    --raw-card-foreground: #F8FAFC;
+}
+
+@theme {
+    --color-primary: var(--raw-primary);
+    --color-primary-dark: var(--raw-primary-dark);
+    --color-primary-light: var(--raw-primary-light);
+    --color-primary-lighter: var(--raw-primary-lighter);
+    --color-primary-medium: var(--raw-primary-medium);
+    --color-primary-foreground: var(--raw-primary-foreground);
+    --color-secondary: var(--raw-secondary);
+    --color-secondary-foreground: var(--raw-secondary-foreground);
+
+    --color-success: var(--raw-success);
+    --color-success-light: var(--raw-success-light);
+    --color-warning: var(--raw-warning);
+    --color-warning-light: var(--raw-warning-light);
+    --color-error: var(--raw-error);
+    --color-error-light: var(--raw-error-light);
+    --color-info: var(--raw-info);
+    --color-info-light: var(--raw-info-light);
+
+    --color-friction-requirements: var(--raw-friction-requirements);
+    --color-friction-communication: var(--raw-friction-communication);
+    --color-friction-ownership: var(--raw-friction-ownership);
+    --color-friction-dependencies: var(--raw-friction-dependencies);
+    --color-friction-process: var(--raw-friction-process);
+    --color-friction-team: var(--raw-friction-team);
+
+    --color-background: var(--raw-background);
+    --color-surface: var(--raw-surface);
+    --color-surface-elevated: var(--raw-surface-elevated);
+    --color-text-primary: var(--raw-text-primary);
+    --color-text-secondary: var(--raw-text-secondary);
+    --color-text-muted: var(--raw-text-muted);
+    --color-text-dark: var(--raw-text-dark);
+
+    --color-border: var(--raw-border);
+    --color-input: var(--raw-input);
+    --color-ring: var(--raw-ring);
+    --color-muted: var(--raw-muted);
+    --color-muted-foreground: var(--raw-muted-foreground);
+    --color-accent: var(--raw-accent);
+    --color-accent-foreground: var(--raw-accent-foreground);
+    --color-popover: var(--raw-popover);
+    --color-popover-foreground: var(--raw-popover-foreground);
+    --color-destructive: var(--raw-destructive);
+    --color-destructive-foreground: var(--raw-destructive-foreground);
+    --color-card: var(--raw-card);
+    --color-card-foreground: var(--raw-card-foreground);
+
+    --spacing-sidebar: 260px;
+    --radius-default: 12px;
+    --font-family-inter: 'Inter', sans-serif;
+}
+
+body {
+    font-family: var(--font-family-inter);
+    background-color: var(--color-background);
+    color: var(--color-text-dark);
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+#root {
+    min-height: 100vh;
+}
+
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    14% { transform: scale(1.3); }
+    28% { transform: scale(1); }
+    42% { transform: scale(1.3); }
+    70% { transform: scale(1); }
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--color-muted-foreground);
+    border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-secondary);
+}

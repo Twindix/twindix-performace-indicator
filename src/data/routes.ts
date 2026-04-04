@@ -1,0 +1,15 @@
+export const routesData = {
+    login: "/login",
+    dashboard: "/",
+    tasks: "/tasks",
+    blockers: "/blockers",
+    decisions: "/decisions",
+    communication: "/communication",
+    workload: "/workload",
+    reports: "/reports",
+    analytics: "/analytics",
+    ownership: "/ownership",
+    handoffs: "/handoffs",
+    profile: "/profile",
+    settings: "/settings",
+} as const;
