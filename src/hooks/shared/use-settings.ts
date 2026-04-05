@@ -255,6 +255,147 @@ const translations: Record<string, Record<"en" | "ar", string>> = {
     "Needs Attention": { en: "Needs Attention", ar: "يحتاج اهتمام" },
     "Critical": { en: "Critical", ar: "حرج" },
     "No active blockers": { en: "No active blockers", ar: "لا توجد عوائق نشطة" },
+
+    // Communication labels
+    "Slack": { en: "Slack", ar: "سلاك" },
+    "Meeting": { en: "Meeting", ar: "اجتماع" },
+    "Jira": { en: "Jira", ar: "جيرا" },
+    "Answered": { en: "Answered", ar: "تمت الإجابة" },
+
+    // Decision categories
+    "Architecture": { en: "Architecture", ar: "الهيكلة" },
+    "Process": { en: "Process", ar: "العمليات" },
+    "Tooling": { en: "Tooling", ar: "الأدوات" },
+    "Requirement": { en: "Requirement", ar: "المتطلبات" },
+
+    // Blocker type labels
+    "Requirements": { en: "Requirements", ar: "المتطلبات" },
+    "API Dependency": { en: "API Dependency", ar: "تبعية API" },
+    "Technical": { en: "Technical", ar: "تقني" },
+    "QA Handoff": { en: "QA Handoff", ar: "تسليم ضمان الجودة" },
+
+    // Blocker view
+    "All Statuses": { en: "All Statuses", ar: "جميع الحالات" },
+    "All Types": { en: "All Types", ar: "جميع الأنواع" },
+    "No blockers found": { en: "No blockers found", ar: "لا توجد عوائق" },
+    "No blockers match the current filters": { en: "No blockers match the current filters. Try adjusting your filter criteria.", ar: "لا توجد عوائق تطابق المرشحات الحالية. حاول تعديل معايير البحث." },
+    "Reported by": { en: "Reported by", ar: "أبلغ عنه" },
+    "Owned by": { en: "Owned by", ar: "مملوك بواسطة" },
+    "Unknown": { en: "Unknown", ar: "غير معروف" },
+    "Unassigned": { en: "Unassigned", ar: "غير مُسند" },
+    "days": { en: "days", ar: "أيام" },
+    "tasks affected": { en: "tasks affected", ar: "مهام متأثرة" },
+    "High": { en: "High", ar: "عالي" },
+    "Medium": { en: "Medium", ar: "متوسط" },
+    "Low": { en: "Low", ar: "منخفض" },
+
+    // Decisions view
+    "All Categories": { en: "All Categories", ar: "جميع الفئات" },
+    "No decisions found": { en: "No decisions found", ar: "لا توجد قرارات" },
+    "No decisions match the selected filters": { en: "No decisions match the selected filters for this sprint.", ar: "لا توجد قرارات تطابق المرشحات المحددة لهذا السبرنت." },
+    "Decided": { en: "Decided", ar: "تم القرار" },
+    "Outcome": { en: "Outcome", ar: "النتيجة" },
+    "Description": { en: "Description", ar: "الوصف" },
+    "Context": { en: "Context", ar: "السياق" },
+    "Participants": { en: "Participants", ar: "المشاركون" },
+    "Decision details and context": { en: "Decision details and context", ar: "تفاصيل القرار والسياق" },
+
+    // Communication view
+    "No Communications": { en: "No Communications", ar: "لا توجد اتصالات" },
+    "No communication data available for the current sprint": { en: "No communication data available for the current sprint.", ar: "لا توجد بيانات تواصل متاحة للسبرنت الحالي." },
+    "Avg Response": { en: "Avg Response", ar: "متوسط الاستجابة" },
+    "No pending questions": { en: "No pending questions -- all caught up!", ar: "لا توجد أسئلة معلقة -- تم الرد على الكل!" },
+    "Answered Questions (slowest first)": { en: "Answered Questions (slowest first)", ar: "الأسئلة المُجابة (الأبطأ أولاً)" },
+    "No answered questions yet": { en: "No answered questions yet.", ar: "لا توجد أسئلة مُجابة بعد." },
+    "response time": { en: "response time", ar: "وقت الاستجابة" },
+    "Response Summary": { en: "Response Summary", ar: "ملخص الاستجابة" },
+    "Fastest Response": { en: "Fastest Response", ar: "أسرع استجابة" },
+    "Slowest Response": { en: "Slowest Response", ar: "أبطأ استجابة" },
+    "Avg Response by Channel": { en: "Avg Response by Channel", ar: "متوسط الاستجابة حسب القناة" },
+    "No data": { en: "No data", ar: "لا توجد بيانات" },
+
+    // Workload view
+    "Team Members": { en: "Team Members", ar: "أعضاء الفريق" },
+    "assigned": { en: "assigned", ar: "مُسند" },
+    "capacity": { en: "capacity", ar: "السعة" },
+    "completed": { en: "completed", ar: "مكتمل" },
+    "switches": { en: "switches", ar: "تبديلات" },
+    "active tasks": { en: "active tasks", ar: "المهام النشطة" },
+    "Assigned": { en: "Assigned", ar: "مُسند" },
+    "Over capacity": { en: "Over capacity", ar: "تجاوز السعة" },
+    "Capacity limit": { en: "Capacity limit", ar: "حد السعة" },
+    "No workload data": { en: "No workload data", ar: "لا توجد بيانات عبء عمل" },
+    "No workload data available for this sprint": { en: "No workload data available for this sprint.", ar: "لا توجد بيانات عبء عمل متاحة لهذا السبرنت." },
+
+    // Reports view
+    "Current Sprint": { en: "Current Sprint", ar: "السبرنت الحالي" },
+    "Overall Sprint Health": { en: "Overall Sprint Health", ar: "صحة السبرنت الإجمالية" },
+    "Health Score": { en: "Health Score", ar: "مؤشر الصحة" },
+    "Completion": { en: "Completion", ar: "الإنجاز" },
+    "Related Metrics": { en: "Related Metrics", ar: "المقاييس ذات الصلة" },
+    "Detailed breakdown of the six friction areas impacting team delivery": { en: "Detailed breakdown of the six friction areas impacting team delivery", ar: "تحليل مفصل لمناطق الاحتكاك الست المؤثرة على تسليم الفريق" },
+
+    // Friction area labels
+    "Poor Requirements": { en: "Poor Requirements", ar: "متطلبات ضعيفة" },
+    "Communication Gaps": { en: "Communication Gaps", ar: "فجوات التواصل" },
+    "Weak Ownership": { en: "Weak Ownership", ar: "ملكية ضعيفة" },
+    "Dependency Blockers": { en: "Dependency Blockers", ar: "عوائق التبعيات" },
+    "Process Gaps": { en: "Process Gaps", ar: "فجوات العمليات" },
+    "Team & Culture": { en: "Team & Culture", ar: "الفريق والثقافة" },
+
+    // Analytics view
+    "Sprint Health Comparison": { en: "Sprint Health Comparison", ar: "مقارنة صحة السبرنتات" },
+    "Sprint-over-Sprint Trends": { en: "Sprint-over-Sprint Trends", ar: "اتجاهات السبرنت مقارنةً" },
+    "Health Score Breakdown": { en: "Health Score Breakdown", ar: "تفصيل مؤشر الصحة" },
+    "Overall Health Score": { en: "Overall Health Score", ar: "مؤشر الصحة الإجمالي" },
+    "Composite score derived from 6 friction areas": { en: "Composite score derived from 6 friction areas. Each area contributes to the overall sprint health.", ar: "مؤشر مركّب مشتق من 6 مناطق احتكاك. كل منطقة تساهم في صحة السبرنت الإجمالية." },
+    "No metrics data available for this sprint": { en: "No metrics data available for this sprint.", ar: "لا توجد بيانات مقاييس متاحة لهذا السبرنت." },
+    "No friction data available for this sprint": { en: "No friction data available for this sprint.", ar: "لا توجد بيانات احتكاك متاحة لهذا السبرنت." },
+    "Overall": { en: "Overall", ar: "إجمالي" },
+
+    // Ownership view
+    "No Ownership Data": { en: "No Ownership Data", ar: "لا توجد بيانات ملكية" },
+    "No ownership entries available": { en: "No ownership entries available. Add components to start mapping ownership.", ar: "لا توجد إدخالات ملكية متاحة. أضف مكونات لبدء تعيين الملكية." },
+    "With Conflicts": { en: "With Conflicts", ar: "بها تعارضات" },
+    "All Components": { en: "All Components", ar: "جميع المكونات" },
+    "Primary Owner": { en: "Primary Owner", ar: "المالك الأساسي" },
+    "Backup Owner": { en: "Backup Owner", ar: "المالك الاحتياطي" },
+
+    // Handoffs view
+    "No Handoffs": { en: "No Handoffs", ar: "لا توجد تسليمات" },
+    "No handoff data available for the current sprint": { en: "No handoff data available for the current sprint.", ar: "لا توجد بيانات تسليم متاحة للسبرنت الحالي." },
+    "Task": { en: "Task", ar: "المهمة" },
+
+    // Tasks view
+    "No tasks found": { en: "No tasks found", ar: "لا توجد مهام" },
+    "No tasks assigned to the current sprint": { en: "There are no tasks assigned to the current sprint.", ar: "لا توجد مهام مسندة للسبرنت الحالي." },
+    "Priority": { en: "Priority", ar: "الأولوية" },
+    "Transition Criteria": { en: "Transition Criteria", ar: "معايير الانتقال" },
+    "Required Criteria": { en: "Required Criteria", ar: "المعايير المطلوبة" },
+    "Moving back": { en: "Moving back", ar: "الرجوع" },
+    "Moving forward": { en: "Moving forward", ar: "التقدم" },
+    "points": { en: "points", ar: "نقاط" },
+
+    // Common labels
+    "Impact": { en: "Impact", ar: "التأثير" },
+    "Duration": { en: "Duration", ar: "المدة" },
+    "Type": { en: "Type", ar: "النوع" },
+    "Category": { en: "Category", ar: "الفئة" },
+
+    // Profile view
+    "Team": { en: "Team", ar: "الفريق" },
+    "Cairo, Egypt": { en: "Cairo, Egypt", ar: "القاهرة، مصر" },
+    "Joined": { en: "Joined", ar: "انضم" },
+    "Active Member": { en: "Active Member", ar: "عضو نشط" },
+    "Sprint Health": { en: "Sprint Health", ar: "صحة السبرنت" },
+
+    // Login page
+    "Sign in to your account": { en: "Sign in to your account", ar: "تسجيل الدخول إلى حسابك" },
+    "Password": { en: "Password", ar: "كلمة المرور" },
+    "Enter your email": { en: "Enter your email", ar: "أدخل بريدك الإلكتروني" },
+    "Enter your password": { en: "Enter your password", ar: "أدخل كلمة المرور" },
+    "Demo Credentials": { en: "Demo Credentials", ar: "بيانات الدخول التجريبية" },
+    "Invalid credentials. Please try again.": { en: "Invalid credentials. Please try again.", ar: "بيانات الدخول غير صحيحة. يرجى المحاولة مرة أخرى." },
 };
 
 export const t = (key: string): string => {

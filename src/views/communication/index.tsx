@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { AlertTriangle, Clock, Hash, MessageSquare, Mail, Video } from "lucide-react";
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
-import { EmptyState, Header } from "@/components/shared";
+import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { t, useSettings } from "@/hooks";
 import type { CommunicationChannel, CommunicationInterface, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
@@ -28,8 +28,14 @@ const hoursAgo = (dateStr: string): number => {
     return Math.round((now.getTime() - date.getTime()) / (1000 * 60 * 60));
 };
 
-const formatTimeSince = (dateStr: string): string => {
+const formatTimeSince = (dateStr: string, lang: "en" | "ar"): string => {
     const hours = hoursAgo(dateStr);
+    if (lang === "ar") {
+        if (hours < 1) return "أقل من ساعة";
+        if (hours < 24) return `منذ ${hours} ساعة`;
+        const days = Math.floor(hours / 24);
+        return `منذ ${days} يوم`;
+    }
     if (hours < 1) return "< 1h ago";
     if (hours < 24) return `${hours}h ago`;
     const days = Math.floor(hours / 24);
@@ -37,7 +43,8 @@ const formatTimeSince = (dateStr: string): string => {
 };
 
 export const CommunicationView = () => {
-    useSettings();
+    const [settings] = useSettings();
+    const isRTL = settings.language === "ar";
     const { activeSprintId } = useSprintStore();
     const allComms = getStorageItem<CommunicationInterface[]>(storageKeys.communications) ?? [];
     const comms = allComms.filter((c) => c.sprintId === activeSprintId);
@@ -98,7 +105,7 @@ export const CommunicationView = () => {
         return (
             <div>
                 <Header title={t("Communication Tracker")} description={t("Monitor response times and pending questions across channels")} />
-                <EmptyState icon={MessageSquare} title="No Communications" description="No communication data available for the current sprint." />
+                <EmptyState icon={MessageSquare} title={t("No Communications")} description={t("No communication data available for the current sprint")} />
             </div>
         );
     }
@@ -116,8 +123,8 @@ export const CommunicationView = () => {
                                 <MessageSquare className="h-5 w-5 text-primary" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-text-dark">{stats.total}</p>
-                                <p className="text-xs text-text-muted">Total Questions</p>
+                                <p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={stats.total} /></p>
+                                <p className="text-xs text-text-muted">{t("Total Questions")}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -129,8 +136,8 @@ export const CommunicationView = () => {
                                 <Clock className="h-5 w-5 text-warning" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-warning">{stats.pending}</p>
-                                <p className="text-xs text-text-muted">Pending</p>
+                                <p className="text-2xl font-bold text-warning"><AnimatedNumber value={stats.pending} /></p>
+                                <p className="text-xs text-text-muted">{t("Pending")}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -142,8 +149,8 @@ export const CommunicationView = () => {
                                 <Clock className="h-5 w-5 text-primary" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-text-dark">{stats.avgResponseTime}h</p>
-                                <p className="text-xs text-text-muted">Avg Response</p>
+                                <p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={stats.avgResponseTime} suffix="h" /></p>
+                                <p className="text-xs text-text-muted">{t("Avg Response")}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -155,8 +162,8 @@ export const CommunicationView = () => {
                                 <AlertTriangle className="h-5 w-5 text-error" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-error">{stats.escalated}</p>
-                                <p className="text-xs text-text-muted">Escalated</p>
+                                <p className="text-2xl font-bold text-error"><AnimatedNumber value={stats.escalated} /></p>
+                                <p className="text-xs text-text-muted">{t("Escalated")}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -166,8 +173,8 @@ export const CommunicationView = () => {
             {/* Tabs */}
             <Tabs defaultValue="pending">
                 <TabsList>
-                    <TabsTrigger value="pending">Pending Questions</TabsTrigger>
-                    <TabsTrigger value="response-time">Response Time Analysis</TabsTrigger>
+                    <TabsTrigger value="pending">{t("Pending Questions")}</TabsTrigger>
+                    <TabsTrigger value="response-time">{t("Response Time Analysis")}</TabsTrigger>
                 </TabsList>
 
                 {/* Pending Questions Tab */}
@@ -175,7 +182,7 @@ export const CommunicationView = () => {
                     {pendingQuestions.length === 0 ? (
                         <Card className="mt-4">
                             <CardContent className="p-6">
-                                <p className="text-sm text-text-muted text-center py-4">No pending questions -- all caught up!</p>
+                                <p className="text-sm text-text-muted text-center py-4">{t("No pending questions")}</p>
                             </CardContent>
                         </Card>
                     ) : (
@@ -191,7 +198,7 @@ export const CommunicationView = () => {
                                     <Card key={q.id}>
                                         <CardContent className="p-4">
                                             <p className="text-sm font-medium text-text-dark mb-3">{q.question}</p>
-                                            <div className="flex flex-wrap items-center gap-3">
+                                            <div className={cn("flex flex-wrap items-center gap-3", isRTL && "flex-row-reverse")}>
                                                 {/* Asked by */}
                                                 <div className="flex items-center gap-2">
                                                     <Avatar className="h-6 w-6">
@@ -211,13 +218,13 @@ export const CommunicationView = () => {
                                                 </div>
 
                                                 <Badge variant={channel.variant}>
-                                                    <ChannelIcon className="h-3 w-3 mr-1" />
-                                                    {channel.label}
+                                                    <ChannelIcon className="h-3 w-3 me-1" />
+                                                    {t(channel.label)}
                                                 </Badge>
 
-                                                <span className="text-xs text-text-muted">{formatTimeSince(q.askedAt)}</span>
+                                                <span className="text-xs text-text-muted">{formatTimeSince(q.askedAt, settings.language)}</span>
 
-                                                <Badge variant={status.variant}>{status.label}</Badge>
+                                                <Badge variant={status.variant}>{t(status.label)}</Badge>
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -232,11 +239,11 @@ export const CommunicationView = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
                         {/* Answered Questions List */}
                         <div className="lg:col-span-2 flex flex-col gap-3">
-                            <h3 className="text-sm font-semibold text-text-dark">Answered Questions (slowest first)</h3>
+                            <h3 className="text-sm font-semibold text-text-dark">{t("Answered Questions (slowest first)")}</h3>
                             {answeredQuestions.length === 0 ? (
                                 <Card>
                                     <CardContent className="p-6">
-                                        <p className="text-sm text-text-muted text-center py-4">No answered questions yet.</p>
+                                        <p className="text-sm text-text-muted text-center py-4">{t("No answered questions yet")}</p>
                                     </CardContent>
                                 </Card>
                             ) : (
@@ -254,14 +261,14 @@ export const CommunicationView = () => {
                                                         <p className="text-sm font-medium text-text-dark truncate">{q.question}</p>
                                                         <div className="flex items-center gap-2 mt-1">
                                                             <Badge variant={channel.variant}>
-                                                                <ChannelIcon className="h-3 w-3 mr-1" />
-                                                                {channel.label}
+                                                                <ChannelIcon className="h-3 w-3 me-1" />
+                                                                {t(channel.label)}
                                                             </Badge>
                                                         </div>
                                                     </div>
                                                     <div className="text-right shrink-0">
                                                         <p className={cn("text-lg font-bold", responseColor)}>{hours}h</p>
-                                                        <p className="text-xs text-text-muted">response time</p>
+                                                        <p className="text-xs text-text-muted">{t("response time")}</p>
                                                     </div>
                                                 </div>
                                             </CardContent>
@@ -276,14 +283,14 @@ export const CommunicationView = () => {
                             {/* Quick Stats */}
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="text-base">Response Summary</CardTitle>
+                                    <CardTitle className="text-base">{t("Response Summary")}</CardTitle>
                                 </CardHeader>
                                 <CardContent className="flex flex-col gap-3">
                                     {fastestResponse && (
                                         <div className="flex items-start gap-3 rounded-xl bg-success-light p-3">
                                             <Clock className="h-4 w-4 text-success mt-0.5 shrink-0" />
                                             <div className="min-w-0">
-                                                <p className="text-xs font-medium text-success">Fastest Response</p>
+                                                <p className="text-xs font-medium text-success">{t("Fastest Response")}</p>
                                                 <p className="text-sm font-bold text-text-dark">{fastestResponse.responseTimeHours}h</p>
                                                 <p className="text-xs text-text-muted truncate">{fastestResponse.question}</p>
                                             </div>
@@ -293,7 +300,7 @@ export const CommunicationView = () => {
                                         <div className="flex items-start gap-3 rounded-xl bg-error-light p-3">
                                             <Clock className="h-4 w-4 text-error mt-0.5 shrink-0" />
                                             <div className="min-w-0">
-                                                <p className="text-xs font-medium text-error">Slowest Response</p>
+                                                <p className="text-xs font-medium text-error">{t("Slowest Response")}</p>
                                                 <p className="text-sm font-bold text-text-dark">{slowestResponse.responseTimeHours}h</p>
                                                 <p className="text-xs text-text-muted truncate">{slowestResponse.question}</p>
                                             </div>
@@ -305,11 +312,11 @@ export const CommunicationView = () => {
                             {/* Channel Breakdown Bar Chart */}
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="text-base">Avg Response by Channel</CardTitle>
+                                    <CardTitle className="text-base">{t("Avg Response by Channel")}</CardTitle>
                                 </CardHeader>
                                 <CardContent className="flex flex-col gap-3">
                                     {channelAvgResponse.length === 0 ? (
-                                        <p className="text-sm text-text-muted text-center py-2">No data</p>
+                                        <p className="text-sm text-text-muted text-center py-2">{t("No data")}</p>
                                     ) : (
                                         channelAvgResponse.map(({ channel, avg }) => {
                                             const config = channelConfig[channel];
@@ -322,13 +329,13 @@ export const CommunicationView = () => {
                                                     <div className="flex items-center justify-between mb-1">
                                                         <div className="flex items-center gap-1.5">
                                                             <ChannelIcon className="h-3.5 w-3.5 text-text-muted" />
-                                                            <span className="text-xs font-medium text-text-secondary">{config.label}</span>
+                                                            <span className="text-xs font-medium text-text-secondary">{t(config.label)}</span>
                                                         </div>
                                                         <span className="text-xs font-bold text-text-dark">{avg}h</span>
                                                     </div>
                                                     <div className="h-2 rounded-full bg-muted overflow-hidden">
                                                         <div
-                                                            className={cn("h-full rounded-full transition-all duration-500", barColor)}
+                                                            className={cn("h-full rounded-full transition-all duration-500 progress-animated", barColor)}
                                                             style={{ width: `${barWidth}%` }}
                                                         />
                                                     </div>

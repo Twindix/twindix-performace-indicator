@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { AlertTriangle, Layers, Shield, Users } from "lucide-react";
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
-import { EmptyState, Header } from "@/components/shared";
+import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { t, useSettings } from "@/hooks";
 import type { OwnershipEntryInterface, UserInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
@@ -27,7 +27,7 @@ export const OwnershipView = () => {
         return (
             <div>
                 <Header title={t("Ownership Map")} description={t("Track component ownership and detect conflicts")} />
-                <EmptyState icon={Shield} title="No Ownership Data" description="No ownership entries available. Add components to start mapping ownership." />
+                <EmptyState icon={Shield} title={t("No Ownership Data")} description={t("No ownership entries available")} />
             </div>
         );
     }
@@ -45,8 +45,8 @@ export const OwnershipView = () => {
                                 <Layers className="h-5 w-5 text-primary" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-text-dark">{stats.total}</p>
-                                <p className="text-xs text-text-muted">Total Components</p>
+                                <p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={stats.total} /></p>
+                                <p className="text-xs text-text-muted">{t("Total Components")}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -58,8 +58,8 @@ export const OwnershipView = () => {
                                 <AlertTriangle className="h-5 w-5 text-error" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-error">{stats.withConflicts}</p>
-                                <p className="text-xs text-text-muted">With Conflicts</p>
+                                <p className="text-2xl font-bold text-error"><AnimatedNumber value={stats.withConflicts} /></p>
+                                <p className="text-xs text-text-muted">{t("With Conflicts")}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -71,8 +71,8 @@ export const OwnershipView = () => {
                                 <Users className="h-5 w-5 text-success" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-success">{stats.withBackup}</p>
-                                <p className="text-xs text-text-muted">With Backup Owners</p>
+                                <p className="text-2xl font-bold text-success"><AnimatedNumber value={stats.withBackup} /></p>
+                                <p className="text-xs text-text-muted">{t("With Backup")}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -84,7 +84,7 @@ export const OwnershipView = () => {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base">
                         <Layers className="h-4 w-4 text-primary" />
-                        All Components
+                        {t("All Components")}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -92,12 +92,12 @@ export const OwnershipView = () => {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-border">
-                                    <th className="text-left py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Component</th>
-                                    <th className="text-left py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Primary Owner</th>
-                                    <th className="text-left py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Backup Owner</th>
-                                    <th className="text-center py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Changes</th>
-                                    <th className="text-left py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Last Modified</th>
-                                    <th className="text-center py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
+                                    <th className="text-left py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">{t("Component")}</th>
+                                    <th className="text-left py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">{t("Primary Owner")}</th>
+                                    <th className="text-left py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">{t("Backup Owner")}</th>
+                                    <th className="text-center py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">{t("Changes")}</th>
+                                    <th className="text-left py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">{t("Last Modified")}</th>
+                                    <th className="text-center py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">{t("Status")}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -130,7 +130,7 @@ export const OwnershipView = () => {
                                                         <span className="text-text-secondary">{backup.name}</span>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-text-muted text-xs">None</span>
+                                                    <span className="text-text-muted text-xs">{t("None")}</span>
                                                 )}
                                             </td>
                                             <td className="py-3 px-3 text-center">
@@ -141,9 +141,9 @@ export const OwnershipView = () => {
                                             </td>
                                             <td className="py-3 px-3 text-center">
                                                 {entry.hasConflict ? (
-                                                    <Badge variant="error">Conflict</Badge>
+                                                    <Badge variant="error">{t("Conflict")}</Badge>
                                                 ) : (
-                                                    <Badge variant="success">OK</Badge>
+                                                    <Badge variant="success">{t("OK")}</Badge>
                                                 )}
                                             </td>
                                         </tr>
@@ -160,7 +160,7 @@ export const OwnershipView = () => {
                 <div>
                     <h2 className="text-lg font-semibold text-text-dark mb-3 flex items-center gap-2">
                         <AlertTriangle className="h-5 w-5 text-error" />
-                        Ownership Conflicts
+                        {t("Ownership Conflicts")}
                         <Badge variant="error">{conflicts.length}</Badge>
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

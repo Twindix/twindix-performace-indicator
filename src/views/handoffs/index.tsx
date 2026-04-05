@@ -2,13 +2,13 @@ import { useMemo } from "react";
 import { ArrowRight, CheckCircle2, XCircle, ArrowRightLeft, BarChart3, Target } from "lucide-react";
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
-import { EmptyState, Header } from "@/components/shared";
+import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { t, useSettings } from "@/hooks";
 import type { CriterionInterface, HandoffInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
-import { cn, getStorageItem, storageKeys } from "@/utils";
+import { cn, td, getStorageItem, storageKeys } from "@/utils";
 
-const PIPELINE_PHASES = ["Product", "Design", "Development", "Code Review", "QA", "Done"];
+const PIPELINE_PHASE_KEYS = ["Product", "Design", "Development", "Code Review", "QA", "Done"];
 
 const getCompletionColor = (rate: number): string => {
     if (rate >= 100) return "bg-success";
@@ -42,7 +42,7 @@ const CriteriaList = ({ title, criteria }: { title: string; criteria: CriterionI
                     ) : (
                         <XCircle className="h-4 w-4 text-text-muted shrink-0" />
                     )}
-                    <span className={cn("text-xs", c.met ? "text-text-dark" : "text-text-muted")}>{c.label}</span>
+                    <span className={cn("text-xs", c.met ? "text-text-dark" : "text-text-muted")}>{td(c.label)}</span>
                 </div>
             ))}
         </div>
@@ -70,7 +70,7 @@ export const HandoffsView = () => {
         return (
             <div>
                 <Header title={t("Handoff Tracker")} description={t("Monitor phase transition quality with entry and exit criteria")} />
-                <EmptyState icon={ArrowRightLeft} title="No Handoffs" description="No handoff data available for the current sprint." />
+                <EmptyState icon={ArrowRightLeft} title={t("No Handoffs")} description={t("No handoff data available for the current sprint")} />
             </div>
         );
     }
@@ -83,12 +83,12 @@ export const HandoffsView = () => {
             <Card className="mb-6">
                 <CardContent className="p-4">
                     <div className="flex items-center justify-center gap-1 flex-wrap">
-                        {PIPELINE_PHASES.map((phase, i) => (
+                        {PIPELINE_PHASE_KEYS.map((phase, i) => (
                             <div key={phase} className="flex items-center gap-1">
                                 <div className="flex items-center justify-center rounded-lg bg-primary-lighter px-3 py-2">
-                                    <span className="text-xs font-semibold text-primary whitespace-nowrap">{phase}</span>
+                                    <span className="text-xs font-semibold text-primary whitespace-nowrap">{t(phase)}</span>
                                 </div>
-                                {i < PIPELINE_PHASES.length - 1 && (
+                                {i < PIPELINE_PHASE_KEYS.length - 1 && (
                                     <ArrowRight className="h-4 w-4 text-text-muted shrink-0" />
                                 )}
                             </div>
@@ -106,8 +106,8 @@ export const HandoffsView = () => {
                                 <ArrowRightLeft className="h-5 w-5 text-primary" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-text-dark">{stats.total}</p>
-                                <p className="text-xs text-text-muted">Total Handoffs</p>
+                                <p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={stats.total} /></p>
+                                <p className="text-xs text-text-muted">{t("Total Handoffs")}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -119,8 +119,8 @@ export const HandoffsView = () => {
                                 <BarChart3 className="h-5 w-5 text-primary" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-text-dark">{stats.avgCompletion}%</p>
-                                <p className="text-xs text-text-muted">Avg Completion</p>
+                                <p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={stats.avgCompletion} suffix="%" /></p>
+                                <p className="text-xs text-text-muted">{t("Avg Completion")}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -132,8 +132,8 @@ export const HandoffsView = () => {
                                 <Target className="h-5 w-5 text-success" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-success">{stats.fullyCompleted}</p>
-                                <p className="text-xs text-text-muted">Fully Completed</p>
+                                <p className="text-2xl font-bold text-success"><AnimatedNumber value={stats.fullyCompleted} /></p>
+                                <p className="text-xs text-text-muted">{t("Fully Completed")}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -145,8 +145,8 @@ export const HandoffsView = () => {
                                 <XCircle className="h-5 w-5 text-error" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-error">{stats.belowThreshold}</p>
-                                <p className="text-xs text-text-muted">Below 80%</p>
+                                <p className="text-2xl font-bold text-error"><AnimatedNumber value={stats.belowThreshold} /></p>
+                                <p className="text-xs text-text-muted">{t("Below Threshold")}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -168,9 +168,9 @@ export const HandoffsView = () => {
                                         </div>
                                         <div className="min-w-0">
                                             <CardTitle className="text-sm">
-                                                {handoff.fromPhase} <ArrowRight className="inline h-3.5 w-3.5 mx-0.5" /> {handoff.toPhase}
+                                                {t(handoff.fromPhase)} <ArrowRight className="inline h-3.5 w-3.5 mx-0.5" /> {t(handoff.toPhase)}
                                             </CardTitle>
-                                            <p className="text-xs text-text-muted mt-0.5">Task: {handoff.taskId}</p>
+                                            <p className="text-xs text-text-muted mt-0.5">{t("Task")}: {handoff.taskId}</p>
                                         </div>
                                     </div>
                                     <Badge variant={rate >= 100 ? "success" : rate >= 80 ? "default" : rate >= 60 ? "warning" : "error"}>
@@ -182,12 +182,12 @@ export const HandoffsView = () => {
                                 {/* Progress Bar */}
                                 <div className="mb-4">
                                     <div className="flex items-center justify-between mb-1">
-                                        <span className="text-xs text-text-muted">Completion</span>
-                                        <span className={cn("text-xs font-bold", getCompletionTextColor(rate))}>{rate}%</span>
+                                        <span className="text-xs text-text-muted">{t("Completion")}</span>
+                                        <span className={cn("text-xs font-bold", getCompletionTextColor(rate))}><AnimatedNumber value={rate} suffix="%" /></span>
                                     </div>
                                     <div className="h-2 rounded-full bg-muted overflow-hidden">
                                         <div
-                                            className={cn("h-full rounded-full transition-all duration-500", getCompletionColor(rate))}
+                                            className={cn("h-full rounded-full transition-all duration-500 progress-animated", getCompletionColor(rate))}
                                             style={{ width: `${Math.min(rate, 100)}%` }}
                                         />
                                     </div>
@@ -195,8 +195,8 @@ export const HandoffsView = () => {
 
                                 {/* Criteria Sections */}
                                 <div className="grid grid-cols-2 gap-4">
-                                    <CriteriaList title="Entry Criteria" criteria={handoff.entryCriteria} />
-                                    <CriteriaList title="Exit Criteria" criteria={handoff.exitCriteria} />
+                                    <CriteriaList title={t("Entry Criteria")} criteria={handoff.entryCriteria} />
+                                    <CriteriaList title={t("Exit Criteria")} criteria={handoff.exitCriteria} />
                                 </div>
                             </CardContent>
                         </Card>

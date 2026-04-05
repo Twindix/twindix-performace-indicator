@@ -2,7 +2,7 @@ import { useState } from "react";
 import { BookOpen, Calendar, Filter, Users } from "lucide-react";
 
 import { Badge, Card, CardContent } from "@/atoms";
-import { EmptyState, Header } from "@/components/shared";
+import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { DecisionCategory, DecisionStatus } from "@/enums";
 import { t, useSettings } from "@/hooks";
 import type { DecisionInterface, SprintMetricsInterface, UserInterface } from "@/interfaces";
@@ -75,26 +75,26 @@ export const DecisionsView = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 <Card>
                     <CardContent className="p-4 text-center">
-                        <p className="text-2xl font-bold text-text-dark">{totalCount}</p>
-                        <p className="text-xs text-text-muted">Total Decisions</p>
+                        <p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={totalCount} /></p>
+                        <p className="text-xs text-text-muted">{t("Total Decisions")}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4 text-center">
-                        <p className="text-2xl font-bold text-success">{approvedCount}</p>
-                        <p className="text-xs text-text-muted">Approved</p>
+                        <p className="text-2xl font-bold text-success"><AnimatedNumber value={approvedCount} /></p>
+                        <p className="text-xs text-text-muted">{t("Approved")}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4 text-center">
-                        <p className="text-2xl font-bold text-warning">{pendingCount}</p>
-                        <p className="text-xs text-text-muted">Pending</p>
+                        <p className="text-2xl font-bold text-warning"><AnimatedNumber value={pendingCount} /></p>
+                        <p className="text-xs text-text-muted">{t("Pending")}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4 text-center">
-                        <p className="text-2xl font-bold text-primary">{coverageValue}%</p>
-                        <p className="text-xs text-text-muted">Decision Coverage</p>
+                        <p className="text-2xl font-bold text-primary"><AnimatedNumber value={coverageValue} suffix="%" /></p>
+                        <p className="text-xs text-text-muted">{t("Decision Coverage")}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -104,26 +104,26 @@ export const DecisionsView = () => {
                 <Filter className="h-4 w-4 text-text-muted" />
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-[160px]">
-                        <SelectValue placeholder="Status" />
+                        <SelectValue placeholder={t("Status")} />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="all">{t("All Statuses")}</SelectItem>
                         {Object.values(DecisionStatus).map((s) => (
                             <SelectItem key={s} value={s}>
-                                {s.charAt(0).toUpperCase() + s.slice(1)}
+                                {t(s.charAt(0).toUpperCase() + s.slice(1))}
                             </SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                     <SelectTrigger className="w-[160px]">
-                        <SelectValue placeholder="Category" />
+                        <SelectValue placeholder={t("Category")} />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
+                        <SelectItem value="all">{t("All Categories")}</SelectItem>
                         {Object.values(DecisionCategory).map((c) => (
                             <SelectItem key={c} value={c}>
-                                {categoryLabels[c]}
+                                {t(categoryLabels[c])}
                             </SelectItem>
                         ))}
                     </SelectContent>
@@ -132,7 +132,7 @@ export const DecisionsView = () => {
 
             {/* Decision List */}
             {filteredDecisions.length === 0 ? (
-                <EmptyState icon={BookOpen} title="No decisions found" description="No decisions match the selected filters for this sprint." />
+                <EmptyState icon={BookOpen} title={t("No decisions found")} description={t("No decisions match the selected filters")} />
             ) : (
                 <div className="flex flex-col gap-4">
                     {filteredDecisions.map((decision) => {
@@ -148,8 +148,8 @@ export const DecisionsView = () => {
                                                     <p className="text-xs text-text-secondary line-clamp-2">{decision.description}</p>
                                                 </div>
                                                 <div className="flex items-center gap-2 shrink-0">
-                                                    <Badge variant={statusVariant[decision.status]}>{decision.status}</Badge>
-                                                    <Badge variant="outline">{categoryLabels[decision.category]}</Badge>
+                                                    <Badge variant={statusVariant[decision.status]}>{t(decision.status.charAt(0).toUpperCase() + decision.status.slice(1))}</Badge>
+                                                    <Badge variant="outline">{t(categoryLabels[decision.category])}</Badge>
                                                 </div>
                                             </div>
 
@@ -178,7 +178,7 @@ export const DecisionsView = () => {
                                                                 );
                                                             })}
                                                             {decision.participants.length > 4 && (
-                                                                <span className="ml-1 text-text-muted">+{decision.participants.length - 4}</span>
+                                                                <span className="ms-1 text-text-muted">+{decision.participants.length - 4}</span>
                                                             )}
                                                         </div>
                                                     </div>
@@ -190,14 +190,14 @@ export const DecisionsView = () => {
                                                     <span>{formatDate(decision.createdAt)}</span>
                                                 </div>
                                                 {decision.decidedAt && (
-                                                    <span className="text-text-muted">Decided: {formatDate(decision.decidedAt)}</span>
+                                                    <span className="text-text-muted">{t("Decided")}: {formatDate(decision.decidedAt)}</span>
                                                 )}
                                             </div>
 
                                             {decision.outcome && (
                                                 <div className="mt-3 rounded-lg bg-muted p-2.5">
                                                     <p className="text-xs text-text-secondary">
-                                                        <span className="font-medium text-text-dark">Outcome: </span>
+                                                        <span className="font-medium text-text-dark">{t("Outcome")}: </span>
                                                         {decision.outcome}
                                                     </p>
                                                 </div>
@@ -209,35 +209,35 @@ export const DecisionsView = () => {
                                 <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                                     <DialogHeader>
                                         <DialogTitle>{decision.title}</DialogTitle>
-                                        <DialogDescription>Decision details and context</DialogDescription>
+                                        <DialogDescription>{t("Decision details and context")}</DialogDescription>
                                     </DialogHeader>
 
                                     <div className="flex items-center gap-2 mt-2">
-                                        <Badge variant={statusVariant[decision.status]}>{decision.status}</Badge>
-                                        <Badge variant="outline">{categoryLabels[decision.category]}</Badge>
+                                        <Badge variant={statusVariant[decision.status]}>{t(decision.status.charAt(0).toUpperCase() + decision.status.slice(1))}</Badge>
+                                        <Badge variant="outline">{t(categoryLabels[decision.category])}</Badge>
                                     </div>
 
                                     <div className="mt-4 space-y-4">
                                         <div>
-                                            <h4 className="text-sm font-semibold text-text-dark mb-1">Description</h4>
+                                            <h4 className="text-sm font-semibold text-text-dark mb-1">{t("Description")}</h4>
                                             <p className="text-sm text-text-secondary">{decision.description}</p>
                                         </div>
 
                                         <div>
-                                            <h4 className="text-sm font-semibold text-text-dark mb-1">Context</h4>
+                                            <h4 className="text-sm font-semibold text-text-dark mb-1">{t("Context")}</h4>
                                             <p className="text-sm text-text-secondary">{decision.context}</p>
                                         </div>
 
                                         {decision.outcome && (
                                             <div>
-                                                <h4 className="text-sm font-semibold text-text-dark mb-1">Outcome</h4>
+                                                <h4 className="text-sm font-semibold text-text-dark mb-1">{t("Outcome")}</h4>
                                                 <p className="text-sm text-text-secondary">{decision.outcome}</p>
                                             </div>
                                         )}
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <h4 className="text-sm font-semibold text-text-dark mb-1">Owner</h4>
+                                                <h4 className="text-sm font-semibold text-text-dark mb-1">{t("Owner")}</h4>
                                                 {owner && (
                                                     <div className="flex items-center gap-2">
                                                         <Avatar className="h-6 w-6">
@@ -248,7 +248,7 @@ export const DecisionsView = () => {
                                                 )}
                                             </div>
                                             <div>
-                                                <h4 className="text-sm font-semibold text-text-dark mb-1">Participants</h4>
+                                                <h4 className="text-sm font-semibold text-text-dark mb-1">{t("Participants")}</h4>
                                                 <div className="flex flex-wrap gap-2">
                                                     {decision.participants.map((pId) => {
                                                         const p = getMember(pId);
@@ -267,12 +267,12 @@ export const DecisionsView = () => {
 
                                         <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border">
                                             <div>
-                                                <h4 className="text-xs font-medium text-text-muted">Created</h4>
+                                                <h4 className="text-xs font-medium text-text-muted">{t("Created")}</h4>
                                                 <p className="text-sm text-text-secondary">{formatDate(decision.createdAt)}</p>
                                             </div>
                                             {decision.decidedAt && (
                                                 <div>
-                                                    <h4 className="text-xs font-medium text-text-muted">Decided</h4>
+                                                    <h4 className="text-xs font-medium text-text-muted">{t("Decided")}</h4>
                                                     <p className="text-sm text-text-secondary">{formatDate(decision.decidedAt)}</p>
                                                 </div>
                                             )}

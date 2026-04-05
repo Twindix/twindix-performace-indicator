@@ -48,17 +48,14 @@ export const SettingsView = () => {
                                     <p className="text-sm font-medium text-text-dark">{t("Dark Mode")}</p>
                                     <p className="text-xs text-text-muted">{t("Switch between light and dark theme")}</p>
                                 </div>
-                                <Button variant="outline" size="sm" onClick={onToggleTheme} className="gap-2">
-                                    {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                                    {isDarkMode ? t("Light") : t("Dark")}
-                                </Button>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-text-dark">{t("Compact View")}</p>
-                                    <p className="text-xs text-text-muted">{t("Reduce spacing in lists and tables")}</p>
-                                </div>
-                                <Checkbox checked={settings.compactView} onCheckedChange={(checked) => updateSettings({ compactView: !!checked })} />
+                                <button
+                                    onClick={onToggleTheme}
+                                    className={`relative inline-flex h-8 w-[52px] shrink-0 cursor-pointer items-center rounded-full border-2 transition-colors duration-300 ease-in-out ${isDarkMode ? "bg-primary border-primary" : "bg-muted border-muted"}`}
+                                >
+                                    <span className={`pointer-events-none inline-flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-md ring-0 transition-transform duration-300 ease-in-out ${isDarkMode ? "translate-x-[22px] rtl:-translate-x-[22px]" : "translate-x-[2px] rtl:-translate-x-[2px]"}`}>
+                                        {isDarkMode ? <Moon className="h-3.5 w-3.5 text-primary" /> : <Sun className="h-3.5 w-3.5 text-amber-500" />}
+                                    </span>
+                                </button>
                             </div>
                         </div>
                     </CardContent>

@@ -5,11 +5,12 @@ import { cn } from "@/utils";
 import { sidebarItems } from "@/data";
 import { t, useSettings } from "@/hooks";
 import { useSidebarStore } from "@/store";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui";
 
 export const Sidebar = () => {
     const { pathname } = useLocation();
     const { isOpen, onToggle } = useSidebarStore();
-    useSettings(); // re-render on language change
+    useSettings();
 
     return (
         <aside className={cn("fixed inset-inline-start-0 top-0 z-40 flex h-screen flex-col border-e border-border bg-surface transition-all duration-300", isOpen ? "w-[var(--spacing-sidebar)]" : "w-16")}>
@@ -23,25 +24,38 @@ export const Sidebar = () => {
                         <span className="text-[10px] text-text-muted truncate">Performance Indicator</span>
                     </div>
                 )}
-                <button onClick={onToggle} className={cn("ml-auto rounded-lg p-1.5 text-text-muted hover:bg-accent hover:text-text-dark transition-colors cursor-pointer", !isOpen && "ml-0 mt-1")}>
+                <button onClick={onToggle} className={cn("ms-auto rounded-lg p-1.5 text-text-muted hover:bg-accent hover:text-text-dark transition-colors cursor-pointer", !isOpen && "ms-0 mt-1")}>
                     <ChevronLeft className={cn("h-4 w-4 transition-transform", !isOpen && "rotate-180")} />
                 </button>
             </div>
 
             <nav className="flex-1 overflow-y-auto p-2 scrollbar-thin">
-                <ul className="flex flex-col gap-1">
-                    {sidebarItems.map(({ label, path, icon: Icon }) => {
-                        const isActive = pathname === path;
-                        return (
-                            <li key={path}>
+                <TooltipProvider delayDuration={0}>
+                    <ul className="flex flex-col gap-1">
+                        {sidebarItems.map(({ label, path, icon: Icon }) => {
+                            const isActive = pathname === path;
+                            const linkContent = (
                                 <Link to={path} className={cn("flex items-center gap-3 rounded-[var(--radius-default)] px-3 py-2.5 text-sm font-medium transition-all duration-200", isActive ? "bg-primary-lighter text-primary-medium shadow-sm" : "text-text-secondary hover:bg-accent hover:text-text-dark", !isOpen && "justify-center px-0")}>
                                     <Icon className="h-5 w-5 shrink-0" />
                                     {isOpen && <span className="truncate">{t(label)}</span>}
                                 </Link>
-                            </li>
-                        );
-                    })}
-                </ul>
+                            );
+
+                            if (!isOpen) {
+                                return (
+                                    <li key={path}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+                                            <TooltipContent side="right">{t(label)}</TooltipContent>
+                                        </Tooltip>
+                                    </li>
+                                );
+                            }
+
+                            return <li key={path}>{linkContent}</li>;
+                        })}
+                    </ul>
+                </TooltipProvider>
             </nav>
 
             {isOpen && (

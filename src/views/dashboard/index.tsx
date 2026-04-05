@@ -1,27 +1,32 @@
 import { AlertTriangle, BookOpen, Clock, GitBranch, MessageSquare, Shield, TrendingUp, Users } from "lucide-react";
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
-import { Header, MetricCard, ScoreGauge, StatusBadge } from "@/components/shared";
+import { AnimatedNumber, Header, MetricCard, ScoreGauge, StatusBadge } from "@/components/shared";
 import { BlockerStatus, MetricStatus } from "@/enums";
-import { t, useSettings } from "@/hooks";
+import { t, useSettings, useCountUp } from "@/hooks";
 import type { BlockerInterface, SprintMetricsInterface, TaskInterface, DecisionInterface, UserInterface, TeamMemberWorkloadInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback } from "@/ui";
 import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
 
 const frictionAreaConfig = [
-    { key: "poorRequirements" as const, label: "Poor Requirements", icon: AlertTriangle, color: "bg-friction-requirements", textColor: "text-friction-requirements" },
-    { key: "communicationGaps" as const, label: "Communication Gaps", icon: MessageSquare, color: "bg-friction-communication", textColor: "text-friction-communication" },
-    { key: "weakOwnership" as const, label: "Weak Ownership", icon: Shield, color: "bg-friction-ownership", textColor: "text-friction-ownership" },
-    { key: "dependencyBlockers" as const, label: "Dependency Blockers", icon: GitBranch, color: "bg-friction-dependencies", textColor: "text-friction-dependencies" },
-    { key: "processGaps" as const, label: "Process Gaps", icon: Clock, color: "bg-friction-process", textColor: "text-friction-process" },
-    { key: "teamCulture" as const, label: "Team & Culture", icon: Users, color: "bg-friction-team", textColor: "text-friction-team" },
+    { key: "poorRequirements" as const, labelKey: "Poor Requirements", icon: AlertTriangle, color: "bg-friction-requirements", textColor: "text-friction-requirements" },
+    { key: "communicationGaps" as const, labelKey: "Communication Gaps", icon: MessageSquare, color: "bg-friction-communication", textColor: "text-friction-communication" },
+    { key: "weakOwnership" as const, labelKey: "Weak Ownership", icon: Shield, color: "bg-friction-ownership", textColor: "text-friction-ownership" },
+    { key: "dependencyBlockers" as const, labelKey: "Dependency Blockers", icon: GitBranch, color: "bg-friction-dependencies", textColor: "text-friction-dependencies" },
+    { key: "processGaps" as const, labelKey: "Process Gaps", icon: Clock, color: "bg-friction-process", textColor: "text-friction-process" },
+    { key: "teamCulture" as const, labelKey: "Team & Culture", icon: Users, color: "bg-friction-team", textColor: "text-friction-team" },
 ];
 
 const getScoreStatus = (score: number): MetricStatus => {
     if (score >= 80) return MetricStatus.Healthy;
     if (score >= 60) return MetricStatus.Warning;
     return MetricStatus.Critical;
+};
+
+const AnimNum = ({ value, className }: { value: number; className?: string }) => {
+    const animated = useCountUp(value);
+    return <span className={className}>{animated}</span>;
 };
 
 export const DashboardView = () => {
@@ -44,7 +49,7 @@ export const DashboardView = () => {
             <Header title={t("Sprint Dashboard")} description={t("Real-time overview of sprint health, delivery friction, and team performance")} />
 
             {/* Hero Section: Health Score + Friction Areas */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 stagger-children">
                 {/* Health Score */}
                 <Card className="lg:row-span-2">
                     <CardHeader>
@@ -58,15 +63,15 @@ export const DashboardView = () => {
                         <StatusBadge status={getScoreStatus(sprintMetrics?.healthScore ?? 0)} />
                         <div className="w-full grid grid-cols-3 gap-2 mt-2">
                             <div className="text-center">
-                                <p className="text-2xl font-bold text-text-dark">{tasks.length}</p>
+                                <p className="text-2xl font-bold text-text-dark"><AnimNum value={tasks.length} /></p>
                                 <p className="text-xs text-text-muted">{t("Total Tasks")}</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-2xl font-bold text-error">{activeBlockers.length}</p>
+                                <p className="text-2xl font-bold text-error"><AnimNum value={activeBlockers.length} /></p>
                                 <p className="text-xs text-text-muted">{t("Active Blockers")}</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-2xl font-bold text-text-dark">{tasks.filter((t) => t.phase === "done").length}</p>
+                                <p className="text-2xl font-bold text-text-dark"><AnimNum value={tasks.filter((tk) => tk.phase === "done").length} /></p>
                                 <p className="text-xs text-text-muted">{t("Completed")}</p>
                             </div>
                         </div>
@@ -74,22 +79,22 @@ export const DashboardView = () => {
                 </Card>
 
                 {/* Friction Areas Grid */}
-                <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {frictionAreaConfig.map(({ key, label, icon: Icon, textColor }) => {
+                <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-3 stagger-children">
+                    {frictionAreaConfig.map(({ key, labelKey, icon: Icon, textColor }) => {
                         const score = sprintMetrics?.frictionScores[key] ?? 0;
                         return (
                             <Card key={key} className="overflow-hidden">
                                 <CardContent className="p-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Icon className={cn("h-4 w-4", textColor)} />
-                                        <span className="text-xs font-medium text-text-secondary truncate">{label}</span>
+                                        <span className="text-xs font-medium text-text-secondary truncate">{t(labelKey)}</span>
                                     </div>
                                     <div className="flex items-end justify-between">
-                                        <span className={cn("text-2xl font-bold", textColor)}>{score}</span>
+                                        <AnimNum value={score} className={cn("text-2xl font-bold", textColor)} />
                                         <StatusBadge status={getScoreStatus(score)} />
                                     </div>
                                     <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
-                                        <div className={cn("h-full rounded-full transition-all duration-500", score >= 80 ? "bg-success" : score >= 60 ? "bg-warning" : "bg-error")} style={{ width: `${score}%` }} />
+                                        <div className={cn("h-full rounded-full transition-all duration-500 progress-animated", score >= 80 ? "bg-success" : score >= 60 ? "bg-warning" : "bg-error")} style={{ width: `${score}%` }} />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -101,7 +106,7 @@ export const DashboardView = () => {
             {/* Key Metrics Row */}
             <div className="mb-6">
                 <h2 className="text-lg font-semibold text-text-dark mb-3">{t("Key Metrics")}</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 stagger-children">
                     {topMetrics.map((m) => (
                         <MetricCard key={m.id} name={m.name} value={m.value} unit={m.unit} status={m.status} trend={m.trend} trendPercent={m.trendPercent} description={m.description} />
                     ))}
@@ -109,7 +114,7 @@ export const DashboardView = () => {
             </div>
 
             {/* Bottom Section: Blockers + Decisions + Workload */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 stagger-children">
                 {/* Active Blockers */}
                 <Card>
                     <CardHeader>
@@ -130,8 +135,8 @@ export const DashboardView = () => {
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-text-dark truncate">{b.title}</p>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-xs text-text-muted">{b.durationDays}d blocked</span>
-                                        <Badge variant={b.impact === "critical" ? "error" : b.impact === "high" ? "warning" : "secondary"}>{b.impact}</Badge>
+                                        <span className="text-xs text-text-muted">{b.durationDays} {t("days")} {t("blocked")}</span>
+                                        <Badge variant={b.impact === "critical" ? "error" : b.impact === "high" ? "warning" : "secondary"}>{t(b.impact.charAt(0).toUpperCase() + b.impact.slice(1))}</Badge>
                                     </div>
                                 </div>
                             </div>
@@ -155,7 +160,7 @@ export const DashboardView = () => {
                                     <p className="text-sm font-medium text-text-dark truncate">{d.title}</p>
                                     <div className="flex items-center gap-2 mt-0.5">
                                         <span className="text-xs text-text-muted">{formatDate(d.createdAt)}</span>
-                                        <Badge variant={d.status === "approved" ? "success" : d.status === "pending" ? "warning" : "secondary"}>{d.status}</Badge>
+                                        <Badge variant={d.status === "approved" ? "success" : d.status === "pending" ? "warning" : "secondary"}>{t(d.status.charAt(0).toUpperCase() + d.status.slice(1))}</Badge>
                                     </div>
                                 </div>
                             </div>
@@ -184,10 +189,10 @@ export const DashboardView = () => {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between mb-1">
                                             <span className="text-xs font-medium text-text-dark truncate">{member?.name}</span>
-                                            <span className={cn("text-xs font-bold", isOverloaded ? "text-error" : "text-text-secondary")}>{utilization}%</span>
+                                            <span className={cn("text-xs font-bold", isOverloaded ? "text-error" : "text-text-secondary")}><AnimatedNumber value={utilization} suffix="%" /></span>
                                         </div>
                                         <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                                            <div className={cn("h-full rounded-full transition-all", isOverloaded ? "bg-error" : utilization > 85 ? "bg-warning" : "bg-primary")} style={{ width: `${Math.min(utilization, 100)}%` }} />
+                                            <div className={cn("h-full rounded-full transition-all progress-animated", isOverloaded ? "bg-error" : utilization > 85 ? "bg-warning" : "bg-primary")} style={{ width: `${Math.min(utilization, 100)}%` }} />
                                         </div>
                                     </div>
                                 </div>

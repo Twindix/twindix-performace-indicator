@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+
 import { cn } from "@/utils";
 
 interface ScoreGaugeProps {
@@ -13,20 +15,49 @@ const getColor = (score: number): string => {
 };
 
 const sizes = {
-    sm: { container: "h-20 w-20", text: "text-lg", label: "text-[9px]" },
-    md: { container: "h-32 w-32", text: "text-3xl", label: "text-xs" },
-    lg: { container: "h-44 w-44", text: "text-5xl", label: "text-sm" },
+    sm: { container: "h-20 w-20", text: "text-lg", label: "text-[9px]", inner: "h-14 w-14" },
+    md: { container: "h-32 w-32", text: "text-3xl", label: "text-xs", inner: "h-24 w-24" },
+    lg: { container: "h-44 w-44", text: "text-5xl", label: "text-sm", inner: "h-36 w-36" },
 };
+
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
 export const ScoreGauge = ({ score, size = "md", label }: ScoreGaugeProps) => {
     const color = getColor(score);
     const s = sizes[size];
-    const angle = (score / 100) * 360;
+    const [animatedScore, setAnimatedScore] = useState(0);
+    const [animatedAngle, setAnimatedAngle] = useState(0);
+    const rafRef = useRef<number>(0);
+
+    useEffect(() => {
+        const targetAngle = (score / 100) * 360;
+        const duration = 1000;
+        const start = performance.now();
+
+        const animate = (now: number) => {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = easeOutCubic(progress);
+
+            setAnimatedAngle(eased * targetAngle);
+            setAnimatedScore(Math.round(eased * score));
+
+            if (progress < 1) {
+                rafRef.current = requestAnimationFrame(animate);
+            }
+        };
+
+        rafRef.current = requestAnimationFrame(animate);
+        return () => cancelAnimationFrame(rafRef.current);
+    }, [score]);
 
     return (
-        <div className={cn("relative flex items-center justify-center rounded-full", s.container)} style={{ background: `conic-gradient(${color} ${angle}deg, var(--raw-border) ${angle}deg)` }}>
-            <div className={cn("absolute rounded-full bg-card flex flex-col items-center justify-center", size === "sm" ? "h-14 w-14" : size === "md" ? "h-24 w-24" : "h-36 w-36")}>
-                <span className={cn("font-bold text-text-dark", s.text)}>{score}</span>
+        <div
+            className={cn("relative flex items-center justify-center rounded-full transition-shadow", s.container)}
+            style={{ background: `conic-gradient(${color} ${animatedAngle}deg, var(--raw-border) ${animatedAngle}deg)` }}
+        >
+            <div className={cn("absolute rounded-full bg-card flex flex-col items-center justify-center", s.inner)}>
+                <span className={cn("font-bold text-text-dark tabular-nums", s.text)}>{animatedScore}</span>
                 {label && <span className={cn("text-text-muted font-medium", s.label)}>{label}</span>}
             </div>
         </div>

@@ -2,7 +2,7 @@ import { TrendingDown, TrendingUp, Minus } from "lucide-react";
 
 import { Card, CardContent } from "@/atoms";
 import { MetricStatus, MetricTrend } from "@/enums";
-import { cn } from "@/utils";
+import { cn, td } from "@/utils";
 
 interface MetricCardProps {
     name: string;
@@ -43,8 +43,8 @@ export const MetricCard = ({ name, value, unit, status, trend, trendPercent, des
         return (
             <div className={cn("flex items-center gap-3 rounded-[var(--radius-default)] p-3", statusBgColors[status])}>
                 <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-text-secondary truncate">{name}</p>
-                    <p className={cn("text-lg font-bold", statusColors[status])}>{value}{unit === "%" || unit === "/day" ? unit : ` ${unit}`}</p>
+                    <p className="text-xs font-medium text-text-secondary truncate">{td(name)}</p>
+                    <p className={cn("text-lg font-bold", statusColors[status])}>{value}{unit === "%" || unit === "/day" ? unit : ` ${td(unit)}`}</p>
                 </div>
                 <div className={cn("flex items-center gap-1 text-xs font-medium", trendColor)}>
                     <TrendIcon className="h-3 w-3" />
@@ -58,16 +58,16 @@ export const MetricCard = ({ name, value, unit, status, trend, trendPercent, des
         <Card className="overflow-hidden">
             <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-2">
-                    <p className="text-xs font-medium text-text-secondary">{name}</p>
+                    <p className="text-xs font-medium text-text-secondary">{td(name)}</p>
                     <div className={cn("flex items-center gap-1 text-xs font-medium", trendColor)}>
                         <TrendIcon className="h-3 w-3" />
                         <span>{Math.abs(trendPercent)}%</span>
                     </div>
                 </div>
                 <p className={cn("text-2xl font-bold mb-1", statusColors[status])}>
-                    {value}{unit === "%" || unit === "/day" ? unit : ` ${unit}`}
+                    {value}{unit === "%" || unit === "/day" ? unit : ` ${td(unit)}`}
                 </p>
-                {description && <p className="text-xs text-text-muted line-clamp-2">{description}</p>}
+                {description && <p className="text-xs text-text-muted line-clamp-2">{td(description)}</p>}
             </CardContent>
         </Card>
     );

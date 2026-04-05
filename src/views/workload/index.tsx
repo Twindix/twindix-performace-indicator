@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { AlertTriangle, ArrowRightLeft, BarChart3, Users } from "lucide-react";
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
-import { EmptyState, Header } from "@/components/shared";
+import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { t, useSettings } from "@/hooks";
 import type { TeamMemberWorkloadInterface, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
@@ -56,7 +56,7 @@ export const WorkloadView = () => {
         return (
             <div>
                 <Header title={t("Team Workload")} description={t("Track team capacity, utilization, and context switching")} />
-                <EmptyState icon={Users} title="No workload data" description="No workload data available for this sprint." />
+                <EmptyState icon={Users} title={t("No workload data")} description={t("No workload data available for this sprint")} />
             </div>
         );
     }
@@ -69,16 +69,16 @@ export const WorkloadView = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 <Card>
                     <CardContent className="p-4 text-center">
-                        <p className="text-2xl font-bold text-text-dark">{stats.teamSize}</p>
-                        <p className="text-xs text-text-muted">Team Size</p>
+                        <p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={stats.teamSize} /></p>
+                        <p className="text-xs text-text-muted">{t("Team Size")}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4 text-center">
                         <p className={cn("text-2xl font-bold", getUtilizationTextColor(stats.avgUtilization))}>
-                            {stats.avgUtilization}%
+                            <AnimatedNumber value={stats.avgUtilization} suffix="%" />
                         </p>
-                        <p className="text-xs text-text-muted">Avg Utilization</p>
+                        <p className="text-xs text-text-muted">{t("Avg Utilization")}</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -86,19 +86,19 @@ export const WorkloadView = () => {
                         <p className={cn("text-2xl font-bold", stats.overloadedCount > 0 ? "text-error" : "text-success")}>
                             {stats.overloadedCount}
                         </p>
-                        <p className="text-xs text-text-muted">Overloaded</p>
+                        <p className="text-xs text-text-muted">{t("Overloaded")}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4 text-center">
-                        <p className="text-2xl font-bold text-text-dark">{stats.totalContextSwitches}</p>
-                        <p className="text-xs text-text-muted">Context Switches</p>
+                        <p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={stats.totalContextSwitches} /></p>
+                        <p className="text-xs text-text-muted">{t("Context Switches")}</p>
                     </CardContent>
                 </Card>
             </div>
 
             {/* Team Member Detail Cards */}
-            <h2 className="text-lg font-semibold text-text-dark mb-3">Team Members</h2>
+            <h2 className="text-lg font-semibold text-text-dark mb-3">{t("Team Members")}</h2>
             <div className="flex flex-col gap-3 mb-8">
                 {sprintWorkload.map((w) => {
                     const member = getMember(w.memberId);
@@ -125,20 +125,20 @@ export const WorkloadView = () => {
                                         <p className={cn("text-sm font-bold", isOverloaded ? "text-error" : "text-text-dark")}>
                                             {w.assignedPoints}/{w.capacity}
                                         </p>
-                                        <p className="text-xs text-text-muted">assigned/capacity</p>
+                                        <p className="text-xs text-text-muted">{t("assigned")}/{t("capacity")}</p>
                                     </div>
 
                                     {/* Utilization Bar */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between mb-1">
-                                            <span className="text-xs text-text-muted">Utilization</span>
+                                            <span className="text-xs text-text-muted">{t("Utilization")}</span>
                                             <span className={cn("text-xs font-bold", getUtilizationTextColor(utilization))}>
-                                                {utilization}%
+                                                <AnimatedNumber value={utilization} suffix="%" />
                                             </span>
                                         </div>
                                         <div className="h-2.5 rounded-full bg-muted overflow-hidden">
                                             <div
-                                                className={cn("h-full rounded-full transition-all duration-500", getUtilizationColor(utilization))}
+                                                className={cn("h-full rounded-full transition-all duration-500 progress-animated", getUtilizationColor(utilization))}
                                                 style={{ width: `${Math.min(utilization, 100)}%` }}
                                             />
                                         </div>
@@ -147,7 +147,7 @@ export const WorkloadView = () => {
                                     {/* Completed */}
                                     <div className="w-20 shrink-0 text-center">
                                         <p className="text-sm font-bold text-text-dark">{w.completedPoints}</p>
-                                        <p className="text-xs text-text-muted">completed</p>
+                                        <p className="text-xs text-text-muted">{t("completed")}</p>
                                     </div>
 
                                     {/* Context Switches */}
@@ -158,20 +158,20 @@ export const WorkloadView = () => {
                                                 {w.contextSwitches}
                                             </span>
                                         </div>
-                                        <p className="text-xs text-text-muted">switches</p>
+                                        <p className="text-xs text-text-muted">{t("switches")}</p>
                                     </div>
 
                                     {/* Active Tasks */}
                                     <div className="w-20 shrink-0 text-center">
                                         <p className="text-sm font-bold text-text-dark">{w.activeTaskCount}</p>
-                                        <p className="text-xs text-text-muted">active tasks</p>
+                                        <p className="text-xs text-text-muted">{t("active tasks")}</p>
                                     </div>
 
                                     {/* Overloaded Indicator */}
                                     {isOverloaded && (
                                         <Badge variant="error" className="shrink-0">
-                                            <AlertTriangle className="h-3 w-3 mr-1" />
-                                            Overloaded
+                                            <AlertTriangle className="h-3 w-3 me-1" />
+                                            {t("Overloaded")}
                                         </Badge>
                                     )}
                                 </div>
@@ -186,7 +186,7 @@ export const WorkloadView = () => {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base">
                         <BarChart3 className="h-4 w-4 text-primary" />
-                        Workload Distribution
+                        {t("Workload Distribution")}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
@@ -205,7 +205,7 @@ export const WorkloadView = () => {
                                         <span className="text-xs font-medium text-text-dark">{member?.name ?? "Unknown"}</span>
                                     </div>
                                     <span className={cn("text-xs font-medium", isOverloaded ? "text-error" : "text-text-secondary")}>
-                                        {w.assignedPoints} / {w.capacity} pts
+                                        {w.assignedPoints} / {w.capacity} {t("points")}
                                     </span>
                                 </div>
                                 <div className="relative h-4 rounded-full bg-muted overflow-hidden">
@@ -217,7 +217,7 @@ export const WorkloadView = () => {
                                     {/* Assigned bar */}
                                     <div
                                         className={cn(
-                                            "h-full rounded-full transition-all duration-500",
+                                            "h-full rounded-full transition-all duration-500 progress-animated",
                                             isOverloaded ? "bg-error" : "bg-primary",
                                         )}
                                         style={{ width: `${Math.min(assignedWidth, 100)}%` }}
@@ -229,15 +229,15 @@ export const WorkloadView = () => {
                     <div className="flex items-center gap-4 pt-2 border-t border-border text-xs text-text-muted">
                         <div className="flex items-center gap-2">
                             <div className="h-2.5 w-6 rounded bg-primary" />
-                            <span>Assigned</span>
+                            <span>{t("Assigned")}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="h-2.5 w-6 rounded bg-error" />
-                            <span>Over capacity</span>
+                            <span>{t("Over capacity")}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="h-4 w-0 border-r-2 border-dashed border-text-muted" />
-                            <span>Capacity limit</span>
+                            <span>{t("Capacity limit")}</span>
                         </div>
                     </div>
                 </CardContent>
@@ -248,7 +248,7 @@ export const WorkloadView = () => {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base">
                         <ArrowRightLeft className="h-4 w-4 text-warning" />
-                        Context Switching
+                        {t("Context Switching")}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -267,12 +267,12 @@ export const WorkloadView = () => {
                                     <span className="text-xs font-medium text-text-dark w-32 truncate shrink-0">{member?.name ?? "Unknown"}</span>
                                     <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden">
                                         <div
-                                            className={cn("h-full rounded-full transition-all duration-500", isHigh ? "bg-error" : "bg-warning")}
+                                            className={cn("h-full rounded-full transition-all duration-500 progress-animated", isHigh ? "bg-error" : "bg-warning")}
                                             style={{ width: `${Math.max(barWidth, 4)}%` }}
                                         />
                                     </div>
                                     <span className={cn("text-xs font-bold w-6 text-right shrink-0", isHigh ? "text-error" : "text-text-dark")}>
-                                        {w.contextSwitches}
+                                        <AnimatedNumber value={w.contextSwitches} />
                                     </span>
                                 </div>
                             );

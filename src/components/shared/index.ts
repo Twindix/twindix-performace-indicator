@@ -5,3 +5,5 @@ export { ScoreGauge } from "./score-gauge";
 export { StatusBadge } from "./status-badge";
 export { Header } from "./header";
 export { EmptyState } from "./empty-state";
+export { AnimatedNumber } from "./animated-number";
+export { ErrorBoundary } from "./error-boundary";

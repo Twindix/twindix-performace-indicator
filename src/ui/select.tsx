@@ -8,9 +8,9 @@ export const Select = SelectPrimitive.Root;
 export const SelectValue = SelectPrimitive.Value;
 
 export const SelectTrigger = forwardRef<HTMLButtonElement, ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>>(({ className, children, ...props }, ref) => (
-    <SelectPrimitive.Trigger ref={ref} className={cn("flex h-10 w-full items-center justify-between rounded-[var(--radius-default)] border border-input bg-surface px-3 py-2 text-sm text-text-dark placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer", className)} {...props}>
+    <SelectPrimitive.Trigger ref={ref} className={cn("flex h-10 w-full items-center justify-between rounded-[var(--radius-default)] border border-input bg-surface px-3 py-2 text-sm text-start text-text-dark placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer gap-2", className)} {...props}>
         {children}
-        <SelectPrimitive.Icon asChild><ChevronDown className="h-4 w-4 opacity-50" /></SelectPrimitive.Icon>
+        <SelectPrimitive.Icon asChild><ChevronDown className="h-4 w-4 opacity-50 shrink-0" /></SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
 ));
 SelectTrigger.displayName = "SelectTrigger";
@@ -27,8 +27,8 @@ export const SelectContent = forwardRef<HTMLDivElement, ComponentPropsWithoutRef
 SelectContent.displayName = "SelectContent";
 
 export const SelectItem = forwardRef<HTMLDivElement, ComponentPropsWithoutRef<typeof SelectPrimitive.Item>>(({ className, children, ...props }, ref) => (
-    <SelectPrimitive.Item ref={ref} className={cn("relative flex w-full cursor-pointer select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50", className)} {...props}>
-        <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+    <SelectPrimitive.Item ref={ref} className={cn("relative flex w-full cursor-pointer select-none items-center rounded-lg py-1.5 pl-8 pr-2 rtl:pl-2 rtl:pr-8 text-sm text-start outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50", className)} {...props}>
+        <span className="absolute left-2 rtl:left-auto rtl:right-2 flex h-3.5 w-3.5 items-center justify-center">
             <SelectPrimitive.ItemIndicator><Check className="h-4 w-4" /></SelectPrimitive.ItemIndicator>
         </span>
         <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>

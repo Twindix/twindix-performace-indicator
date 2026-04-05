@@ -178,6 +178,24 @@ body {
     70% { transform: scale(1); }
 }
 
+/* RTL support — force text alignment and fix hardcoded directions */
+[dir="rtl"] body {
+    text-align: right;
+}
+
+[dir="rtl"] .text-left {
+    text-align: right;
+}
+
+[dir="rtl"] .text-center {
+    text-align: center;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] textarea {
+    text-align: inherit;
+}
+
 .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -194,4 +212,131 @@ body {
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: var(--color-text-secondary);
+}
+
+/* RTL: flip tabs direction so default tab is on the right */
+[dir="rtl"] [role="tablist"] {
+    flex-direction: row-reverse;
+}
+
+/* RTL: fix dropdown menu alignment */
+[dir="rtl"] [data-radix-popper-content-wrapper] {
+    direction: rtl;
+}
+
+/* RTL: flip select trigger so chevron goes to left, text to right */
+[dir="rtl"] [role="combobox"] {
+    flex-direction: row-reverse;
+}
+
+
+/* RTL: progress bars fill from right to left */
+[dir="rtl"] .rounded-full > .progress-animated,
+[dir="rtl"] .overflow-hidden > .progress-animated {
+    margin-left: auto;
+    margin-right: 0;
+}
+
+/* Animated progress bar fill */
+.progress-animated {
+    animation: progressGrow 1s ease-out both;
+    transform-origin: left;
+}
+
+[dir="rtl"] .progress-animated {
+    transform-origin: right;
+}
+
+@keyframes progressGrow {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+}
+
+/* RTL: dialog close button position */
+[dir="rtl"] [data-radix-collection-item][aria-label="Close"],
+[dir="rtl"] button.absolute.inset-inline-end-4 {
+    right: auto;
+    left: 1rem;
+}
+
+
+/* Smooth entrance animations */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(16px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+[dir="rtl"] .animate-slide-in {
+    animation: slideInLeft 0.3s ease-out both;
+}
+
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-16px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.4s ease-out both;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out both;
+}
+
+.animate-scale-in {
+    animation: scaleIn 0.3s ease-out both;
+}
+
+.animate-slide-in {
+    animation: slideInRight 0.3s ease-out both;
+}
+
+/* Staggered animation delays for grid children */
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 350ms; }
+
+/* Card hover lift effect */
+.hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+    transform: translateY(-2px);
+}
+
+/* Progress bar animation */
+@keyframes growWidth {
+    from { width: 0; }
+}
+.animate-grow {
+    animation: growWidth 0.8s ease-out both;
+}
+
+/* Number count-up feel via opacity */
+@keyframes countIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+.animate-count {
+    animation: countIn 0.5s ease-out both;
 }

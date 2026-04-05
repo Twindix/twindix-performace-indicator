@@ -1,7 +1,7 @@
 import { Briefcase, Calendar, Mail, MapPin, Shield, Users } from "lucide-react";
 
 import { Badge, Card, CardContent } from "@/atoms";
-import { Header, ScoreGauge } from "@/components/shared";
+import { AnimatedNumber, Header, ScoreGauge } from "@/components/shared";
 import { t, useAuth, useSettings } from "@/hooks";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback } from "@/ui";
@@ -54,7 +54,7 @@ export const ProfileView = () => {
                         </Avatar>
                         <h2 className="text-xl font-bold text-text-dark">{user.name}</h2>
                         <p className="text-sm text-primary font-medium mt-1">{roleLabels[user.role] ?? user.role}</p>
-                        <Badge variant="default" className="mt-2">{user.team} Team</Badge>
+                        <Badge variant="default" className="mt-2">{user.team} {t("Team")}</Badge>
 
                         <div className="w-full mt-6 space-y-3">
                             <div className="flex items-center gap-3 text-sm text-text-secondary">
@@ -67,19 +67,19 @@ export const ProfileView = () => {
                             </div>
                             <div className="flex items-center gap-3 text-sm text-text-secondary">
                                 <Users className="h-4 w-4 text-text-muted" />
-                                <span>{user.team} Team</span>
+                                <span>{user.team} {t("Team")}</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm text-text-secondary">
                                 <MapPin className="h-4 w-4 text-text-muted" />
-                                <span>Cairo, Egypt</span>
+                                <span>{t("Cairo, Egypt")}</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm text-text-secondary">
                                 <Calendar className="h-4 w-4 text-text-muted" />
-                                <span>Joined Jan 2025</span>
+                                <span>{t("Joined")} Jan 2025</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm text-text-secondary">
                                 <Shield className="h-4 w-4 text-text-muted" />
-                                <span>Active Member</span>
+                                <span>{t("Active Member")}</span>
                             </div>
                         </div>
                     </CardContent>
@@ -90,7 +90,7 @@ export const ProfileView = () => {
                     <CardContent className="p-6">
                         <h3 className="text-lg font-semibold text-text-dark mb-4">{t("Current Sprint Performance")}</h3>
                         <div className="flex items-center gap-8">
-                            <ScoreGauge score={sprintMetrics?.healthScore ?? 0} size="md" label="Sprint Health" />
+                            <ScoreGauge score={sprintMetrics?.healthScore ?? 0} size="md" label={t("Sprint Health")} />
                             <div className="grid grid-cols-2 gap-4 flex-1">
                                 <div className="rounded-xl bg-muted p-4 text-center">
                                     <p className="text-2xl font-bold text-text-dark">{tasks.length}</p>
@@ -124,7 +124,7 @@ export const ProfileView = () => {
                             </div>
                             <div className="text-center">
                                 <p className="text-xs text-text-muted mb-1">{t("Utilization")}</p>
-                                <p className={cn("text-2xl font-bold", utilization > 100 ? "text-error" : utilization > 85 ? "text-warning" : "text-success")}>{utilization}%</p>
+                                <p className={cn("text-2xl font-bold", utilization > 100 ? "text-error" : utilization > 85 ? "text-warning" : "text-success")}><AnimatedNumber value={utilization} suffix="%" /></p>
                             </div>
                             <div className="text-center">
                                 <p className="text-xs text-text-muted mb-1">{t("Context Switches")}</p>
@@ -132,7 +132,7 @@ export const ProfileView = () => {
                             </div>
                             <div className="text-center">
                                 <p className="text-xs text-text-muted mb-1">{t("Capacity")}</p>
-                                <p className="text-2xl font-bold text-text-dark">{workload?.capacity ?? 0}<span className="text-sm text-text-muted font-normal"> pts</span></p>
+                                <p className="text-2xl font-bold text-text-dark">{workload?.capacity ?? 0}<span className="text-sm text-text-muted font-normal"> {t("points")}</span></p>
                             </div>
                         </div>
 
@@ -140,10 +140,10 @@ export const ProfileView = () => {
                         <div className="mt-6">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-xs font-medium text-text-secondary">{t("Capacity Utilization")}</span>
-                                <span className={cn("text-xs font-bold", utilization > 100 ? "text-error" : "text-text-dark")}>{workload?.assignedPoints ?? 0}/{workload?.capacity ?? 0} pts ({utilization}%)</span>
+                                <span className={cn("text-xs font-bold", utilization > 100 ? "text-error" : "text-text-dark")}>{workload?.assignedPoints ?? 0}/{workload?.capacity ?? 0} {t("points")} ({utilization}%)</span>
                             </div>
                             <div className="h-3 rounded-full bg-muted overflow-hidden">
-                                <div className={cn("h-full rounded-full transition-all", utilization > 100 ? "bg-error" : utilization > 85 ? "bg-warning" : "bg-primary")} style={{ width: `${Math.min(utilization, 100)}%` }} />
+                                <div className={cn("h-full rounded-full transition-all progress-animated", utilization > 100 ? "bg-error" : utilization > 85 ? "bg-warning" : "bg-primary")} style={{ width: `${Math.min(utilization, 100)}%` }} />
                             </div>
                         </div>
                     </CardContent>
@@ -158,17 +158,17 @@ export const ProfileView = () => {
                         <p className="text-sm text-text-muted text-center py-6">{t("No tasks assigned to you this sprint.")}</p>
                     ) : (
                         <div className="space-y-2">
-                            {tasks.map((t) => (
-                                <div key={t.id} className="flex items-center justify-between gap-4 rounded-xl border border-border p-3 hover:bg-muted/50 transition-colors">
+                            {tasks.map((task) => (
+                                <div key={task.id} className="flex items-center justify-between gap-4 rounded-xl border border-border p-3 hover:bg-muted/50 transition-colors">
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <div className={cn("h-2.5 w-2.5 rounded-full shrink-0", t.phase === "done" ? "bg-success" : t.phase === "in_progress" ? "bg-warning" : t.phase === "review" ? "bg-[#8b5cf6]" : t.phase === "qa" ? "bg-[#ec4899]" : t.phase === "ready" ? "bg-primary" : "bg-text-muted")} />
-                                        <span className="text-sm font-medium text-text-dark truncate">{t.title}</span>
+                                        <div className={cn("h-2.5 w-2.5 rounded-full shrink-0", task.phase === "done" ? "bg-success" : task.phase === "in_progress" ? "bg-warning" : task.phase === "review" ? "bg-[#8b5cf6]" : task.phase === "qa" ? "bg-[#ec4899]" : task.phase === "ready" ? "bg-primary" : "bg-text-muted")} />
+                                        <span className="text-sm font-medium text-text-dark truncate">{task.title}</span>
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
-                                        {t.hasBlocker && <Badge variant="error">Blocked</Badge>}
-                                        <Badge variant={t.priority === "critical" ? "error" : t.priority === "high" ? "warning" : "secondary"} className="text-[10px]">{t.priority}</Badge>
-                                        <span className="text-xs text-text-muted capitalize whitespace-nowrap">{t.phase.replace("_", " ")}</span>
-                                        <span className="text-xs font-semibold text-text-muted bg-muted rounded-full h-5 w-5 flex items-center justify-center">{t.storyPoints}</span>
+                                        {task.hasBlocker && <Badge variant="error">{t("Blocked")}</Badge>}
+                                        <Badge variant={task.priority === "critical" ? "error" : task.priority === "high" ? "warning" : "secondary"} className="text-[10px]">{t(task.priority.charAt(0).toUpperCase() + task.priority.slice(1))}</Badge>
+                                        <span className="text-xs text-text-muted whitespace-nowrap">{t(task.phase === "in_progress" ? "In Progress" : task.phase.charAt(0).toUpperCase() + task.phase.slice(1))}</span>
+                                        <span className="text-xs font-semibold text-text-muted bg-muted rounded-full h-5 w-5 flex items-center justify-center">{task.storyPoints}</span>
                                     </div>
                                 </div>
                             ))}

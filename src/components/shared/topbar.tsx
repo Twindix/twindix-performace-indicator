@@ -1,4 +1,4 @@
-import { HelpCircle, LogOut, Moon, Settings, Sun, User } from "lucide-react";
+import { Globe, HelpCircle, LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/atoms";
@@ -18,6 +18,10 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
 } from "@/ui";
 import { storageKeys, getStorageItem } from "@/utils";
 import type { SprintInterface } from "@/interfaces";
@@ -39,10 +43,16 @@ const roleLabels: Record<string, string> = {
 export const Topbar = () => {
     const { user, onLogout } = useAuth();
     const { isDarkMode, onToggleTheme } = useTheme();
-    useSettings(); // re-render on language change
+    const [settings, updateSettings] = useSettings();
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
     const sprints = getStorageItem<SprintInterface[]>(storageKeys.sprints) ?? [];
     const navigate = useNavigate();
+
+    const isArabic = settings.language === "ar";
+
+    const toggleLanguage = () => {
+        updateSettings({ language: isArabic ? "en" : "ar" });
+    };
 
     return (
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-surface/80 backdrop-blur-sm px-6">
@@ -54,21 +64,41 @@ export const Topbar = () => {
                     <SelectContent>
                         {sprints.map((s) => (
                             <SelectItem key={s.id} value={s.id}>
-                                {s.name} {s.status === "active" && "(Active)"}
+                                {s.name} {s.status === "active" && `(${t("Active")})`}
                             </SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
             </div>
 
-            <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" onClick={onToggleTheme} className="h-9 w-9">
-                    {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                </Button>
+            <div className="flex items-center gap-2">
+                <TooltipProvider delayDuration={300}>
+                    {/* Language toggle */}
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="sm" onClick={toggleLanguage} className="h-9 gap-1.5 px-2.5 text-xs font-semibold">
+                                <Globe className="h-4 w-4" />
+                                {isArabic ? "EN" : "عربي"}
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{isArabic ? "Switch to English" : "التبديل إلى العربية"}</TooltipContent>
+                    </Tooltip>
 
-                <DropdownMenu>
+                    {/* Theme toggle */}
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={onToggleTheme} className="h-9 w-9">
+                                {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{isDarkMode ? t("Light") : t("Dark")}</TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+
+                {/* Avatar dropdown */}
+                <DropdownMenu dir={isArabic ? "rtl" : "ltr"}>
                     <DropdownMenuTrigger asChild>
-                        <button className="flex items-center gap-2 rounded-full p-1 pr-3 hover:bg-accent transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                        <button className="flex items-center gap-2 rounded-full p-1 pe-3 hover:bg-accent transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                             <Avatar className="h-8 w-8">
                                 <AvatarFallback className="text-[10px]">{user?.avatar}</AvatarFallback>
                             </Avatar>
@@ -79,7 +109,6 @@ export const Topbar = () => {
                         </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
-                        {/* User info header in dropdown */}
                         <div className="px-2 py-2.5">
                             <p className="text-sm font-semibold text-text-dark">{user?.name}</p>
                             <p className="text-xs text-text-muted">{user?.email}</p>
