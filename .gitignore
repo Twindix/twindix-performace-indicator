@@ -175,7 +175,7 @@ env/
 # TASK MANAGEMENT & AI TOOLS
 # =============================================================================
 tasks.json
-tasks/
+/tasks/
 mcp.json
 .taskmaster/
 .qodo/
