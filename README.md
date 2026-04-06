@@ -28,7 +28,11 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.1-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![Radix UI](https://img.shields.io/badge/Radix_UI-Accessible-161618?logo=radixui&logoColor=white)](https://www.radix-ui.com)
-[![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
+[![Vite](https://img.shields.io/badge/Vite-6.4-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
+[![Zustand](https://img.shields.io/badge/Zustand-State-433E38)](https://zustand-demo.pmnd.rs)
+[![PWA](https://img.shields.io/badge/PWA-Ready-5A0FC8?logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
+
+**[Live Demo →](https://twindix-performace-indicator.netlify.app)**
 
 </div>
 
@@ -175,14 +179,18 @@ This section describes how each of the above critical points is realized within 
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | React 19 + TypeScript |
-| Styling | Tailwind CSS v4 |
-| Components | Radix UI (accessible primitives) |
+| Framework | React 19 + TypeScript 5.7 |
+| Styling | Tailwind CSS 4.1 |
+| Components | Radix UI (accessible primitives) + shadcn/ui patterns |
 | State | Zustand (sidebar, sprint selection) |
-| Routing | React Router v7 |
+| Routing | React Router 7 |
+| Icons | Lucide React |
+| Notifications | Sonner (toast) |
 | Backend | localStorage (POC — no real API) |
 | Auth | Dummy login (localStorage session) |
-| Build | Vite 6 |
+| Build | Vite 6.4 |
+| PWA | vite-plugin-pwa (service worker, offline fallback) |
+| Font | Inter |
 
 ---
 
@@ -206,11 +214,16 @@ npm run dev
 
 # Build for production
 npm run build
+
+# Preview production build
+npm run preview
 ```
 
 ### Demo Login
 - **Email:** admin@twindix.com
 - **Password:** demo
+
+**[Live Demo →](https://twindix-performace-indicator.netlify.app)**
 
 On first load, the app automatically seeds realistic demo data with 3 sprints showing improvement trends (Sprint 12 → 13 → 14).
 
@@ -230,6 +243,25 @@ On first load, the app automatically seeds realistic demo data with 3 sprints sh
 | **Data Mutations** | Task phase changes (drag-and-drop) are persisted to localStorage immediately. Other mutations (creating blockers, decisions) are visual-only in the POC — the data comes from seed. |
 | **Theme Preference** | Stored in localStorage (`twindix_perf_theme`) — persists dark/light mode choice across sessions. |
 | **State Management** | Zustand for UI state (sidebar open/close, active sprint). React Context for auth and theme. |
+
+### Storage Keys
+
+| Key | Data | Records |
+|---|---|---|
+| `twindix_perf_auth_user` | Authenticated user session | 1 |
+| `twindix_perf_theme` | Dark/light mode preference | 1 |
+| `twindix_perf_settings` | Date format, compact view, language | 1 |
+| `twindix_perf_team_members` | Team member roster (name, role, email) | 12 |
+| `twindix_perf_sprints` | Sprint definitions (name, dates, status) | 3 |
+| `twindix_perf_tasks` | Tasks with readiness checklists and phases | 26 |
+| `twindix_perf_blockers` | Blocker records with type, impact, duration | 9 |
+| `twindix_perf_decisions` | Decision log entries with context and outcome | 13 |
+| `twindix_perf_communications` | Communication records with response times | 17 |
+| `twindix_perf_workload` | Team member workload and capacity data | 8 |
+| `twindix_perf_metrics` | Sprint metrics and friction scores (17 metrics each) | 3 |
+| `twindix_perf_ownership` | Ownership map entries for shared components | 12 |
+| `twindix_perf_handoffs` | Phase transition criteria and completion rates | 6 |
+| `twindix_perf_seeded` | Seed version stamp for cache invalidation | 1 |
 
 ### What a real backend would look like:
 
@@ -307,8 +339,12 @@ src/
 
 ---
 
+## License
+
+PROPRIETARY — Twindix Global Inc.
+
 ## Author
 
-**Mohamed Elhawary** — Frontend Team, Twindix Global Inc.
+**[Mohamed Elhawary](https://hawary.dev)**
 
 Based on the *Twindix Team Performance Platform Feasibility Study* — a comprehensive analysis of recurring delivery problems, practical solutions, and the foundation for a product that solves the same challenges for other companies.
