@@ -88,7 +88,8 @@ export const OwnershipView = () => {
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="overflow-x-auto">
+                    {/* Desktop table */}
+                    <div className="overflow-x-auto hidden md:block">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-border">
@@ -151,6 +152,45 @@ export const OwnershipView = () => {
                                 })}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Mobile cards */}
+                    <div className="flex flex-col gap-3 md:hidden">
+                        {entries.map((entry) => {
+                            const owner = getMember(entry.ownerId);
+                            const backup = entry.backupOwnerId ? getMember(entry.backupOwnerId) : null;
+
+                            return (
+                                <div key={entry.id} className={cn("rounded-xl border border-border p-3", entry.hasConflict && "bg-error-light/30 border-error/40")}>
+                                    <div className="flex items-center justify-between gap-2 mb-2">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <span className="text-sm font-medium text-text-dark truncate">{entry.componentName}</span>
+                                            {entry.hasConflict && <AlertTriangle className="h-3.5 w-3.5 text-error shrink-0" />}
+                                        </div>
+                                        {entry.hasConflict ? (
+                                            <Badge variant="error">{t("Conflict")}</Badge>
+                                        ) : (
+                                            <Badge variant="success">{t("OK")}</Badge>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-text-secondary mb-1">
+                                        <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{owner?.avatar}</AvatarFallback></Avatar>
+                                        <span>{owner?.name ?? "Unknown"}</span>
+                                        {backup && (
+                                            <>
+                                                <span className="text-text-muted">/</span>
+                                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{backup.avatar}</AvatarFallback></Avatar>
+                                                <span>{backup.name}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-3 text-[10px] text-text-muted">
+                                        <span>{entry.changeCount} {t("Changes")}</span>
+                                        <span>{formatDate(entry.lastModified)}</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </CardContent>
             </Card>

@@ -108,24 +108,22 @@ export const WorkloadView = () => {
                     return (
                         <Card key={w.memberId}>
                             <CardContent className="p-4">
-                                <div className="flex items-center gap-4">
-                                    {/* Avatar + Name */}
-                                    <div className="flex items-center gap-3 w-48 shrink-0">
+                                <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+                                    {/* Avatar + Name + Overloaded (mobile) */}
+                                    <div className="flex items-center gap-3 md:w-48 md:shrink-0">
                                         <Avatar className="h-9 w-9">
                                             <AvatarFallback>{member?.avatar ?? "?"}</AvatarFallback>
                                         </Avatar>
-                                        <div className="min-w-0">
+                                        <div className="min-w-0 flex-1">
                                             <p className="text-sm font-semibold text-text-dark truncate">{member?.name ?? "Unknown"}</p>
                                             <p className="text-xs text-text-muted truncate">{member?.role?.replace(/_/g, " ")}</p>
                                         </div>
-                                    </div>
-
-                                    {/* Points */}
-                                    <div className="w-28 shrink-0 text-center">
-                                        <p className={cn("text-sm font-bold", isOverloaded ? "text-error" : "text-text-dark")}>
-                                            {w.assignedPoints}/{w.capacity}
-                                        </p>
-                                        <p className="text-xs text-text-muted">{t("assigned")}/{t("capacity")}</p>
+                                        {isOverloaded && (
+                                            <Badge variant="error" className="shrink-0 md:hidden">
+                                                <AlertTriangle className="h-3 w-3 me-1" />
+                                                {t("Overloaded")}
+                                            </Badge>
+                                        )}
                                     </div>
 
                                     {/* Utilization Bar */}
@@ -144,32 +142,36 @@ export const WorkloadView = () => {
                                         </div>
                                     </div>
 
-                                    {/* Completed */}
-                                    <div className="w-20 shrink-0 text-center">
-                                        <p className="text-sm font-bold text-text-dark">{w.completedPoints}</p>
-                                        <p className="text-xs text-text-muted">{t("completed")}</p>
-                                    </div>
-
-                                    {/* Context Switches */}
-                                    <div className="w-20 shrink-0 text-center">
-                                        <div className="flex items-center justify-center gap-1">
-                                            <ArrowRightLeft className={cn("h-3 w-3", w.contextSwitches >= 5 ? "text-error" : "text-text-muted")} />
-                                            <span className={cn("text-sm font-bold", w.contextSwitches >= 5 ? "text-error" : "text-text-dark")}>
-                                                {w.contextSwitches}
-                                            </span>
+                                    {/* Stats row */}
+                                    <div className="grid grid-cols-4 md:flex md:items-center gap-2 md:gap-0">
+                                        <div className="md:w-24 shrink-0 text-center">
+                                            <p className={cn("text-sm font-bold", isOverloaded ? "text-error" : "text-text-dark")}>
+                                                {w.assignedPoints}/{w.capacity}
+                                            </p>
+                                            <p className="text-[10px] md:text-xs text-text-muted">{t("assigned")}/{t("capacity")}</p>
                                         </div>
-                                        <p className="text-xs text-text-muted">{t("switches")}</p>
+                                        <div className="md:w-20 shrink-0 text-center">
+                                            <p className="text-sm font-bold text-text-dark">{w.completedPoints}</p>
+                                            <p className="text-[10px] md:text-xs text-text-muted">{t("completed")}</p>
+                                        </div>
+                                        <div className="md:w-20 shrink-0 text-center">
+                                            <div className="flex items-center justify-center gap-1">
+                                                <ArrowRightLeft className={cn("h-3 w-3", w.contextSwitches >= 5 ? "text-error" : "text-text-muted")} />
+                                                <span className={cn("text-sm font-bold", w.contextSwitches >= 5 ? "text-error" : "text-text-dark")}>
+                                                    {w.contextSwitches}
+                                                </span>
+                                            </div>
+                                            <p className="text-[10px] md:text-xs text-text-muted">{t("switches")}</p>
+                                        </div>
+                                        <div className="md:w-20 shrink-0 text-center">
+                                            <p className="text-sm font-bold text-text-dark">{w.activeTaskCount}</p>
+                                            <p className="text-[10px] md:text-xs text-text-muted">{t("active tasks")}</p>
+                                        </div>
                                     </div>
 
-                                    {/* Active Tasks */}
-                                    <div className="w-20 shrink-0 text-center">
-                                        <p className="text-sm font-bold text-text-dark">{w.activeTaskCount}</p>
-                                        <p className="text-xs text-text-muted">{t("active tasks")}</p>
-                                    </div>
-
-                                    {/* Overloaded Indicator */}
+                                    {/* Overloaded (desktop) */}
                                     {isOverloaded && (
-                                        <Badge variant="error" className="shrink-0">
+                                        <Badge variant="error" className="shrink-0 hidden md:inline-flex">
                                             <AlertTriangle className="h-3 w-3 me-1" />
                                             {t("Overloaded")}
                                         </Badge>

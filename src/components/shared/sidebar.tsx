@@ -13,7 +13,7 @@ export const Sidebar = () => {
     useSettings();
 
     return (
-        <aside className={cn("fixed inset-inline-start-0 top-0 z-40 flex h-screen flex-col border-e border-border bg-surface transition-all duration-300", isOpen ? "w-[var(--spacing-sidebar)]" : "w-16")}>
+        <aside className={cn("fixed inset-inline-start-0 top-0 z-40 flex h-screen flex-col border-e border-border bg-surface transition-all duration-300", isOpen ? "w-[var(--spacing-sidebar)]" : "w-16", "max-lg:hidden")}>
             <div className="flex h-16 items-center gap-3 border-b border-border px-4">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-default)] bg-primary text-primary-foreground">
                     <Activity className="h-5 w-5" />
@@ -25,7 +25,7 @@ export const Sidebar = () => {
                     </div>
                 )}
                 <button onClick={onToggle} className={cn("ms-auto rounded-lg p-1.5 text-text-muted hover:bg-accent hover:text-text-dark transition-colors cursor-pointer", !isOpen && "ms-0 mt-1")}>
-                    <ChevronLeft className={cn("h-4 w-4 transition-transform", !isOpen && "rotate-180")} />
+                    <ChevronLeft className={cn("h-4 w-4 transition-transform", !isOpen ? "rotate-180 rtl:rotate-0" : "rtl:rotate-180")} />
                 </button>
             </div>
 

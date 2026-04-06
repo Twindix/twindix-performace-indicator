@@ -7,3 +7,5 @@ export { Header } from "./header";
 export { EmptyState } from "./empty-state";
 export { AnimatedNumber } from "./animated-number";
 export { ErrorBoundary } from "./error-boundary";
+export { OfflineBanner } from "./offline-banner";
+export { MobileNav } from "./mobile-nav";

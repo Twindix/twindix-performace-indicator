@@ -64,7 +64,7 @@ export const MetricCard = ({ name, value, unit, status, trend, trendPercent, des
                         <span>{Math.abs(trendPercent)}%</span>
                     </div>
                 </div>
-                <p className={cn("text-2xl font-bold mb-1", statusColors[status])}>
+                <p className={cn("text-xl sm:text-2xl font-bold mb-1", statusColors[status])}>
                     {value}{unit === "%" || unit === "/day" ? unit : ` ${td(unit)}`}
                 </p>
                 {description && <p className="text-xs text-text-muted line-clamp-2">{td(description)}</p>}

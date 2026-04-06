@@ -10,9 +10,11 @@ import {
     DecisionsView,
     HandoffsView,
     LoginView,
+    NotFoundView,
     OwnershipView,
     ProfileView,
     ReportsView,
+    ServerErrorView,
     SettingsView,
     TasksView,
     WorkloadView,
@@ -55,4 +57,6 @@ export const router = createBrowserRouter([
             },
         ],
     },
+    { path: "/500", element: <ServerErrorView /> },
+    { path: "*", element: <NotFoundView /> },
 ]);

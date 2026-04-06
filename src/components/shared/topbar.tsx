@@ -5,6 +5,7 @@ import { Button } from "@/atoms";
 import { routesData } from "@/data";
 import { useAuth, useTheme, t, useSettings } from "@/hooks";
 import { useSprintStore } from "@/store";
+import { MobileNav } from "./mobile-nav";
 import {
     Avatar,
     AvatarFallback,
@@ -55,10 +56,11 @@ export const Topbar = () => {
     };
 
     return (
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-surface/80 backdrop-blur-sm px-6">
-            <div className="flex items-center gap-4">
+        <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between border-b border-border bg-surface/80 backdrop-blur-sm px-3 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-4">
+                <MobileNav />
                 <Select value={activeSprintId} onValueChange={onSetActiveSprint}>
-                    <SelectTrigger className="w-[180px] h-9">
+                    <SelectTrigger className="w-[140px] sm:w-[180px] h-9 text-xs sm:text-sm">
                         <SelectValue placeholder="Select Sprint" />
                     </SelectTrigger>
                     <SelectContent>

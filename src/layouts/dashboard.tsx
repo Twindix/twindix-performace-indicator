@@ -13,9 +13,9 @@ export const DashboardLayout = () => {
     return (
         <div className="min-h-screen bg-background flex flex-col">
             <Sidebar />
-            <div className={cn("transition-all duration-300 flex-1 flex flex-col", isOpen ? "ms-[var(--spacing-sidebar)]" : "ms-16")}>
+            <div className={cn("transition-all duration-300 flex-1 flex flex-col", isOpen ? "ms-[var(--spacing-sidebar)]" : "ms-16", "max-lg:ms-0")}>
                 <Topbar />
-                <main className="p-6 flex-1">
+                <main className="p-3 sm:p-6 flex-1">
                     <Outlet />
                 </main>
                 <footer className="border-t border-border py-4 px-6">

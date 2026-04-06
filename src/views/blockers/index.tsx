@@ -81,10 +81,10 @@ export const BlockerView = () => {
                 title={t("Blocker Tracker")}
                 description={t("Track and manage blockers affecting sprint delivery")}
                 actions={
-                    <div className="flex items-center gap-2">
-                        <Filter className="h-4 w-4 text-text-muted" />
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Filter className="h-4 w-4 text-text-muted hidden sm:block" />
                         <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-[150px] h-9 text-sm">
+                            <SelectTrigger className="w-[130px] sm:w-[150px] h-9 text-xs sm:text-sm">
                                 <SelectValue placeholder={t("Status")} />
                             </SelectTrigger>
                             <SelectContent>
@@ -95,7 +95,7 @@ export const BlockerView = () => {
                             </SelectContent>
                         </Select>
                         <Select value={typeFilter} onValueChange={setTypeFilter}>
-                            <SelectTrigger className="w-[170px] h-9 text-sm">
+                            <SelectTrigger className="w-[130px] sm:w-[170px] h-9 text-xs sm:text-sm">
                                 <SelectValue placeholder={t("Type")} />
                             </SelectTrigger>
                             <SelectContent>
@@ -112,27 +112,27 @@ export const BlockerView = () => {
             {/* Stats Row */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                 <Card>
-                    <CardContent className="p-4 text-center">
-                        <p className="text-3xl font-bold text-text-dark"><AnimatedNumber value={stats.total} /></p>
-                        <p className="text-xs text-text-muted mt-1">{t("Total Blockers")}</p>
+                    <CardContent className="p-3 sm:p-4 text-center">
+                        <p className="text-2xl sm:text-3xl font-bold text-text-dark"><AnimatedNumber value={stats.total} /></p>
+                        <p className="text-[10px] sm:text-xs text-text-muted mt-1">{t("Total Blockers")}</p>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardContent className="p-4 text-center">
-                        <p className="text-3xl font-bold text-error"><AnimatedNumber value={stats.active} /></p>
-                        <p className="text-xs text-text-muted mt-1">{t("Active")}</p>
+                    <CardContent className="p-3 sm:p-4 text-center">
+                        <p className="text-2xl sm:text-3xl font-bold text-error"><AnimatedNumber value={stats.active} /></p>
+                        <p className="text-[10px] sm:text-xs text-text-muted mt-1">{t("Active")}</p>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardContent className="p-4 text-center">
-                        <p className="text-3xl font-bold text-success"><AnimatedNumber value={stats.resolved} /></p>
-                        <p className="text-xs text-text-muted mt-1">{t("Resolved")}</p>
+                    <CardContent className="p-3 sm:p-4 text-center">
+                        <p className="text-2xl sm:text-3xl font-bold text-success"><AnimatedNumber value={stats.resolved} /></p>
+                        <p className="text-[10px] sm:text-xs text-text-muted mt-1">{t("Resolved")}</p>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardContent className="p-4 text-center">
-                        <p className="text-3xl font-bold text-text-dark"><AnimatedNumber value={stats.avgDuration} suffix="d" /></p>
-                        <p className="text-xs text-text-muted mt-1">{t("Avg Duration")}</p>
+                    <CardContent className="p-3 sm:p-4 text-center">
+                        <p className="text-2xl sm:text-3xl font-bold text-text-dark"><AnimatedNumber value={stats.avgDuration} suffix="d" /></p>
+                        <p className="text-[10px] sm:text-xs text-text-muted mt-1">{t("Avg Duration")}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -177,7 +177,7 @@ export const BlockerView = () => {
                                         </div>
 
                                         {/* Meta row */}
-                                        <div className="flex flex-wrap items-center gap-4 text-xs text-text-muted">
+                                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-text-muted">
                                             {/* Reporter */}
                                             <div className="flex items-center gap-1.5">
                                                 <Avatar className="h-5 w-5">

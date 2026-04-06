@@ -195,7 +195,7 @@ export const ReportsView = () => {
                     <div className="space-y-8">
                         {/* Sprint Header */}
                         <div className="text-center pb-6 border-b border-border">
-                            <h2 className="text-3xl font-bold text-text-dark">{sprint?.name ?? t("Current Sprint")}</h2>
+                            <h2 className="text-xl sm:text-3xl font-bold text-text-dark">{sprint?.name ?? t("Current Sprint")}</h2>
                             {sprint && (
                                 <p className="text-base text-text-secondary mt-2">
                                     {formatDate(sprint.startDate)} - {formatDate(sprint.endDate)}
@@ -216,24 +216,24 @@ export const ReportsView = () => {
                                 <CardTitle className="text-lg">{t("Sprint Progress")}</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
                                     <div className="text-center">
-                                        <p className="text-4xl font-bold text-text-dark"><AnimatedNumber value={taskStats.total} /></p>
-                                        <p className="text-sm text-text-muted mt-1">{t("Total Tasks")}</p>
+                                        <p className="text-2xl sm:text-4xl font-bold text-text-dark"><AnimatedNumber value={taskStats.total} /></p>
+                                        <p className="text-xs sm:text-sm text-text-muted mt-1">{t("Total Tasks")}</p>
                                     </div>
                                     <div className="text-center">
-                                        <p className="text-4xl font-bold text-success"><AnimatedNumber value={taskStats.completed} /></p>
-                                        <p className="text-sm text-text-muted mt-1">{t("Completed")}</p>
+                                        <p className="text-2xl sm:text-4xl font-bold text-success"><AnimatedNumber value={taskStats.completed} /></p>
+                                        <p className="text-xs sm:text-sm text-text-muted mt-1">{t("Completed")}</p>
                                     </div>
                                     <div className="text-center">
-                                        <p className="text-4xl font-bold text-error"><AnimatedNumber value={taskStats.blocked} /></p>
-                                        <p className="text-sm text-text-muted mt-1">{t("Blocked")}</p>
+                                        <p className="text-2xl sm:text-4xl font-bold text-error"><AnimatedNumber value={taskStats.blocked} /></p>
+                                        <p className="text-xs sm:text-sm text-text-muted mt-1">{t("Blocked")}</p>
                                     </div>
                                     <div className="text-center">
-                                        <p className={cn("text-4xl font-bold", taskStats.completionPct >= 70 ? "text-success" : taskStats.completionPct >= 40 ? "text-warning" : "text-error")}>
+                                        <p className={cn("text-2xl sm:text-4xl font-bold", taskStats.completionPct >= 70 ? "text-success" : taskStats.completionPct >= 40 ? "text-warning" : "text-error")}>
                                             <AnimatedNumber value={taskStats.completionPct} suffix="%" />
                                         </p>
-                                        <p className="text-sm text-text-muted mt-1">{t("Completion")}</p>
+                                        <p className="text-xs sm:text-sm text-text-muted mt-1">{t("Completion")}</p>
                                     </div>
                                 </div>
                                 <div className="mt-4 h-3 rounded-full bg-muted overflow-hidden">

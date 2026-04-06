@@ -49,7 +49,7 @@ export const ProfileView = () => {
                 {/* Profile Card */}
                 <Card className="lg:row-span-2">
                     <CardContent className="p-6 flex flex-col items-center text-center">
-                        <Avatar className="h-24 w-24 mb-4">
+                        <Avatar className="h-20 w-20 sm:h-24 sm:w-24 mb-4">
                             <AvatarFallback className="text-2xl font-bold">{user.avatar}</AvatarFallback>
                         </Avatar>
                         <h2 className="text-xl font-bold text-text-dark">{user.name}</h2>
@@ -88,24 +88,24 @@ export const ProfileView = () => {
                 {/* Sprint Performance */}
                 <Card className="lg:col-span-2">
                     <CardContent className="p-6">
-                        <h3 className="text-lg font-semibold text-text-dark mb-4">{t("Current Sprint Performance")}</h3>
-                        <div className="flex items-center gap-8">
+                        <h3 className="text-base sm:text-lg font-semibold text-text-dark mb-4">{t("Current Sprint Performance")}</h3>
+                        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
                             <ScoreGauge score={sprintMetrics?.healthScore ?? 0} size="md" label={t("Sprint Health")} />
-                            <div className="grid grid-cols-2 gap-4 flex-1">
-                                <div className="rounded-xl bg-muted p-4 text-center">
-                                    <p className="text-2xl font-bold text-text-dark">{tasks.length}</p>
+                            <div className="grid grid-cols-2 gap-3 sm:gap-4 flex-1 w-full">
+                                <div className="rounded-xl bg-muted p-3 sm:p-4 text-center">
+                                    <p className="text-xl sm:text-2xl font-bold text-text-dark">{tasks.length}</p>
                                     <p className="text-xs text-text-muted mt-1">{t("Assigned Tasks")}</p>
                                 </div>
-                                <div className="rounded-xl bg-success-light p-4 text-center">
-                                    <p className="text-2xl font-bold text-success">{doneTasks}</p>
+                                <div className="rounded-xl bg-success-light p-3 sm:p-4 text-center">
+                                    <p className="text-xl sm:text-2xl font-bold text-success">{doneTasks}</p>
                                     <p className="text-xs text-text-muted mt-1">{t("Completed")}</p>
                                 </div>
-                                <div className="rounded-xl bg-warning-light p-4 text-center">
-                                    <p className="text-2xl font-bold text-warning">{inProgressTasks}</p>
+                                <div className="rounded-xl bg-warning-light p-3 sm:p-4 text-center">
+                                    <p className="text-xl sm:text-2xl font-bold text-warning">{inProgressTasks}</p>
                                     <p className="text-xs text-text-muted mt-1">{t("In Progress")}</p>
                                 </div>
-                                <div className="rounded-xl bg-error-light p-4 text-center">
-                                    <p className="text-2xl font-bold text-error">{blockedTasks}</p>
+                                <div className="rounded-xl bg-error-light p-3 sm:p-4 text-center">
+                                    <p className="text-xl sm:text-2xl font-bold text-error">{blockedTasks}</p>
                                     <p className="text-xs text-text-muted mt-1">{t("Blocked")}</p>
                                 </div>
                             </div>
@@ -159,7 +159,7 @@ export const ProfileView = () => {
                     ) : (
                         <div className="space-y-2">
                             {tasks.map((task) => (
-                                <div key={task.id} className="flex items-center justify-between gap-4 rounded-xl border border-border p-3 hover:bg-muted/50 transition-colors">
+                                <div key={task.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 rounded-xl border border-border p-3 hover:bg-muted/50 transition-colors">
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
                                         <div className={cn("h-2.5 w-2.5 rounded-full shrink-0", task.phase === "done" ? "bg-success" : task.phase === "in_progress" ? "bg-warning" : task.phase === "review" ? "bg-[#8b5cf6]" : task.phase === "qa" ? "bg-[#ec4899]" : task.phase === "ready" ? "bg-primary" : "bg-text-muted")} />
                                         <span className="text-sm font-medium text-text-dark truncate">{task.title}</span>

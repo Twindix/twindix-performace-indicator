@@ -143,7 +143,7 @@ export const SettingsView = () => {
                                     <p className="text-xs text-text-muted">{t("Interface language")}</p>
                                 </div>
                                 <Select value={settings.language} onValueChange={(v) => updateSettings({ language: v as "en" | "ar" })}>
-                                    <SelectTrigger className="w-[130px] h-8 text-xs rounded-full bg-primary-lighter text-primary-medium border-none font-medium">
+                                    <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs rounded-full bg-primary-lighter text-primary-medium border-none font-medium">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -161,7 +161,7 @@ export const SettingsView = () => {
                                     <p className="text-xs text-text-muted">{t("How dates are displayed")}</p>
                                 </div>
                                 <Select value={settings.dateFormat} onValueChange={(v) => updateSettings({ dateFormat: v as AppSettings["dateFormat"] })}>
-                                    <SelectTrigger className="w-[140px] h-8 text-xs rounded-full bg-primary-lighter text-primary-medium border-none font-medium">
+                                    <SelectTrigger className="w-full sm:w-[140px] h-8 text-xs rounded-full bg-primary-lighter text-primary-medium border-none font-medium">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>

@@ -783,15 +783,15 @@ export const TasksView = () => {
             {/* Filters */}
             <Card className="mb-6">
                 <CardContent className="p-5">
-                    <div className="flex flex-wrap items-center gap-3">
-                        <div className="relative flex-1 min-w-[200px] max-w-sm">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <div className="relative flex-1 min-w-0 sm:min-w-[200px] sm:max-w-sm">
                             <Search className="absolute top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" style={{ insetInlineStart: 12 }} />
                             <Input placeholder={t("Search tasks or tags...")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ paddingInlineStart: 40 }} />
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Filter className="h-4 w-4 text-text-muted" />
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <Filter className="h-4 w-4 text-text-muted hidden sm:block" />
                             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                                <SelectTrigger className="w-[140px] h-9 text-sm"><SelectValue placeholder={t("Priority")} /></SelectTrigger>
+                                <SelectTrigger className="w-full sm:w-[140px] h-9 text-xs sm:text-sm"><SelectValue placeholder={t("Priority")} /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">{t("All Priorities")}</SelectItem>
                                     <SelectItem value={TaskPriority.Critical}>{t("Critical")}</SelectItem>
@@ -801,7 +801,7 @@ export const TasksView = () => {
                                 </SelectContent>
                             </Select>
                             <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-                                <SelectTrigger className="w-[160px] h-9 text-sm"><SelectValue placeholder={t("Assignee")} /></SelectTrigger>
+                                <SelectTrigger className="w-full sm:w-[160px] h-9 text-xs sm:text-sm"><SelectValue placeholder={t("Assignee")} /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">{t("All Assignees")}</SelectItem>
                                     {sprintAssigneeIds.map((id) => {
@@ -816,7 +816,7 @@ export const TasksView = () => {
             </Card>
 
             {/* Phase legend */}
-            <div className="flex items-center gap-1.5 mb-6 mt-1 py-2 text-[10px] text-text-muted">
+            <div className="flex flex-wrap items-center gap-1.5 mb-6 mt-1 py-2 text-[10px] text-text-muted">
                 {COLUMNS.map((col, i) => (
                     <span key={col.phase} className="flex items-center gap-1">
                         {i > 0 && <ArrowRight className="h-3 w-3 mx-0.5" />}

@@ -75,11 +75,11 @@ export const AnalyticsView = () => {
             />
 
             <Tabs defaultValue="overview" className="space-y-6">
-                <TabsList>
-                    <TabsTrigger value="overview">{t("Overview")}</TabsTrigger>
-                    <TabsTrigger value="metrics">{t("All Metrics")}</TabsTrigger>
-                    <TabsTrigger value="trends">{t("Sprint Trends")}</TabsTrigger>
-                    <TabsTrigger value="friction">{t("Friction Breakdown")}</TabsTrigger>
+                <TabsList className="flex-wrap">
+                    <TabsTrigger value="overview" className="text-xs sm:text-sm">{t("Overview")}</TabsTrigger>
+                    <TabsTrigger value="metrics" className="text-xs sm:text-sm">{t("All Metrics")}</TabsTrigger>
+                    <TabsTrigger value="trends" className="text-xs sm:text-sm">{t("Sprint Trends")}</TabsTrigger>
+                    <TabsTrigger value="friction" className="text-xs sm:text-sm">{t("Friction Breakdown")}</TabsTrigger>
                 </TabsList>
 
                 {/* Overview Tab */}
@@ -225,9 +225,9 @@ export const AnalyticsView = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Overall Score */}
                             <Card className="md:col-span-2">
-                                <CardContent className="p-6 flex items-center gap-6">
+                                <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                                     <ScoreGauge score={activeMetrics.healthScore} size="md" label={t("Overall")} />
-                                    <div className="flex-1">
+                                    <div className="flex-1 text-center sm:text-start">
                                         <h3 className="text-lg font-semibold text-text-dark mb-1">{t("Overall Health Score")}</h3>
                                         <p className="text-sm text-text-secondary mb-3">
                                             {t("Composite score derived from 6 friction areas")}

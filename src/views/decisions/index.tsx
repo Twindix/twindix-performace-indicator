@@ -100,10 +100,10 @@ export const DecisionsView = () => {
             </div>
 
             {/* Filters */}
-            <div className="flex items-center gap-3 mb-6">
-                <Filter className="h-4 w-4 text-text-muted" />
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-6">
+                <Filter className="h-4 w-4 text-text-muted hidden sm:block" />
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[160px]">
+                    <SelectTrigger className="w-full sm:w-[160px]">
                         <SelectValue placeholder={t("Status")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -116,7 +116,7 @@ export const DecisionsView = () => {
                     </SelectContent>
                 </Select>
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                    <SelectTrigger className="w-[160px]">
+                    <SelectTrigger className="w-full sm:w-[160px]">
                         <SelectValue placeholder={t("Category")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -142,7 +142,7 @@ export const DecisionsView = () => {
                                 <DialogTrigger asChild>
                                     <Card className="cursor-pointer">
                                         <CardContent className="p-5">
-                                            <div className="flex items-start justify-between gap-4 mb-3">
+                                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-4 mb-3">
                                                 <div className="flex-1 min-w-0">
                                                     <h3 className="text-sm font-semibold text-text-dark mb-1">{decision.title}</h3>
                                                     <p className="text-xs text-text-secondary line-clamp-2">{decision.description}</p>

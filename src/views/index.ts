@@ -11,3 +11,4 @@ export { OwnershipView } from "./ownership";
 export { HandoffsView } from "./handoffs";
 export { ProfileView } from "./profile";
 export { SettingsView } from "./settings";
+export { NotFoundView, ServerErrorView } from "./errors";

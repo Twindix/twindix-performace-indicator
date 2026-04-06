@@ -1,6 +1,6 @@
 import { RouterProvider } from "react-router-dom";
 
-import { ErrorBoundary } from "@/components/shared";
+import { ErrorBoundary, OfflineBanner } from "@/components/shared";
 import { AuthProvider, ThemeProvider } from "@/providers";
 import { router } from "@/routes";
 import { Toaster } from "@/ui";
@@ -11,6 +11,7 @@ export const App = () => (
             <AuthProvider>
                 <RouterProvider router={router} />
                 <Toaster />
+                <OfflineBanner />
             </AuthProvider>
         </ThemeProvider>
     </ErrorBoundary>

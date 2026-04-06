@@ -79,7 +79,7 @@ export const DashboardView = () => {
                 </Card>
 
                 {/* Friction Areas Grid */}
-                <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-3 stagger-children">
+                <div className="lg:col-span-2 grid grid-cols-2 gap-3 stagger-children">
                     {frictionAreaConfig.map(({ key, labelKey, icon: Icon, textColor }) => {
                         const score = sprintMetrics?.frictionScores[key] ?? 0;
                         return (

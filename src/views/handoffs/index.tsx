@@ -82,14 +82,14 @@ export const HandoffsView = () => {
             {/* Visual Pipeline */}
             <Card className="mb-6">
                 <CardContent className="p-4">
-                    <div className="flex items-center justify-center gap-1 flex-wrap">
+                    <div className="grid grid-cols-3 sm:flex sm:items-center sm:justify-center gap-1 sm:gap-1">
                         {PIPELINE_PHASE_KEYS.map((phase, i) => (
                             <div key={phase} className="flex items-center gap-1">
-                                <div className="flex items-center justify-center rounded-lg bg-primary-lighter px-3 py-2">
-                                    <span className="text-xs font-semibold text-primary whitespace-nowrap">{t(phase)}</span>
+                                <div className="flex items-center justify-center rounded-lg bg-primary-lighter px-2 sm:px-3 py-2 w-full sm:w-auto">
+                                    <span className="text-[10px] sm:text-xs font-semibold text-primary whitespace-nowrap">{t(phase)}</span>
                                 </div>
                                 {i < PIPELINE_PHASE_KEYS.length - 1 && (
-                                    <ArrowRight className="h-4 w-4 text-text-muted shrink-0" />
+                                    <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 text-text-muted shrink-0 hidden sm:block" />
                                 )}
                             </div>
                         ))}
