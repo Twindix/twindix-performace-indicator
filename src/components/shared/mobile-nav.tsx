@@ -50,8 +50,8 @@ export const MobileNav = () => {
                                     <Activity className="h-5 w-5" />
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-text-dark">Twindix</span>
-                                    <span className="text-[10px] text-text-muted">Performance Indicator</span>
+                                    <span className="text-sm font-bold text-text-dark">{t("Twindix")}</span>
+                                    <span className="text-[10px] text-text-muted">{t("Performance Indicator")}</span>
                                 </div>
                             </div>
                             <button onClick={() => setOpen(false)} className="p-1.5 rounded-lg hover:bg-accent transition-colors cursor-pointer">
@@ -86,7 +86,7 @@ export const MobileNav = () => {
                         </nav>
 
                         <div className="border-t border-border p-4">
-                            <p className="text-[10px] text-text-muted text-center">Twindix Performance Indicator v0.1</p>
+                            <p className="text-[10px] text-text-muted text-center">{t("Twindix Performance Indicator v0.1")}</p>
                         </div>
                     </div>
                 </>,

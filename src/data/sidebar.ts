@@ -7,6 +7,7 @@ import {
     ListChecks,
     MessageSquare,
     type LucideIcon,
+    Settings,
     Shield,
     TrendingUp,
     Users,
@@ -31,4 +32,5 @@ export const sidebarItems: SidebarItemInterface[] = [
     { label: "Analytics", path: routesData.analytics, icon: TrendingUp },
     { label: "Ownership", path: routesData.ownership, icon: Shield },
     { label: "Handoffs", path: routesData.handoffs, icon: GitBranch },
+    { label: "Settings", path: routesData.settings, icon: Settings },
 ];

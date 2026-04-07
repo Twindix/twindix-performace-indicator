@@ -20,8 +20,8 @@ export const Sidebar = () => {
                 </div>
                 {isOpen && (
                     <div className="flex flex-col overflow-hidden">
-                        <span className="text-sm font-bold text-text-dark truncate">Twindix</span>
-                        <span className="text-[10px] text-text-muted truncate">Performance Indicator</span>
+                        <span className="text-sm font-bold text-text-dark truncate">{t("Twindix")}</span>
+                        <span className="text-[10px] text-text-muted truncate">{t("Performance Indicator")}</span>
                     </div>
                 )}
                 <button onClick={onToggle} className={cn("ms-auto rounded-lg p-1.5 text-text-muted hover:bg-accent hover:text-text-dark transition-colors cursor-pointer", !isOpen && "ms-0 mt-1")}>
@@ -60,7 +60,7 @@ export const Sidebar = () => {
 
             {isOpen && (
                 <div className="border-t border-border p-4">
-                    <p className="text-[10px] text-text-muted text-center">Twindix Performance Indicator v0.1</p>
+                    <p className="text-[10px] text-text-muted text-center">{t("Twindix Performance Indicator v0.1")}</p>
                 </div>
             )}
         </aside>

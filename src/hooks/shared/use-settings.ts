@@ -59,6 +59,11 @@ export const useSettings = (): [AppSettings, (partial: Partial<AppSettings>) => 
 /* ─── Translations ───────────────────────────────────────────── */
 
 const translations: Record<string, Record<"en" | "ar", string>> = {
+    // Brand
+    "Twindix": { en: "Twindix", ar: "توينديكس" },
+    "Performance Indicator": { en: "Performance Indicator", ar: "مؤشر الأداء" },
+    "Twindix Performance Indicator v0.1": { en: "Twindix Performance Indicator v0.1", ar: "توينديكس مؤشر الأداء v0.1" },
+
     // Sidebar
     "Dashboard": { en: "Dashboard", ar: "لوحة التحكم" },
     "Tasks": { en: "Tasks", ar: "المهام" },
@@ -240,6 +245,13 @@ const translations: Record<string, Record<"en" | "ar", string>> = {
     "How dates are displayed": { en: "How dates are displayed", ar: "كيفية عرض التواريخ" },
     "Language & Date": { en: "Language & Date", ar: "اللغة والتاريخ" },
     "Save Changes": { en: "Save Changes", ar: "حفظ التغييرات" },
+
+    // About section
+    "About the App": { en: "About the App", ar: "حول التطبيق" },
+    "Application": { en: "Application", ar: "التطبيق" },
+    "Twindix Performance Indicator": { en: "Twindix Performance Indicator", ar: "توينديكس مؤشر الأداء" },
+    "Version": { en: "Version", ar: "الإصدار" },
+    "Developer": { en: "Developer", ar: "المطور" },
 
     // Common / Topbar
     "Sign In": { en: "Sign In", ar: "تسجيل الدخول" },

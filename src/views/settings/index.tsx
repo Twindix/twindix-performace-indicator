@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Calendar, Globe, Lock, Moon, Palette, Save, Sun } from "lucide-react";
+import { Bell, Calendar, Globe, Info, Lock, Moon, Palette, Save, Sun } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button, Card, CardContent, Input, Label } from "@/atoms";
@@ -171,6 +171,30 @@ export const SettingsView = () => {
                                         <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
                                     </SelectContent>
                                 </Select>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* About the App */}
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Info className="h-5 w-5 text-primary" />
+                            <h3 className="text-base font-semibold text-text-dark">{t("About the App")}</h3>
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium text-text-dark">{t("Application")}</p>
+                                <p className="text-sm text-text-secondary">{t("Twindix Performance Indicator")}</p>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium text-text-dark">{t("Version")}</p>
+                                <p className="text-sm text-text-secondary font-mono">0.1.0</p>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium text-text-dark">{t("Developer")}</p>
+                                <a href="https://hawary.dev" target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">Mohamed Elhawary</a>
                             </div>
                         </div>
                     </CardContent>
