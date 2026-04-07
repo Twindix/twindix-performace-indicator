@@ -42,7 +42,8 @@ const barColors: Record<BlockerType, string> = {
 };
 
 export const BlockerView = () => {
-    useSettings();
+    const [settings] = useSettings();
+    const compact = settings.compactView;
     const { activeSprintId } = useSprintStore();
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -110,7 +111,7 @@ export const BlockerView = () => {
             />
 
             {/* Stats Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div className={cn("grid grid-cols-2 sm:grid-cols-4", compact ? "gap-2 mb-3" : "gap-3 mb-6")}>
                 <Card>
                     <CardContent className="p-3 sm:p-4 text-center">
                         <p className="text-2xl sm:text-3xl font-bold text-text-dark"><AnimatedNumber value={stats.total} /></p>
@@ -137,9 +138,9 @@ export const BlockerView = () => {
                 </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className={cn("grid grid-cols-1 lg:grid-cols-3", compact ? "gap-3" : "gap-6")}>
                 {/* Blocker List */}
-                <div className="lg:col-span-2 flex flex-col gap-4">
+                <div className={cn("lg:col-span-2 flex flex-col", compact ? "gap-2" : "gap-4")}>
                     <h2 className="text-lg font-semibold text-text-dark">
                         {t("Blockers")}
                         <Badge className="ms-2" variant="secondary">{filteredBlockers.length}</Badge>
@@ -158,7 +159,7 @@ export const BlockerView = () => {
 
                             return (
                                 <Card key={blocker.id} className="overflow-hidden">
-                                    <CardContent className="p-5">
+                                    <CardContent className={compact ? "p-3" : "p-5"}>
                                         {/* Header: title + badges */}
                                         <div className="flex items-start justify-between gap-3 mb-3">
                                             <div className="flex items-start gap-3 min-w-0">

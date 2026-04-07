@@ -1,23 +1,17 @@
 import { useState } from "react";
-import { Bell, Calendar, Globe, Info, Lock, Moon, Palette, Save, Sun } from "lucide-react";
+import { Calendar, Globe, Info, Lock, Minimize2, Moon, Palette, Save, Sun } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button, Card, CardContent, Input, Label } from "@/atoms";
 import { Header } from "@/components/shared";
 import { useAuth, useTheme, useSettings, t, type AppSettings } from "@/hooks";
-import { Checkbox, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 
 export const SettingsView = () => {
     const { user, onUpdateUser } = useAuth();
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings, updateSettings] = useSettings();
     const [displayName, setDisplayName] = useState(user?.name ?? "");
-
-    const updateNotification = (key: keyof AppSettings["notifications"], value: boolean) => {
-        updateSettings({ notifications: { ...settings.notifications, [key]: value } });
-        const label = key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
-        toast(value ? `${label} enabled` : `${label} disabled`, { description: value ? "You will receive notifications for this event." : "Notifications for this event are now off." });
-    };
 
     const handleSaveAccount = () => {
         if (!displayName.trim()) {
@@ -57,45 +51,19 @@ export const SettingsView = () => {
                                     </span>
                                 </button>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Notifications */}
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Bell className="h-5 w-5 text-primary" />
-                            <h3 className="text-base font-semibold text-text-dark">{t("Notifications")}</h3>
-                        </div>
-                        <div className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-text-dark">{t("Blocker Alerts")}</p>
-                                    <p className="text-xs text-text-muted">{t("Get notified when a task is blocked")}</p>
+                                    <p className="text-sm font-medium text-text-dark">{t("Compact View")}</p>
+                                    <p className="text-xs text-text-muted">{t("Reduce spacing in lists and tables")}</p>
                                 </div>
-                                <Checkbox checked={settings.notifications.blockerAlerts} onCheckedChange={(v) => updateNotification("blockerAlerts", !!v)} />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-text-dark">{t("SLA Breaches")}</p>
-                                    <p className="text-xs text-text-muted">{t("Alert when response time exceeds SLA")}</p>
-                                </div>
-                                <Checkbox checked={settings.notifications.slaBreaches} onCheckedChange={(v) => updateNotification("slaBreaches", !!v)} />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-text-dark">{t("Sprint Summary")}</p>
-                                    <p className="text-xs text-text-muted">{t("Daily sprint health digest")}</p>
-                                </div>
-                                <Checkbox checked={settings.notifications.sprintSummary} onCheckedChange={(v) => updateNotification("sprintSummary", !!v)} />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-text-dark">{t("Decision Updates")}</p>
-                                    <p className="text-xs text-text-muted">{t("Notify when decisions are approved")}</p>
-                                </div>
-                                <Checkbox checked={settings.notifications.decisionUpdates} onCheckedChange={(v) => updateNotification("decisionUpdates", !!v)} />
+                                <button
+                                    onClick={() => updateSettings({ compactView: !settings.compactView })}
+                                    className={`relative inline-flex h-8 w-[52px] shrink-0 cursor-pointer items-center rounded-full border-2 transition-colors duration-300 ease-in-out ${settings.compactView ? "bg-primary border-primary" : "bg-muted border-muted"}`}
+                                >
+                                    <span className={`pointer-events-none inline-flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-md ring-0 transition-transform duration-300 ease-in-out ${settings.compactView ? "translate-x-[22px] rtl:-translate-x-[22px]" : "translate-x-[2px] rtl:-translate-x-[2px]"}`}>
+                                        <Minimize2 className={`h-3.5 w-3.5 ${settings.compactView ? "text-primary" : "text-text-muted"}`} />
+                                    </span>
+                                </button>
                             </div>
                         </div>
                     </CardContent>

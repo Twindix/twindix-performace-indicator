@@ -9,7 +9,8 @@ import { Avatar, AvatarFallback } from "@/ui";
 import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
 
 export const OwnershipView = () => {
-    useSettings();
+    const [settings] = useSettings();
+    const compact = settings.compactView;
     const entries = getStorageItem<OwnershipEntryInterface[]>(storageKeys.ownership) ?? [];
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
 
@@ -37,7 +38,7 @@ export const OwnershipView = () => {
             <Header title={t("Ownership Map")} description={t("Track component ownership and detect conflicts")} />
 
             {/* Stats Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className={cn("grid grid-cols-1 sm:grid-cols-3", compact ? "gap-2 mb-3" : "gap-4 mb-6")}>
                 <Card>
                     <CardContent className="p-4">
                         <div className="flex items-center gap-3">
@@ -93,12 +94,12 @@ export const OwnershipView = () => {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-border">
-                                    <th className="text-left py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">{t("Component")}</th>
-                                    <th className="text-left py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">{t("Primary Owner")}</th>
-                                    <th className="text-left py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">{t("Backup Owner")}</th>
-                                    <th className="text-center py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">{t("Changes")}</th>
-                                    <th className="text-left py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">{t("Last Modified")}</th>
-                                    <th className="text-center py-3 px-3 text-xs font-semibold text-text-muted uppercase tracking-wider">{t("Status")}</th>
+                                    <th className={cn("text-left px-3 text-xs font-semibold text-text-muted uppercase tracking-wider", compact ? "py-2" : "py-3")}>{t("Component")}</th>
+                                    <th className={cn("text-left px-3 text-xs font-semibold text-text-muted uppercase tracking-wider", compact ? "py-2" : "py-3")}>{t("Primary Owner")}</th>
+                                    <th className={cn("text-left px-3 text-xs font-semibold text-text-muted uppercase tracking-wider", compact ? "py-2" : "py-3")}>{t("Backup Owner")}</th>
+                                    <th className={cn("text-center px-3 text-xs font-semibold text-text-muted uppercase tracking-wider", compact ? "py-2" : "py-3")}>{t("Changes")}</th>
+                                    <th className={cn("text-left px-3 text-xs font-semibold text-text-muted uppercase tracking-wider", compact ? "py-2" : "py-3")}>{t("Last Modified")}</th>
+                                    <th className={cn("text-center px-3 text-xs font-semibold text-text-muted uppercase tracking-wider", compact ? "py-2" : "py-3")}>{t("Status")}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -108,13 +109,13 @@ export const OwnershipView = () => {
 
                                     return (
                                         <tr key={entry.id} className={cn("transition-colors hover:bg-muted/50", entry.hasConflict && "bg-error-light/30")}>
-                                            <td className="py-3 px-3">
+                                            <td className={cn("px-3", compact ? "py-1.5" : "py-3")}>
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-medium text-text-dark">{entry.componentName}</span>
                                                     {entry.hasConflict && <AlertTriangle className="h-3.5 w-3.5 text-error shrink-0" />}
                                                 </div>
                                             </td>
-                                            <td className="py-3 px-3">
+                                            <td className={cn("px-3", compact ? "py-1.5" : "py-3")}>
                                                 <div className="flex items-center gap-2">
                                                     <Avatar className="h-6 w-6">
                                                         <AvatarFallback className="text-[8px]">{owner?.avatar}</AvatarFallback>
@@ -122,7 +123,7 @@ export const OwnershipView = () => {
                                                     <span className="text-text-secondary">{owner?.name ?? "Unknown"}</span>
                                                 </div>
                                             </td>
-                                            <td className="py-3 px-3">
+                                            <td className={cn("px-3", compact ? "py-1.5" : "py-3")}>
                                                 {backup ? (
                                                     <div className="flex items-center gap-2">
                                                         <Avatar className="h-6 w-6">
@@ -137,7 +138,7 @@ export const OwnershipView = () => {
                                             <td className="py-3 px-3 text-center">
                                                 <span className="font-semibold text-text-dark">{entry.changeCount}</span>
                                             </td>
-                                            <td className="py-3 px-3">
+                                            <td className={cn("px-3", compact ? "py-1.5" : "py-3")}>
                                                 <span className="text-text-secondary text-xs">{formatDate(entry.lastModified)}</span>
                                             </td>
                                             <td className="py-3 px-3 text-center">

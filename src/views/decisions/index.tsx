@@ -22,7 +22,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/ui";
-import { formatDate, getStorageItem, storageKeys } from "@/utils";
+import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
 
 const statusVariant: Record<DecisionStatus, "success" | "warning" | "error" | "secondary"> = {
     [DecisionStatus.Approved]: "success",
@@ -40,7 +40,8 @@ const categoryLabels: Record<DecisionCategory, string> = {
 };
 
 export const DecisionsView = () => {
-    useSettings();
+    const [settings] = useSettings();
+    const compact = settings.compactView;
     const { activeSprintId } = useSprintStore();
     const allDecisions = getStorageItem<DecisionInterface[]>(storageKeys.decisions) ?? [];
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
@@ -72,7 +73,7 @@ export const DecisionsView = () => {
             <Header title={t("Decision Log")} description={t("Document and track important project decisions")} />
 
             {/* Stats Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div className={cn("grid grid-cols-2 sm:grid-cols-4", compact ? "gap-2 mb-3" : "gap-4 mb-6")}>
                 <Card>
                     <CardContent className="p-4 text-center">
                         <p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={totalCount} /></p>
@@ -100,7 +101,7 @@ export const DecisionsView = () => {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-6">
+            <div className={cn("flex flex-wrap items-center", compact ? "gap-2 mb-3" : "gap-2 sm:gap-3 mb-6")}>
                 <Filter className="h-4 w-4 text-text-muted hidden sm:block" />
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full sm:w-[160px]">
@@ -134,14 +135,14 @@ export const DecisionsView = () => {
             {filteredDecisions.length === 0 ? (
                 <EmptyState icon={BookOpen} title={t("No decisions found")} description={t("No decisions match the selected filters")} />
             ) : (
-                <div className="flex flex-col gap-4">
+                <div className={cn("flex flex-col", compact ? "gap-2" : "gap-4")}>
                     {filteredDecisions.map((decision) => {
                         const owner = getMember(decision.ownerId);
                         return (
                             <Dialog key={decision.id}>
                                 <DialogTrigger asChild>
                                     <Card className="cursor-pointer">
-                                        <CardContent className="p-5">
+                                        <CardContent className={compact ? "p-3" : "p-5"}>
                                             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-4 mb-3">
                                                 <div className="flex-1 min-w-0">
                                                     <h3 className="text-sm font-semibold text-text-dark mb-1">{decision.title}</h3>

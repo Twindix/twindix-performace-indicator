@@ -44,6 +44,7 @@ const formatTimeSince = (dateStr: string, lang: "en" | "ar"): string => {
 
 export const CommunicationView = () => {
     const [settings] = useSettings();
+    const compact = settings.compactView;
     const isRTL = settings.language === "ar";
     const { activeSprintId } = useSprintStore();
     const allComms = getStorageItem<CommunicationInterface[]>(storageKeys.communications) ?? [];
@@ -115,7 +116,7 @@ export const CommunicationView = () => {
             <Header title={t("Communication Tracker")} description={t("Monitor response times and pending questions across channels")} />
 
             {/* Stats Row */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className={cn("grid grid-cols-2 lg:grid-cols-4", compact ? "gap-2 mb-3" : "gap-4 mb-6")}>
                 <Card>
                     <CardContent className="p-4">
                         <div className="flex items-center gap-3">

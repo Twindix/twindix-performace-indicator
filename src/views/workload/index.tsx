@@ -22,7 +22,8 @@ const getUtilizationTextColor = (util: number): string => {
 };
 
 export const WorkloadView = () => {
-    useSettings();
+    const [settings] = useSettings();
+    const compact = settings.compactView;
     const { activeSprintId } = useSprintStore();
     const allWorkload = getStorageItem<TeamMemberWorkloadInterface[]>(storageKeys.workload) ?? [];
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
@@ -66,7 +67,7 @@ export const WorkloadView = () => {
             <Header title={t("Team Workload")} description={t("Track team capacity, utilization, and context switching")} />
 
             {/* Stats Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div className={cn("grid grid-cols-2 sm:grid-cols-4", compact ? "gap-2 mb-3" : "gap-4 mb-6")}>
                 <Card>
                     <CardContent className="p-4 text-center">
                         <p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={stats.teamSize} /></p>
@@ -98,8 +99,8 @@ export const WorkloadView = () => {
             </div>
 
             {/* Team Member Detail Cards */}
-            <h2 className="text-lg font-semibold text-text-dark mb-3">{t("Team Members")}</h2>
-            <div className="flex flex-col gap-3 mb-8">
+            <h2 className={cn("font-semibold text-text-dark", compact ? "text-base mb-2" : "text-lg mb-3")}>{t("Team Members")}</h2>
+            <div className={cn("flex flex-col", compact ? "gap-2 mb-4" : "gap-3 mb-8")}>
                 {sprintWorkload.map((w) => {
                     const member = getMember(w.memberId);
                     const utilization = Math.round((w.assignedPoints / w.capacity) * 100);
@@ -107,7 +108,7 @@ export const WorkloadView = () => {
 
                     return (
                         <Card key={w.memberId}>
-                            <CardContent className="p-4">
+                            <CardContent className={compact ? "p-3" : "p-4"}>
                                 <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
                                     {/* Avatar + Name + Overloaded (mobile) */}
                                     <div className="flex items-center gap-3 md:w-48 md:shrink-0">

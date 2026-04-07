@@ -8,14 +8,14 @@ import { cn } from "@/utils";
 
 export const DashboardLayout = () => {
     const isOpen = useSidebarStore((s) => s.isOpen);
-    useSettings(); // re-render on language change
+    const [settings] = useSettings();
 
     return (
         <div className="min-h-screen bg-background flex flex-col">
             <Sidebar />
             <div className={cn("transition-all duration-300 flex-1 flex flex-col", isOpen ? "ms-[var(--spacing-sidebar)]" : "ms-16", "max-lg:ms-0")}>
                 <Topbar />
-                <main className="p-3 sm:p-6 flex-1">
+                <main className={cn("flex-1 transition-all", settings.compactView ? "p-2 sm:p-3" : "p-3 sm:p-6")}>
                     <Outlet />
                 </main>
                 <footer className="border-t border-border py-4 px-6">

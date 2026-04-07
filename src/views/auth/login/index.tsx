@@ -3,7 +3,7 @@ import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button, Input, Label } from "@/atoms";
-import { APP_NAME, DEMO_EMAIL, DEMO_PASSWORD, routesData } from "@/data";
+import { DEMO_EMAIL, DEMO_PASSWORD, routesData } from "@/data";
 import { useAuth, useSettings, useTheme, t } from "@/hooks";
 
 export const LoginView = () => {
@@ -47,7 +47,7 @@ export const LoginView = () => {
                     <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground mb-4 shadow-md">
                         <Activity className="h-7 w-7" />
                     </div>
-                    <h1 className="text-2xl font-bold text-text-dark">{APP_NAME}</h1>
+                    <h1 className="text-2xl font-bold text-text-dark">{t("Twindix Performance Indicator")}</h1>
                     <p className="text-sm text-text-secondary mt-1">{t("Sign in to your account")}</p>
                 </div>
 

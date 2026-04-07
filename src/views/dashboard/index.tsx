@@ -30,7 +30,8 @@ const AnimNum = ({ value, className }: { value: number; className?: string }) =>
 };
 
 export const DashboardView = () => {
-    useSettings();
+    const [settings] = useSettings();
+    const compact = settings.compactView;
     const { activeSprintId } = useSprintStore();
     const allMetrics = getStorageItem<SprintMetricsInterface[]>(storageKeys.metrics) ?? [];
     const sprintMetrics = allMetrics.find((m) => m.sprintId === activeSprintId);
@@ -49,7 +50,7 @@ export const DashboardView = () => {
             <Header title={t("Sprint Dashboard")} description={t("Real-time overview of sprint health, delivery friction, and team performance")} />
 
             {/* Hero Section: Health Score + Friction Areas */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 stagger-children">
+            <div className={cn("grid grid-cols-1 lg:grid-cols-3 stagger-children", compact ? "gap-3 mb-3" : "gap-6 mb-6")}>
                 {/* Health Score */}
                 <Card className="lg:row-span-2">
                     <CardHeader>
@@ -79,12 +80,12 @@ export const DashboardView = () => {
                 </Card>
 
                 {/* Friction Areas Grid */}
-                <div className="lg:col-span-2 grid grid-cols-2 gap-3 stagger-children">
+                <div className={cn("lg:col-span-2 grid grid-cols-2 stagger-children", compact ? "gap-2" : "gap-3")}>
                     {frictionAreaConfig.map(({ key, labelKey, icon: Icon, textColor }) => {
                         const score = sprintMetrics?.frictionScores[key] ?? 0;
                         return (
                             <Card key={key} className="overflow-hidden">
-                                <CardContent className="p-4">
+                                <CardContent className={compact ? "p-3" : "p-4"}>
                                     <div className="flex items-center gap-2 mb-2">
                                         <Icon className={cn("h-4 w-4", textColor)} />
                                         <span className="text-xs font-medium text-text-secondary truncate">{t(labelKey)}</span>
@@ -104,9 +105,9 @@ export const DashboardView = () => {
             </div>
 
             {/* Key Metrics Row */}
-            <div className="mb-6">
-                <h2 className="text-lg font-semibold text-text-dark mb-3">{t("Key Metrics")}</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 stagger-children">
+            <div className={compact ? "mb-3" : "mb-6"}>
+                <h2 className={cn("font-semibold text-text-dark", compact ? "text-base mb-2" : "text-lg mb-3")}>{t("Key Metrics")}</h2>
+                <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 stagger-children", compact ? "gap-2" : "gap-3")}>
                     {topMetrics.map((m) => (
                         <MetricCard key={m.id} name={m.name} value={m.value} unit={m.unit} status={m.status} trend={m.trend} trendPercent={m.trendPercent} description={m.description} />
                     ))}
@@ -114,7 +115,7 @@ export const DashboardView = () => {
             </div>
 
             {/* Bottom Section: Blockers + Decisions + Workload */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 stagger-children">
+            <div className={cn("grid grid-cols-1 lg:grid-cols-3 stagger-children", compact ? "gap-3" : "gap-6")}>
                 {/* Active Blockers */}
                 <Card>
                     <CardHeader>
