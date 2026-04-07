@@ -1,1 +1,1 @@
-export { useAuth, useTheme, useLocalStorage, useSettings, t, defaultSettings, saveSettings, type AppSettings, useCountUp, useOnlineStatus } from "./shared";
+export { useAuth, useTheme, useLocalStorage, useSettings, t, defaultSettings, saveSettings, type AppSettings, useCountUp, useOnlineStatus, usePageLoader } from "./shared";

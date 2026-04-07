@@ -2,8 +2,9 @@ import { AlertTriangle, BookOpen, Clock, GitBranch, MessageSquare, Shield, Trend
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, Header, MetricCard, ScoreGauge, StatusBadge } from "@/components/shared";
+import { DashboardSkeleton } from "@/components/skeletons";
 import { BlockerStatus, MetricStatus } from "@/enums";
-import { t, useSettings, useCountUp } from "@/hooks";
+import { t, useSettings, useCountUp, usePageLoader } from "@/hooks";
 import type { BlockerInterface, SprintMetricsInterface, TaskInterface, DecisionInterface, UserInterface, TeamMemberWorkloadInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback } from "@/ui";
@@ -30,6 +31,7 @@ const AnimNum = ({ value, className }: { value: number; className?: string }) =>
 };
 
 export const DashboardView = () => {
+    const isLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
     const { activeSprintId } = useSprintStore();
@@ -44,6 +46,8 @@ export const DashboardView = () => {
     const topMetrics = sprintMetrics?.metrics.slice(0, 8) ?? [];
 
     const getMember = (id: string) => members.find((m) => m.id === id);
+
+    if (isLoading) return <DashboardSkeleton />;
 
     return (
         <div>

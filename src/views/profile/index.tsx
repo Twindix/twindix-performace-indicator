@@ -2,7 +2,8 @@ import { Briefcase, Calendar, Mail, MapPin, Shield, Users } from "lucide-react";
 
 import { Badge, Card, CardContent } from "@/atoms";
 import { AnimatedNumber, Header, ScoreGauge } from "@/components/shared";
-import { t, useAuth, useSettings } from "@/hooks";
+import { ProfileSkeleton } from "@/components/skeletons";
+import { t, useAuth, useSettings, usePageLoader } from "@/hooks";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback } from "@/ui";
 import { cn, getStorageItem, storageKeys } from "@/utils";
@@ -23,6 +24,7 @@ const roleLabels: Record<string, string> = {
 };
 
 export const ProfileView = () => {
+    const isLoading = usePageLoader();
     useSettings();
     const { user } = useAuth();
     const { activeSprintId } = useSprintStore();
@@ -40,6 +42,7 @@ export const ProfileView = () => {
     const utilization = workload ? Math.round((workload.assignedPoints / workload.capacity) * 100) : 0;
 
     if (!user) return null;
+    if (isLoading) return <ProfileSkeleton />;
 
     return (
         <div>

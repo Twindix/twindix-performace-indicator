@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw, Copy, ChevronDown, ChevronUp } from "lucide-react";
 
 import { Button } from "@/atoms";
+import { t } from "@/hooks";
 
 interface Props {
     children: ReactNode;
@@ -75,14 +76,14 @@ export class ErrorBoundary extends Component<Props, State> {
 
                         {/* Title */}
                         <h1 className="text-2xl font-bold text-text-dark mb-2">
-                            {isNetworkError ? "Connection Error" : "Something Went Wrong"}
+                            {isNetworkError ? t("Connection Error") : t("Something Went Wrong")}
                         </h1>
 
                         {/* Description */}
                         <p className="text-sm text-text-secondary mb-6 max-w-sm mx-auto">
                             {isNetworkError
-                                ? "Unable to connect to the server. Please check your internet connection and try again."
-                                : "An unexpected error occurred. The error has been logged and our team will look into it."}
+                                ? t("Unable to connect to the server. Please check your internet connection and try again.")
+                                : t("An unexpected error occurred. The error has been logged and our team will look into it.")}
                         </p>
 
                         {/* Error message */}
@@ -94,10 +95,10 @@ export class ErrorBoundary extends Component<Props, State> {
                         <div className="flex gap-3 justify-center mb-4">
                             <Button onClick={this.handleReload} className="gap-2">
                                 <RefreshCw className="h-4 w-4" />
-                                Reload Page
+                                {t("Reload Page")}
                             </Button>
                             <Button variant="outline" onClick={this.handleGoHome}>
-                                Go to Dashboard
+                                {t("Go to Dashboard")}
                             </Button>
                         </div>
 
@@ -108,19 +109,19 @@ export class ErrorBoundary extends Component<Props, State> {
                                 className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors cursor-pointer"
                             >
                                 {showStack ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                                {showStack ? "Hide" : "Show"} Technical Details
+                                {showStack ? t("Hide Technical Details") : t("Show Technical Details")}
                             </button>
 
                             {showStack && (
                                 <div className="mt-3 rounded-xl bg-muted border border-border overflow-hidden">
                                     <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-                                        <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Stack Trace</span>
+                                        <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">{t("Stack Trace")}</span>
                                         <button
                                             onClick={this.handleCopyError}
                                             className="inline-flex items-center gap-1 text-[10px] text-text-muted hover:text-primary transition-colors cursor-pointer"
                                         >
                                             <Copy className="h-3 w-3" />
-                                            {copied ? "Copied!" : "Copy"}
+                                            {copied ? t("Copied!") : t("Copy")}
                                         </button>
                                     </div>
                                     <pre className="p-3 text-[10px] font-mono text-text-secondary overflow-auto max-h-48 text-start leading-relaxed scrollbar-thin">
@@ -138,7 +139,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
                         {/* Footer */}
                         <p className="mt-6 text-[10px] text-text-muted">
-                            Twindix Performance Indicator v0.1
+                            {t("Twindix Performance Indicator v0.1")}
                         </p>
                     </div>
                 </div>

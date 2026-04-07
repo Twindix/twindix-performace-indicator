@@ -3,7 +3,8 @@ import { ArrowRight, CheckCircle2, XCircle, ArrowRightLeft, BarChart3, Target } 
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
-import { t, useSettings } from "@/hooks";
+import { HandoffsSkeleton } from "@/components/skeletons";
+import { t, useSettings, usePageLoader } from "@/hooks";
 import type { CriterionInterface, HandoffInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { cn, td, getStorageItem, storageKeys } from "@/utils";
@@ -50,6 +51,7 @@ const CriteriaList = ({ title, criteria }: { title: string; criteria: CriterionI
 );
 
 export const HandoffsView = () => {
+    const isLoading = usePageLoader();
     useSettings();
     const { activeSprintId } = useSprintStore();
     const allHandoffs = getStorageItem<HandoffInterface[]>(storageKeys.handoffs) ?? [];
@@ -65,6 +67,8 @@ export const HandoffsView = () => {
 
         return { total, avgCompletion, fullyCompleted, belowThreshold };
     }, [handoffs]);
+
+    if (isLoading) return <HandoffsSkeleton />;
 
     if (handoffs.length === 0) {
         return (

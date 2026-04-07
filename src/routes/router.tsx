@@ -20,6 +20,7 @@ import {
     WorkloadView,
 } from "@/views";
 
+import { RouteError } from "./error";
 import { ProtectedRoute } from "./protected";
 import { PublicRoute } from "./public";
 
@@ -41,18 +42,23 @@ export const router = createBrowserRouter([
             {
                 element: <DashboardLayout />,
                 children: [
-                    { path: routesData.dashboard, element: <DashboardView /> },
-                    { path: routesData.tasks, element: <TasksView /> },
-                    { path: routesData.blockers, element: <BlockerView /> },
-                    { path: routesData.decisions, element: <DecisionsView /> },
-                    { path: routesData.communication, element: <CommunicationView /> },
-                    { path: routesData.workload, element: <WorkloadView /> },
-                    { path: routesData.reports, element: <ReportsView /> },
-                    { path: routesData.analytics, element: <AnalyticsView /> },
-                    { path: routesData.ownership, element: <OwnershipView /> },
-                    { path: routesData.handoffs, element: <HandoffsView /> },
-                    { path: routesData.profile, element: <ProfileView /> },
-                    { path: routesData.settings, element: <SettingsView /> },
+                    {
+                        errorElement: <RouteError />,
+                        children: [
+                            { path: routesData.dashboard, element: <DashboardView /> },
+                            { path: routesData.tasks, element: <TasksView /> },
+                            { path: routesData.blockers, element: <BlockerView /> },
+                            { path: routesData.decisions, element: <DecisionsView /> },
+                            { path: routesData.communication, element: <CommunicationView /> },
+                            { path: routesData.workload, element: <WorkloadView /> },
+                            { path: routesData.reports, element: <ReportsView /> },
+                            { path: routesData.analytics, element: <AnalyticsView /> },
+                            { path: routesData.ownership, element: <OwnershipView /> },
+                            { path: routesData.handoffs, element: <HandoffsView /> },
+                            { path: routesData.profile, element: <ProfileView /> },
+                            { path: routesData.settings, element: <SettingsView /> },
+                        ],
+                    },
                 ],
             },
         ],

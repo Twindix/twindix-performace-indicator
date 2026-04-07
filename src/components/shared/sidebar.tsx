@@ -24,10 +24,12 @@ export const Sidebar = () => {
                         <span className="text-[10px] text-text-muted truncate">{t("Performance Indicator")}</span>
                     </div>
                 )}
-                <button onClick={onToggle} className={cn("ms-auto rounded-lg p-1.5 text-text-muted hover:bg-accent hover:text-text-dark transition-colors cursor-pointer", !isOpen && "ms-0 mt-1")}>
-                    <ChevronLeft className={cn("h-4 w-4 transition-transform", !isOpen ? "rotate-180 rtl:rotate-0" : "rtl:rotate-180")} />
-                </button>
             </div>
+
+            {/* Floating toggle arrow on sidebar edge */}
+            <button onClick={onToggle} className="absolute top-7 -end-3.5 z-50 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface shadow-md text-text-muted hover:text-text-dark hover:bg-accent transition-colors cursor-pointer">
+                <ChevronLeft className={cn("h-4 w-4 transition-transform", !isOpen ? "rotate-180 rtl:rotate-0" : "rtl:rotate-180")} />
+            </button>
 
             <nav className="flex-1 overflow-y-auto p-2 scrollbar-thin">
                 <TooltipProvider delayDuration={0}>

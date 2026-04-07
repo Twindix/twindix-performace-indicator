@@ -19,6 +19,7 @@ import { toast } from "sonner";
 
 import { Badge, Button, Card, CardContent, Input } from "@/atoms";
 import { EmptyState, Header, ScoreGauge } from "@/components/shared";
+import { TasksSkeleton } from "@/components/skeletons";
 import { TaskPhase, TaskPriority, BlockerStatus } from "@/enums";
 import type {
     TaskInterface,
@@ -26,7 +27,7 @@ import type {
     UserInterface,
     BlockerInterface,
 } from "@/interfaces";
-import { t, useSettings } from "@/hooks";
+import { t, useSettings, usePageLoader } from "@/hooks";
 import { useSprintStore } from "@/store";
 import {
     Dialog,
@@ -615,6 +616,7 @@ const KanbanColumn = ({ phase, label, tasks, members, onTaskClick, onDragStart, 
 /* -------------------------------------------------------------------------- */
 
 export const TasksView = () => {
+    const isLoading = usePageLoader();
     useSettings();
     const { activeSprintId } = useSprintStore();
 
@@ -759,6 +761,8 @@ export const TasksView = () => {
     const totalPoints = sprintTasks.reduce((sum, t) => sum + t.storyPoints, 0);
     const donePoints = sprintTasks.filter((t) => t.phase === TaskPhase.Done).reduce((sum, t) => sum + t.storyPoints, 0);
     const blockedCount = sprintTasks.filter((t) => t.hasBlocker).length;
+
+    if (isLoading) return <TasksSkeleton />;
 
     return (
         <div>

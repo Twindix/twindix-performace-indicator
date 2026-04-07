@@ -3,7 +3,8 @@ import { AlertTriangle, Clock, Hash, MessageSquare, Mail, Video } from "lucide-r
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
-import { t, useSettings } from "@/hooks";
+import { CommunicationSkeleton } from "@/components/skeletons";
+import { t, useSettings, usePageLoader } from "@/hooks";
 import type { CommunicationChannel, CommunicationInterface, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Tabs, TabsList, TabsTrigger, TabsContent } from "@/ui";
@@ -43,6 +44,7 @@ const formatTimeSince = (dateStr: string, lang: "en" | "ar"): string => {
 };
 
 export const CommunicationView = () => {
+    const isLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
     const isRTL = settings.language === "ar";
@@ -101,6 +103,8 @@ export const CommunicationView = () => {
         if (answeredQuestions.length === 0) return null;
         return answeredQuestions[0];
     }, [answeredQuestions]);
+
+    if (isLoading) return <CommunicationSkeleton />;
 
     if (comms.length === 0) {
         return (

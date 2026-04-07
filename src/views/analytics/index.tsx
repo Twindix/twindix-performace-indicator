@@ -3,8 +3,9 @@ import { AlertTriangle, Clock, GitBranch, MessageSquare, Shield, Users } from "l
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { Header, MetricCard, ScoreGauge, StatusBadge } from "@/components/shared";
+import { AnalyticsSkeleton } from "@/components/skeletons";
 import { MetricStatus } from "@/enums";
-import { t, useSettings } from "@/hooks";
+import { t, useSettings, usePageLoader } from "@/hooks";
 import type { SprintInterface, SprintMetricsInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
@@ -38,6 +39,7 @@ const getBarColor = (score: number): string => {
 };
 
 export const AnalyticsView = () => {
+    const isLoading = usePageLoader();
     const [settings] = useSettings();
     const isRTL = settings.language === "ar";
     const { activeSprintId } = useSprintStore();
@@ -66,6 +68,8 @@ export const AnalyticsView = () => {
         }
         return Array.from(names);
     }, [allMetrics]);
+
+    if (isLoading) return <AnalyticsSkeleton />;
 
     return (
         <div>

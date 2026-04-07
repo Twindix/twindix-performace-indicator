@@ -3,8 +3,9 @@ import { BookOpen, Calendar, Filter, Users } from "lucide-react";
 
 import { Badge, Card, CardContent } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
+import { DecisionsSkeleton } from "@/components/skeletons";
 import { DecisionCategory, DecisionStatus } from "@/enums";
-import { t, useSettings } from "@/hooks";
+import { t, useSettings, usePageLoader } from "@/hooks";
 import type { DecisionInterface, SprintMetricsInterface, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import {
@@ -40,6 +41,7 @@ const categoryLabels: Record<DecisionCategory, string> = {
 };
 
 export const DecisionsView = () => {
+    const isLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
     const { activeSprintId } = useSprintStore();
@@ -60,6 +62,8 @@ export const DecisionsView = () => {
     });
 
     const getMember = (id: string) => members.find((m) => m.id === id);
+
+    if (isLoading) return <DecisionsSkeleton />;
 
     const totalCount = sprintDecisions.length;
     const approvedCount = sprintDecisions.filter((d) => d.status === DecisionStatus.Approved).length;

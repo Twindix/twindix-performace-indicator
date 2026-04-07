@@ -3,8 +3,9 @@ import { AlertTriangle, ArrowRight, Clock, FileText, GitBranch, Lightbulb, Messa
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, Header, MetricCard, ScoreGauge, StatusBadge } from "@/components/shared";
+import { ReportsSkeleton } from "@/components/skeletons";
 import { BlockerStatus, MetricStatus, TaskPhase } from "@/enums";
-import { t, useSettings } from "@/hooks";
+import { t, useSettings, usePageLoader } from "@/hooks";
 import type { BlockerInterface, SprintInterface, SprintMetricsInterface, TaskInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
@@ -116,6 +117,7 @@ const frictionAreaConfig = [
 ];
 
 export const ReportsView = () => {
+    const isLoading = usePageLoader();
     const [settings] = useSettings();
     const isRTL = settings.language === "ar";
     const { activeSprintId } = useSprintStore();
@@ -168,6 +170,8 @@ export const ReportsView = () => {
 
         return recs;
     }, [sprintMetrics, taskStats, activeBlockerCount]);
+
+    if (isLoading) return <ReportsSkeleton />;
 
     const getMetricsForArea = (metricsFilter: string[]) => {
         if (!sprintMetrics?.metrics) return [];

@@ -3,12 +3,14 @@ import { AlertTriangle, Layers, Shield, Users } from "lucide-react";
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
-import { t, useSettings } from "@/hooks";
+import { OwnershipSkeleton } from "@/components/skeletons";
+import { t, useSettings, usePageLoader } from "@/hooks";
 import type { OwnershipEntryInterface, UserInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
 import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
 
 export const OwnershipView = () => {
+    const isLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
     const entries = getStorageItem<OwnershipEntryInterface[]>(storageKeys.ownership) ?? [];
@@ -23,6 +25,8 @@ export const OwnershipView = () => {
     }), [entries]);
 
     const conflicts = useMemo(() => entries.filter((e) => e.hasConflict), [entries]);
+
+    if (isLoading) return <OwnershipSkeleton />;
 
     if (entries.length === 0) {
         return (

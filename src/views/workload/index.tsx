@@ -3,7 +3,8 @@ import { AlertTriangle, ArrowRightLeft, BarChart3, Users } from "lucide-react";
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
-import { t, useSettings } from "@/hooks";
+import { WorkloadSkeleton } from "@/components/skeletons";
+import { t, useSettings, usePageLoader } from "@/hooks";
 import type { TeamMemberWorkloadInterface, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback } from "@/ui";
@@ -22,6 +23,7 @@ const getUtilizationTextColor = (util: number): string => {
 };
 
 export const WorkloadView = () => {
+    const isLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
     const { activeSprintId } = useSprintStore();
@@ -52,6 +54,8 @@ export const WorkloadView = () => {
         () => Math.max(...sprintWorkload.map((w) => w.assignedPoints), 1),
         [sprintWorkload],
     );
+
+    if (isLoading) return <WorkloadSkeleton />;
 
     if (sprintWorkload.length === 0) {
         return (

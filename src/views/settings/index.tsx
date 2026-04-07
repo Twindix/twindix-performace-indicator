@@ -4,10 +4,12 @@ import { toast } from "sonner";
 
 import { Button, Card, CardContent, Input, Label } from "@/atoms";
 import { Header } from "@/components/shared";
-import { useAuth, useTheme, useSettings, t, type AppSettings } from "@/hooks";
+import { SettingsSkeleton } from "@/components/skeletons";
+import { useAuth, useTheme, useSettings, t, usePageLoader, type AppSettings } from "@/hooks";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 
 export const SettingsView = () => {
+    const isLoading = usePageLoader();
     const { user, onUpdateUser } = useAuth();
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings, updateSettings] = useSettings();
@@ -23,6 +25,7 @@ export const SettingsView = () => {
     };
 
     if (!user) return null;
+    if (isLoading) return <SettingsSkeleton />;
 
     return (
         <div>

@@ -408,6 +408,21 @@ const translations: Record<string, Record<"en" | "ar", string>> = {
     "Enter your password": { en: "Enter your password", ar: "أدخل كلمة المرور" },
     "Demo Credentials": { en: "Demo Credentials", ar: "بيانات الدخول التجريبية" },
     "Invalid credentials. Please try again.": { en: "Invalid credentials. Please try again.", ar: "بيانات الدخول غير صحيحة. يرجى المحاولة مرة أخرى." },
+
+    // Error boundary
+    "Something Went Wrong": { en: "Something Went Wrong", ar: "حدث خطأ ما" },
+    "An unexpected error occurred while loading this page.": { en: "An unexpected error occurred while loading this page.", ar: "حدث خطأ غير متوقع أثناء تحميل هذه الصفحة." },
+    "An unexpected error occurred": { en: "An unexpected error occurred", ar: "حدث خطأ غير متوقع" },
+    "An unexpected error occurred. The error has been logged and our team will look into it.": { en: "An unexpected error occurred. The error has been logged and our team will look into it.", ar: "حدث خطأ غير متوقع. تم تسجيل الخطأ وسيقوم فريقنا بمراجعته." },
+    "Connection Error": { en: "Connection Error", ar: "خطأ في الاتصال" },
+    "Unable to connect to the server. Please check your internet connection and try again.": { en: "Unable to connect to the server. Please check your internet connection and try again.", ar: "تعذر الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى." },
+    "Reload Page": { en: "Reload Page", ar: "إعادة تحميل الصفحة" },
+    "Go to Dashboard": { en: "Go to Dashboard", ar: "الذهاب إلى لوحة التحكم" },
+    "Show Technical Details": { en: "Show Technical Details", ar: "عرض التفاصيل التقنية" },
+    "Hide Technical Details": { en: "Hide Technical Details", ar: "إخفاء التفاصيل التقنية" },
+    "Stack Trace": { en: "Stack Trace", ar: "تتبع الخطأ" },
+    "Copy": { en: "Copy", ar: "نسخ" },
+    "Copied!": { en: "Copied!", ar: "تم النسخ!" },
 };
 
 export const t = (key: string): string => {

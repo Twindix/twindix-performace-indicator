@@ -150,7 +150,7 @@
     --color-card: var(--raw-card);
     --color-card-foreground: var(--raw-card-foreground);
 
-    --spacing-sidebar: 260px;
+    --spacing-sidebar: 220px;
     --radius-default: 12px;
     --font-family-inter: 'Inter', sans-serif;
 }

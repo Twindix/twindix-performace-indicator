@@ -3,8 +3,9 @@ import { AlertTriangle, Calendar, Clock, Filter, GitBranch, Layers, MessageSquar
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
+import { BlockersSkeleton } from "@/components/skeletons";
 import { BlockerImpact, BlockerStatus, BlockerType } from "@/enums";
-import { t, useSettings } from "@/hooks";
+import { t, useSettings, usePageLoader } from "@/hooks";
 import type { BlockerInterface, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
@@ -42,6 +43,7 @@ const barColors: Record<BlockerType, string> = {
 };
 
 export const BlockerView = () => {
+    const isLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
     const { activeSprintId } = useSprintStore();
@@ -75,6 +77,8 @@ export const BlockerView = () => {
         const max = Math.max(...Object.values(counts), 1);
         return { counts, max };
     }, [sprintBlockers]);
+
+    if (isLoading) return <BlockersSkeleton />;
 
     return (
         <div>
