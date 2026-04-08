@@ -12,4 +12,5 @@ export { HandoffsView } from "./handoffs";
 export { ProfileView } from "./profile";
 export { SettingsView } from "./settings";
 export { NotFoundView, ServerErrorView } from "./errors";
+export { RedFlagsView } from "./red-flags";
 export { AlertsView } from "./alerts";

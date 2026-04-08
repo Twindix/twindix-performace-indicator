@@ -484,6 +484,18 @@ export const ProfileSkeleton = () => (
 );
 
 /* -------------------------------------------------------------------------- */
+/*  Red Flags                                                                  */
+/* -------------------------------------------------------------------------- */
+
+export const RedFlagsSkeleton = () => (
+    <div>
+        <HeaderSk />
+        <div className="flex justify-end mb-6">
+            <Skeleton className="h-9 w-32 rounded-md" />
+        </div>
+        <div className="space-y-4">
+            {[...Array(4)].map((_, i) => (
+                <Card key={i} className="border-s-4">
 /*  Alerts                                                                     */
 /* -------------------------------------------------------------------------- */
 
