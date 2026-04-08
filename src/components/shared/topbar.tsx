@@ -1,10 +1,11 @@
-import { Globe, HelpCircle, LogOut, Moon, Settings, Sun, User } from "lucide-react";
+import { Globe, HelpCircle, LogOut, Moon, Settings, Sun, User, Flag } from "lucide-react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/atoms";
 import { routesData } from "@/data";
 import { useAuth, useTheme, t, useSettings } from "@/hooks";
-import { useSprintStore } from "@/store";
+import { useRedFlagStore, useSprintStore } from "@/store";
 import { MobileNav } from "./mobile-nav";
 import {
     Avatar,
@@ -46,10 +47,14 @@ export const Topbar = () => {
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings, updateSettings] = useSettings();
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
+    const { flags, load } = useRedFlagStore();
     const sprints = getStorageItem<SprintInterface[]>(storageKeys.sprints) ?? [];
     const navigate = useNavigate();
 
+    useEffect(() => { load(); }, [load]);
+
     const isArabic = settings.language === "ar";
+    const redFlagCount = flags.filter((f) => f.sprintId === activeSprintId).length;
 
     const toggleLanguage = () => {
         updateSettings({ language: isArabic ? "en" : "ar" });
@@ -75,6 +80,28 @@ export const Topbar = () => {
 
             <div className="flex items-center gap-2">
                 <TooltipProvider delayDuration={300}>
+                    {/* Red Flags indicator */}
+                    {redFlagCount > 0 && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    onClick={() => navigate(routesData.redFlags)}
+                                    className="relative flex items-center gap-1.5 h-9 px-2.5 rounded-[var(--radius-default)] text-error hover:bg-error-light transition-colors cursor-pointer"
+                                    aria-label="Red Flags"
+                                >
+                                    <Flag className="h-4 w-4 animate-[flag-wave_1.8s_ease-in-out_infinite]" />
+                                    <span className="text-xs font-semibold hidden sm:inline">
+                                        {t("Red Flags")}
+                                    </span>
+                                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-error text-[10px] font-bold text-white px-1">
+                                        {redFlagCount}
+                                    </span>
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t("View all red flags for this sprint")}</TooltipContent>
+                        </Tooltip>
+                    )}
+
                     {/* Language toggle */}
                     <Tooltip>
                         <TooltipTrigger asChild>
