@@ -26,4 +26,5 @@ export interface TaskInterface {
     createdAt: string;
     updatedAt: string;
     tags: string[];
+    workType: "Design" | "Frontend" | "Backend" | "QA" | "Done";
 }
