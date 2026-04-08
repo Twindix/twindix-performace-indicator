@@ -1,5 +1,5 @@
 export type { UserInterface, SprintInterface, AuthContextInterface, ThemeContextInterface } from "./common";
-export type { TaskInterface, ReadinessChecklistInterface } from "./tasks";
+export type { TaskInterface, ReadinessChecklistInterface, TaskAttachmentInterface, TaskCommentInterface, TaskTimeLogInterface } from "./tasks";
 export type { BlockerInterface } from "./blockers";
 export type { DecisionInterface } from "./decisions";
 export type { CommunicationInterface, CommunicationChannel, CommunicationStatus } from "./communications";
@@ -8,3 +8,6 @@ export type { MetricInterface, FrictionScoresInterface, SprintMetricsInterface }
 export type { OwnershipEntryInterface } from "./ownership";
 export type { HandoffInterface, CriterionInterface } from "./handoffs";
 export type { CommentInterface } from "./comments";
+export type { RedFlagInterface, RedFlagSeverity } from "./red-flags";
+export type { AlertInterface } from "./alerts";
+export type { AttachmentInterface, AddTaskFormState, AddTaskDialogProps } from "./tasks-dialog";

@@ -485,6 +485,57 @@ export const ProfileSkeleton = () => (
 
 /* -------------------------------------------------------------------------- */
 /*  Comments Log                                                               */
+/*  Red Flags                                                                  */
+/* -------------------------------------------------------------------------- */
+
+export const RedFlagsSkeleton = () => (
+    <div>
+        <HeaderSk />
+        <div className="flex justify-end mb-6">
+            <Skeleton className="h-9 w-32 rounded-md" />
+        </div>
+        <div className="space-y-4">
+            {[...Array(4)].map((_, i) => (
+                <Card key={i} className="border-s-4">
+/*  Alerts                                                                     */
+/* -------------------------------------------------------------------------- */
+
+export const AlertsSkeleton = () => (
+    <div>
+        <HeaderSk />
+        <div className="flex justify-end mb-6">
+            <Skeleton className="h-9 w-28 rounded-md" />
+        </div>
+        <div className="space-y-4">
+            {[...Array(4)].map((_, i) => (
+                <Card key={i}>
+                    <CardContent className="p-5">
+                        <div className="flex items-start gap-3">
+                            <Skeleton className="h-5 w-5 rounded shrink-0 mt-0.5" />
+                            <div className="flex-1 space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <Skeleton className="h-4 w-48" />
+                                    <Skeleton className="h-5 w-16 rounded-full" />
+                                </div>
+                                <Skeleton className="h-3 w-full" />
+                                <Skeleton className="h-3 w-3/4" />
+                                <div className="flex items-center gap-3 pt-1">
+                                    <Skeleton className="h-5 w-5 rounded-full" />
+                                    <Skeleton className="h-3 w-24" />
+                                    <Skeleton className="h-3 w-28" />
+                                </div>
+                            </div>
+                            <Skeleton className="h-8 w-28 rounded-md shrink-0" />
+                        </div>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    </div>
+);
+
+/* -------------------------------------------------------------------------- */
+/*  Settings                                                                   */
 /* -------------------------------------------------------------------------- */
 
 export const CommentsLogSkeleton = () => (
