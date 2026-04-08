@@ -32,7 +32,7 @@ export const router = createBrowserRouter([
             {
                 element: <AuthLayout />,
                 children: [
-                    { path: routesData.login, element: <LoginView /> },
+                    { path: routesData.login.path, element: <LoginView /> },
                 ],
             },
         ],

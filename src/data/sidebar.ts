@@ -20,6 +20,7 @@ export interface SidebarItemInterface {
     label: string;
     path: string;
     icon: LucideIcon;
+    disabled?: boolean;
 }
 
 export const sidebarItems: SidebarItemInterface[] = [
