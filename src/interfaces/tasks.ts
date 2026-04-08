@@ -42,7 +42,7 @@ export interface TaskInterface {
     id: string;
     title: string;
     description: string;
-    assigneeId: string;
+    assigneeIds: string[];
     phase: TaskPhase;
     priority: TaskPriority;
     storyPoints: number;

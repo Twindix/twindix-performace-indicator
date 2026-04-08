@@ -37,7 +37,7 @@ const PRIORITY_OPTIONS = [
 const INITIAL_FORM_STATE: AddTaskFormState = {
     title: "",
     description: "",
-    assigneeId: "",
+    assigneeIds: [],
     priority: TaskPriority.Medium,
     estimatedHours: 0,
     attachments: [],
@@ -106,7 +106,7 @@ export const AddTaskDialog = ({ open, onOpenChange, members, sprintId, onAddTask
                 id: generateTaskId(),
                 title: formState.title.trim(),
                 description: formState.description.trim(),
-                assigneeId: formState.assigneeId,
+                assigneeIds: formState.assigneeIds,
                 phase: TaskPhase.Backlog,
                 priority: formState.priority,
                 storyPoints: Math.ceil(formState.estimatedHours / 4),
@@ -125,6 +125,7 @@ export const AddTaskDialog = ({ open, onOpenChange, members, sprintId, onAddTask
                 createdAt: now,
                 updatedAt: now,
                 tags: [],
+                workType: "Frontend",
             };
 
             onAddTask(newTask);
@@ -187,24 +188,63 @@ export const AddTaskDialog = ({ open, onOpenChange, members, sprintId, onAddTask
                                 <User className="h-4 w-4 text-text-muted" />
                                 {t("Assigned To")} <span className="text-error">*</span>
                             </Label>
-                            <Select value={formState.assigneeId} onValueChange={(v) => updateField("assigneeId", v)}>
-                                <SelectTrigger id="assignee" className="w-full">
-                                    <SelectValue placeholder={t("Select team member")} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {members.map((member) => (
-                                        <SelectItem key={member.id} value={member.id}>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs font-medium bg-muted rounded-full h-5 w-5 flex items-center justify-center">
+                            <div className="space-y-2">
+                                <div className="flex flex-wrap gap-2">
+                                    {formState.assigneeIds.map((id) => {
+                                        const member = members.find((m) => m.id === id);
+                                        return member ? (
+                                            <div
+                                                key={id}
+                                                className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5 text-sm"
+                                            >
+                                                <span className="text-xs font-medium bg-primary rounded-full h-5 w-5 flex items-center justify-center text-primary-foreground">
                                                     {member.avatar}
                                                 </span>
                                                 <span>{member.name}</span>
-                                                <span className="text-xs text-text-muted">({member.role})</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        updateField(
+                                                            "assigneeIds",
+                                                            formState.assigneeIds.filter((aid) => aid !== id)
+                                                        )
+                                                    }
+                                                    className="ml-1 text-text-muted hover:text-error transition-colors"
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </button>
                                             </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                        ) : null;
+                                    })}
+                                </div>
+                                <Select
+                                    value=""
+                                    onValueChange={(v) => {
+                                        if (!formState.assigneeIds.includes(v)) {
+                                            updateField("assigneeIds", [...formState.assigneeIds, v]);
+                                        }
+                                    }}
+                                >
+                                    <SelectTrigger id="assignee" className="w-full">
+                                        <SelectValue placeholder={t("Add team member")} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {members
+                                            .filter((m) => !formState.assigneeIds.includes(m.id))
+                                            .map((member) => (
+                                                <SelectItem key={member.id} value={member.id}>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-medium bg-muted rounded-full h-5 w-5 flex items-center justify-center">
+                                                            {member.avatar}
+                                                        </span>
+                                                        <span>{member.name}</span>
+                                                        <span className="text-xs text-text-muted">({member.role})</span>
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
 
                         <div className="space-y-2">

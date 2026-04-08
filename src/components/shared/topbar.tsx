@@ -1,14 +1,13 @@
-import { Bell, Globe, HelpCircle, LogOut, Moon, Settings, Sun, User } from "lucide-react";
+import { Bell, Flag, Globe, HelpCircle, LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/atoms";
 import { routesData } from "@/data";
-import { useAuth, useTheme, t, useSettings } from "@/hooks";
-import { useRedFlagStore, useSprintStore } from "@/store";
-import { useAlertStore, useSprintStore } from "@/store";
 import { useAuth, useTheme, t, useSettings, usePresence, type PresenceStatus } from "@/hooks";
-import { useSprintStore } from "@/store";
+import { useRedFlagStore, useSprintStore, useAlertStore } from "@/store";
+import { storageKeys, getStorageItem } from "@/utils";
+import type { SprintInterface } from "@/interfaces";
 import { MobileNav } from "./mobile-nav";
 import {
     Avatar,
@@ -28,22 +27,6 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/ui";
-import { storageKeys, getStorageItem } from "@/utils";
-import type { SprintInterface } from "@/interfaces";
-
-const roleLabels: Record<string, string> = {
-    ceo: "CEO",
-    cto: "CTO",
-    senior_frontend_engineer: "Sr. Frontend Engineer",
-    frontend_engineer: "Frontend Engineer",
-    senior_backend_engineer: "Sr. Backend Engineer",
-    ai_engineer: "AI Engineer",
-    quality_control: "Quality Control",
-    project_manager: "Project Manager",
-    hr_manager: "HR Manager",
-    data_analyst: "Data Analyst",
-    uiux_designer: "UI/UX Designer",
-};
 
 const presenceConfig: Record<PresenceStatus, { label: string; dot: string }> = {
     active:  { label: "Active",  dot: "bg-success" },
@@ -56,29 +39,25 @@ export const Topbar = () => {
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings, updateSettings] = useSettings();
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
-    const { flags, load } = useRedFlagStore();
-    const { alerts, load } = useAlertStore();
+    const { flags, load: loadFlags } = useRedFlagStore();
+    const { alerts, load: loadAlerts } = useAlertStore();
     const sprints = getStorageItem<SprintInterface[]>(storageKeys.sprints) ?? [];
     const navigate = useNavigate();
     const { status, updateStatus } = usePresence(user?.id);
 
-    useEffect(() => { load(); }, [load]);
-
-    useEffect(() => { load(); }, [load]);
+    useEffect(() => { loadFlags(); }, [loadFlags]);
+    useEffect(() => { loadAlerts(); }, [loadAlerts]);
 
     const isArabic = settings.language === "ar";
     const redFlagCount = flags.filter((f) => f.sprintId === activeSprintId).length;
 
     const toggleLanguage = () => { updateSettings({ language: isArabic ? "en" : "ar" }); };
 
-    // Count pending alerts for this sprint (not fully acknowledged)
     const pendingAlertCount = alerts.filter((a) => {
         if (a.sprintId !== activeSprintId) return false;
-        // only count if current user is mentioned or it's for everyone
         if (a.mentionedIds.length > 0 && !a.mentionedIds.includes(user?.id ?? "")) return false;
         return !a.resolvedByIds.includes(user?.id ?? "");
     }).length;
-    const toggleLanguage = () => { updateSettings({ language: isArabic ? "en" : "ar" }); };
 
     return (
         <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between border-b border-border bg-surface/80 backdrop-blur-sm px-3 sm:px-6">
@@ -119,6 +98,9 @@ export const Topbar = () => {
                                 </button>
                             </TooltipTrigger>
                             <TooltipContent>{t("View all red flags for this sprint")}</TooltipContent>
+                        </Tooltip>
+                    )}
+
                     {/* Alerts indicator */}
                     {pendingAlertCount > 0 && (
                         <Tooltip>
@@ -187,7 +169,6 @@ export const Topbar = () => {
                         </div>
                         <DropdownMenuSeparator />
 
-                        {/* Presence status options */}
                         {(["active", "away", "offline"] as PresenceStatus[]).map((s) => (
                             <DropdownMenuItem key={s} onClick={() => updateStatus(s)} className="gap-2 cursor-pointer">
                                 <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${presenceConfig[s].dot}`} />
@@ -198,15 +179,15 @@ export const Topbar = () => {
 
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuItem onClick={() => navigate(routesData.profile.path)} className="gap-2 cursor-pointer">
+                        <DropdownMenuItem onClick={() => navigate(routesData.profile)} className="gap-2 cursor-pointer">
                             <User className="h-4 w-4" />
                             {t("My Profile")}
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(routesData.settings.path)} className="gap-2 cursor-pointer">
+                        <DropdownMenuItem onClick={() => navigate(routesData.settings)} className="gap-2 cursor-pointer">
                             <Settings className="h-4 w-4" />
                             {t("Settings")}
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(routesData.reports.path)} className="gap-2 cursor-pointer">
+                        <DropdownMenuItem onClick={() => navigate(routesData.reports)} className="gap-2 cursor-pointer">
                             <HelpCircle className="h-4 w-4" />
                             {t("Help & Reports")}
                         </DropdownMenuItem>

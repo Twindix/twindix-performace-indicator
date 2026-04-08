@@ -11,7 +11,7 @@ export interface AttachmentInterface {
 export interface AddTaskFormState {
     title: string;
     description: string;
-    assigneeId: string;
+    assigneeIds: string[];
     priority: TaskPriority;
     estimatedHours: number;
     attachments: AttachmentInterface[];

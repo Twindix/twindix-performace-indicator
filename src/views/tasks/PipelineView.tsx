@@ -1,6 +1,6 @@
-import { Circle, Clock, AlertCircle } from "lucide-react";
+import { Circle, AlertCircle, Clock } from "lucide-react";
 import { Badge } from "@/atoms";
-import { TaskPhase, TaskPriority } from "@/enums";
+import { TaskPriority } from "@/enums";
 import type { TaskInterface, UserInterface } from "@/interfaces";
 import { t } from "@/hooks";
 import { cn } from "@/utils";
@@ -72,7 +72,8 @@ export const PipelineView = ({
                         {/* Task List */}
                         <div className="flex-1 p-3 overflow-y-auto space-y-3 bg-muted/20">
                             {columnTasks.map((task) => {
-                                const assignee = members.find((m) => m.id === task.assigneeId);
+                                const assignees = task.assigneeIds.map(id => members.find((m) => m.id === id)).filter(Boolean);
+                                const assignee = assignees[0]; // Use first assignee for display
                                 const progressIndex = PHASE_INDEX[task.phase];
                                 const maxStages = 5; // Backlog is 0, Done is 5
 
@@ -124,27 +125,6 @@ export const PipelineView = ({
                                             )}
                                         </div>
 
-                                        {/* Multi-stage Progress Bar */}
-                                        <div className="flex items-center gap-1 w-full mb-3">
-                                            {[...Array(maxStages)].map((_, idx) => {
-                                                const filled = idx < progressIndex;
-                                                return (
-                                                    <div
-                                                        key={idx}
-                                                        className={cn(
-                                                            "h-1.5 flex-1 rounded-full",
-                                                            filled ?
-                                                                (type === "Design" ? "bg-purple-500" :
-                                                                    type === "Frontend" ? "bg-blue-500" :
-                                                                        type === "Backend" ? "bg-green-500" :
-                                                                            type === "QA" ? "bg-yellow-500" : "bg-primary")
-                                                                : "bg-border"
-                                                        )}
-                                                    />
-                                                );
-                                            })}
-                                        </div>
-
                                         <div className="flex items-center justify-between mt-auto">
                                             {assignee ? (
                                                 <div className="flex items-center gap-2">
@@ -160,11 +140,6 @@ export const PipelineView = ({
                                                     {progressIndex}/{maxStages} stages
                                                 </span>
                                             )}
-
-                                            <span className="text-[10px] text-text-muted flex items-center gap-1 font-medium">
-                                                <Clock className="w-3 h-3" />
-                                                {new Date(task.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric' })}
-                                            </span>
                                         </div>
                                     </div>
                                 );

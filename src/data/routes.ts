@@ -14,6 +14,7 @@ export const routesData = {
     userDetail: "/users/:userId",
     commentsLog: "/comments-log",
     redFlags: "/red-flags",
+    alerts: "/alerts",
     profile: "/profile",
     settings: "/settings",
 } as const;

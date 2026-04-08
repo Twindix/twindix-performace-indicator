@@ -1,16 +1,17 @@
-import { ShieldCheck, Lock, CheckCircle2, AlertCircle } from "lucide-react";
-import { Badge, Button } from "@/atoms";
+import { useState, useEffect } from "react";
+import { ShieldCheck, Lock, CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import { Badge, Button, Input } from "@/atoms";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
 import { cn } from "@/utils";
 import { t } from "@/hooks";
 import type { TaskInterface } from "@/interfaces";
 import type { TaskPhase } from "@/enums";
-import { 
-    PHASE_INDEX, 
-    PRIORITY_VARIANT, 
-    phaseLabel, 
-    capitalize, 
-    type TransitionResult 
+import {
+    PHASE_INDEX,
+    PRIORITY_VARIANT,
+    phaseLabel,
+    capitalize,
+    type TransitionResult,
 } from "../../data/seed/constants";
 
 interface TransitionDialogProps {
@@ -19,13 +20,35 @@ interface TransitionDialogProps {
     task: TaskInterface | null;
     targetPhase: TaskPhase | null;
     transitionResult: TransitionResult | null;
-    onConfirm: () => void;
+    onConfirm: (payload?: { loggedHours?: number; note?: string }) => void;
+    isAssignee?: boolean;
 }
 
-export const TransitionDialog = ({ open, onOpenChange, task, targetPhase, transitionResult, onConfirm }: TransitionDialogProps) => {
+export const TransitionDialog = ({
+    open,
+    onOpenChange,
+    task,
+    targetPhase,
+    transitionResult,
+    onConfirm,
+    isAssignee = false,
+}: TransitionDialogProps) => {
+    const [hours, setHours] = useState("");
+    const [note, setNote] = useState("");
+
+    useEffect(() => {
+        if (open) { setHours(""); setNote(""); }
+    }, [open]);
+
     if (!task || !targetPhase || !transitionResult) return null;
 
     const isBackward = PHASE_INDEX[targetPhase] < PHASE_INDEX[task.phase];
+    const showTimeInput = isAssignee && transitionResult.allowed && !isBackward;
+
+    const handleConfirm = () => {
+        const h = parseFloat(hours);
+        onConfirm(showTimeInput && !isNaN(h) && h > 0 ? { loggedHours: h, note: note.trim() } : undefined);
+    };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -73,16 +96,44 @@ export const TransitionDialog = ({ open, onOpenChange, task, targetPhase, transi
                     </div>
                 )}
 
-                {/* Reason / status message */}
+                {/* Reason */}
                 <p className={cn("text-sm mt-4 p-3 rounded-lg", transitionResult.allowed ? "bg-success-light/30 text-success" : "bg-error-light/30 text-error")}>
                     {transitionResult.reason}
                 </p>
+
+                {/* Time input — only for assignee on forward moves */}
+                {showTimeInput && (
+                    <div className="mt-4 p-4 rounded-xl bg-muted border border-border space-y-3">
+                        <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-text-muted" />
+                            <p className="text-sm font-semibold text-text-dark">{t("Log Time Spent")}</p>
+                        </div>
+                        <p className="text-xs text-text-muted">{t("How many hours did you work on this phase?")}</p>
+                        <div className="flex gap-2">
+                            <Input
+                                type="number"
+                                min="0.5"
+                                step="0.5"
+                                placeholder={t("e.g. 4.5")}
+                                value={hours}
+                                onChange={(e) => setHours(e.target.value)}
+                                className="w-28 bg-surface"
+                            />
+                            <Input
+                                placeholder={t("Note (optional)")}
+                                value={note}
+                                onChange={(e) => setNote(e.target.value)}
+                                className="flex-1 bg-surface"
+                            />
+                        </div>
+                    </div>
+                )}
 
                 {/* Actions */}
                 <div className="flex justify-end gap-2 mt-4">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>{t("Cancel")}</Button>
                     {transitionResult.allowed && (
-                        <Button onClick={onConfirm}>
+                        <Button onClick={handleConfirm}>
                             {isBackward ? t("Move Back") : t("Move Forward")}
                         </Button>
                     )}

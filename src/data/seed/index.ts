@@ -11,11 +11,7 @@ import { seedWorkload } from "./workload";
 import { seedOwnership } from "./ownership";
 import { seedHandoffs } from "./handoffs";
 import { seedComments } from "./comments";
-
-const SEED_VERSION = 5;
 import { seedRedFlags } from "./red-flags";
-
-const SEED_VERSION = 6;
 import { seedAlerts } from "./alerts";
 
 const SEED_VERSION = 7;

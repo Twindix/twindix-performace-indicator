@@ -1,5 +1,5 @@
 import type { DragEvent } from "react";
-import { Circle, GripVertical, Lock, ShieldCheck } from "lucide-react";
+import { Circle, GripVertical, Lock } from "lucide-react";
 
 import { Badge } from "@/atoms";
 import { TaskPhase } from "@/enums";
@@ -72,7 +72,8 @@ export const BoardView = ({
                             )}
 
                             {columnTasks.map((task) => {
-                                const assignee = members.find((m) => m.id === task.assigneeId);
+                                const assignees = task.assigneeIds.map(id => members.find((m) => m.id === id)).filter(Boolean);
+                                const assignee = assignees[0]; // Use first assignee for display
 
                                 return (
                                     <div
@@ -120,8 +121,7 @@ export const BoardView = ({
                                             ))}
                                         </div>
 
-                                        <div className="flex items-center justify-between mt-auto">
-                                            <div className="flex items-center gap-1.5">
+                                        <div className="flex items-center gap-1.5">
                                                 <Badge variant={PRIORITY_VARIANT[task.priority]} className="text-[9px] px-1.5 py-0.5 rounded shadow-sm relative z-30">
                                                     {t(task.priority.charAt(0).toUpperCase() + task.priority.slice(1))}
                                                 </Badge>
@@ -131,24 +131,6 @@ export const BoardView = ({
                                                     </span>
                                                 )}
                                             </div>
-
-                                            <div className="relative shrink-0 w-[24px] h-[24px]">
-                                                <svg width="24" height="24" className="absolute inset-0 -rotate-90">
-                                                    <circle cx="12" cy="12" r="10.5" fill="none" stroke="var(--raw-border)" strokeWidth="3" />
-                                                    <circle
-                                                        cx="12" cy="12" r="10.5" fill="none"
-                                                        stroke={task.readinessScore >= 80 ? "var(--raw-success)" : task.readinessScore >= 60 ? "var(--raw-warning)" : "var(--raw-error)"}
-                                                        strokeWidth="3"
-                                                        strokeDasharray={2 * Math.PI * 10.5}
-                                                        strokeDashoffset={(2 * Math.PI * 10.5) - ((task.readinessScore / 100) * (2 * Math.PI * 10.5))}
-                                                        strokeLinecap="round"
-                                                    />
-                                                </svg>
-                                                {task.readinessScore === 100 && (
-                                                    <ShieldCheck className="h-3 w-3 text-success absolute inset-0 m-auto" />
-                                                )}
-                                            </div>
-                                        </div>
                                     </div>
                                 );
                             })}
