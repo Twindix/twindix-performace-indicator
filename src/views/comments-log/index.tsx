@@ -7,7 +7,7 @@ import { CommentsLogSkeleton } from "@/components/skeletons";
 import { t, useSettings, usePageLoader } from "@/hooks";
 import type { CommentInterface, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
-import { Avatar, AvatarFallback, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
+import { Avatar, AvatarFallback, Dialog, DialogContent, DialogHeader, DialogTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 import { cn, formatDate, formatDateTime, getStorageItem, storageKeys } from "@/utils";
 
 export const CommentsLogView = () => {
@@ -27,6 +27,7 @@ export const CommentsLogView = () => {
     const [responseFilter, setResponseFilter] = useState<string>("all");
     const [fromDate, setFromDate] = useState<string>("");
     const [toDate, setToDate] = useState<string>("");
+    const [viewTarget, setViewTarget] = useState<CommentInterface | null>(null);
 
     const stats = useMemo(() => ({
         total: comments.length,
@@ -190,7 +191,7 @@ export const CommentsLogView = () => {
                         const responder = getMember(comment.responderId);
 
                         return (
-                            <Card key={comment.id}>
+                            <Card key={comment.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setViewTarget(comment)}>
                                 <CardContent className="p-4">
                                     {/* Task label */}
                                     <div className="flex items-center gap-2 mb-2">
@@ -256,6 +257,82 @@ export const CommentsLogView = () => {
                     })}
                 </div>
             )}
+
+            {/* Details Dialog */}
+            <Dialog open={!!viewTarget} onOpenChange={(o) => !o && setViewTarget(null)}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <MessageCircle className="h-5 w-5 text-primary" />
+                            {t("Comment Details")}
+                        </DialogTitle>
+                    </DialogHeader>
+                    {viewTarget && (() => {
+                        const author = getMember(viewTarget.authorId);
+                        const mentioned = getMember(viewTarget.mentionedId);
+                        const responder = getMember(viewTarget.responderId);
+                        return (
+                            <div className="flex flex-col gap-4 py-2">
+                                {/* Task */}
+                                <div>
+                                    <p className="text-xs font-medium text-text-muted mb-1">{t("Task")}</p>
+                                    <Badge variant="outline" className="text-xs font-normal">{viewTarget.taskTitle}</Badge>
+                                </div>
+
+                                {/* Content */}
+                                <div>
+                                    <p className="text-xs font-medium text-text-muted mb-1">{t("Comment")}</p>
+                                    <p className="text-sm text-text-dark">{viewTarget.content}</p>
+                                </div>
+
+                                {/* Author + mention */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-xs font-medium text-text-muted mb-1.5">{t("Written by")}</p>
+                                        <div className="flex items-center gap-2">
+                                            <Avatar className="h-6 w-6"><AvatarFallback className="text-[9px]">{author?.avatar}</AvatarFallback></Avatar>
+                                            <span className="text-sm text-text-secondary">{author?.name ?? t("Unknown")}</span>
+                                        </div>
+                                    </div>
+                                    {mentioned && (
+                                        <div>
+                                            <p className="text-xs font-medium text-text-muted mb-1.5">{t("Mentioned")}</p>
+                                            <div className="flex items-center gap-2">
+                                                <AtSign className="h-4 w-4 text-primary" />
+                                                <Avatar className="h-6 w-6"><AvatarFallback className="text-[9px]">{mentioned.avatar}</AvatarFallback></Avatar>
+                                                <span className="text-sm text-primary font-medium">{mentioned.name}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Time + response */}
+                                <div className="grid grid-cols-2 gap-4 border-t border-border pt-3">
+                                    <div>
+                                        <p className="text-xs font-medium text-text-muted mb-1">{t("Posted")}</p>
+                                        <p className="text-sm text-text-secondary">{formatDateTime(viewTarget.createdAt)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-medium text-text-muted mb-1">{t("Response")}</p>
+                                        {viewTarget.hasResponse ? (
+                                            <div className="flex flex-col gap-0.5">
+                                                <div className="flex items-center gap-1 text-success">
+                                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                                    <span className="text-xs font-medium">{t("Responded")}</span>
+                                                </div>
+                                                {responder && <span className="text-xs text-text-muted">{t("by")} {responder.name}</span>}
+                                                {viewTarget.responseAt && <span className="text-xs text-text-muted">{formatDate(viewTarget.responseAt)}</span>}
+                                            </div>
+                                        ) : (
+                                            <Badge variant="warning" className="text-xs">{t("No Response")}</Badge>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
