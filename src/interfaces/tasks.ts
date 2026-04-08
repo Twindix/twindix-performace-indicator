@@ -58,4 +58,5 @@ export interface TaskInterface {
     attachments?: TaskAttachmentInterface[];
     comments?: TaskCommentInterface[];
     timeLogs?: TaskTimeLogInterface[];
+    workType: "Design" | "Frontend" | "Backend" | "QA" | "Done";
 }

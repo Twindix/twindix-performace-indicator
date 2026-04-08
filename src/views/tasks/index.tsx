@@ -1,8 +1,6 @@
 import { useState, useMemo, useCallback, useRef, type DragEvent } from "react";
 import React from "react";
 import {
-    AlertCircle,
-    ArrowLeft,
     ArrowRight,
     AtSign,
     Check,
@@ -38,20 +36,15 @@ import type {
     TaskCommentInterface,
     TaskTimeLogInterface,
     ReadinessChecklistInterface,
+import { TaskPhase } from "@/enums";
+import type {
+    TaskInterface,
     UserInterface,
     BlockerInterface,
 } from "@/interfaces";
 import { t, useSettings, usePageLoader } from "@/hooks";
 import { useSprintStore } from "@/store";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    Checkbox,
-    Avatar,
-    AvatarFallback,
     Select,
     SelectTrigger,
     SelectContent,
@@ -1042,48 +1035,22 @@ interface KanbanColumnProps {
 
 const KanbanColumn = ({ phase, label, tasks, members, onTaskClick, onDragStart, onDrop, isDragOver, onDragOver, onDragEnter, onDragLeave }: KanbanColumnProps) => {
     const getMember = (id: string) => members.find((m) => m.id === id);
+import { cn, getStorageItem, setStorageItem, storageKeys } from "@/utils";
+import {
+    COLUMNS,
+    COLUMN_COLORS,
+    capitalize,
+    phaseLabel,
+    inferWorkType,
+    checkTransition,
+    type TransitionResult,
+} from "../../data/seed/constants";
+import { BoardView } from "./BoardView";
+import { PipelineView } from "./PipelineView";
+import { TaskDetailDialog } from "./TaskDetailDialog";
+import { TransitionDialog } from "./TransitionDialog";
 
-    return (
-        <div className="flex flex-col min-w-[290px] w-[290px] lg:flex-1 lg:min-w-0">
-            {/* Column header */}
-            <div className="flex items-center gap-2 mb-3 px-1">
-                <div className={cn("h-2.5 w-2.5 rounded-full", COLUMN_COLORS[phase])} />
-                <h3 className="text-sm font-semibold text-text-dark">{t(label)}</h3>
-                <span className="flex items-center justify-center h-6 min-w-6 rounded-full bg-muted px-2 text-[11px] font-bold text-text-muted">{tasks.length}</span>
-            </div>
 
-            {/* Drop zone */}
-            <div
-                onDragOver={onDragOver}
-                onDragEnter={(e) => onDragEnter(e, phase)}
-                onDragLeave={onDragLeave}
-                onDrop={(e) => onDrop(e, phase)}
-                className={cn(
-                    "flex flex-col gap-3 flex-1 rounded-xl p-3 min-h-[120px] transition-all duration-200",
-                    isDragOver
-                        ? "border-2 border-dashed border-primary bg-primary-lighter/30"
-                        : "bg-muted/30 border border-border/30",
-                )}
-            >
-                {tasks.length === 0 ? (
-                    <div className={cn("flex flex-col items-center justify-center h-full py-8 transition-opacity", isDragOver ? "opacity-100" : "opacity-60")}>
-                        <p className="text-xs text-text-muted">{isDragOver ? t("Drop here") : t("No tasks")}</p>
-                    </div>
-                ) : (
-                    tasks.map((task) => (
-                        <TaskCard
-                            key={task.id}
-                            task={task}
-                            member={getMember(task.assigneeId)}
-                            onClick={() => onTaskClick(task)}
-                            onDragStart={onDragStart}
-                        />
-                    ))
-                )}
-            </div>
-        </div>
-    );
-};
 
 /* -------------------------------------------------------------------------- */
 /*  Main View                                                                  */
@@ -1094,8 +1061,16 @@ export const TasksView = () => {
     useSettings();
     const { activeSprintId } = useSprintStore();
 
-    // Read tasks from localStorage so we can update them
-    const [allTasks, setAllTasks] = useState<TaskInterface[]>(() => getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? []);
+    // Initialise tasks — migrate any legacy items missing workType in the initialiser itself (no useEffect needed)
+    const [allTasks, setAllTasks] = useState<TaskInterface[]>(() => {
+        const stored = getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? [];
+        const hasMissing = stored.some((t) => !t.workType);
+        if (!hasMissing) return stored;
+        const migrated = stored.map((t) => t.workType ? t : { ...t, workType: inferWorkType(t.tags) });
+        setStorageItem(storageKeys.tasks, migrated);
+        return migrated;
+    });
+
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
     const blockers = getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? [];
 
@@ -1104,41 +1079,60 @@ export const TasksView = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [priorityFilter, setPriorityFilter] = useState<string>("all");
     const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
+    const [viewMode, setViewMode] = useState<"board" | "pipeline">("board");
 
-    // Drag-and-drop state
     const [draggedTask, setDraggedTask] = useState<TaskInterface | null>(null);
     const [dragOverPhase, setDragOverPhase] = useState<TaskPhase | null>(null);
 
-    // Transition dialog state
     const [transitionDialogOpen, setTransitionDialogOpen] = useState(false);
     const [transitionTask, setTransitionTask] = useState<TaskInterface | null>(null);
     const [transitionTarget, setTransitionTarget] = useState<TaskPhase | null>(null);
     const [transitionResult, setTransitionResult] = useState<TransitionResult | null>(null);
 
-    const sprintTasks = useMemo(() => allTasks.filter((t) => t.sprintId === activeSprintId), [allTasks, activeSprintId]);
+    // ── Derived data ──────────────────────────────────────────────────────────
+
+    const sprintTasks = useMemo(
+        () => allTasks.filter((t) => t.sprintId === activeSprintId),
+        [allTasks, activeSprintId],
+    );
 
     const filteredTasks = useMemo(() => {
-        let result = sprintTasks;
-        if (searchQuery.trim()) {
-            const q = searchQuery.toLowerCase();
-            result = result.filter((t) => t.title.toLowerCase().includes(q) || t.tags.some((tag) => tag.toLowerCase().includes(q)));
-        }
-        if (priorityFilter !== "all") result = result.filter((t) => t.priority === priorityFilter);
-        if (assigneeFilter !== "all") result = result.filter((t) => t.assigneeId === assigneeFilter);
-        return result;
+        const q = searchQuery.toLowerCase().trim();
+        return sprintTasks.filter((t) =>
+            (!q || t.title.toLowerCase().includes(q) || t.tags.some((tag) => tag.toLowerCase().includes(q))) &&
+            (priorityFilter === "all" || t.priority === priorityFilter) &&
+            (assigneeFilter === "all" || t.assigneeId === assigneeFilter),
+        );
     }, [sprintTasks, searchQuery, priorityFilter, assigneeFilter]);
 
     const tasksByPhase = useMemo(() => {
         const map = new Map<TaskPhase, TaskInterface[]>();
         for (const col of COLUMNS) map.set(col.phase, []);
-        for (const task of filteredTasks) {
-            const list = map.get(task.phase);
-            if (list) list.push(task);
-        }
+        for (const task of filteredTasks) map.get(task.phase)?.push(task);
         return map;
     }, [filteredTasks]);
 
-    // Persist task changes to localStorage
+    const selectedBlocker = useMemo(
+        () => blockers.find((b) => b.id === selectedTask?.blockerId),
+        [selectedTask, blockers],
+    );
+
+    const selectedMember = useMemo(
+        () => members.find((m) => m.id === selectedTask?.assigneeId),
+        [selectedTask, members],
+    );
+
+    const sprintAssigneeIds = useMemo(
+        () => [...new Set(sprintTasks.map((t) => t.assigneeId))],
+        [sprintTasks],
+    );
+
+    const totalPoints = sprintTasks.reduce((sum, t) => sum + t.storyPoints, 0);
+    const donePoints  = sprintTasks.filter((t) => t.phase === COLUMNS[COLUMNS.length - 1].phase).reduce((sum, t) => sum + t.storyPoints, 0);
+    const blockedCount = sprintTasks.filter((t) => t.hasBlocker).length;
+
+    // ── Mutations ─────────────────────────────────────────────────────────────
+
     const updateTasks = useCallback((updater: (prev: TaskInterface[]) => TaskInterface[]) => {
         setAllTasks((prev) => {
             const next = updater(prev);
@@ -1151,16 +1145,19 @@ export const TasksView = () => {
     const moveTask = useCallback((taskId: string, newPhase: TaskPhase, extraProps?: Partial<TaskInterface>) => {
         updateTasks((prev) => prev.map((t) =>
             t.id === taskId ? { ...t, phase: newPhase, updatedAt: new Date().toISOString().split("T")[0], ...extraProps } : t,
+    const updateTaskField = useCallback((taskId: string, field: keyof TaskInterface, value: any) => {
+        updateTasks((prev) => prev.map((t) =>
+            t.id === taskId ? { ...t, [field]: value, updatedAt: new Date().toISOString().split("T")[0] } : t,
         ));
     }, [updateTasks]);
 
-    // Request a transition (opens confirmation dialog with gate check)
+    // ── Transition flow ───────────────────────────────────────────────────────
+
     const requestTransition = useCallback((task: TaskInterface, targetPhase: TaskPhase) => {
         if (task.phase === targetPhase) return;
-        const result = checkTransition(task, task.phase, targetPhase, blockers);
         setTransitionTask(task);
         setTransitionTarget(targetPhase);
-        setTransitionResult(result);
+        setTransitionResult(checkTransition(task, targetPhase, blockers));
         setTransitionDialogOpen(true);
     }, [blockers]);
 
@@ -1186,46 +1183,30 @@ export const TasksView = () => {
         }
 
         moveTask(transitionTask.id, transitionTarget, extraProps);
+    const confirmTransition = useCallback(() => {
+        if (!transitionTask || !transitionTarget) return;
+        updateTaskField(transitionTask.id, "phase", transitionTarget);
+        toast.success(`${t("Task moved")}: ${t(phaseLabel(transitionTask.phase))} → ${t(phaseLabel(transitionTarget))}`, {
+            description: transitionTask.title,
+        });
         setTransitionDialogOpen(false);
         setTransitionTask(null);
         setTransitionTarget(null);
         setTransitionResult(null);
+    }, [transitionTask, transitionTarget, updateTaskField, t]);
 
-        toast.success(`${t("Task")} moved: ${t(fromLabel ?? "")} → ${t(toLabel ?? "")}`, {
-            description: transitionTask.title,
-        });
-    }, [transitionTask, transitionTarget, moveTask]);
+    // ── Drag handlers ─────────────────────────────────────────────────────────
 
-    // Drag handlers
-    const handleDragStart = useCallback((_e: DragEvent<HTMLDivElement>, task: TaskInterface) => {
-        setDraggedTask(task);
+    const handleDragStart  = useCallback((_e: DragEvent<HTMLDivElement>, task: TaskInterface) => setDraggedTask(task), []);
+    const handleDragOver   = useCallback((e: DragEvent<HTMLDivElement>) => e.preventDefault(), []);
+    const handleDragEnter  = useCallback((_e: DragEvent<HTMLDivElement>, phase: TaskPhase) => setDragOverPhase(phase), []);
+    const handleDragLeave  = useCallback((e: DragEvent<HTMLDivElement>) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverPhase(null);
     }, []);
-
-    const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-    }, []);
-
-    const handleDragEnter = useCallback((_e: DragEvent<HTMLDivElement>, phase: TaskPhase) => {
-        setDragOverPhase(phase);
-    }, []);
-
-    const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
-        // Only clear if leaving the column entirely (not entering a child)
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-            setDragOverPhase(null);
-        }
-    }, []);
-
     const handleDrop = useCallback((e: DragEvent<HTMLDivElement>, targetPhase: TaskPhase) => {
         e.preventDefault();
         setDragOverPhase(null);
-
-        if (!draggedTask || draggedTask.phase === targetPhase) {
-            setDraggedTask(null);
-            return;
-        }
-
-        requestTransition(draggedTask, targetPhase);
+        if (draggedTask && draggedTask.phase !== targetPhase) requestTransition(draggedTask, targetPhase);
         setDraggedTask(null);
     }, [draggedTask, requestTransition]);
 
@@ -1264,6 +1245,7 @@ export const TasksView = () => {
     const totalPoints = sprintTasks.reduce((sum, t) => sum + t.storyPoints, 0);
     const donePoints = sprintTasks.filter((t) => t.phase === TaskPhase.Done).reduce((sum, t) => sum + t.storyPoints, 0);
     const blockedCount = sprintTasks.filter((t) => t.hasBlocker).length;
+    // ── Render ────────────────────────────────────────────────────────────────
 
     if (isLoading) return <TasksSkeleton />;
 
@@ -1301,10 +1283,9 @@ export const TasksView = () => {
                                 <SelectTrigger className="w-full sm:w-[140px] h-9 text-xs sm:text-sm"><SelectValue placeholder={t("Priority")} /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">{t("All Priorities")}</SelectItem>
-                                    <SelectItem value={TaskPriority.Critical}>{t("Critical")}</SelectItem>
-                                    <SelectItem value={TaskPriority.High}>{t("High")}</SelectItem>
-                                    <SelectItem value={TaskPriority.Medium}>{t("Medium")}</SelectItem>
-                                    <SelectItem value={TaskPriority.Low}>{t("Low")}</SelectItem>
+                                    {(["critical", "high", "medium", "low"] as const).map((p) => (
+                                        <SelectItem key={p} value={p}>{t(capitalize(p))}</SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                             <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
@@ -1317,6 +1298,15 @@ export const TasksView = () => {
                                     })}
                                 </SelectContent>
                             </Select>
+                        </div>
+
+                        <div className="flex items-center bg-muted p-1 rounded-lg ml-auto">
+                            <Button variant={viewMode === "board" ? "default" : "ghost"} size="sm" onClick={() => setViewMode("board")} className="h-7 text-xs px-3">
+                                {t("Kanban")}
+                            </Button>
+                            <Button variant={viewMode === "pipeline" ? "default" : "ghost"} size="sm" onClick={() => setViewMode("pipeline")} className="h-7 text-xs px-3">
+                                {t("Pipeline")}
+                            </Button>
                         </div>
                     </div>
                 </CardContent>
@@ -1333,33 +1323,31 @@ export const TasksView = () => {
                 ))}
             </div>
 
-            {/* Kanban Board */}
-            {sprintTasks.length === 0 ? (
-                <EmptyState icon={ClipboardList} title={t("No tasks found")} description={t("No tasks assigned to the current sprint")} />
+            {filteredTasks.length === 0 ? (
+                <EmptyState icon={ClipboardList} title={t("No tasks found")} description={t("Try adjusting your filters or search query.")} />
+            ) : viewMode === "board" ? (
+                <BoardView
+                    tasksByPhase={tasksByPhase}
+                    members={members}
+                    draggedTask={draggedTask}
+                    dragOverPhase={dragOverPhase}
+                    handleDragStart={handleDragStart}
+                    handleDragOver={handleDragOver}
+                    handleDragEnter={handleDragEnter}
+                    handleDragLeave={handleDragLeave}
+                    handleDrop={handleDrop}
+                    setSelectedTask={setSelectedTask}
+                    setDialogOpen={setDialogOpen}
+                />
             ) : (
-                <div className="overflow-x-auto pb-4 -mx-2 px-2">
-                    <div className="flex gap-4 min-w-max lg:min-w-0">
-                        {COLUMNS.map(({ phase, label }) => (
-                            <KanbanColumn
-                                key={phase}
-                                phase={phase}
-                                label={label}
-                                tasks={tasksByPhase.get(phase) ?? []}
-                                members={members}
-                                onTaskClick={handleTaskClick}
-                                onDragStart={handleDragStart}
-                                onDrop={handleDrop}
-                                isDragOver={dragOverPhase === phase}
-                                onDragOver={handleDragOver}
-                                onDragEnter={handleDragEnter}
-                                onDragLeave={handleDragLeave}
-                            />
-                        ))}
-                    </div>
-                </div>
+                <PipelineView
+                    tasks={filteredTasks}
+                    members={members}
+                    setSelectedTask={setSelectedTask}
+                    setDialogOpen={setDialogOpen}
+                />
             )}
 
-            {/* Task Detail Dialog */}
             <TaskDetailDialog
                 task={selectedTask}
                 member={selectedMember}
@@ -1374,7 +1362,6 @@ export const TasksView = () => {
                 onUpdateTimeLogs={handleUpdateTimeLogs}
             />
 
-            {/* Phase Transition Confirmation Dialog */}
             <TransitionDialog
                 open={transitionDialogOpen}
                 onOpenChange={setTransitionDialogOpen}
