@@ -5,3 +5,4 @@ export { useSettings, t, defaultSettings, saveSettings, type AppSettings } from 
 export { useCountUp } from "./use-count-up";
 export { useOnlineStatus } from "./use-online-status";
 export { usePageLoader } from "./use-page-loader";
+export { usePresence, type PresenceStatus } from "./use-presence";
