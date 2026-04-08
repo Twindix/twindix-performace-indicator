@@ -67,13 +67,13 @@ export const UserDetailView = () => {
     // Sprint filter helper
     const inSprint = (sprintId: string) => sprintFilter === "all" || sprintId === sprintFilter;
 
-    const tasks     = useMemo(() => allTasks.filter((t) => t.assigneeIds.includes(userId ?? "") && inSprint(t.sprintId)), [allTasks, userId, sprintFilter]);
+    const tasks     = useMemo(() => allTasks.filter((t) => (t.assigneeIds ?? []).includes(userId ?? "") && inSprint(t.sprintId)), [allTasks, userId, sprintFilter]);
     const blockers  = useMemo(() => allBlockers.filter((b) => inSprint(b.sprintId)), [allBlockers, sprintFilter]);
     const comms     = useMemo(() => allComms.filter((c) => inSprint(c.sprintId)), [allComms, sprintFilter]);
     const workloads = useMemo(() => allWorkloads.filter((w) => w.memberId === userId && inSprint(w.sprintId)), [allWorkloads, userId, sprintFilter]);
     const handoffs  = useMemo(() => allHandoffs.filter((h) => {
         const task = allTasks.find((t) => t.id === h.taskId);
-        return task?.assigneeIds.includes(userId ?? "") && inSprint(h.sprintId);
+        return (task?.assigneeIds ?? []).includes(userId ?? "") && inSprint(h.sprintId);
     }), [allHandoffs, allTasks, userId, sprintFilter]);
 
     /* ── Task analytics ── */

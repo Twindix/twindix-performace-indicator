@@ -95,7 +95,7 @@ export const TasksView = () => {
             else result = result.filter((t) => t.phase === phaseFilter);
         }
         if (priorityFilter !== "all") result = result.filter((t) => t.priority === priorityFilter);
-        if (assigneeFilter !== "all") result = result.filter((t) => t.assigneeIds.includes(assigneeFilter));
+        if (assigneeFilter !== "all") result = result.filter((t) => (t.assigneeIds ?? []).includes(assigneeFilter));
         if (readinessFilter === "ready") result = result.filter((t) => t.readinessScore >= 70);
         if (readinessFilter === "not_ready") result = result.filter((t) => t.readinessScore < 70);
         if (typeFilter !== "all") result = result.filter((t) => (t.type ?? "feature") === typeFilter);
@@ -110,7 +110,7 @@ export const TasksView = () => {
     }, [filteredTasks]);
 
     const sprintAssigneeIds = useMemo(
-        () => [...new Set(sprintTasks.flatMap((t) => t.assigneeIds))],
+        () => [...new Set(sprintTasks.flatMap((t) => t.assigneeIds ?? []))],
         [sprintTasks],
     );
 
@@ -205,7 +205,7 @@ export const TasksView = () => {
     }, [selectedTask, blockers]);
 
     const selectedMember = useMemo(() => {
-        if (!selectedTask) return undefined;
+        if (!selectedTask || !selectedTask.assigneeIds || selectedTask.assigneeIds.length === 0) return undefined;
         return members.find((m) => m.id === selectedTask.assigneeIds[0]);
     }, [selectedTask, members]);
 
@@ -375,7 +375,7 @@ export const TasksView = () => {
                 task={transitionTask}
                 targetPhase={transitionTarget}
                 transitionResult={transitionResult}
-                isAssignee={transitionTask?.assigneeIds.includes(getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "") ?? false}
+                isAssignee={(transitionTask?.assigneeIds ?? []).includes(getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "")}
                 onConfirm={confirmTransition}
             />
 

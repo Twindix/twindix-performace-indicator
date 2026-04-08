@@ -16,7 +16,7 @@ interface Props {
 export const TaskTimeLogs = ({ task, members, onUpdateTimeLogs }: Props) => {
     const currentUserId = getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "";
     const authUser = members.find((m) => m.id === currentUserId);
-    const isAssignee = task.assigneeIds.includes(currentUserId);
+    const isAssignee = (task.assigneeIds ?? []).includes(currentUserId);
     const isManager = authUser?.role === UserRole.CEO || authUser?.role === UserRole.CTO || authUser?.role === UserRole.ProjectManager;
 
     if (!isAssignee && !isManager) return null;

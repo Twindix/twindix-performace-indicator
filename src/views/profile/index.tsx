@@ -29,7 +29,7 @@ export const ProfileView = () => {
     const { user } = useAuth();
     const { activeSprintId } = useSprintStore();
 
-    const tasks = (getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? []).filter((t) => t.sprintId === activeSprintId && t.assigneeIds.includes(user?.id ?? ""));
+    const tasks = (getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? []).filter((t) => t.sprintId === activeSprintId && (t.assigneeIds ?? []).includes(user?.id ?? ""));
     const workload = (getStorageItem<TeamMemberWorkloadInterface[]>(storageKeys.workload) ?? []).find((w) => w.sprintId === activeSprintId && w.memberId === user?.id);
     const allMetrics = getStorageItem<SprintMetricsInterface[]>(storageKeys.metrics) ?? [];
     const sprintMetrics = allMetrics.find((m) => m.sprintId === activeSprintId);

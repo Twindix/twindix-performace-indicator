@@ -72,7 +72,7 @@ export const PipelineView = ({
                         {/* Task List */}
                         <div className="flex-1 p-3 overflow-y-auto space-y-3 bg-muted/20">
                             {columnTasks.map((task) => {
-                                const assignees = task.assigneeIds.map(id => members.find((m) => m.id === id)).filter(Boolean);
+                                const assignees = (task.assigneeIds ?? []).map(id => members.find((m) => m.id === id)).filter(Boolean);
                                 const assignee = assignees[0]; // Use first assignee for display
                                 const progressIndex = PHASE_INDEX[task.phase];
                                 const maxStages = 5; // Backlog is 0, Done is 5

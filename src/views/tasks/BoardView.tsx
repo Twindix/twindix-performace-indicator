@@ -72,7 +72,7 @@ export const BoardView = ({
                             )}
 
                             {columnTasks.map((task) => {
-                                const assignees = task.assigneeIds.map(id => members.find((m) => m.id === id)).filter(Boolean);
+                                const assignees = (task.assigneeIds ?? []).map(id => members.find((m) => m.id === id)).filter(Boolean);
                                 const assignee = assignees[0]; // Use first assignee for display
 
                                 return (
