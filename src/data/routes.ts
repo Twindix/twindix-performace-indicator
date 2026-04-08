@@ -10,6 +10,8 @@ export const routesData = {
     analytics: "/analytics",
     ownership: "/ownership",
     handoffs: "/handoffs",
+    users: "/users",
+    userDetail: "/users/:userId",
     commentsLog: "/comments-log",
     redFlags: "/red-flags",
     profile: "/profile",

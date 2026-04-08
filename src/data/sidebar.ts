@@ -13,6 +13,7 @@ import {
     Settings,
     Shield,
     TrendingUp,
+    UserCog,
     Users,
 } from "lucide-react";
 
@@ -37,6 +38,7 @@ export const sidebarItems: SidebarItemInterface[] = [
     { label: "Analytics", path: routesData.analytics, icon: TrendingUp },
     { label: "Ownership", path: routesData.ownership, icon: Shield },
     { label: "Handoffs", path: routesData.handoffs, icon: GitBranch },
+    { label: "Users", path: routesData.users, icon: UserCog },
     { label: "Red Flags", path: routesData.redFlags, icon: Flag },
     { label: "Alerts", path: routesData.alerts, icon: Bell },
     { label: "Settings", path: routesData.settings, icon: Settings },

@@ -20,6 +20,8 @@ import {
     ServerErrorView,
     SettingsView,
     TasksView,
+    UserDetailView,
+    UsersView,
     WorkloadView,
 } from "@/views";
 
@@ -58,6 +60,8 @@ export const router = createBrowserRouter([
                             { path: routesData.analytics, element: <AnalyticsView /> },
                             { path: routesData.ownership, element: <OwnershipView /> },
                             { path: routesData.handoffs, element: <HandoffsView /> },
+                            { path: routesData.users, element: <UsersView /> },
+                            { path: routesData.userDetail, element: <UserDetailView /> },
                             { path: routesData.commentsLog, element: <CommentsLogView /> },
                             { path: routesData.redFlags, element: <RedFlagsView /> },
                             { path: routesData.alerts, element: <AlertsView /> },
