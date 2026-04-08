@@ -13,6 +13,7 @@ export const storageKeys = {
     metrics: `${PREFIX}metrics`,
     ownership: `${PREFIX}ownership`,
     handoffs: `${PREFIX}handoffs`,
+    comments: `${PREFIX}comments`,
     seeded: `${PREFIX}seeded`,
 } as const;
 

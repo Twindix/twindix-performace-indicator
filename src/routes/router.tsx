@@ -5,6 +5,7 @@ import { AuthLayout, DashboardLayout } from "@/layouts";
 import {
     AnalyticsView,
     BlockerView,
+    CommentsLogView,
     CommunicationView,
     DashboardView,
     DecisionsView,
@@ -55,6 +56,7 @@ export const router = createBrowserRouter([
                             { path: routesData.analytics, element: <AnalyticsView /> },
                             { path: routesData.ownership, element: <OwnershipView /> },
                             { path: routesData.handoffs, element: <HandoffsView /> },
+                            { path: routesData.commentsLog, element: <CommentsLogView /> },
                             { path: routesData.profile, element: <ProfileView /> },
                             { path: routesData.settings, element: <SettingsView /> },
                         ],

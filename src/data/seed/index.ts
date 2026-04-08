@@ -10,8 +10,9 @@ import { seedMetrics } from "./metrics";
 import { seedWorkload } from "./workload";
 import { seedOwnership } from "./ownership";
 import { seedHandoffs } from "./handoffs";
+import { seedComments } from "./comments";
 
-const SEED_VERSION = 3;
+const SEED_VERSION = 5;
 
 export const initializeSeedData = () => {
     const currentVersion = getStorageItem<number>(storageKeys.seeded);
@@ -27,6 +28,7 @@ export const initializeSeedData = () => {
     setStorageItem(storageKeys.workload, seedWorkload);
     setStorageItem(storageKeys.ownership, seedOwnership);
     setStorageItem(storageKeys.handoffs, seedHandoffs);
+    setStorageItem(storageKeys.comments, seedComments);
     setStorageItem(storageKeys.seeded, SEED_VERSION);
 };
 
@@ -40,3 +42,4 @@ export { seedMetrics } from "./metrics";
 export { seedWorkload } from "./workload";
 export { seedOwnership } from "./ownership";
 export { seedHandoffs } from "./handoffs";
+export { seedComments } from "./comments";

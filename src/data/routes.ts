@@ -10,6 +10,7 @@ export const routesData = {
     analytics: "/analytics",
     ownership: "/ownership",
     handoffs: "/handoffs",
+    commentsLog: "/comments-log",
     profile: "/profile",
     settings: "/settings",
 } as const;
