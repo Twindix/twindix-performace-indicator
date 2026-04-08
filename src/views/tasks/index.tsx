@@ -10,6 +10,7 @@ import {
     GripVertical,
     Layers,
     Lock,
+    Plus,
     Search,
     ShieldCheck,
     Tag,
@@ -45,6 +46,7 @@ import {
     SelectValue,
 } from "@/ui";
 import { cn, td, formatDate, getStorageItem, setStorageItem, storageKeys } from "@/utils";
+import { AddTaskDialog } from "./add-task-dialog";
 
 /* -------------------------------------------------------------------------- */
 /*  Constants                                                                  */
@@ -627,6 +629,7 @@ export const TasksView = () => {
 
     const [selectedTask, setSelectedTask] = useState<TaskInterface | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [addTaskDialogOpen, setAddTaskDialogOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [priorityFilter, setPriorityFilter] = useState<string>("all");
     const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
@@ -672,6 +675,10 @@ export const TasksView = () => {
             return next;
         });
     }, []);
+
+    const handleAddTask = useCallback((task: TaskInterface) => {
+        updateTasks((prev) => [...prev, task]);
+    }, [updateTasks]);
 
     // Move task to new phase
     const moveTask = useCallback((taskId: string, newPhase: TaskPhase) => {
@@ -814,6 +821,10 @@ export const TasksView = () => {
                                     })}
                                 </SelectContent>
                             </Select>
+                            <Button size="sm" className="gap-1.5 shrink-0" onClick={() => setAddTaskDialogOpen(true)}>
+                                <Plus className="h-4 w-4" />
+                                {t("Add Task")}
+                            </Button>
                         </div>
                     </div>
                 </CardContent>
@@ -874,6 +885,15 @@ export const TasksView = () => {
                 targetPhase={transitionTarget}
                 transitionResult={transitionResult}
                 onConfirm={confirmTransition}
+            />
+
+            {/* Add Task Dialog */}
+            <AddTaskDialog
+                open={addTaskDialogOpen}
+                onOpenChange={setAddTaskDialogOpen}
+                members={members}
+                sprintId={activeSprintId ?? ""}
+                onAddTask={handleAddTask}
             />
         </div>
     );
