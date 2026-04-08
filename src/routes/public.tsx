@@ -5,6 +5,6 @@ import { routesData } from "@/data";
 
 export const PublicRoute = () => {
     const { isAuthenticated } = useAuth();
-    if (isAuthenticated) return <Navigate to={routesData.dashboard} replace />;
+    if (isAuthenticated) return <Navigate to={routesData.dashboard.path} replace />;
     return <Outlet />;
 };
