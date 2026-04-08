@@ -22,7 +22,7 @@ export const LoginView = () => {
         setError("");
         const success = onLogin(email, password);
         if (success) {
-            navigate(routesData.dashboard);
+            navigate(routesData.dashboard.path);
         } else {
             setError(t("Invalid credentials. Please try again."));
         }

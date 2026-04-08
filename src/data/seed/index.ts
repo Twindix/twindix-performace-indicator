@@ -13,6 +13,9 @@ import { seedHandoffs } from "./handoffs";
 import { seedRedFlags } from "./red-flags";
 
 const SEED_VERSION = 6;
+import { seedAlerts } from "./alerts";
+
+const SEED_VERSION = 7;
 
 export const initializeSeedData = () => {
     const currentVersion = getStorageItem<number>(storageKeys.seeded);
@@ -29,6 +32,7 @@ export const initializeSeedData = () => {
     setStorageItem(storageKeys.ownership, seedOwnership);
     setStorageItem(storageKeys.handoffs, seedHandoffs);
     setStorageItem(storageKeys.redFlags, seedRedFlags);
+    setStorageItem(storageKeys.alerts, seedAlerts);
     setStorageItem(storageKeys.seeded, SEED_VERSION);
 };
 
@@ -43,3 +47,4 @@ export { seedWorkload } from "./workload";
 export { seedOwnership } from "./ownership";
 export { seedHandoffs } from "./handoffs";
 export { seedRedFlags } from "./red-flags";
+export { seedAlerts } from "./alerts";

@@ -184,6 +184,13 @@ body {
     40%       { transform: rotate(10deg); }
     60%       { transform: rotate(-8deg); }
     80%       { transform: rotate(6deg); }
+@keyframes bell-ring {
+    0%, 100% { transform: rotate(0deg); transform-origin: top center; }
+    10%       { transform: rotate(-18deg); }
+    20%       { transform: rotate(16deg); }
+    30%       { transform: rotate(-12deg); }
+    40%       { transform: rotate(10deg); }
+    50%       { transform: rotate(0deg); }
 }
 
 /* RTL support — force text alignment and fix hardcoded directions */

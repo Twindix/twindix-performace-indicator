@@ -1,6 +1,7 @@
 import {
     AlertTriangle,
     BarChart3,
+    Bell,
     BookOpen,
     Flag,
     GitBranch,
@@ -20,6 +21,7 @@ export interface SidebarItemInterface {
     label: string;
     path: string;
     icon: LucideIcon;
+    disabled?: boolean;
 }
 
 export const sidebarItems: SidebarItemInterface[] = [
@@ -34,5 +36,6 @@ export const sidebarItems: SidebarItemInterface[] = [
     { label: "Ownership", path: routesData.ownership, icon: Shield },
     { label: "Handoffs", path: routesData.handoffs, icon: GitBranch },
     { label: "Red Flags", path: routesData.redFlags, icon: Flag },
+    { label: "Alerts", path: routesData.alerts, icon: Bell },
     { label: "Settings", path: routesData.settings, icon: Settings },
 ];

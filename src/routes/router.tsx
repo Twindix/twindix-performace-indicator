@@ -3,6 +3,7 @@ import { createBrowserRouter } from "react-router-dom";
 import { routesData } from "@/data";
 import { AuthLayout, DashboardLayout } from "@/layouts";
 import {
+    AlertsView,
     AnalyticsView,
     BlockerView,
     CommunicationView,
@@ -32,7 +33,7 @@ export const router = createBrowserRouter([
             {
                 element: <AuthLayout />,
                 children: [
-                    { path: routesData.login, element: <LoginView /> },
+                    { path: routesData.login.path, element: <LoginView /> },
                 ],
             },
         ],
@@ -57,6 +58,7 @@ export const router = createBrowserRouter([
                             { path: routesData.ownership, element: <OwnershipView /> },
                             { path: routesData.handoffs, element: <HandoffsView /> },
                             { path: routesData.redFlags, element: <RedFlagsView /> },
+                            { path: routesData.alerts, element: <AlertsView /> },
                             { path: routesData.profile, element: <ProfileView /> },
                             { path: routesData.settings, element: <SettingsView /> },
                         ],

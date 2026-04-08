@@ -4,3 +4,5 @@ export { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./car
 export { Input } from "./input";
 export { Label } from "./label";
 export { Skeleton } from "./skeleton";
+export { Textarea } from "./textarea";
+export type { TextareaProps } from "./textarea";
