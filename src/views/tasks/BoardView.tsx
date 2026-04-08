@@ -3,14 +3,13 @@ import { Circle, GripVertical, Lock } from "lucide-react";
 
 import { Badge } from "@/atoms";
 import { TaskPhase } from "@/enums";
-import type { TaskInterface, UserInterface } from "@/interfaces";
+import type { TaskInterface } from "@/interfaces";
 import { t } from "@/hooks";
 import { cn } from "@/utils";
 import { COLUMNS, COLUMN_COLORS, PRIORITY_VARIANT } from "../../data/seed/constants";
 
 export interface BoardViewProps {
     tasksByPhase: Map<TaskPhase, TaskInterface[]>;
-    members: UserInterface[];
     draggedTask: TaskInterface | null;
     dragOverPhase: TaskPhase | null;
     handleDragStart: (e: DragEvent<HTMLDivElement>, task: TaskInterface) => void;
@@ -24,7 +23,6 @@ export interface BoardViewProps {
 
 export const BoardView = ({
     tasksByPhase,
-    members,
     draggedTask,
     dragOverPhase,
     handleDragStart,
@@ -72,9 +70,6 @@ export const BoardView = ({
                             )}
 
                             {columnTasks.map((task) => {
-                                const assignees = (task.assigneeIds ?? []).map(id => members.find((m) => m.id === id)).filter(Boolean);
-                                const assignee = assignees[0]; // Use first assignee for display
-
                                 return (
                                     <div
                                         key={task.id}
@@ -99,14 +94,6 @@ export const BoardView = ({
                                                 </span>
                                                 {task.hasBlocker && <Lock className="h-3 w-3 text-error shrink-0" />}
                                             </div>
-                                            {assignee && (
-                                                <img
-                                                    src={assignee.avatar}
-                                                    alt={assignee.name}
-                                                    className="h-6 w-6 rounded-full border border-border shrink-0"
-                                                    title={assignee.name}
-                                                />
-                                            )}
                                         </div>
 
                                         <h4 className="text-sm font-semibold text-text-dark mb-2 leading-tight line-clamp-2">

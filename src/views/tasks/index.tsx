@@ -332,7 +332,6 @@ export const TasksView = () => {
             ) : viewMode === "board" ? (
                 <BoardView
                     tasksByPhase={tasksByPhase}
-                    members={members}
                     draggedTask={draggedTask}
                     dragOverPhase={dragOverPhase}
                     handleDragStart={handleDragStart}
