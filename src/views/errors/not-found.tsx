@@ -31,7 +31,7 @@ export const NotFoundView = () => {
                             <ArrowLeft className="h-4 w-4" />
                             Go Back
                         </Button>
-                        <Button onClick={() => navigate(routesData.dashboard.path)} className="gap-2">
+                        <Button onClick={() => navigate(routesData.dashboard)} className="gap-2">
                             <Home className="h-4 w-4" />
                             Go to Dashboard
                         </Button>

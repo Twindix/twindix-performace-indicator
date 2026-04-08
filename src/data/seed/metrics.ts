@@ -14,7 +14,13 @@ export const seedMetrics: SprintMetricsInterface[] = [
             redFlagResponse: 30, 
             deliveryTime: 25, 
             commentsResponse: 40, 
-            rejectionRate: 35 
+            rejectionRate: 35,
+            poorRequirements: 28,
+            communicationGaps: 32,
+            weakOwnership: 35,
+            dependencyBlockers: 22,
+            processGaps: 30,
+            teamCulture: 38
         },
         metrics: [
             createMetric("m-012-01", "Alert Response Time", 14.5, "hours", 2, MetricStatus.Critical, MetricTrend.Up, 20, "alertResponse", "spr-012", "Average time taken to acknowledge and respond to system alerts"),
@@ -36,7 +42,13 @@ export const seedMetrics: SprintMetricsInterface[] = [
             redFlagResponse: 55, 
             deliveryTime: 68, 
             commentsResponse: 62, 
-            rejectionRate: 70 
+            rejectionRate: 70,
+            poorRequirements: 58,
+            communicationGaps: 62,
+            weakOwnership: 65,
+            dependencyBlockers: 60,
+            processGaps: 64,
+            teamCulture: 68
         },
         metrics: [
             createMetric("m-013-01", "Alert Response Time", 6.5, "hours", 2, MetricStatus.Warning, MetricTrend.Down, -55, "alertResponse", "spr-013", "Response time improved significantly with dedicated alert monitors"),
@@ -56,7 +68,13 @@ export const seedMetrics: SprintMetricsInterface[] = [
             redFlagResponse: 78, 
             deliveryTime: 82, 
             commentsResponse: 88, 
-            rejectionRate: 85 
+            rejectionRate: 85,
+            poorRequirements: 82,
+            communicationGaps: 85,
+            weakOwnership: 88,
+            dependencyBlockers: 80,
+            processGaps: 84,
+            teamCulture: 86
         },
         metrics: [
             createMetric("m-014-01", "Alert Response Time", 1.8, "hours", 2, MetricStatus.Healthy, MetricTrend.Down, -72, "alertResponse", "spr-014", "Currently exceeding target response time for all system alerts"),

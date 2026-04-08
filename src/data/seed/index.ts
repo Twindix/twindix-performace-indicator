@@ -14,7 +14,7 @@ import { seedComments } from "./comments";
 import { seedRedFlags } from "./red-flags";
 import { seedAlerts } from "./alerts";
 
-const SEED_VERSION = 7;
+const SEED_VERSION = 8;
 
 export const initializeSeedData = () => {
     const currentVersion = getStorageItem<number>(storageKeys.seeded);

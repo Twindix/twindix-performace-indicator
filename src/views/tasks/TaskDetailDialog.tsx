@@ -13,7 +13,7 @@ import { TaskComments } from "./TaskComments";
 
 export interface TaskDetailDialogProps {
     task: TaskInterface | null;
-    member: UserInterface | undefined;
+    members: UserInterface[];
     blocker: BlockerInterface | undefined;
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -23,9 +23,9 @@ export interface TaskDetailDialogProps {
     onUpdateTimeLogs?: (taskId: string, timeLogs: TaskTimeLogInterface[]) => void;
 }
 
-export const TaskDetailDialog = ({ task, member, blocker, open, onOpenChange, onMoveRequest, onUpdateComments, onUpdateAttachments, onUpdateTimeLogs }: TaskDetailDialogProps) => {
+export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, onMoveRequest, onUpdateComments, onUpdateAttachments, onUpdateTimeLogs }: TaskDetailDialogProps) => {
     const currentUserId = getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "";
-    const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
+    const allMembers = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? members;
 
     if (!task) return null;
 
@@ -68,10 +68,21 @@ export const TaskDetailDialog = ({ task, member, blocker, open, onOpenChange, on
                     <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-text-muted" />
                         <div>
-                            <p className="text-xs text-text-muted">{t("Assignee")}</p>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{member?.avatar ?? "?"}</AvatarFallback></Avatar>
-                                <span className="text-sm font-medium text-text-dark">{member?.name ?? t("Unassigned")}</span>
+                            <p className="text-xs text-text-muted">{t("Assignees")}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                {(task.assigneeIds ?? []).length > 0 ? (
+                                    (task.assigneeIds ?? []).map((id) => {
+                                        const assignee = allMembers.find((m) => m.id === id);
+                                        return assignee ? (
+                                            <div key={id} className="flex items-center gap-1">
+                                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{assignee.avatar}</AvatarFallback></Avatar>
+                                                <span className="text-sm font-medium text-text-dark">{assignee.name}</span>
+                                            </div>
+                                        ) : null;
+                                    })
+                                ) : (
+                                    <span className="text-sm font-medium text-text-muted">{t("Unassigned")}</span>
+                                )}
                             </div>
                         </div>
                     </div>

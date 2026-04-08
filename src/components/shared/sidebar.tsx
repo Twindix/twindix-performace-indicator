@@ -38,7 +38,7 @@ export const Sidebar = () => {
 
                             if (disabled) {
                                 const disabledEl = (
-                                    <span className={cn("flex items-center gap-3 rounded-[var(--radius-default)] px-3 py-2.5 text-sm font-medium text-text-muted opacity-40 cursor-not-allowed select-none", !isOpen && "justify-center px-0")}>
+                                    <span className={cn("flex items-center gap-3 rounded-[var(--radius-default)] px-3 py-2.5 text-sm font-medium text-text-muted cursor-not-allowed select-none bg-muted/30", !isOpen && "justify-center px-0")}>
                                         <Icon className="h-5 w-5 shrink-0" />
                                         {isOpen && <span className="truncate">{t(label)}</span>}
                                     </span>

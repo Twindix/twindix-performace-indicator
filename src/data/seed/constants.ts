@@ -94,7 +94,7 @@ const TRANSITION_RULES: Partial<Record<string, TransitionRule>> = {
         };
     },
     [`${TaskPhase.Ready}->${TaskPhase.InProgress}`]: (task, blocker) => {
-        const hasAssignee = !!task.assigneeId;
+        const hasAssignee = (task.assigneeIds ?? []).length > 0;
         const notBlocked = !blocker;
         const criteria = [
             { label: "Task has an assignee", met: hasAssignee },

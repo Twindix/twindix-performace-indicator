@@ -184,6 +184,8 @@ body {
     40%       { transform: rotate(10deg); }
     60%       { transform: rotate(-8deg); }
     80%       { transform: rotate(6deg); }
+}
+
 @keyframes bell-ring {
     0%, 100% { transform: rotate(0deg); transform-origin: top center; }
     10%       { transform: rotate(-18deg); }

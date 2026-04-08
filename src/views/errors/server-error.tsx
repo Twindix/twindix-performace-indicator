@@ -31,7 +31,7 @@ export const ServerErrorView = () => {
                             <RefreshCw className="h-4 w-4" />
                             Try Again
                         </Button>
-                        <Button onClick={() => navigate(routesData.dashboard.path)} variant="outline" className="gap-2">
+                        <Button onClick={() => navigate(routesData.dashboard)} variant="outline" className="gap-2">
                             <Home className="h-4 w-4" />
                             Go to Dashboard
                         </Button>

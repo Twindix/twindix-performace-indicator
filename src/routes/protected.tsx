@@ -5,6 +5,6 @@ import { routesData } from "@/data";
 
 export const ProtectedRoute = () => {
     const { isAuthenticated } = useAuth();
-    if (!isAuthenticated) return <Navigate to={routesData.login.path} replace />;
+    if (!isAuthenticated) return <Navigate to={routesData.login} replace />;
     return <Outlet />;
 };

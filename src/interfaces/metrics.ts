@@ -20,6 +20,12 @@ export interface FrictionScoresInterface {
     deliveryTime: number;
     commentsResponse: number;
     rejectionRate: number;
+    poorRequirements: number;
+    communicationGaps: number;
+    weakOwnership: number;
+    dependencyBlockers: number;
+    processGaps: number;
+    teamCulture: number;
 }
 
 export interface SprintMetricsInterface {

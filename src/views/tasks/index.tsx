@@ -204,11 +204,6 @@ export const TasksView = () => {
         return blockers.find((b) => b.id === selectedTask.blockerId);
     }, [selectedTask, blockers]);
 
-    const selectedMember = useMemo(() => {
-        if (!selectedTask || !selectedTask.assigneeIds || selectedTask.assigneeIds.length === 0) return undefined;
-        return members.find((m) => m.id === selectedTask.assigneeIds[0]);
-    }, [selectedTask, members]);
-
     if (isLoading) return <TasksSkeleton />;
 
     return (
@@ -359,7 +354,7 @@ export const TasksView = () => {
 
             <TaskDetailDialog
                 task={selectedTask}
-                member={selectedMember}
+                members={members}
                 blocker={selectedBlocker}
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}

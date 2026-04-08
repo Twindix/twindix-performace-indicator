@@ -24,7 +24,6 @@ const svgGray = `data:image/svg+xml;base64,${btoa('<svg xmlns="http://www.w3.org
 const pdfData = `data:application/pdf;base64,JVBERi0=`;
 const videoData = `data:video/mp4;base64,AAAAAA==`;
 const docData = `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,UEsDBBQ=`;
-const xlsData = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,UEsDBBQ=`; // minimal fake PDF
 const att = (id: string, name: string, size: number, type: string, dataUrl: string, uploadedAt: string): TaskAttachmentInterface =>
     ({ id, name, size, type, dataUrl, uploadedAt });
 
