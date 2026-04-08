@@ -10,6 +10,34 @@ export interface ReadinessChecklistInterface {
     estimationDone: boolean;
 }
 
+export interface TaskAttachmentInterface {
+    id: string;
+    name: string;
+    size: number;
+    type: string;
+    dataUrl: string;
+    uploadedAt: string;
+}
+
+export interface TaskCommentInterface {
+    id: string;
+    authorId: string;
+    content: string;
+    mentionedId?: string;
+    createdAt: string;
+    updatedAt?: string;
+    reactions?: Record<string, string[]>; // emoji -> userIds[]
+}
+
+export interface TaskTimeLogInterface {
+    id: string;
+    userId: string;
+    phase: TaskPhase;
+    hours: number;
+    description: string;
+    createdAt: string;
+}
+
 export interface TaskInterface {
     id: string;
     title: string;
@@ -27,4 +55,8 @@ export interface TaskInterface {
     updatedAt: string;
     tags: string[];
     type?: "feature" | "bug";
+    attachments?: TaskAttachmentInterface[];
+    comments?: TaskCommentInterface[];
+    timeLogs?: TaskTimeLogInterface[];
+    workType: "Design" | "Frontend" | "Backend" | "QA" | "Done";
 }

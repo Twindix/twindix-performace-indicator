@@ -1,43 +1,51 @@
-import { useState, useMemo, useCallback, type DragEvent } from "react";
+import { useState, useMemo, useCallback, useRef, type DragEvent } from "react";
+import React from "react";
 import {
-    AlertCircle,
-    ArrowLeft,
     ArrowRight,
+    AtSign,
+    Check,
     CheckCircle2,
     Circle,
     ClipboardList,
+    Clock,
+    Edit2,
     Filter,
     GripVertical,
     Layers,
     Lock,
+    Plus,
+    MessageCircle,
+    Paperclip,
     Search,
+    Send,
     ShieldCheck,
+    Smile,
     Tag,
+    Trash2,
     User,
+    X,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge, Button, Card, CardContent, Input } from "@/atoms";
-import { EmptyState, Header, ScoreGauge } from "@/components/shared";
+import { EmptyState, Header } from "@/components/shared";
 import { TasksSkeleton } from "@/components/skeletons";
-import { TaskPhase, TaskPriority, BlockerStatus } from "@/enums";
+import { TaskPhase, TaskPriority, BlockerStatus, UserRole } from "@/enums";
 import type {
     TaskInterface,
+    TaskAttachmentInterface,
+    TaskCommentInterface,
+    TaskTimeLogInterface,
     ReadinessChecklistInterface,
+import { TaskPhase } from "@/enums";
+import type {
+    TaskInterface,
     UserInterface,
     BlockerInterface,
 } from "@/interfaces";
 import { t, useSettings, usePageLoader } from "@/hooks";
 import { useSprintStore } from "@/store";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    Checkbox,
-    Avatar,
-    AvatarFallback,
     Select,
     SelectTrigger,
     SelectContent,
@@ -45,6 +53,7 @@ import {
     SelectValue,
 } from "@/ui";
 import { cn, td, formatDate, getStorageItem, setStorageItem, storageKeys } from "@/utils";
+import { AddTaskDialog } from "./add-task-dialog";
 
 /* -------------------------------------------------------------------------- */
 /*  Constants                                                                  */
@@ -310,6 +319,11 @@ const TaskCard = ({ task, member, onClick, onDragStart }: TaskCardProps) => (
                 {task.storyPoints > 0 && (
                     <span className="text-[10px] font-semibold text-text-muted bg-muted rounded-full h-5 w-5 flex items-center justify-center">{task.storyPoints}</span>
                 )}
+                {(task.attachments?.length ?? 0) > 0 && (
+                    <span className="flex items-center gap-0.5 text-[10px] text-text-muted">
+                        <Paperclip className="h-3 w-3" />{task.attachments!.length}
+                    </span>
+                )}
             </div>
             <ProgressRing score={task.readinessScore} size={28} />
         </div>
@@ -326,15 +340,23 @@ interface TransitionDialogProps {
     task: TaskInterface | null;
     targetPhase: TaskPhase | null;
     transitionResult: TransitionResult | null;
-    onConfirm: () => void;
+    onConfirm: (payload?: { loggedHours?: number }) => void;
+    currentUserId: string;
 }
 
-const TransitionDialog = ({ open, onOpenChange, task, targetPhase, transitionResult, onConfirm }: TransitionDialogProps) => {
+const TransitionDialog = ({ open, onOpenChange, task, targetPhase, transitionResult, onConfirm, currentUserId }: TransitionDialogProps) => {
+    const [hours, setHours] = React.useState<string>("");
+
+    React.useEffect(() => {
+        if (open) setHours("");
+    }, [open]);
+
     if (!task || !targetPhase || !transitionResult) return null;
 
     const fromLabel = COLUMNS.find((c) => c.phase === task.phase)?.label ?? task.phase;
     const toLabel = COLUMNS.find((c) => c.phase === targetPhase)?.label ?? targetPhase;
     const isBackward = PHASE_INDEX[targetPhase] < PHASE_INDEX[task.phase];
+    const shouldPromptTime = task.assigneeId === currentUserId;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -390,11 +412,31 @@ const TransitionDialog = ({ open, onOpenChange, task, targetPhase, transitionRes
                     {transitionResult.reason}
                 </p>
 
+                {/* Optional Hours Input */}
+                {shouldPromptTime && transitionResult.allowed && (
+                    <div className="mt-4 p-3 rounded-xl bg-muted border border-border">
+                        <label className="block text-sm font-semibold text-text-dark mb-1.5">{t("Time Tracking")}</label>
+                        <p className="text-xs text-text-muted mb-2">{t("How many hours did you work on this task?")}</p>
+                        <Input 
+                            type="number" 
+                            min="0"
+                            step="0.5"
+                            placeholder={t("e.g., 4.5")} 
+                            value={hours} 
+                            onChange={(e) => setHours(e.target.value)} 
+                            className="w-full sm:w-1/2 bg-surface"
+                        />
+                    </div>
+                )}
+
                 {/* Actions */}
                 <div className="flex justify-end gap-2 mt-4">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>{t("Cancel")}</Button>
                     {transitionResult.allowed && (
-                        <Button onClick={onConfirm}>
+                        <Button 
+                            onClick={() => onConfirm(shouldPromptTime && hours ? { loggedHours: parseFloat(hours) } : undefined)}
+                            disabled={shouldPromptTime && !hours.trim()}
+                        >
                             {isBackward ? t("Move Back") : t("Move Forward")}
                         </Button>
                     )}
@@ -412,17 +454,193 @@ interface TaskDetailDialogProps {
     task: TaskInterface | null;
     member: UserInterface | undefined;
     blocker: BlockerInterface | undefined;
+    members: UserInterface[];
+    currentUserId: string;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onMoveRequest: (task: TaskInterface, targetPhase: TaskPhase) => void;
+    onUpdateAttachments: (taskId: string, attachments: TaskAttachmentInterface[]) => void;
+    onUpdateComments: (taskId: string, comments: TaskCommentInterface[]) => void;
+    onUpdateTimeLogs: (taskId: string, timeLogs: TaskTimeLogInterface[]) => void;
 }
 
-const TaskDetailDialog = ({ task, member, blocker, open, onOpenChange, onMoveRequest }: TaskDetailDialogProps) => {
+const TaskDetailDialog = ({ task, member, blocker, members, currentUserId, open, onOpenChange, onMoveRequest, onUpdateAttachments, onUpdateComments, onUpdateTimeLogs }: TaskDetailDialogProps) => {
     if (!task) return null;
 
     const currentIndex = PHASE_INDEX[task.phase];
     const prevPhase = currentIndex > 0 ? COLUMNS[currentIndex - 1].phase : null;
     const nextPhase = currentIndex < COLUMNS.length - 1 ? COLUMNS[currentIndex + 1].phase : null;
+    const attachments = task.attachments ?? [];
+    const comments = task.comments ?? [];
+    const timeLogs = task.timeLogs ?? [];
+
+    const getMember = (id: string) => members.find((m) => m.id === id);
+    const authUser = getMember(currentUserId);
+    const isAssignee = task.assigneeId === currentUserId;
+    const isManager = authUser?.role === UserRole.CEO || authUser?.role === UserRole.CTO || authUser?.role === UserRole.ProjectManager;
+
+    const canSeeTimeLogs = isAssignee || isManager;
+
+    const hoursByPhase = timeLogs.reduce((acc, log) => {
+        const phaseLabel = COLUMNS.find((c) => c.phase === log.phase)?.label ?? log.phase;
+        acc[phaseLabel] = (acc[phaseLabel] || 0) + log.hours;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files ?? []);
+        if (!files.length) return;
+        files.forEach((file) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const newAtt: TaskAttachmentInterface = {
+                    id: `att-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    dataUrl: reader.result as string,
+                    uploadedAt: new Date().toISOString(),
+                };
+                onUpdateAttachments(task.id, [...(task.attachments ?? []), newAtt]);
+            };
+            reader.readAsDataURL(file);
+        });
+        e.target.value = "";
+    };
+
+    const handleRemove = (id: string) => {
+        onUpdateAttachments(task.id, attachments.filter((a) => a.id !== id));
+    };
+
+    const formatSize = (bytes: number) => {
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    };
+
+    const isImage = (type: string) => type.startsWith("image/");
+
+    // ── Comment state ──
+    const [commentText, setCommentText] = useState("");
+    const [mentionQuery, setMentionQuery] = useState("");
+    const [showMentions, setShowMentions] = useState(false);
+    const [mentionedId, setMentionedId] = useState<string | undefined>();
+    const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+    const [editCommentText, setEditCommentText] = useState("");
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+    // ── Work Log state ──
+    const [workLogHours, setWorkLogHours] = useState("");
+    const [workLogNote, setWorkLogNote] = useState("");
+
+    const submitWorkLog = () => {
+        const hours = parseFloat(workLogHours);
+        if (isNaN(hours) || hours <= 0) return;
+        const newLog: TaskTimeLogInterface = {
+            id: `log-${Date.now()}`,
+            userId: currentUserId,
+            phase: task.phase,
+            hours,
+            description: workLogNote.trim(),
+            createdAt: new Date().toISOString(),
+        };
+        onUpdateTimeLogs(task.id, [...timeLogs, newLog]);
+        setWorkLogHours("");
+        setWorkLogNote("");
+    };
+
+    const deleteWorkLog = (logId: string) => {
+        onUpdateTimeLogs(task.id, timeLogs.filter((l) => l.id !== logId));
+    };
+
+    const mentionSuggestions = members.filter((m) =>
+        mentionQuery.length > 0 && m.name.toLowerCase().includes(mentionQuery.toLowerCase())
+    );
+
+    const handleCommentInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const val = e.target.value;
+        setCommentText(val);
+        const atIdx = val.lastIndexOf("@");
+        if (atIdx !== -1 && atIdx === val.length - 1) {
+            setMentionQuery("");
+            setShowMentions(true);
+        } else if (atIdx !== -1 && val.slice(atIdx + 1).match(/^\w+$/)) {
+            setMentionQuery(val.slice(atIdx + 1));
+            setShowMentions(true);
+        } else {
+            setShowMentions(false);
+            setMentionQuery("");
+        }
+    };
+
+    const pickMention = (m: UserInterface) => {
+        const atIdx = commentText.lastIndexOf("@");
+        setCommentText(commentText.slice(0, atIdx) + `@${m.name} `);
+        setMentionedId(m.id);
+        setShowMentions(false);
+        textareaRef.current?.focus();
+    };
+
+    const submitComment = () => {
+        if (!commentText.trim()) return;
+        const newComment: TaskCommentInterface = {
+            id: `cmt-${Date.now()}`,
+            authorId: currentUserId,
+            content: commentText.trim(),
+            mentionedId,
+            createdAt: new Date().toISOString(),
+        };
+        onUpdateComments(task.id, [...comments, newComment]);
+        setCommentText("");
+        setMentionedId(undefined);
+        setShowMentions(false);
+    };
+
+    const handleDeleteComment = (commentId: string) => {
+        onUpdateComments(task.id, comments.filter((c) => c.id !== commentId));
+    };
+
+    const handleStartEdit = (comment: TaskCommentInterface) => {
+        setEditingCommentId(comment.id);
+        setEditCommentText(comment.content);
+    };
+
+    const handleSaveEdit = () => {
+        if (!editCommentText.trim() || !editingCommentId) return;
+        onUpdateComments(
+            task.id,
+            comments.map((c) =>
+                c.id === editingCommentId
+                    ? { ...c, content: editCommentText.trim(), updatedAt: new Date().toISOString() }
+                    : c
+            )
+        );
+        setEditingCommentId(null);
+        setEditCommentText("");
+    };
+
+    const handleCancelEdit = () => {
+        setEditingCommentId(null);
+        setEditCommentText("");
+    };
+
+    const handleReact = (commentId: string, emoji: string) => {
+        onUpdateComments(
+            task.id,
+            comments.map((c) => {
+                if (c.id !== commentId) return c;
+                const reactions = { ...(c.reactions || {}) };
+                const users = reactions[emoji] || [];
+                if (users.includes(currentUserId)) {
+                    reactions[emoji] = users.filter((id) => id !== currentUserId);
+                    if (reactions[emoji].length === 0) delete reactions[emoji];
+                } else {
+                    reactions[emoji] = [...users, currentUserId];
+                }
+                return { ...c, reactions };
+            })
+        );
+    };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -507,24 +725,49 @@ const TaskDetailDialog = ({ task, member, blocker, open, onOpenChange, onMoveReq
                     </div>
                 )}
 
-                {/* Readiness Gate Section */}
-                <div className="mt-5 pb-4 border-b border-border">
-                    <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-sm font-semibold text-text-dark">{t("Readiness Gate Checklist")}</h4>
-                        <ScoreGauge score={task.readinessScore} size="sm" label={t("Ready")} />
+                {/* Attachments */}
+                <div className="mt-4 pb-4 border-b border-border">
+                    <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs font-medium text-text-muted flex items-center gap-1.5">
+                            <Paperclip className="h-3.5 w-3.5" />
+                            {t("Attachments")}
+                            {attachments.length > 0 && <span className="bg-muted rounded-full px-1.5 py-0.5 text-[10px] font-semibold">{attachments.length}</span>}
+                        </p>
+                        <label className="flex items-center gap-1.5 cursor-pointer text-xs text-primary hover:text-primary-dark font-medium transition-colors">
+                            <Paperclip className="h-3.5 w-3.5" />
+                            {t("Upload")}
+                            <input type="file" multiple className="hidden" onChange={handleFileChange} />
+                        </label>
                     </div>
-                    <div className="space-y-3">
-                        {READINESS_LABELS.map(({ key, label }) => {
-                            const checked = task.readinessChecklist[key];
-                            return (
-                                <label key={key} className={cn("flex items-center gap-3 rounded-lg px-3 py-2 transition-colors", checked ? "bg-success-light/50" : "bg-muted/50")}>
-                                    <Checkbox checked={checked} disabled />
-                                    <span className={cn("text-sm", checked ? "text-text-dark font-medium" : "text-text-secondary")}>{td(label)}</span>
-                                    {checked && <CheckCircle2 className="h-3.5 w-3.5 text-success ml-auto" />}
-                                </label>
-                            );
-                        })}
-                    </div>
+
+                    {attachments.length === 0 ? (
+                        <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-6 cursor-pointer hover:border-primary hover:bg-primary-lighter/20 transition-colors">
+                            <Paperclip className="h-6 w-6 text-text-muted" />
+                            <p className="text-xs text-text-muted">{t("Click to upload files")}</p>
+                            <input type="file" multiple className="hidden" onChange={handleFileChange} />
+                        </label>
+                    ) : (
+                        <div className="flex flex-col gap-2">
+                            {attachments.map((att) => (
+                                <div key={att.id} className="flex items-center gap-3 rounded-lg bg-muted p-2.5 group">
+                                    {isImage(att.type) ? (
+                                        <img src={att.dataUrl} alt={att.name} className="h-10 w-10 rounded object-cover shrink-0" />
+                                    ) : (
+                                        <div className="h-10 w-10 rounded bg-primary-lighter flex items-center justify-center shrink-0">
+                                            <Paperclip className="h-4 w-4 text-primary" />
+                                        </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                        <a href={att.dataUrl} download={att.name} className="text-xs font-medium text-text-dark hover:text-primary truncate block transition-colors">{att.name}</a>
+                                        <p className="text-[10px] text-text-muted">{formatSize(att.size)}</p>
+                                    </div>
+                                    <button onClick={() => handleRemove(att.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Blocker info */}
@@ -543,6 +786,232 @@ const TaskDetailDialog = ({ task, member, blocker, open, onOpenChange, onMoveReq
                         </div>
                     </div>
                 )}
+
+                {/* Work Logs */}
+                {canSeeTimeLogs && (
+                    <div className="mt-4 pb-4 border-b border-border">
+                        <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs font-medium text-text-muted flex items-center gap-1.5">
+                                <Clock className="h-3.5 w-3.5" />
+                                {t("Time Tracking / Work Logs")}
+                                {timeLogs.length > 0 && <span className="bg-muted rounded-full px-1.5 py-0.5 text-[10px] font-semibold">{timeLogs.length}</span>}
+                            </p>
+                            {timeLogs.length > 0 && (
+                                <span className="text-xs font-semibold text-text-dark bg-muted px-2 py-1 rounded-lg">
+                                    {t("Total")}: {timeLogs.reduce((sum, l) => sum + l.hours, 0)} {t("h")}
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Breakdown by phase */}
+                        {Object.keys(hoursByPhase).length > 0 && (
+                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                                {Object.entries(hoursByPhase).map(([phase, hours]) => (
+                                    <Badge key={phase} variant="secondary" className="text-[10px]">
+                                        {t(phase)}: {hours} {t("h")}
+                                    </Badge>
+                                ))}
+                            </div>
+                        )}
+                    
+                    {timeLogs.length > 0 && (
+                        <div className="flex flex-col gap-2 mb-3">
+                            {timeLogs.map((log) => {
+                                const author = getMember(log.userId);
+                                return (
+                                    <div key={log.id} className="flex gap-2.5 items-start p-2 rounded-lg bg-surface border border-transparent hover:border-border transition-colors group">
+                                        <Avatar className="h-6 w-6 shrink-0 mt-0.5">
+                                            <AvatarFallback className="text-[8px]">{author?.avatar ?? "?"}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between gap-2 mb-0.5">
+                                                <span className="text-xs font-medium text-text-dark">{author?.name ?? t("Unknown")}</span>
+                                                <span className="text-[10px] text-text-muted">
+                                                    {new Date(log.createdAt).toLocaleString("en-GB", { day: "2-digit", month: "short" })}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between gap-2 mt-0.5">
+                                                <p className="text-xs text-text-secondary">{log.description || <span className="italic opacity-50">{t("No note")}</span>}</p>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <span className="text-xs font-bold text-primary px-1.5 py-0.5 rounded bg-primary-lighter/30">{log.hours} {t("h")}</span>
+                                                    {log.userId === currentUserId && (
+                                                        <button onClick={() => deleteWorkLog(log.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                                                            <Trash2 className="h-3 w-3" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+
+                    <div className="flex items-stretch gap-2 bg-muted p-2 rounded-xl border border-border">
+                        <Input 
+                            type="number" 
+                            min="0.5" 
+                            step="0.5" 
+                            placeholder={t("Hrs")} 
+                            value={workLogHours} 
+                            onChange={(e) => setWorkLogHours(e.target.value)} 
+                            className="w-20 bg-surface h-8 text-sm"
+                        />
+                        <div className="relative flex-1">
+                            <Input 
+                                placeholder={t("What did you work on? (optional)")} 
+                                value={workLogNote} 
+                                onChange={(e) => setWorkLogNote(e.target.value)} 
+                                onKeyDown={(e) => { if (e.key === "Enter") submitWorkLog(); }}
+                                className="w-full bg-surface h-8 text-sm"
+                            />
+                        </div>
+                        <Button onClick={submitWorkLog} disabled={!workLogHours || parseFloat(workLogHours) <= 0} size="sm" className="h-8">
+                            {t("Log time")}
+                        </Button>
+                    </div>
+                </div>
+                )}
+
+                {/* Comments */}
+                <div className="mt-4">
+                    <p className="text-xs font-medium text-text-muted flex items-center gap-1.5 mb-3">
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        {t("Comments")}
+                        {comments.length > 0 && <span className="bg-muted rounded-full px-1.5 py-0.5 text-[10px] font-semibold">{comments.length}</span>}
+                    </p>
+
+                    {/* Existing comments */}
+                    {comments.length > 0 && (
+                        <div className="flex flex-col gap-3 mb-4">
+                            {comments.map((c) => {
+                                const author = getMember(c.authorId);
+                                const mentioned = getMember(c.mentionedId ?? "");
+                                const isAuthor = c.authorId === currentUserId;
+                                const isEditing = editingCommentId === c.id;
+
+                                return (
+                                    <div key={c.id} className="flex gap-2.5 group">
+                                        <Avatar className="h-7 w-7 shrink-0 mt-0.5">
+                                            <AvatarFallback className="text-[9px]">{author?.avatar ?? "?"}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                <span className="text-xs font-semibold text-text-dark">{author?.name ?? t("Unknown")}</span>
+                                                {mentioned && (
+                                                    <span className="flex items-center gap-0.5 text-[10px] text-primary">
+                                                        <AtSign className="h-3 w-3" />{mentioned.name}
+                                                    </span>
+                                                )}
+                                                <span className="text-[10px] text-text-muted ms-auto flex items-center">
+                                                    {new Date(c.createdAt).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                                    {c.updatedAt && <span className="ms-1 italic opacity-70">({t("edited")})</span>}
+                                                </span>
+                                            </div>
+
+                                            {isEditing ? (
+                                                <div className="mt-1">
+                                                    <textarea
+                                                        value={editCommentText}
+                                                        onChange={(e) => setEditCommentText(e.target.value)}
+                                                        className="w-full rounded-md border border-input bg-surface px-2 py-1 text-sm text-text-dark focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+                                                        rows={2}
+                                                    />
+                                                    <div className="flex justify-end gap-1 mt-1">
+                                                        <button onClick={handleCancelEdit} className="p-1 text-text-muted hover:text-text-dark bg-muted rounded-md transition-colors"><X className="h-3 w-3" /></button>
+                                                        <button onClick={handleSaveEdit} className="p-1 text-success hover:text-success-dark bg-success-light/30 rounded-md transition-colors"><Check className="h-3 w-3" /></button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm text-text-secondary bg-muted rounded-lg px-3 py-2">{c.content}</p>
+                                            )}
+
+                                            {/* Reactions & Actions */}
+                                            {!isEditing && (
+                                                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                                    {Object.entries(c.reactions || {}).map(([emoji, users]) => (
+                                                        <button
+                                                            key={emoji}
+                                                            onClick={() => handleReact(c.id, emoji)}
+                                                            className={cn(
+                                                                "flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] transition-colors",
+                                                                users.includes(currentUserId) ? "bg-primary-lighter/30 text-primary border border-primary/20" : "bg-muted text-text-muted hover:bg-muted-dark hover:text-text-dark"
+                                                            )}
+                                                        >
+                                                            <span>{emoji}</span>
+                                                            <span className="font-medium">{users.length}</span>
+                                                        </button>
+                                                    ))}
+
+                                                    <div className="flex items-center gap-1 ms-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <div className="relative group/react">
+                                                            <button className="p-1.5 rounded text-text-muted hover:text-text-dark hover:bg-muted transition-colors"><Smile className="h-3.5 w-3.5" /></button>
+                                                            <div className="absolute bottom-full end-0 pb-1 hidden group-hover/react:block z-10 w-max">
+                                                                <div className="flex items-center gap-1 p-1 bg-surface border border-border rounded-lg shadow-lg">
+                                                                    {["👍", "👎", "😄", "🎉", "😕", "👀", "❤️", "🚀"].map(emoji => (
+                                                                        <button key={emoji} onClick={() => handleReact(c.id, emoji)} className="p-1.5 hover:bg-muted rounded text-sm transition-colors">{emoji}</button>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        {isAuthor && (
+                                                            <>
+                                                                <button onClick={() => handleStartEdit(c)} className="p-1.5 rounded text-text-muted hover:text-primary hover:bg-primary-lighter/20 transition-colors"><Edit2 className="h-3.5 w-3.5" /></button>
+                                                                <button onClick={() => handleDeleteComment(c.id)} className="p-1.5 rounded text-text-muted hover:text-error hover:bg-error-light transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* Input */}
+                    <div className="relative">
+                        <textarea
+                            ref={textareaRef}
+                            value={commentText}
+                            onChange={handleCommentInput}
+                            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitComment(); } }}
+                            placeholder={t("Write a comment… type @ to mention someone")}
+                            rows={2}
+                            className="w-full rounded-[var(--radius-default)] border border-input bg-surface px-3 py-2 pe-10 text-sm text-text-dark placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-ring resize-none transition-colors"
+                        />
+                        <button
+                            onClick={submitComment}
+                            disabled={!commentText.trim()}
+                            className="absolute bottom-2 end-2 p-1.5 rounded-md text-primary hover:bg-primary-lighter disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                        >
+                            <Send className="h-4 w-4" />
+                        </button>
+
+                        {/* Mention dropdown */}
+                        {showMentions && mentionSuggestions.length > 0 && (
+                            <div className="absolute bottom-full mb-1 start-0 w-full max-h-40 overflow-y-auto rounded-xl border border-border bg-surface shadow-lg z-50">
+                                {mentionSuggestions.map((m) => (
+                                    <button
+                                        key={m.id}
+                                        onMouseDown={(e) => { e.preventDefault(); pickMention(m); }}
+                                        className="flex items-center gap-2 w-full px-3 py-2 hover:bg-accent text-left transition-colors cursor-pointer"
+                                    >
+                                        <Avatar className="h-6 w-6 shrink-0">
+                                            <AvatarFallback className="text-[9px]">{m.avatar}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="text-xs font-medium text-text-dark">{m.name}</p>
+                                            <p className="text-[10px] text-text-muted">{m.team}</p>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
             </DialogContent>
         </Dialog>
     );
@@ -568,48 +1037,22 @@ interface KanbanColumnProps {
 
 const KanbanColumn = ({ phase, label, tasks, members, onTaskClick, onDragStart, onDrop, isDragOver, onDragOver, onDragEnter, onDragLeave }: KanbanColumnProps) => {
     const getMember = (id: string) => members.find((m) => m.id === id);
+import { cn, getStorageItem, setStorageItem, storageKeys } from "@/utils";
+import {
+    COLUMNS,
+    COLUMN_COLORS,
+    capitalize,
+    phaseLabel,
+    inferWorkType,
+    checkTransition,
+    type TransitionResult,
+} from "../../data/seed/constants";
+import { BoardView } from "./BoardView";
+import { PipelineView } from "./PipelineView";
+import { TaskDetailDialog } from "./TaskDetailDialog";
+import { TransitionDialog } from "./TransitionDialog";
 
-    return (
-        <div className="flex flex-col min-w-[290px] w-[290px] lg:flex-1 lg:min-w-0">
-            {/* Column header */}
-            <div className="flex items-center gap-2 mb-3 px-1">
-                <div className={cn("h-2.5 w-2.5 rounded-full", COLUMN_COLORS[phase])} />
-                <h3 className="text-sm font-semibold text-text-dark">{t(label)}</h3>
-                <span className="flex items-center justify-center h-6 min-w-6 rounded-full bg-muted px-2 text-[11px] font-bold text-text-muted">{tasks.length}</span>
-            </div>
 
-            {/* Drop zone */}
-            <div
-                onDragOver={onDragOver}
-                onDragEnter={(e) => onDragEnter(e, phase)}
-                onDragLeave={onDragLeave}
-                onDrop={(e) => onDrop(e, phase)}
-                className={cn(
-                    "flex flex-col gap-3 flex-1 rounded-xl p-3 min-h-[120px] transition-all duration-200",
-                    isDragOver
-                        ? "border-2 border-dashed border-primary bg-primary-lighter/30"
-                        : "bg-muted/30 border border-border/30",
-                )}
-            >
-                {tasks.length === 0 ? (
-                    <div className={cn("flex flex-col items-center justify-center h-full py-8 transition-opacity", isDragOver ? "opacity-100" : "opacity-60")}>
-                        <p className="text-xs text-text-muted">{isDragOver ? t("Drop here") : t("No tasks")}</p>
-                    </div>
-                ) : (
-                    tasks.map((task) => (
-                        <TaskCard
-                            key={task.id}
-                            task={task}
-                            member={getMember(task.assigneeId)}
-                            onClick={() => onTaskClick(task)}
-                            onDragStart={onDragStart}
-                        />
-                    ))
-                )}
-            </div>
-        </div>
-    );
-};
 
 /* -------------------------------------------------------------------------- */
 /*  Main View                                                                  */
@@ -620,31 +1063,44 @@ export const TasksView = () => {
     useSettings();
     const { activeSprintId } = useSprintStore();
 
-    // Read tasks from localStorage so we can update them
-    const [allTasks, setAllTasks] = useState<TaskInterface[]>(() => getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? []);
+    // Initialise tasks — migrate any legacy items missing workType in the initialiser itself (no useEffect needed)
+    const [allTasks, setAllTasks] = useState<TaskInterface[]>(() => {
+        const stored = getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? [];
+        const hasMissing = stored.some((t) => !t.workType);
+        if (!hasMissing) return stored;
+        const migrated = stored.map((t) => t.workType ? t : { ...t, workType: inferWorkType(t.tags) });
+        setStorageItem(storageKeys.tasks, migrated);
+        return migrated;
+    });
+
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
     const blockers = getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? [];
 
     const [selectedTask, setSelectedTask] = useState<TaskInterface | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [addTaskDialogOpen, setAddTaskDialogOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [priorityFilter, setPriorityFilter] = useState<string>("all");
     const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
     const [phaseFilter, setPhaseFilter] = useState<string>("all");
     const [readinessFilter, setReadinessFilter] = useState<string>("all");
     const [typeFilter, setTypeFilter] = useState<string>("all");
+    const [viewMode, setViewMode] = useState<"board" | "pipeline">("board");
 
-    // Drag-and-drop state
     const [draggedTask, setDraggedTask] = useState<TaskInterface | null>(null);
     const [dragOverPhase, setDragOverPhase] = useState<TaskPhase | null>(null);
 
-    // Transition dialog state
     const [transitionDialogOpen, setTransitionDialogOpen] = useState(false);
     const [transitionTask, setTransitionTask] = useState<TaskInterface | null>(null);
     const [transitionTarget, setTransitionTarget] = useState<TaskPhase | null>(null);
     const [transitionResult, setTransitionResult] = useState<TransitionResult | null>(null);
 
-    const sprintTasks = useMemo(() => allTasks.filter((t) => t.sprintId === activeSprintId), [allTasks, activeSprintId]);
+    // ── Derived data ──────────────────────────────────────────────────────────
+
+    const sprintTasks = useMemo(
+        () => allTasks.filter((t) => t.sprintId === activeSprintId),
+        [allTasks, activeSprintId],
+    );
 
     const filteredTasks = useMemo(() => {
         let result = sprintTasks;
@@ -663,18 +1119,42 @@ export const TasksView = () => {
         if (typeFilter !== "all") result = result.filter((t) => (t.type ?? "feature") === typeFilter);
         return result;
     }, [sprintTasks, searchQuery, phaseFilter, priorityFilter, assigneeFilter, readinessFilter, typeFilter]);
+        const q = searchQuery.toLowerCase().trim();
+        return sprintTasks.filter((t) =>
+            (!q || t.title.toLowerCase().includes(q) || t.tags.some((tag) => tag.toLowerCase().includes(q))) &&
+            (priorityFilter === "all" || t.priority === priorityFilter) &&
+            (assigneeFilter === "all" || t.assigneeId === assigneeFilter),
+        );
+    }, [sprintTasks, searchQuery, priorityFilter, assigneeFilter]);
 
     const tasksByPhase = useMemo(() => {
         const map = new Map<TaskPhase, TaskInterface[]>();
         for (const col of COLUMNS) map.set(col.phase, []);
-        for (const task of filteredTasks) {
-            const list = map.get(task.phase);
-            if (list) list.push(task);
-        }
+        for (const task of filteredTasks) map.get(task.phase)?.push(task);
         return map;
     }, [filteredTasks]);
 
-    // Persist task changes to localStorage
+    const selectedBlocker = useMemo(
+        () => blockers.find((b) => b.id === selectedTask?.blockerId),
+        [selectedTask, blockers],
+    );
+
+    const selectedMember = useMemo(
+        () => members.find((m) => m.id === selectedTask?.assigneeId),
+        [selectedTask, members],
+    );
+
+    const sprintAssigneeIds = useMemo(
+        () => [...new Set(sprintTasks.map((t) => t.assigneeId))],
+        [sprintTasks],
+    );
+
+    const totalPoints = sprintTasks.reduce((sum, t) => sum + t.storyPoints, 0);
+    const donePoints  = sprintTasks.filter((t) => t.phase === COLUMNS[COLUMNS.length - 1].phase).reduce((sum, t) => sum + t.storyPoints, 0);
+    const blockedCount = sprintTasks.filter((t) => t.hasBlocker).length;
+
+    // ── Mutations ─────────────────────────────────────────────────────────────
+
     const updateTasks = useCallback((updater: (prev: TaskInterface[]) => TaskInterface[]) => {
         setAllTasks((prev) => {
             const next = updater(prev);
@@ -683,71 +1163,76 @@ export const TasksView = () => {
         });
     }, []);
 
+    const handleAddTask = useCallback((task: TaskInterface) => {
+        updateTasks((prev) => [...prev, task]);
+    }, [updateTasks]);
+
     // Move task to new phase
-    const moveTask = useCallback((taskId: string, newPhase: TaskPhase) => {
+    const moveTask = useCallback((taskId: string, newPhase: TaskPhase, extraProps?: Partial<TaskInterface>) => {
         updateTasks((prev) => prev.map((t) =>
-            t.id === taskId ? { ...t, phase: newPhase, updatedAt: new Date().toISOString().split("T")[0] } : t,
+            t.id === taskId ? { ...t, phase: newPhase, updatedAt: new Date().toISOString().split("T")[0], ...extraProps } : t,
+    const updateTaskField = useCallback((taskId: string, field: keyof TaskInterface, value: any) => {
+        updateTasks((prev) => prev.map((t) =>
+            t.id === taskId ? { ...t, [field]: value, updatedAt: new Date().toISOString().split("T")[0] } : t,
         ));
     }, [updateTasks]);
 
-    // Request a transition (opens confirmation dialog with gate check)
+    // ── Transition flow ───────────────────────────────────────────────────────
+
     const requestTransition = useCallback((task: TaskInterface, targetPhase: TaskPhase) => {
         if (task.phase === targetPhase) return;
-        const result = checkTransition(task, task.phase, targetPhase, blockers);
         setTransitionTask(task);
         setTransitionTarget(targetPhase);
-        setTransitionResult(result);
+        setTransitionResult(checkTransition(task, targetPhase, blockers));
         setTransitionDialogOpen(true);
     }, [blockers]);
 
     // Confirm and execute the transition
-    const confirmTransition = useCallback(() => {
+    const confirmTransition = useCallback((payload?: { loggedHours?: number }) => {
         if (!transitionTask || !transitionTarget) return;
 
         const fromLabel = COLUMNS.find((c) => c.phase === transitionTask.phase)?.label;
         const toLabel = COLUMNS.find((c) => c.phase === transitionTarget)?.label;
 
-        moveTask(transitionTask.id, transitionTarget);
+        const extraProps: Partial<TaskInterface> = {};
+        if (payload?.loggedHours) {
+            const currentUserId = getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "";
+            const newLog: TaskTimeLogInterface = {
+                id: `log-${Date.now()}`,
+                userId: currentUserId,
+                phase: transitionTask.phase,
+                hours: payload.loggedHours,
+                description: `Time tracked moving to ${toLabel ?? transitionTarget}`,
+                createdAt: new Date().toISOString(),
+            };
+            extraProps.timeLogs = [...(transitionTask.timeLogs ?? []), newLog];
+        }
+
+        moveTask(transitionTask.id, transitionTarget, extraProps);
+    const confirmTransition = useCallback(() => {
+        if (!transitionTask || !transitionTarget) return;
+        updateTaskField(transitionTask.id, "phase", transitionTarget);
+        toast.success(`${t("Task moved")}: ${t(phaseLabel(transitionTask.phase))} → ${t(phaseLabel(transitionTarget))}`, {
+            description: transitionTask.title,
+        });
         setTransitionDialogOpen(false);
         setTransitionTask(null);
         setTransitionTarget(null);
         setTransitionResult(null);
+    }, [transitionTask, transitionTarget, updateTaskField, t]);
 
-        toast.success(`${t("Task")} moved: ${t(fromLabel ?? "")} → ${t(toLabel ?? "")}`, {
-            description: transitionTask.title,
-        });
-    }, [transitionTask, transitionTarget, moveTask]);
+    // ── Drag handlers ─────────────────────────────────────────────────────────
 
-    // Drag handlers
-    const handleDragStart = useCallback((_e: DragEvent<HTMLDivElement>, task: TaskInterface) => {
-        setDraggedTask(task);
+    const handleDragStart  = useCallback((_e: DragEvent<HTMLDivElement>, task: TaskInterface) => setDraggedTask(task), []);
+    const handleDragOver   = useCallback((e: DragEvent<HTMLDivElement>) => e.preventDefault(), []);
+    const handleDragEnter  = useCallback((_e: DragEvent<HTMLDivElement>, phase: TaskPhase) => setDragOverPhase(phase), []);
+    const handleDragLeave  = useCallback((e: DragEvent<HTMLDivElement>) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverPhase(null);
     }, []);
-
-    const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-    }, []);
-
-    const handleDragEnter = useCallback((_e: DragEvent<HTMLDivElement>, phase: TaskPhase) => {
-        setDragOverPhase(phase);
-    }, []);
-
-    const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
-        // Only clear if leaving the column entirely (not entering a child)
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-            setDragOverPhase(null);
-        }
-    }, []);
-
     const handleDrop = useCallback((e: DragEvent<HTMLDivElement>, targetPhase: TaskPhase) => {
         e.preventDefault();
         setDragOverPhase(null);
-
-        if (!draggedTask || draggedTask.phase === targetPhase) {
-            setDraggedTask(null);
-            return;
-        }
-
-        requestTransition(draggedTask, targetPhase);
+        if (draggedTask && draggedTask.phase !== targetPhase) requestTransition(draggedTask, targetPhase);
         setDraggedTask(null);
     }, [draggedTask, requestTransition]);
 
@@ -755,6 +1240,21 @@ export const TasksView = () => {
         setSelectedTask(task);
         setDialogOpen(true);
     };
+
+    const handleUpdateAttachments = useCallback((taskId: string, attachments: TaskAttachmentInterface[]) => {
+        updateTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, attachments } : t));
+        setSelectedTask((prev) => prev?.id === taskId ? { ...prev, attachments } : prev);
+    }, [updateTasks]);
+
+    const handleUpdateComments = useCallback((taskId: string, comments: TaskCommentInterface[]) => {
+        updateTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, comments } : t));
+        setSelectedTask((prev) => prev?.id === taskId ? { ...prev, comments } : prev);
+    }, [updateTasks]);
+
+    const handleUpdateTimeLogs = useCallback((taskId: string, timeLogs: TaskTimeLogInterface[]) => {
+        updateTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, timeLogs } : t));
+        setSelectedTask((prev) => prev?.id === taskId ? { ...prev, timeLogs } : prev);
+    }, [updateTasks]);
 
     const selectedBlocker = useMemo(() => {
         if (!selectedTask?.blockerId) return undefined;
@@ -771,6 +1271,7 @@ export const TasksView = () => {
     const totalPoints = sprintTasks.reduce((sum, t) => sum + t.storyPoints, 0);
     const donePoints = sprintTasks.filter((t) => t.phase === TaskPhase.Done).reduce((sum, t) => sum + t.storyPoints, 0);
     const blockedCount = sprintTasks.filter((t) => t.hasBlocker).length;
+    // ── Render ────────────────────────────────────────────────────────────────
 
     if (isLoading) return <TasksSkeleton />;
 
@@ -819,6 +1320,10 @@ export const TasksView = () => {
                                     <SelectItem value={TaskPhase.QA}>{t("Ready for Testing")}</SelectItem>
                                     <SelectItem value={TaskPhase.Done}>{t("Deployed")}</SelectItem>
                                     <SelectItem value="blocked">{t("Blocked")}</SelectItem>
+                                    <SelectItem value="all">{t("All Priorities")}</SelectItem>
+                                    {(["critical", "high", "medium", "low"] as const).map((p) => (
+                                        <SelectItem key={p} value={p}>{t(capitalize(p))}</SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
 
@@ -875,6 +1380,19 @@ export const TasksView = () => {
                                     {t("Clear all")}
                                 </button>
                             )}
+                            <Button size="sm" className="gap-1.5 shrink-0" onClick={() => setAddTaskDialogOpen(true)}>
+                                <Plus className="h-4 w-4" />
+                                {t("Add Task")}
+                            </Button>
+                        </div>
+
+                        <div className="flex items-center bg-muted p-1 rounded-lg ml-auto">
+                            <Button variant={viewMode === "board" ? "default" : "ghost"} size="sm" onClick={() => setViewMode("board")} className="h-7 text-xs px-3">
+                                {t("Kanban")}
+                            </Button>
+                            <Button variant={viewMode === "pipeline" ? "default" : "ghost"} size="sm" onClick={() => setViewMode("pipeline")} className="h-7 text-xs px-3">
+                                {t("Pipeline")}
+                            </Button>
                         </div>
                     </div>
                 </CardContent>
@@ -891,43 +1409,45 @@ export const TasksView = () => {
                 ))}
             </div>
 
-            {/* Kanban Board */}
-            {sprintTasks.length === 0 ? (
-                <EmptyState icon={ClipboardList} title={t("No tasks found")} description={t("No tasks assigned to the current sprint")} />
+            {filteredTasks.length === 0 ? (
+                <EmptyState icon={ClipboardList} title={t("No tasks found")} description={t("Try adjusting your filters or search query.")} />
+            ) : viewMode === "board" ? (
+                <BoardView
+                    tasksByPhase={tasksByPhase}
+                    members={members}
+                    draggedTask={draggedTask}
+                    dragOverPhase={dragOverPhase}
+                    handleDragStart={handleDragStart}
+                    handleDragOver={handleDragOver}
+                    handleDragEnter={handleDragEnter}
+                    handleDragLeave={handleDragLeave}
+                    handleDrop={handleDrop}
+                    setSelectedTask={setSelectedTask}
+                    setDialogOpen={setDialogOpen}
+                />
             ) : (
-                <div className="overflow-x-auto pb-4 -mx-2 px-2">
-                    <div className="flex gap-4 min-w-max lg:min-w-0">
-                        {COLUMNS.map(({ phase, label }) => (
-                            <KanbanColumn
-                                key={phase}
-                                phase={phase}
-                                label={label}
-                                tasks={tasksByPhase.get(phase) ?? []}
-                                members={members}
-                                onTaskClick={handleTaskClick}
-                                onDragStart={handleDragStart}
-                                onDrop={handleDrop}
-                                isDragOver={dragOverPhase === phase}
-                                onDragOver={handleDragOver}
-                                onDragEnter={handleDragEnter}
-                                onDragLeave={handleDragLeave}
-                            />
-                        ))}
-                    </div>
-                </div>
+                <PipelineView
+                    tasks={filteredTasks}
+                    members={members}
+                    setSelectedTask={setSelectedTask}
+                    setDialogOpen={setDialogOpen}
+                />
             )}
 
-            {/* Task Detail Dialog */}
             <TaskDetailDialog
                 task={selectedTask}
                 member={selectedMember}
                 blocker={selectedBlocker}
+                members={members}
+                currentUserId={getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? ""}
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
                 onMoveRequest={requestTransition}
+                onUpdateAttachments={handleUpdateAttachments}
+                onUpdateComments={handleUpdateComments}
+                onUpdateTimeLogs={handleUpdateTimeLogs}
             />
 
-            {/* Phase Transition Confirmation Dialog */}
             <TransitionDialog
                 open={transitionDialogOpen}
                 onOpenChange={setTransitionDialogOpen}
@@ -935,6 +1455,16 @@ export const TasksView = () => {
                 targetPhase={transitionTarget}
                 transitionResult={transitionResult}
                 onConfirm={confirmTransition}
+                currentUserId={getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? ""}
+            />
+
+            {/* Add Task Dialog */}
+            <AddTaskDialog
+                open={addTaskDialogOpen}
+                onOpenChange={setAddTaskDialogOpen}
+                members={members}
+                sprintId={activeSprintId ?? ""}
+                onAddTask={handleAddTask}
             />
         </div>
     );

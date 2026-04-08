@@ -1,0 +1,9 @@
+import type { RedFlagInterface } from "@/interfaces";
+
+export const seedRedFlags: RedFlagInterface[] = [
+    { id: "rf-001", title: "API response time exceeding SLA", description: "The metrics aggregation endpoint is returning responses in 4-6 seconds, well above the 1s SLA. This will block the dashboard from going live.", severity: "critical", createdById: "usr-005", createdAt: "2026-04-02T09:00:00Z", updatedAt: "2026-04-02T09:00:00Z", sprintId: "spr-014" },
+    { id: "rf-002", title: "No test coverage on auth middleware", description: "The RBAC middleware was merged without any unit tests. A regression here could expose protected routes to unauthorized users.", severity: "high", createdById: "usr-009", createdAt: "2026-04-01T14:30:00Z", updatedAt: "2026-04-01T14:30:00Z", sprintId: "spr-014" },
+    { id: "rf-003", title: "Sprint velocity dropping 3 sprints in a row", description: "Velocity has dropped from 62 to 44 story points over the last 3 sprints. Team is at risk of missing the release milestone.", severity: "high", createdById: "usr-008", createdAt: "2026-03-31T11:00:00Z", updatedAt: "2026-03-31T11:00:00Z", sprintId: "spr-014" },
+    { id: "rf-004", title: "Design handoff delays blocking frontend", description: "Two frontend tasks have been waiting on Figma files for over 5 days. This is creating a bottleneck in the ready column.", severity: "medium", createdById: "usr-001", createdAt: "2026-04-03T08:45:00Z", updatedAt: "2026-04-03T08:45:00Z", sprintId: "spr-014" },
+    { id: "rf-005", title: "Database migration script not reviewed", description: "The decisions table migration script has not been peer-reviewed. Running it on production without review is a data integrity risk.", severity: "medium", createdById: "usr-004", createdAt: "2026-04-02T16:00:00Z", updatedAt: "2026-04-02T16:00:00Z", sprintId: "spr-014" },
+];

@@ -1,9 +1,13 @@
-import { Globe, HelpCircle, LogOut, Moon, Settings, Sun, User } from "lucide-react";
+import { Bell, Globe, HelpCircle, LogOut, Moon, Settings, Sun, User } from "lucide-react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/atoms";
 import { routesData } from "@/data";
 import { useAuth, useTheme, t, useSettings } from "@/hooks";
+import { useRedFlagStore, useSprintStore } from "@/store";
+import { useAlertStore, useSprintStore } from "@/store";
+import { useAuth, useTheme, t, useSettings, usePresence, type PresenceStatus } from "@/hooks";
 import { useSprintStore } from "@/store";
 import { MobileNav } from "./mobile-nav";
 import {
@@ -41,19 +45,40 @@ const roleLabels: Record<string, string> = {
     uiux_designer: "UI/UX Designer",
 };
 
+const presenceConfig: Record<PresenceStatus, { label: string; dot: string }> = {
+    active:  { label: "Active",  dot: "bg-success" },
+    away:    { label: "Away",    dot: "bg-warning" },
+    offline: { label: "Offline", dot: "bg-text-muted" },
+};
+
 export const Topbar = () => {
     const { user, onLogout } = useAuth();
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings, updateSettings] = useSettings();
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
+    const { flags, load } = useRedFlagStore();
+    const { alerts, load } = useAlertStore();
     const sprints = getStorageItem<SprintInterface[]>(storageKeys.sprints) ?? [];
     const navigate = useNavigate();
+    const { status, updateStatus } = usePresence(user?.id);
+
+    useEffect(() => { load(); }, [load]);
+
+    useEffect(() => { load(); }, [load]);
 
     const isArabic = settings.language === "ar";
+    const redFlagCount = flags.filter((f) => f.sprintId === activeSprintId).length;
 
-    const toggleLanguage = () => {
-        updateSettings({ language: isArabic ? "en" : "ar" });
-    };
+    const toggleLanguage = () => { updateSettings({ language: isArabic ? "en" : "ar" }); };
+
+    // Count pending alerts for this sprint (not fully acknowledged)
+    const pendingAlertCount = alerts.filter((a) => {
+        if (a.sprintId !== activeSprintId) return false;
+        // only count if current user is mentioned or it's for everyone
+        if (a.mentionedIds.length > 0 && !a.mentionedIds.includes(user?.id ?? "")) return false;
+        return !a.resolvedByIds.includes(user?.id ?? "");
+    }).length;
+    const toggleLanguage = () => { updateSettings({ language: isArabic ? "en" : "ar" }); };
 
     return (
         <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between border-b border-border bg-surface/80 backdrop-blur-sm px-3 sm:px-6">
@@ -75,6 +100,45 @@ export const Topbar = () => {
 
             <div className="flex items-center gap-2">
                 <TooltipProvider delayDuration={300}>
+                    {/* Red Flags indicator */}
+                    {redFlagCount > 0 && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    onClick={() => navigate(routesData.redFlags)}
+                                    className="relative flex items-center gap-1.5 h-9 px-2.5 rounded-[var(--radius-default)] text-error hover:bg-error-light transition-colors cursor-pointer"
+                                    aria-label="Red Flags"
+                                >
+                                    <Flag className="h-4 w-4 animate-[flag-wave_1.8s_ease-in-out_infinite]" />
+                                    <span className="text-xs font-semibold hidden sm:inline">
+                                        {t("Red Flags")}
+                                    </span>
+                                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-error text-[10px] font-bold text-white px-1">
+                                        {redFlagCount}
+                                    </span>
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t("View all red flags for this sprint")}</TooltipContent>
+                    {/* Alerts indicator */}
+                    {pendingAlertCount > 0 && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    onClick={() => navigate(routesData.alerts)}
+                                    className="relative flex items-center gap-1.5 h-9 px-2.5 rounded-[var(--radius-default)] text-warning hover:bg-warning-light transition-colors cursor-pointer"
+                                    aria-label="Alerts"
+                                >
+                                    <Bell className="h-4 w-4 animate-[bell-ring_2s_ease-in-out_infinite]" />
+                                    <span className="text-xs font-semibold hidden sm:inline">{t("Alerts")}</span>
+                                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-warning text-[10px] font-bold text-white px-1">
+                                        {pendingAlertCount}
+                                    </span>
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t("You have pending alerts")}</TooltipContent>
+                        </Tooltip>
+                    )}
+
                     {/* Language toggle */}
                     <Tooltip>
                         <TooltipTrigger asChild>
@@ -101,12 +165,18 @@ export const Topbar = () => {
                 <DropdownMenu dir={isArabic ? "rtl" : "ltr"}>
                     <DropdownMenuTrigger asChild>
                         <button className="flex items-center gap-2 rounded-full p-1 pe-3 hover:bg-accent transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                            <Avatar className="h-8 w-8">
-                                <AvatarFallback className="text-[10px]">{user?.avatar}</AvatarFallback>
-                            </Avatar>
+                            <div className="relative">
+                                <Avatar className="h-8 w-8">
+                                    <AvatarFallback className="text-[10px]">{user?.avatar}</AvatarFallback>
+                                </Avatar>
+                                <span className={`absolute bottom-0 end-0 h-2.5 w-2.5 rounded-full border-2 border-surface ${presenceConfig[status].dot}`} />
+                            </div>
                             <div className="hidden sm:flex flex-col items-start">
                                 <span className="text-sm font-medium text-text-dark leading-tight">{user?.name}</span>
-                                <span className="text-[10px] text-text-muted leading-tight">{roleLabels[user?.role ?? ""] ?? user?.role}</span>
+                                <span className="text-[10px] text-text-muted leading-tight flex items-center gap-1">
+                                    <span className={`h-1.5 w-1.5 rounded-full ${presenceConfig[status].dot}`} />
+                                    {t(presenceConfig[status].label)}
+                                </span>
                             </div>
                         </button>
                     </DropdownMenuTrigger>
@@ -117,15 +187,26 @@ export const Topbar = () => {
                         </div>
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuItem onClick={() => navigate(routesData.profile)} className="gap-2 cursor-pointer">
+                        {/* Presence status options */}
+                        {(["active", "away", "offline"] as PresenceStatus[]).map((s) => (
+                            <DropdownMenuItem key={s} onClick={() => updateStatus(s)} className="gap-2 cursor-pointer">
+                                <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${presenceConfig[s].dot}`} />
+                                {t(presenceConfig[s].label)}
+                                {status === s && <span className="ms-auto text-[10px] text-text-muted">✓</span>}
+                            </DropdownMenuItem>
+                        ))}
+
+                        <DropdownMenuSeparator />
+
+                        <DropdownMenuItem onClick={() => navigate(routesData.profile.path)} className="gap-2 cursor-pointer">
                             <User className="h-4 w-4" />
                             {t("My Profile")}
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(routesData.settings)} className="gap-2 cursor-pointer">
+                        <DropdownMenuItem onClick={() => navigate(routesData.settings.path)} className="gap-2 cursor-pointer">
                             <Settings className="h-4 w-4" />
                             {t("Settings")}
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(routesData.reports)} className="gap-2 cursor-pointer">
+                        <DropdownMenuItem onClick={() => navigate(routesData.reports.path)} className="gap-2 cursor-pointer">
                             <HelpCircle className="h-4 w-4" />
                             {t("Help & Reports")}
                         </DropdownMenuItem>
