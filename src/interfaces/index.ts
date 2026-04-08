@@ -1,5 +1,5 @@
 export type { UserInterface, SprintInterface, AuthContextInterface, ThemeContextInterface } from "./common";
-export type { TaskInterface, ReadinessChecklistInterface } from "./tasks";
+export type { TaskInterface, ReadinessChecklistInterface, TaskAttachmentInterface, TaskCommentInterface, TaskTimeLogInterface } from "./tasks";
 export type { BlockerInterface } from "./blockers";
 export type { DecisionInterface } from "./decisions";
 export type { CommunicationInterface, CommunicationChannel, CommunicationStatus } from "./communications";

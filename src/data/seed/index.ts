@@ -11,7 +11,7 @@ import { seedWorkload } from "./workload";
 import { seedOwnership } from "./ownership";
 import { seedHandoffs } from "./handoffs";
 
-const SEED_VERSION = 3;
+const SEED_VERSION = 7;
 
 export const initializeSeedData = () => {
     const currentVersion = getStorageItem<number>(storageKeys.seeded);
