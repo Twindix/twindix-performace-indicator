@@ -1,4 +1,4 @@
-import { AlertTriangle, BookOpen, Clock, GitBranch, MessageSquare, Shield, TrendingUp, Users } from "lucide-react";
+import { AlertTriangle, Bell, BookOpen, Flag, MessageCircle, TrendingUp, Users, Zap, XCircle } from "lucide-react";
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, Header, MetricCard, ScoreGauge, StatusBadge } from "@/components/shared";
@@ -11,12 +11,11 @@ import { Avatar, AvatarFallback } from "@/ui";
 import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
 
 const frictionAreaConfig = [
-    { key: "poorRequirements" as const, labelKey: "Poor Requirements", icon: AlertTriangle, color: "bg-friction-requirements", textColor: "text-friction-requirements" },
-    { key: "communicationGaps" as const, labelKey: "Communication Gaps", icon: MessageSquare, color: "bg-friction-communication", textColor: "text-friction-communication" },
-    { key: "weakOwnership" as const, labelKey: "Weak Ownership", icon: Shield, color: "bg-friction-ownership", textColor: "text-friction-ownership" },
-    { key: "dependencyBlockers" as const, labelKey: "Dependency Blockers", icon: GitBranch, color: "bg-friction-dependencies", textColor: "text-friction-dependencies" },
-    { key: "processGaps" as const, labelKey: "Process Gaps", icon: Clock, color: "bg-friction-process", textColor: "text-friction-process" },
-    { key: "teamCulture" as const, labelKey: "Team & Culture", icon: Users, color: "bg-friction-team", textColor: "text-friction-team" },
+    { key: "alertResponse" as const, labelKey: "Alert Response", icon: Bell, color: "bg-blue-500/10", textColor: "text-blue-500" },
+    { key: "redFlagResponse" as const, labelKey: "Red Flag Response", icon: Flag, color: "bg-error/10", textColor: "text-error" },
+    { key: "deliveryTime" as const, labelKey: "Time Delivery", icon: Zap, color: "bg-success/10", textColor: "text-success" },
+    { key: "commentsResponse" as const, labelKey: "Comments Response", icon: MessageCircle, color: "bg-purple-500/10", textColor: "text-purple-500" },
+    { key: "rejectionRate" as const, labelKey: "Not Approval (%)", icon: XCircle, color: "bg-warning/10", textColor: "text-warning" },
 ];
 
 const getScoreStatus = (score: number): MetricStatus => {
@@ -60,7 +59,7 @@ export const DashboardView = () => {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <TrendingUp className="h-5 w-5 text-primary" />
-                            {t("Sprint Health Score")}
+                            {t("Sprint Performance Score")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center gap-4">
@@ -108,9 +107,9 @@ export const DashboardView = () => {
                 </div>
             </div>
 
-            {/* Key Metrics Row */}
+            {/* Performance Metrics Row */}
             <div className={compact ? "mb-3" : "mb-6"}>
-                <h2 className={cn("font-semibold text-text-dark", compact ? "text-base mb-2" : "text-lg mb-3")}>{t("Key Metrics")}</h2>
+                <h2 className={cn("font-semibold text-text-dark", compact ? "text-base mb-2" : "text-lg mb-3")}>{t("Performance Metrics")}</h2>
                 <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 stagger-children", compact ? "gap-2" : "gap-3")}>
                     {topMetrics.map((m) => (
                         <MetricCard key={m.id} name={m.name} value={m.value} unit={m.unit} status={m.status} trend={m.trend} trendPercent={m.trendPercent} description={m.description} />
