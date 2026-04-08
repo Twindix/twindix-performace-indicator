@@ -13,6 +13,9 @@ export const storageKeys = {
     metrics: `${PREFIX}metrics`,
     ownership: `${PREFIX}ownership`,
     handoffs: `${PREFIX}handoffs`,
+    alerts: `${PREFIX}alerts`,
+    redFlags: `${PREFIX}red_flags`,
+    comments: `${PREFIX}comments`,
     seeded: `${PREFIX}seeded`,
 } as const;
 

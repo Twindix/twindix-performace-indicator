@@ -12,3 +12,5 @@ export { HandoffsView } from "./handoffs";
 export { ProfileView } from "./profile";
 export { SettingsView } from "./settings";
 export { NotFoundView, ServerErrorView } from "./errors";
+export { UsersView } from "./users/index";
+export { UserDetailView } from "./users/detail";
