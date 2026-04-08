@@ -1,6 +1,7 @@
 import {
     AlertTriangle,
     BarChart3,
+    Bell,
     BookOpen,
     GitBranch,
     LayoutDashboard,
@@ -32,5 +33,6 @@ export const sidebarItems: SidebarItemInterface[] = [
     { label: "Analytics", path: routesData.analytics, icon: TrendingUp },
     { label: "Ownership", path: routesData.ownership, icon: Shield },
     { label: "Handoffs", path: routesData.handoffs, icon: GitBranch },
+    { label: "Alerts", path: routesData.alerts, icon: Bell },
     { label: "Settings", path: routesData.settings, icon: Settings },
 ];
