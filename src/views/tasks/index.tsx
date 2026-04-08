@@ -630,6 +630,9 @@ export const TasksView = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [priorityFilter, setPriorityFilter] = useState<string>("all");
     const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
+    const [phaseFilter, setPhaseFilter] = useState<string>("all");
+    const [readinessFilter, setReadinessFilter] = useState<string>("all");
+    const [typeFilter, setTypeFilter] = useState<string>("all");
 
     // Drag-and-drop state
     const [draggedTask, setDraggedTask] = useState<TaskInterface | null>(null);
@@ -649,10 +652,17 @@ export const TasksView = () => {
             const q = searchQuery.toLowerCase();
             result = result.filter((t) => t.title.toLowerCase().includes(q) || t.tags.some((tag) => tag.toLowerCase().includes(q)));
         }
+        if (phaseFilter !== "all") {
+            if (phaseFilter === "blocked") result = result.filter((t) => t.hasBlocker);
+            else result = result.filter((t) => t.phase === phaseFilter);
+        }
         if (priorityFilter !== "all") result = result.filter((t) => t.priority === priorityFilter);
         if (assigneeFilter !== "all") result = result.filter((t) => t.assigneeId === assigneeFilter);
+        if (readinessFilter === "ready") result = result.filter((t) => t.readinessScore >= 70);
+        if (readinessFilter === "not_ready") result = result.filter((t) => t.readinessScore < 70);
+        if (typeFilter !== "all") result = result.filter((t) => (t.type ?? "feature") === typeFilter);
         return result;
-    }, [sprintTasks, searchQuery, priorityFilter, assigneeFilter]);
+    }, [sprintTasks, searchQuery, phaseFilter, priorityFilter, assigneeFilter, readinessFilter, typeFilter]);
 
     const tasksByPhase = useMemo(() => {
         const map = new Map<TaskPhase, TaskInterface[]>();
@@ -788,24 +798,33 @@ export const TasksView = () => {
             <Card className="mb-6">
                 <CardContent className="p-5">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                        {/* Search */}
                         <div className="relative flex-1 min-w-0 sm:min-w-[200px] sm:max-w-sm">
                             <Search className="absolute top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" style={{ insetInlineStart: 12 }} />
                             <Input placeholder={t("Search tasks or tags...")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ paddingInlineStart: 40 }} />
                         </div>
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <Filter className="h-4 w-4 text-text-muted hidden sm:block" />
-                            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                                <SelectTrigger className="w-full sm:w-[140px] h-9 text-xs sm:text-sm"><SelectValue placeholder={t("Priority")} /></SelectTrigger>
+
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                            <Filter className="h-4 w-4 text-text-muted hidden sm:block shrink-0" />
+
+                            {/* Phase / Status */}
+                            <Select value={phaseFilter} onValueChange={setPhaseFilter}>
+                                <SelectTrigger className="w-[150px] h-9 text-xs sm:text-sm"><SelectValue placeholder={t("Status")} /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">{t("All Priorities")}</SelectItem>
-                                    <SelectItem value={TaskPriority.Critical}>{t("Critical")}</SelectItem>
-                                    <SelectItem value={TaskPriority.High}>{t("High")}</SelectItem>
-                                    <SelectItem value={TaskPriority.Medium}>{t("Medium")}</SelectItem>
-                                    <SelectItem value={TaskPriority.Low}>{t("Low")}</SelectItem>
+                                    <SelectItem value="all">{t("All Statuses")}</SelectItem>
+                                    <SelectItem value={TaskPhase.Backlog}>{t("Backlog")}</SelectItem>
+                                    <SelectItem value={TaskPhase.Ready}>{t("Ready")}</SelectItem>
+                                    <SelectItem value={TaskPhase.InProgress}>{t("In Progress")}</SelectItem>
+                                    <SelectItem value={TaskPhase.Review}>{t("Review")}</SelectItem>
+                                    <SelectItem value={TaskPhase.QA}>{t("Ready for Testing")}</SelectItem>
+                                    <SelectItem value={TaskPhase.Done}>{t("Deployed")}</SelectItem>
+                                    <SelectItem value="blocked">{t("Blocked")}</SelectItem>
                                 </SelectContent>
                             </Select>
+
+                            {/* Assignee */}
                             <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-                                <SelectTrigger className="w-full sm:w-[160px] h-9 text-xs sm:text-sm"><SelectValue placeholder={t("Assignee")} /></SelectTrigger>
+                                <SelectTrigger className="w-[150px] h-9 text-xs sm:text-sm"><SelectValue placeholder={t("Assignee")} /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">{t("All Assignees")}</SelectItem>
                                     {sprintAssigneeIds.map((id) => {
@@ -814,6 +833,48 @@ export const TasksView = () => {
                                     })}
                                 </SelectContent>
                             </Select>
+
+                            {/* Readiness */}
+                            <Select value={readinessFilter} onValueChange={setReadinessFilter}>
+                                <SelectTrigger className="w-[150px] h-9 text-xs sm:text-sm"><SelectValue placeholder={t("Readiness")} /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">{t("All Readiness")}</SelectItem>
+                                    <SelectItem value="ready">{t("Ready (≥70%)")}</SelectItem>
+                                    <SelectItem value="not_ready">{t("Not Ready (<70%)")}</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            {/* Priority */}
+                            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                                <SelectTrigger className="w-[130px] h-9 text-xs sm:text-sm"><SelectValue placeholder={t("Priority")} /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">{t("All Priorities")}</SelectItem>
+                                    <SelectItem value={TaskPriority.Low}>{t("Low")}</SelectItem>
+                                    <SelectItem value={TaskPriority.Medium}>{t("Medium")}</SelectItem>
+                                    <SelectItem value={TaskPriority.High}>{t("High")}</SelectItem>
+                                    <SelectItem value={TaskPriority.Critical}>{t("Critical")}</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            {/* Type */}
+                            <Select value={typeFilter} onValueChange={setTypeFilter}>
+                                <SelectTrigger className="w-[120px] h-9 text-xs sm:text-sm"><SelectValue placeholder={t("Type")} /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">{t("All Types")}</SelectItem>
+                                    <SelectItem value="feature">{t("Feature")}</SelectItem>
+                                    <SelectItem value="bug">{t("Bug")}</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            {/* Clear */}
+                            {(phaseFilter !== "all" || assigneeFilter !== "all" || readinessFilter !== "all" || priorityFilter !== "all" || typeFilter !== "all" || searchQuery) && (
+                                <button
+                                    onClick={() => { setPhaseFilter("all"); setAssigneeFilter("all"); setReadinessFilter("all"); setPriorityFilter("all"); setTypeFilter("all"); setSearchQuery(""); }}
+                                    className="text-xs text-text-muted hover:text-text-dark underline cursor-pointer"
+                                >
+                                    {t("Clear all")}
+                                </button>
+                            )}
                         </div>
                     </div>
                 </CardContent>

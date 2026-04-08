@@ -26,4 +26,5 @@ export interface TaskInterface {
     createdAt: string;
     updatedAt: string;
     tags: string[];
+    type?: "feature" | "bug";
 }
