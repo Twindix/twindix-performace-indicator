@@ -7,4 +7,5 @@ export type { TeamMemberWorkloadInterface } from "./workload";
 export type { MetricInterface, FrictionScoresInterface, SprintMetricsInterface } from "./metrics";
 export type { OwnershipEntryInterface } from "./ownership";
 export type { HandoffInterface, CriterionInterface } from "./handoffs";
+export type { AlertInterface } from "./alerts";
 export type { AttachmentInterface, AddTaskFormState, AddTaskDialogProps } from "./tasks-dialog";

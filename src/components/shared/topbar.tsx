@@ -1,8 +1,11 @@
-import { Globe, HelpCircle, LogOut, Moon, Settings, Sun, User } from "lucide-react";
+import { Bell, Globe, HelpCircle, LogOut, Moon, Settings, Sun, User } from "lucide-react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/atoms";
 import { routesData } from "@/data";
+import { useAuth, useTheme, t, useSettings } from "@/hooks";
+import { useAlertStore, useSprintStore } from "@/store";
 import { useAuth, useTheme, t, useSettings, usePresence, type PresenceStatus } from "@/hooks";
 import { useSprintStore } from "@/store";
 import { MobileNav } from "./mobile-nav";
@@ -52,11 +55,24 @@ export const Topbar = () => {
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings, updateSettings] = useSettings();
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
+    const { alerts, load } = useAlertStore();
     const sprints = getStorageItem<SprintInterface[]>(storageKeys.sprints) ?? [];
     const navigate = useNavigate();
     const { status, updateStatus } = usePresence(user?.id);
 
+    useEffect(() => { load(); }, [load]);
+
     const isArabic = settings.language === "ar";
+
+    const toggleLanguage = () => { updateSettings({ language: isArabic ? "en" : "ar" }); };
+
+    // Count pending alerts for this sprint (not fully acknowledged)
+    const pendingAlertCount = alerts.filter((a) => {
+        if (a.sprintId !== activeSprintId) return false;
+        // only count if current user is mentioned or it's for everyone
+        if (a.mentionedIds.length > 0 && !a.mentionedIds.includes(user?.id ?? "")) return false;
+        return !a.resolvedByIds.includes(user?.id ?? "");
+    }).length;
     const toggleLanguage = () => { updateSettings({ language: isArabic ? "en" : "ar" }); };
 
     return (
@@ -79,6 +95,26 @@ export const Topbar = () => {
 
             <div className="flex items-center gap-2">
                 <TooltipProvider delayDuration={300}>
+                    {/* Alerts indicator */}
+                    {pendingAlertCount > 0 && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    onClick={() => navigate(routesData.alerts)}
+                                    className="relative flex items-center gap-1.5 h-9 px-2.5 rounded-[var(--radius-default)] text-warning hover:bg-warning-light transition-colors cursor-pointer"
+                                    aria-label="Alerts"
+                                >
+                                    <Bell className="h-4 w-4 animate-[bell-ring_2s_ease-in-out_infinite]" />
+                                    <span className="text-xs font-semibold hidden sm:inline">{t("Alerts")}</span>
+                                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-warning text-[10px] font-bold text-white px-1">
+                                        {pendingAlertCount}
+                                    </span>
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t("You have pending alerts")}</TooltipContent>
+                        </Tooltip>
+                    )}
+
                     {/* Language toggle */}
                     <Tooltip>
                         <TooltipTrigger asChild>

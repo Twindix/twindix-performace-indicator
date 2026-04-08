@@ -1,6 +1,7 @@
 import {
     AlertTriangle,
     BarChart3,
+    Bell,
     BookOpen,
     GitBranch,
     LayoutDashboard,
@@ -23,15 +24,16 @@ export interface SidebarItemInterface {
 }
 
 export const sidebarItems: SidebarItemInterface[] = [
-    { label: "Dashboard",     path: routesData.dashboard.path,     icon: LayoutDashboard,  disabled: routesData.dashboard.disabled },
-    { label: "Tasks",         path: routesData.tasks.path,         icon: ListChecks,        disabled: routesData.tasks.disabled },
-    { label: "Blockers",      path: routesData.blockers.path,      icon: AlertTriangle,     disabled: routesData.blockers.disabled },
-    { label: "Decisions",     path: routesData.decisions.path,     icon: BookOpen,          disabled: routesData.decisions.disabled },
-    { label: "Communication", path: routesData.communication.path, icon: MessageSquare,     disabled: routesData.communication.disabled },
-    { label: "Workload",      path: routesData.workload.path,      icon: Users,             disabled: routesData.workload.disabled },
-    { label: "Reports",       path: routesData.reports.path,       icon: BarChart3,         disabled: routesData.reports.disabled },
-    { label: "Analytics",     path: routesData.analytics.path,     icon: TrendingUp,        disabled: routesData.analytics.disabled },
-    { label: "Ownership",     path: routesData.ownership.path,     icon: Shield,            disabled: routesData.ownership.disabled },
-    { label: "Handoffs",      path: routesData.handoffs.path,      icon: GitBranch,         disabled: routesData.handoffs.disabled },
-    { label: "Settings",      path: routesData.settings.path,      icon: Settings,          disabled: routesData.settings.disabled },
+    { label: "Dashboard", path: routesData.dashboard, icon: LayoutDashboard },
+    { label: "Tasks", path: routesData.tasks, icon: ListChecks },
+    { label: "Blockers", path: routesData.blockers, icon: AlertTriangle },
+    { label: "Decisions", path: routesData.decisions, icon: BookOpen },
+    { label: "Communication", path: routesData.communication, icon: MessageSquare },
+    { label: "Workload", path: routesData.workload, icon: Users },
+    { label: "Reports", path: routesData.reports, icon: BarChart3 },
+    { label: "Analytics", path: routesData.analytics, icon: TrendingUp },
+    { label: "Ownership", path: routesData.ownership, icon: Shield },
+    { label: "Handoffs", path: routesData.handoffs, icon: GitBranch },
+    { label: "Alerts", path: routesData.alerts, icon: Bell },
+    { label: "Settings", path: routesData.settings, icon: Settings },
 ];
