@@ -44,6 +44,7 @@ export const RedFlagsView = () => {
     const sprintFlags = flags.filter((f) => f.sprintId === activeSprintId);
 
     const [addOpen, setAddOpen] = useState(false);
+    const [viewTarget, setViewTarget] = useState<RedFlagInterface | null>(null);
     const [editTarget, setEditTarget] = useState<RedFlagInterface | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<RedFlagInterface | null>(null);
     const [form, setForm] = useState(emptyForm);
@@ -127,7 +128,7 @@ export const RedFlagsView = () => {
                         const isOwner = user?.id === flag.createdById;
 
                         return (
-                            <Card key={flag.id} className="border-s-4" style={{ borderLeftColor: `var(--color-${flag.severity === "critical" ? "error" : flag.severity === "high" ? "warning" : flag.severity === "medium" ? "primary" : "muted"})` }}>
+                            <Card key={flag.id} className="border-s-4 cursor-pointer hover:shadow-md transition-shadow" style={{ borderLeftColor: `var(--color-${flag.severity === "critical" ? "error" : flag.severity === "high" ? "warning" : flag.severity === "medium" ? "primary" : "muted"})` }} onClick={() => setViewTarget(flag)}>
                                 <CardContent className="p-5">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -158,7 +159,7 @@ export const RedFlagsView = () => {
                                         </div>
 
                                         {isOwner && (
-                                            <div className="flex items-center gap-1 shrink-0">
+                                            <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                                                 <button
                                                     onClick={() => openEdit(flag)}
                                                     className="p-1.5 rounded-md text-text-muted hover:text-primary hover:bg-primary-lighter transition-colors"
@@ -182,6 +183,52 @@ export const RedFlagsView = () => {
                     })}
                 </div>
             )}
+
+            {/* Details Dialog */}
+            <Dialog open={!!viewTarget} onOpenChange={(o) => !o && setViewTarget(null)}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            {viewTarget && <Flag className={cn("h-5 w-5", severityConfig[viewTarget.severity].color)} />}
+                            {viewTarget?.title}
+                        </DialogTitle>
+                    </DialogHeader>
+                    {viewTarget && (() => {
+                        const creator = getMember(viewTarget.createdById);
+                        const cfg = severityConfig[viewTarget.severity];
+                        const wasEdited = viewTarget.updatedAt !== viewTarget.createdAt;
+                        return (
+                            <div className="flex flex-col gap-4 py-2">
+                                <Badge variant={cfg.variant} className="w-fit">{t(cfg.label)}</Badge>
+
+                                <div>
+                                    <p className="text-xs font-medium text-text-muted mb-1">{t("Description")}</p>
+                                    <p className="text-sm text-text-secondary">{viewTarget.description}</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 border-t border-border pt-3">
+                                    <div>
+                                        <p className="text-xs font-medium text-text-muted mb-1.5">{t("Raised by")}</p>
+                                        {creator && (
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="h-6 w-6"><AvatarFallback className="text-[9px]">{creator.avatar}</AvatarFallback></Avatar>
+                                                <span className="text-sm text-text-secondary">{creator.name}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-medium text-text-muted mb-1">{t("Created")}</p>
+                                        <p className="text-sm text-text-secondary">{formatDateTime(viewTarget.createdAt)}</p>
+                                        {wasEdited && (
+                                            <p className="text-xs text-text-muted mt-0.5 italic">{t("Edited")} {formatDateTime(viewTarget.updatedAt)}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </DialogContent>
+            </Dialog>
 
             {/* Add Dialog */}
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
