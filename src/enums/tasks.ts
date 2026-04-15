@@ -13,3 +13,10 @@ export enum TaskPriority {
     Medium = "medium",
     Low = "low",
 }
+
+export enum TaskStatus {
+    OnTrack = "on_track",
+    AtRisk = "at_risk",
+    Delayed = "delayed",
+    OnHold = "on_hold",
+}

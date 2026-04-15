@@ -1,4 +1,10 @@
-import type { TaskPhase, TaskPriority } from "@/enums";
+import type { TaskPhase, TaskPriority, TaskStatus } from "@/enums";
+
+export interface RequirementInterface {
+    id: string;
+    label: string;
+    met: boolean;
+}
 
 export interface ReadinessChecklistInterface {
     acceptanceCriteriaDefined: boolean;
@@ -55,6 +61,8 @@ export interface TaskInterface {
     updatedAt: string;
     tags: string[];
     type?: "feature" | "bug";
+    status?: TaskStatus;
+    requirements?: RequirementInterface[];
     attachments?: TaskAttachmentInterface[];
     comments?: TaskCommentInterface[];
     timeLogs?: TaskTimeLogInterface[];

@@ -1,5 +1,10 @@
-import type { TaskPriority } from "@/enums";
+import type { TaskPriority, TaskStatus } from "@/enums";
 import type { TaskInterface, UserInterface } from "@/interfaces";
+
+export interface RequirementDraftInterface {
+    id: string;
+    label: string;
+}
 
 export interface AttachmentInterface {
     id: string;
@@ -13,9 +18,11 @@ export interface AddTaskFormState {
     description: string;
     assigneeIds: string[];
     priority: TaskPriority;
+    status: TaskStatus;
     estimatedHours: number;
     attachments: AttachmentInterface[];
     initialComment: string;
+    requirements: RequirementDraftInterface[];
 }
 
 export interface AddTaskDialogProps {
