@@ -199,6 +199,11 @@ export const TasksView = () => {
         setSelectedTask((prev) => prev?.id === taskId ? { ...prev, timeLogs } : prev);
     }, [updateTasks]);
 
+    const handleUpdateRequirements = useCallback((taskId: string, requirements: TaskInterface["requirements"]) => {
+        updateTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, requirements } : t));
+        setSelectedTask((prev) => prev?.id === taskId ? { ...prev, requirements } : prev);
+    }, [updateTasks]);
+
     const selectedBlocker = useMemo(() => {
         if (!selectedTask?.blockerId) return undefined;
         return blockers.find((b) => b.id === selectedTask.blockerId);
@@ -361,6 +366,7 @@ export const TasksView = () => {
                 onUpdateComments={handleUpdateComments}
                 onUpdateAttachments={handleUpdateAttachments}
                 onUpdateTimeLogs={handleUpdateTimeLogs}
+                onUpdateRequirements={handleUpdateRequirements}
             />
 
             <TransitionDialog

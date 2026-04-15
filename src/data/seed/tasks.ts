@@ -1,4 +1,4 @@
-import { TaskPhase, TaskPriority } from "@/enums";
+import { TaskPhase, TaskPriority, TaskStatus } from "@/enums";
 import type { TaskAttachmentInterface, TaskInterface } from "@/interfaces";
 
 /*
@@ -35,7 +35,13 @@ export const seedTasks: TaskInterface[] = [
         phase: TaskPhase.Backlog, priority: TaskPriority.Medium, storyPoints: 5, sprintId: "spr-014",
         readinessScore: 43, readinessChecklist: { acceptanceCriteriaDefined: true, businessRulesClear: false, edgeCasesIdentified: false, dependenciesMapped: true, designAvailable: false, apiContractReady: false, estimationDone: true },
         hasBlocker: false, createdAt: "2026-03-23", updatedAt: "2026-03-23", tags: ["settings", "ux", "frontend"],
-        workType: "Frontend",
+        workType: "Frontend", status: TaskStatus.OnTrack,
+        requirements: [
+            { id: "req-001-1", label: "Figma design approved by product team", met: false },
+            { id: "req-001-2", label: "API contract defined for preferences endpoint", met: false },
+            { id: "req-001-3", label: "Acceptance criteria documented in Jira", met: true },
+            { id: "req-001-4", label: "Edge cases for empty/default state identified", met: false },
+        ],
     },
     {
         id: "tsk-002", title: "Build AI-powered candidate screening module",
@@ -62,13 +68,20 @@ export const seedTasks: TaskInterface[] = [
         phase: TaskPhase.Ready, priority: TaskPriority.High, storyPoints: 8, sprintId: "spr-014",
         readinessScore: 86, readinessChecklist: { acceptanceCriteriaDefined: true, businessRulesClear: true, edgeCasesIdentified: true, dependenciesMapped: true, designAvailable: true, apiContractReady: false, estimationDone: true },
         hasBlocker: false, createdAt: "2026-03-23", updatedAt: "2026-03-25", tags: ["settings", "redesign", "frontend"],
+        workType: "Frontend", status: TaskStatus.OnTrack,
+        requirements: [
+            { id: "req-004-1", label: "High-fidelity Figma mockup completed", met: true },
+            { id: "req-004-2", label: "Responsive breakpoints defined for mobile and tablet", met: true },
+            { id: "req-004-3", label: "Accessibility (WCAG 2.1) requirements reviewed", met: true },
+            { id: "req-004-4", label: "REST API contract finalized with backend team", met: false },
+            { id: "req-004-5", label: "Unit tests written for all form validations", met: false },
+        ],
         attachments: [
             att("att-004-1", "settings-mockup.png",      48200, "image/png",        svgBlue,  "2026-03-25T10:00:00Z"),
             att("att-004-2", "requirements.pdf",          92400, "application/pdf",  pdfData,  "2026-03-25T10:05:00Z"),
             att("att-004-3", "walkthrough-demo.mp4",    3200000, "video/mp4",        videoData,"2026-03-25T10:10:00Z"),
             att("att-004-4", "spec-document.docx",        54000, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docData, "2026-03-25T10:15:00Z"),
         ],
-        workType: "Frontend",
     },
     {
         id: "tsk-005", title: "Design executive report template",
@@ -100,11 +113,18 @@ export const seedTasks: TaskInterface[] = [
         phase: TaskPhase.InProgress, priority: TaskPriority.Critical, storyPoints: 13, sprintId: "spr-014",
         readinessScore: 86, readinessChecklist: { acceptanceCriteriaDefined: true, businessRulesClear: true, edgeCasesIdentified: true, dependenciesMapped: true, designAvailable: true, apiContractReady: false, estimationDone: true },
         hasBlocker: true, blockerId: "blk-001", createdAt: "2026-03-23", updatedAt: "2026-03-31", tags: ["dashboard", "widgets", "frontend"],
+        workType: "Frontend", status: TaskStatus.AtRisk,
+        requirements: [
+            { id: "req-007-1", label: "Health score algorithm approved by CTO", met: true },
+            { id: "req-007-2", label: "Gauge chart library selected and integrated", met: true },
+            { id: "req-007-3", label: "Real-time data polling interval confirmed", met: false },
+            { id: "req-007-4", label: "Blocker dependency on metrics API resolved", met: false },
+            { id: "req-007-5", label: "Cross-browser testing on Chrome, Firefox, Safari", met: false },
+        ],
         attachments: [
             att("att-007-1", "dashboard-spec.pdf",   55000, "application/pdf", pdfData,  "2026-03-28T11:00:00Z"),
             att("att-007-2", "gauge-component.png",  29000, "image/png",       svgBlue,  "2026-03-29T14:00:00Z"),
         ],
-        workType: "Frontend",
     },
     {
         id: "tsk-008", title: "Implement blocker tracking UI",
@@ -140,7 +160,14 @@ export const seedTasks: TaskInterface[] = [
         phase: TaskPhase.InProgress, priority: TaskPriority.Critical, storyPoints: 8, sprintId: "spr-014",
         readinessScore: 100, readinessChecklist: { acceptanceCriteriaDefined: true, businessRulesClear: true, edgeCasesIdentified: true, dependenciesMapped: true, designAvailable: true, apiContractReady: true, estimationDone: true },
         hasBlocker: false, createdAt: "2026-03-23", updatedAt: "2026-04-02", tags: ["readiness", "frontend", "core"],
-        workType: "Frontend",
+        workType: "Frontend", status: TaskStatus.OnTrack,
+        requirements: [
+            { id: "req-011-1", label: "Readiness scoring formula agreed with PM", met: true },
+            { id: "req-011-2", label: "All 7 checklist items mapped to business rules", met: true },
+            { id: "req-011-3", label: "Transition gate blocks implemented for each phase", met: true },
+            { id: "req-011-4", label: "Dialog UI matches approved Figma design", met: true },
+            { id: "req-011-5", label: "Self-review completed by developer", met: false },
+        ],
     },
     {
         id: "tsk-012", title: "Design decision log database schema",
@@ -185,7 +212,14 @@ export const seedTasks: TaskInterface[] = [
         phase: TaskPhase.QA, priority: TaskPriority.High, storyPoints: 5, sprintId: "spr-014",
         readinessScore: 100, readinessChecklist: { acceptanceCriteriaDefined: true, businessRulesClear: true, edgeCasesIdentified: true, dependenciesMapped: true, designAvailable: true, apiContractReady: true, estimationDone: true },
         hasBlocker: true, blockerId: "blk-004", createdAt: "2026-03-24", updatedAt: "2026-04-03", tags: ["qa", "analytics", "testing"],
-        workType: "QA",
+        workType: "QA", status: TaskStatus.Delayed,
+        requirements: [
+            { id: "req-016-1", label: "All 17 metric calculations verified against source data", met: false },
+            { id: "req-016-2", label: "Multi-sprint comparison tested with ≥3 sprints", met: false },
+            { id: "req-016-3", label: "Edge case: sprint with zero tasks handled correctly", met: true },
+            { id: "req-016-4", label: "Performance test: page load under 2s with full dataset", met: false },
+            { id: "req-016-5", label: "Product owner sign-off on displayed metrics", met: false },
+        ],
     },
     {
         id: "tsk-017", title: "QA: Ownership map and conflict detection",

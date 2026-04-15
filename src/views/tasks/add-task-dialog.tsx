@@ -1,10 +1,10 @@
-import { useState, useCallback } from "react";
-import { Plus, Paperclip, X, Clock, User, AlertCircle, FileText, MessageSquare } from "lucide-react";
+import { useState, useCallback, useRef } from "react";
+import { Plus, Paperclip, X, Clock, User, AlertCircle, FileText, MessageSquare, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { ValidationError } from "yup";
 
 import { Button, Input, Label, Textarea } from "@/atoms";
-import { TaskPriority, TaskPhase } from "@/enums";
+import { TaskPriority, TaskPhase, TaskStatus } from "@/enums";
 import type { TaskInterface } from "@/interfaces";
 import type { AddTaskDialogProps, AddTaskFormState } from "@/interfaces";
 import { t } from "@/hooks";
@@ -34,14 +34,23 @@ const PRIORITY_OPTIONS = [
     { value: TaskPriority.Critical, label: "Critical", color: "text-red-500" },
 ];
 
+const STATUS_OPTIONS = [
+    { value: TaskStatus.OnTrack, label: "On Track", color: "text-green-500" },
+    { value: TaskStatus.AtRisk, label: "At Risk", color: "text-yellow-500" },
+    { value: TaskStatus.Delayed, label: "Delayed", color: "text-orange-500" },
+    { value: TaskStatus.OnHold, label: "On Hold", color: "text-gray-500" },
+];
+
 const INITIAL_FORM_STATE: AddTaskFormState = {
     title: "",
     description: "",
     assigneeIds: [],
     priority: TaskPriority.Medium,
+    status: TaskStatus.OnTrack,
     estimatedHours: 0,
     attachments: [],
     initialComment: "",
+    requirements: [],
 };
 
 /* -------------------------------------------------------------------------- */
@@ -51,14 +60,34 @@ const INITIAL_FORM_STATE: AddTaskFormState = {
 export const AddTaskDialog = ({ open, onOpenChange, members, sprintId, onAddTask }: AddTaskDialogProps) => {
     const [formState, setFormState] = useState<AddTaskFormState>(INITIAL_FORM_STATE);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [requirementInput, setRequirementInput] = useState("");
+    const requirementInputRef = useRef<HTMLInputElement>(null);
 
     const updateField = <K extends keyof AddTaskFormState>(field: K, value: AddTaskFormState[K]) =>
         setFormState((prev) => ({ ...prev, [field]: value }));
 
     const handleOpenChange = useCallback((newOpen: boolean) => {
-        if (!newOpen) setFormState(INITIAL_FORM_STATE);
+        if (!newOpen) { setFormState(INITIAL_FORM_STATE); setRequirementInput(""); }
         onOpenChange(newOpen);
     }, [onOpenChange]);
+
+    const addRequirement = useCallback(() => {
+        const label = requirementInput.trim();
+        if (!label) return;
+        setFormState((prev) => ({
+            ...prev,
+            requirements: [
+                ...prev.requirements,
+                { id: `req-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`, label },
+            ],
+        }));
+        setRequirementInput("");
+        requirementInputRef.current?.focus();
+    }, [requirementInput]);
+
+    const removeRequirement = useCallback((id: string) => {
+        setFormState((prev) => ({ ...prev, requirements: prev.requirements.filter((r) => r.id !== id) }));
+    }, []);
 
     const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -126,6 +155,8 @@ export const AddTaskDialog = ({ open, onOpenChange, members, sprintId, onAddTask
                 updatedAt: now,
                 tags: [],
                 workType: "Frontend",
+                status: formState.status,
+                requirements: formState.requirements.map((r) => ({ ...r, met: false })),
             };
 
             onAddTask(newTask);
@@ -181,8 +212,46 @@ export const AddTaskDialog = ({ open, onOpenChange, members, sprintId, onAddTask
                         />
                     </div>
 
-                    {/* Assignee and Priority row */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Requirements */}
+                    <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                            <ListChecks className="h-4 w-4 text-text-muted" />
+                            {t("Requirements")}
+                        </Label>
+                        <div className="flex gap-2">
+                            <Input
+                                ref={requirementInputRef}
+                                placeholder={t("Add a requirement...")}
+                                value={requirementInput}
+                                onChange={(e) => setRequirementInput(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addRequirement(); } }}
+                                className="flex-1"
+                            />
+                            <Button type="button" variant="outline" onClick={addRequirement} className="gap-1.5 shrink-0">
+                                <Plus className="h-4 w-4" />
+                                {t("Add")}
+                            </Button>
+                        </div>
+                        {formState.requirements.length > 0 && (
+                            <div className="space-y-2 mt-2">
+                                {formState.requirements.map((req) => (
+                                    <div key={req.id} className="flex items-center gap-3 rounded-lg border border-border bg-muted px-3 py-2">
+                                        <span className="flex-1 text-sm text-text-dark">{req.label}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeRequirement(req.id)}
+                                            className="p-1 rounded-full hover:bg-surface text-text-muted hover:text-error transition-colors shrink-0"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Assignee, Priority and Status row */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="assignee" className="flex items-center gap-2">
                                 <User className="h-4 w-4 text-text-muted" />
@@ -258,6 +327,25 @@ export const AddTaskDialog = ({ open, onOpenChange, members, sprintId, onAddTask
                                 </SelectTrigger>
                                 <SelectContent>
                                     {PRIORITY_OPTIONS.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            <span className={cn("font-medium", option.color)}>{t(option.label)}</span>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="status" className="flex items-center gap-2">
+                                <AlertCircle className="h-4 w-4 text-text-muted" />
+                                {t("Status")}
+                            </Label>
+                            <Select value={formState.status} onValueChange={(v) => updateField("status", v as TaskStatus)}>
+                                <SelectTrigger id="status" className="w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {STATUS_OPTIONS.map((option) => (
                                         <SelectItem key={option.value} value={option.value}>
                                             <span className={cn("font-medium", option.color)}>{t(option.label)}</span>
                                         </SelectItem>
