@@ -1,5 +1,25 @@
 import type { SprintStatus, UserRole } from "@/enums";
 
+export interface ApiSuccessResponse<T> {
+    data: T;
+    isSuccess: boolean;
+    message?: string;
+}
+
+export interface LoginResponseInterface {
+    data: {
+        token: string;
+        user: UserInterface;
+    };
+    isSuccess: boolean;
+    message: string;
+}
+
+export interface MeResponseInterface {
+    data: UserInterface;
+    isSuccess: boolean;
+}
+
 export interface UserInterface {
     id: string;
     name: string;
@@ -7,6 +27,7 @@ export interface UserInterface {
     role: UserRole;
     avatar: string;
     team: string;
+    status?: string;
 }
 
 export interface SprintInterface {

@@ -4,7 +4,7 @@
     "private": true,
     "type": "module",
     "engines": {
-        "node": "24.12.0"
+        "node": ">=22.0.0"
     },
     "description": "Twindix Performance Indicator — a team performance and delivery friction tracking platform that makes delivery problems visible, measurable, and actionable. Track sprint health, blockers, decisions, workload, and 17 key delivery metrics.",
     "author": "Mohamed Elhawary",
