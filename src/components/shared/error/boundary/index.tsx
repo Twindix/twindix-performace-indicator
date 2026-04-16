@@ -3,7 +3,7 @@ import { Component } from "react";
 
 import { checkIsNetworkErrorHandler, getErrorMessageHandler } from "@/utils";
 
-import { NetworkError } from "../network/network-error";
+import { NetworkError } from "../network";
 import { StackError } from "../stack";
 
 export class BoundaryErrorClass extends Component<
