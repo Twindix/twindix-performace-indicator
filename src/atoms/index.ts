@@ -1,4 +1,5 @@
 export { Button } from "./button";
+export { Logo } from "./logo";
 export { Badge } from "./badge";
 export { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./card";
 export { Input } from "./input";
