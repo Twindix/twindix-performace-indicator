@@ -9,3 +9,4 @@ export { AnimatedNumber } from "./animated-number";
 export { ErrorBoundary } from "./error-boundary";
 export { OfflineBanner } from "./offline-banner";
 export { MobileNav } from "./mobile-nav";
+export { BoundaryErrorClass, NetworkError, IndicatorNetworkError, StackError } from "./error";

@@ -1,6 +1,7 @@
 import {
     AlertTriangle,
     Bell,
+    BookOpen,
     Flag,
     LayoutDashboard,
     ListChecks,
@@ -27,8 +28,8 @@ export const sidebarItems: SidebarItemInterface[] = [
     { label: "Users", path: routesData.users, icon: UserCog },
     { label: "Red Flags", path: routesData.redFlags, icon: Flag },
     { label: "Alerts", path: routesData.alerts, icon: Bell },
+    { label: "Decisions", path: routesData.decisions, icon: BookOpen },
     { label: "Settings", path: routesData.settings, icon: Settings },
-    // { label: "Decisions", path: routesData.decisions, icon: BookOpen, disabled: true },
     // { label: "Communication", path: routesData.communication, icon: MessageSquare, disabled: true },
     // { label: "Workload", path: routesData.workload, icon: Users, disabled: true },
     // { label: "Reports", path: routesData.reports, icon: BarChart3, disabled: true },

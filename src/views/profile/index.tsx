@@ -1,13 +1,13 @@
 import { Briefcase, Calendar, Mail, MapPin, Shield, Users } from "lucide-react";
 
 import { Badge, Card, CardContent } from "@/atoms";
-import { AnimatedNumber, Header, ScoreGauge } from "@/components/shared";
+import { Header, ScoreGauge } from "@/components/shared";
 import { ProfileSkeleton } from "@/components/skeletons";
 import { t, useAuth, useSettings, usePageLoader } from "@/hooks";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback } from "@/ui";
 import { cn, getStorageItem, storageKeys } from "@/utils";
-import type { TaskInterface, TeamMemberWorkloadInterface, SprintMetricsInterface } from "@/interfaces";
+import type { TaskInterface, SprintMetricsInterface } from "@/interfaces";
 
 const roleLabels: Record<string, string> = {
     ceo: "Chief Executive Officer",
@@ -30,16 +30,12 @@ export const ProfileView = () => {
     const { activeSprintId } = useSprintStore();
 
     const tasks = (getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? []).filter((t) => t.sprintId === activeSprintId && (t.assigneeIds ?? []).includes(user?.id ?? ""));
-    const workload = (getStorageItem<TeamMemberWorkloadInterface[]>(storageKeys.workload) ?? []).find((w) => w.sprintId === activeSprintId && w.memberId === user?.id);
     const allMetrics = getStorageItem<SprintMetricsInterface[]>(storageKeys.metrics) ?? [];
     const sprintMetrics = allMetrics.find((m) => m.sprintId === activeSprintId);
 
     const doneTasks = tasks.filter((t) => t.phase === "done").length;
     const inProgressTasks = tasks.filter((t) => t.phase === "in_progress").length;
     const blockedTasks = tasks.filter((t) => t.hasBlocker).length;
-    const totalPoints = tasks.reduce((s, t) => s + t.storyPoints, 0);
-    const donePoints = tasks.filter((t) => t.phase === "done").reduce((s, t) => s + t.storyPoints, 0);
-    const utilization = workload ? Math.round((workload.assignedPoints / workload.capacity) * 100) : 0;
 
     if (!user) return null;
     if (isLoading) return <ProfileSkeleton />;
@@ -116,41 +112,6 @@ export const ProfileView = () => {
                     </CardContent>
                 </Card>
 
-                {/* Workload & Points */}
-                <Card className="lg:col-span-2">
-                    <CardContent className="p-6">
-                        <h3 className="text-lg font-semibold text-text-dark mb-4">{t("Workload Overview")}</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                            <div className="text-center">
-                                <p className="text-xs text-text-muted mb-1">{t("Story Points")}</p>
-                                <p className="text-2xl font-bold text-text-dark">{donePoints}<span className="text-sm text-text-muted font-normal">/{totalPoints}</span></p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-xs text-text-muted mb-1">{t("Utilization")}</p>
-                                <p className={cn("text-2xl font-bold", utilization > 100 ? "text-error" : utilization > 85 ? "text-warning" : "text-success")}><AnimatedNumber value={utilization} suffix="%" /></p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-xs text-text-muted mb-1">{t("Context Switches")}</p>
-                                <p className={cn("text-2xl font-bold", (workload?.contextSwitches ?? 0) > 4 ? "text-error" : "text-text-dark")}>{workload?.contextSwitches ?? 0}<span className="text-sm text-text-muted font-normal">/day</span></p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-xs text-text-muted mb-1">{t("Capacity")}</p>
-                                <p className="text-2xl font-bold text-text-dark">{workload?.capacity ?? 0}<span className="text-sm text-text-muted font-normal"> {t("points")}</span></p>
-                            </div>
-                        </div>
-
-                        {/* Utilization bar */}
-                        <div className="mt-6">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-medium text-text-secondary">{t("Capacity Utilization")}</span>
-                                <span className={cn("text-xs font-bold", utilization > 100 ? "text-error" : "text-text-dark")}>{workload?.assignedPoints ?? 0}/{workload?.capacity ?? 0} {t("points")} ({utilization}%)</span>
-                            </div>
-                            <div className="h-3 rounded-full bg-muted overflow-hidden">
-                                <div className={cn("h-full rounded-full transition-all progress-animated", utilization > 100 ? "bg-error" : utilization > 85 ? "bg-warning" : "bg-primary")} style={{ width: `${Math.min(utilization, 100)}%` }} />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
 
             {/* My Tasks */}
