@@ -1,8 +1,6 @@
-import { useState } from "react";
-import { Calendar, Globe, Info, Lock, Minimize2, Moon, Palette, Save, Sun } from "lucide-react";
-import { toast } from "sonner";
+import { Calendar, Globe, Info, Minimize2, Moon, Palette, Sun } from "lucide-react";
 
-import { Button, Card, CardContent, Input, Label } from "@/atoms";
+import { Card, CardContent } from "@/atoms";
 import { Header } from "@/components/shared";
 import { SettingsSkeleton } from "@/components/skeletons";
 import { useAuth, useTheme, useSettings, t, usePageLoader, type AppSettings } from "@/hooks";
@@ -10,19 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export const SettingsView = () => {
     const isLoading = usePageLoader();
-    const { user, onUpdateUser } = useAuth();
+    const { user } = useAuth();
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings, updateSettings] = useSettings();
-    const [displayName, setDisplayName] = useState(user?.name ?? "");
-
-    const handleSaveAccount = () => {
-        if (!displayName.trim()) {
-            toast.error("Display name cannot be empty");
-            return;
-        }
-        onUpdateUser({ name: displayName.trim() });
-        toast.success("Display name updated", { description: `Your name is now "${displayName.trim()}"` });
-    };
 
     if (!user) return null;
     if (isLoading) return <SettingsSkeleton />;
@@ -68,34 +56,6 @@ export const SettingsView = () => {
                                     </span>
                                 </button>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Account */}
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Lock className="h-5 w-5 text-primary" />
-                            <h3 className="text-base font-semibold text-text-dark">{t("Account")}</h3>
-                        </div>
-                        <div className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="display-name">{t("Display Name")}</Label>
-                                <Input id="display-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>{t("Email")}</Label>
-                                <Input value={user.email} disabled />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>{t("Role")}</Label>
-                                <Input defaultValue={user.role.replace(/_/g, " ")} disabled className="capitalize" />
-                            </div>
-                            <Button onClick={handleSaveAccount} className="w-full gap-2">
-                                <Save className="h-4 w-4" />
-                                {t("Save Changes")}
-                            </Button>
                         </div>
                     </CardContent>
                 </Card>

@@ -8,7 +8,7 @@ export const seedDecisions: DecisionInterface[] = [
         context: "Need to ship the demo quickly without backend dependencies.",
         status: DecisionStatus.Approved, ownerId: "usr-005", participants: ["usr-005", "usr-001", "usr-008"],
         sprintId: "spr-014", createdAt: "2026-03-23", decidedAt: "2026-03-23",
-        category: DecisionCategory.Architecture, outcome: "localStorage with seed data on first load. Will migrate to real API in v2.",
+        category: DecisionCategory.Tooling, outcome: "localStorage with seed data on first load. Will migrate to real API in v2.",
     },
     {
         id: "dec-002", title: "Use CSS-only charts for visualizations",
@@ -16,7 +16,7 @@ export const seedDecisions: DecisionInterface[] = [
         context: "Reduce bundle size and avoid debugging chart library issues before the CEO demo.",
         status: DecisionStatus.Approved, ownerId: "usr-001", participants: ["usr-001", "usr-002", "usr-005"],
         sprintId: "spr-014", createdAt: "2026-03-23", decidedAt: "2026-03-24",
-        category: DecisionCategory.Architecture, outcome: "CSS conic-gradient for gauges, div-based bars for charts. Recharts planned for v2.",
+        category: DecisionCategory.Tooling, outcome: "CSS conic-gradient for gauges, div-based bars for charts. Recharts planned for v2.",
     },
     {
         id: "dec-003", title: "Task readiness gate threshold set to 70%",
@@ -46,9 +46,9 @@ export const seedDecisions: DecisionInterface[] = [
         id: "dec-006", title: "Migrate to monorepo structure",
         description: "Move all Twindix products into a single monorepo for shared code and consistent tooling.",
         context: "Multiple projects share UI components and utilities but currently duplicate code.",
-        status: DecisionStatus.Deferred, ownerId: "usr-005", participants: ["usr-005", "usr-001", "usr-003"],
+        status: DecisionStatus.Pending, ownerId: "usr-005", participants: ["usr-005", "usr-001", "usr-003"],
         sprintId: "spr-014", createdAt: "2026-03-24",
-        category: DecisionCategory.Architecture,
+        category: DecisionCategory.Tooling,
     },
     {
         id: "dec-007", title: "Add mandatory architecture notes for complex tasks",
