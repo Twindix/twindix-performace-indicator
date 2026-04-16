@@ -1,4 +1,4 @@
-import { Bell, Flag, /* Globe, */ HelpCircle, LogOut, Moon, Settings, Sun, User } from "lucide-react";
+import { Bell, Flag, HelpCircle, LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -50,8 +50,6 @@ export const Topbar = () => {
 
     const isArabic = settings.language === "ar";
     const redFlagCount = flags.filter((f) => f.sprintId === activeSprintId).length;
-
-    // const toggleLanguage = () => { updateSettings({ language: isArabic ? "en" : "ar" }); };
 
     const pendingAlertCount = alerts.filter((a) => {
         if (a.sprintId !== activeSprintId) return false;
@@ -120,18 +118,6 @@ export const Topbar = () => {
                             <TooltipContent>{t("You have pending alerts")}</TooltipContent>
                         </Tooltip>
                     )}
-
-                    {/* Language toggle */}
-                    {/* stopping toggle Language button  */}
-                    {/* <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="sm" onClick={toggleLanguage} className="h-9 gap-1.5 px-2.5 text-xs font-semibold">
-                                <Globe className="h-4 w-4" />
-                                {isArabic ? "EN" : "عربي"}
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{isArabic ? "Switch to English" : "التبديل إلى العربية"}</TooltipContent>
-                    </Tooltip> */}
 
                     {/* Theme toggle */}
                     <Tooltip>
