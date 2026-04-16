@@ -122,7 +122,8 @@ export const Topbar = () => {
                     )}
 
                     {/* Language toggle */}
-                    <Tooltip>
+                    {/* stopping toggle Language button  */}
+                    {/* <Tooltip>
                         <TooltipTrigger asChild>
                             <Button variant="ghost" size="sm" onClick={toggleLanguage} className="h-9 gap-1.5 px-2.5 text-xs font-semibold">
                                 <Globe className="h-4 w-4" />
@@ -130,7 +131,7 @@ export const Topbar = () => {
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>{isArabic ? "Switch to English" : "التبديل إلى العربية"}</TooltipContent>
-                    </Tooltip>
+                    </Tooltip> */}
 
                     {/* Theme toggle */}
                     <Tooltip>
