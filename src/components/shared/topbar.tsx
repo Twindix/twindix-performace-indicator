@@ -1,4 +1,4 @@
-import { Bell, Flag, Globe, HelpCircle, LogOut, Moon, Settings, Sun, User } from "lucide-react";
+import { Bell, Flag, /* Globe, */ HelpCircle, LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -37,7 +37,7 @@ const presenceConfig: Record<PresenceStatus, { label: string; dot: string }> = {
 export const Topbar = () => {
     const { user, onLogout } = useAuth();
     const { isDarkMode, onToggleTheme } = useTheme();
-    const [settings, updateSettings] = useSettings();
+    const [settings, /* updateSettings */] = useSettings();
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
     const { flags, load: loadFlags } = useRedFlagStore();
     const { alerts, load: loadAlerts } = useAlertStore();
@@ -51,7 +51,7 @@ export const Topbar = () => {
     const isArabic = settings.language === "ar";
     const redFlagCount = flags.filter((f) => f.sprintId === activeSprintId).length;
 
-    const toggleLanguage = () => { updateSettings({ language: isArabic ? "en" : "ar" }); };
+    // const toggleLanguage = () => { updateSettings({ language: isArabic ? "en" : "ar" }); };
 
     const pendingAlertCount = alerts.filter((a) => {
         if (a.sprintId !== activeSprintId) return false;
