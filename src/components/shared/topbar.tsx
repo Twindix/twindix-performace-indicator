@@ -1,4 +1,4 @@
-import { Bell, Flag, Globe, HelpCircle, LogOut, Moon, Pencil, Settings, Sun, User } from "lucide-react";
+import { Bell, Flag, Globe, LogOut, Moon, Pencil, Settings, Sun, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -243,11 +243,6 @@ export const Topbar = () => {
                             <Settings className="h-4 w-4" />
                             {t("Settings")}
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(routesData.reports)} className="gap-2 cursor-pointer">
-                            <HelpCircle className="h-4 w-4" />
-                            {t("Help & Reports")}
-                        </DropdownMenuItem>
-
                         <DropdownMenuSeparator />
 
                         <DropdownMenuItem onClick={onLogout} className="gap-2 text-error focus:text-error cursor-pointer">
