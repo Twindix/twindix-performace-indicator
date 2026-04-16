@@ -1,4 +1,4 @@
-import { Bell, Flag, Globe, LogOut, Moon, Pencil, Settings, Sun, User } from "lucide-react";
+import { Bell, Flag, Globe, LogOut, Pencil, HelpCircle, LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -134,17 +134,6 @@ export const Topbar = () => {
                             <TooltipContent>{t("You have pending alerts")}</TooltipContent>
                         </Tooltip>
                     )}
-
-                    {/* Language toggle */}
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="sm" onClick={toggleLanguage} className="h-9 gap-1.5 px-2.5 text-xs font-semibold">
-                                <Globe className="h-4 w-4" />
-                                {isArabic ? "EN" : "عربي"}
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{isArabic ? "Switch to English" : "التبديل إلى العربية"}</TooltipContent>
-                    </Tooltip>
 
                     {/* Theme toggle */}
                     <Tooltip>
