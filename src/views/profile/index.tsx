@@ -1,6 +1,7 @@
-import { Briefcase, Calendar, Mail, MapPin, Shield, Users } from "lucide-react";
+import { Briefcase, Calendar, Mail, MapPin, Pencil, Shield, Users } from "lucide-react";
+import { useState } from "react";
 
-import { Badge, Card, CardContent } from "@/atoms";
+import { Badge, Card, CardContent, Button, Input } from "@/atoms";
 import { Header, ScoreGauge } from "@/components/shared";
 import { ProfileSkeleton } from "@/components/skeletons";
 import { t, useAuth, useSettings, usePageLoader } from "@/hooks";
@@ -26,7 +27,9 @@ const roleLabels: Record<string, string> = {
 export const ProfileView = () => {
     const isLoading = usePageLoader();
     useSettings();
-    const { user } = useAuth();
+    const { user, onUpdateUser } = useAuth();
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [editedName, setEditedName] = useState(user?.name ?? "");
     const { activeSprintId } = useSprintStore();
 
     const tasks = (getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? []).filter((t) => t.sprintId === activeSprintId && (t.assigneeIds ?? []).includes(user?.id ?? ""));
@@ -51,7 +54,34 @@ export const ProfileView = () => {
                         <Avatar className="h-20 w-20 sm:h-24 sm:w-24 mb-4">
                             <AvatarFallback className="text-2xl font-bold">{user.avatar}</AvatarFallback>
                         </Avatar>
-                        <h2 className="text-xl font-bold text-text-dark">{user.name}</h2>
+                        {isEditingName ? (
+                            <div className="flex items-center gap-2 mt-1">
+                                <Input
+                                    autoFocus
+                                    value={editedName}
+                                    onChange={(e) => setEditedName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" && editedName.trim()) {
+                                            onUpdateUser({ name: editedName.trim() });
+                                            setIsEditingName(false);
+                                        } else if (e.key === "Escape") {
+                                            setEditedName(user.name);
+                                            setIsEditingName(false);
+                                        }
+                                    }}
+                                    className="text-xl font-bold text-center h-9"
+                                />
+                                <Button size="sm" onClick={() => { if (editedName.trim()) { onUpdateUser({ name: editedName.trim() }); setIsEditingName(false); } }} disabled={!editedName.trim()}>{t("Save")}</Button>
+                                <Button size="sm" variant="outline" onClick={() => { setEditedName(user.name); setIsEditingName(false); }}>{t("Cancel")}</Button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-xl font-bold text-text-dark">{user.name}</h2>
+                                <button onClick={() => { setEditedName(user.name); setIsEditingName(true); }} className="text-text-muted hover:text-text-dark transition-colors cursor-pointer" aria-label="Edit name">
+                                    <Pencil className="h-4 w-4" />
+                                </button>
+                            </div>
+                        )}
                         <p className="text-sm text-primary font-medium mt-1">{roleLabels[user.role] ?? user.role}</p>
                         <Badge variant="default" className="mt-2">{user.team} {t("Team")}</Badge>
 

@@ -1,8 +1,8 @@
-import { Bell, Flag, Globe, LogOut, Pencil, HelpCircle, LogOut, Moon, Settings, Sun, User } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Bell, Flag, LogOut, Moon, Settings, Sun, User } from "lucide-react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Button, Input, Label } from "@/atoms";
+import { Button } from "@/atoms";
 import { routesData } from "@/data";
 import { useAuth, useTheme, t, useSettings, usePresence, type PresenceStatus } from "@/hooks";
 import { useRedFlagStore, useSprintStore, useAlertStore } from "@/store";
@@ -12,11 +12,6 @@ import { MobileNav } from "./mobile-nav";
 import {
     Avatar,
     AvatarFallback,
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -40,12 +35,9 @@ const presenceConfig: Record<PresenceStatus, { label: string; dot: string }> = {
 };
 
 export const Topbar = () => {
-    const { user, onLogout, onUpdateUser } = useAuth();
+    const { user, onLogout } = useAuth();
     const { isDarkMode, onToggleTheme } = useTheme();
-    const [settings, updateSettings] = useSettings();
-    const [editOpen, setEditOpen] = useState(false);
-    const [displayName, setDisplayName] = useState(user?.name ?? "");
-    const inputRef = useRef<HTMLInputElement>(null);
+    const [settings] = useSettings();
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
     const { flags, load: loadFlags } = useRedFlagStore();
     const { alerts, load: loadAlerts } = useAlertStore();
@@ -58,14 +50,6 @@ export const Topbar = () => {
 
     const isArabic = settings.language === "ar";
     const redFlagCount = flags.filter((f) => f.sprintId === activeSprintId).length;
-
-    const toggleLanguage = () => { updateSettings({ language: isArabic ? "en" : "ar" }); };
-
-    const handleSaveName = () => {
-        if (!displayName.trim()) return;
-        onUpdateUser({ name: displayName.trim() });
-        setEditOpen(false);
-    };
 
     const pendingAlertCount = alerts.filter((a) => {
         if (a.sprintId !== activeSprintId) return false;
@@ -144,48 +128,6 @@ export const Topbar = () => {
                         </TooltipTrigger>
                         <TooltipContent>{isDarkMode ? t("Light") : t("Dark")}</TooltipContent>
                     </Tooltip>
-                    {/* Edit name */}
-                    <Dialog open={editOpen} onOpenChange={(open) => {
-                        setEditOpen(open);
-                        if (open) setDisplayName(user?.name ?? "");
-                        setTimeout(() => inputRef.current?.focus(), 50);
-                    }}>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <DialogTrigger asChild>
-                                    <button
-                                        className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-accent text-text-muted hover:text-text-dark transition-colors cursor-pointer"
-                                        aria-label="Edit display name"
-                                    >
-                                        <Pencil className="h-3.5 w-3.5" />
-                                    </button>
-                                </DialogTrigger>
-                            </TooltipTrigger>
-                            <TooltipContent>{t("Edit Display Name")}</TooltipContent>
-                        </Tooltip>
-                        <DialogContent className="sm:max-w-sm">
-                        <DialogHeader>
-                            <DialogTitle>{t("Edit Display Name")}</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 pt-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="topbar-display-name">{t("Display Name")}</Label>
-                                <Input
-                                    id="topbar-display-name"
-                                    ref={inputRef}
-                                    value={displayName}
-                                    onChange={(e) => setDisplayName(e.target.value)}
-                                    onKeyDown={(e) => { if (e.key === "Enter") handleSaveName(); }}
-                                    placeholder={t("Enter your name")}
-                                />
-                            </div>
-                            <div className="flex justify-end gap-2">
-                                <Button variant="outline" onClick={() => setEditOpen(false)}>{t("Cancel")}</Button>
-                                <Button onClick={handleSaveName} disabled={!displayName.trim()}>{t("Save")}</Button>
-                            </div>
-                        </div>
-                        </DialogContent>
-                    </Dialog>
                 </TooltipProvider>
 
                 {/* Avatar dropdown */}
