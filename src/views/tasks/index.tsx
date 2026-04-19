@@ -219,7 +219,7 @@ export const TasksView = () => {
                 }
             />
 
-            <Card className="mb-6">
+            {allTasks.length > 0 && <Card className="mb-6">
                 <CardContent className="p-5">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                         <div className="relative flex-1 min-w-0 sm:min-w-[200px] sm:max-w-sm">
@@ -308,7 +308,7 @@ export const TasksView = () => {
                         </div>
                     </div>
                 </CardContent>
-            </Card>
+            </Card>}
 
             <div className="flex flex-wrap items-center gap-1.5 mb-6 mt-1 py-2 text-[10px] text-text-muted">
                 {COLUMNS.map((col, i) => (
