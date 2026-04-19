@@ -1,7 +1,7 @@
 import { Paperclip, Trash2 } from "lucide-react";
 
 import { useTasks } from "@/contexts";
-import { t } from "@/hooks";
+import { t, useTaskAttachments } from "@/hooks";
 import type { TaskInterface } from "@/interfaces";
 
 interface Props {
@@ -12,15 +12,22 @@ const formatSize = (bytes: number) =>
     bytes < 1024 ? `${bytes} B` : bytes < 1048576 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
 
 export const TaskAttachments = ({ task }: Props) => {
-    const { uploadAttachment, removeAttachment } = useTasks();
+    const { patchTaskLocal } = useTasks();
+    const { uploadHandler, deleteHandler } = useTaskAttachments();
     const attachments = task.attachments ?? [];
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files ?? []);
         e.target.value = "";
         for (const file of files) {
-            await uploadAttachment(task.id, file);
+            const res = await uploadHandler(task.id, file);
+            if (res) patchTaskLocal(task.id, { attachments: res.attachments });
         }
+    };
+
+    const handleDelete = async (attachmentId: string) => {
+        const ok = await deleteHandler(task.id, attachmentId);
+        if (ok) patchTaskLocal(task.id, { attachments: attachments.filter((a) => a.id !== attachmentId) });
     };
 
     return (
@@ -61,7 +68,7 @@ export const TaskAttachments = ({ task }: Props) => {
                                 <a href={att.dataUrl} download={att.name} className="text-xs font-medium text-text-dark hover:text-primary truncate block transition-colors">{att.name}</a>
                                 <p className="text-[10px] text-text-muted">{formatSize(att.size)}</p>
                             </div>
-                            <button onClick={() => removeAttachment(task.id, att.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                            <button onClick={() => handleDelete(att.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
                                 <Trash2 className="h-3.5 w-3.5" />
                             </button>
                         </div>

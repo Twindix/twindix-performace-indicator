@@ -17,7 +17,7 @@ import type {
     UserInterface,
     BlockerInterface,
 } from "@/interfaces";
-import { t, useSettings, usePageLoader } from "@/hooks";
+import { t, useGetTask, useSettings, usePageLoader, useTaskViews, useUpdateTask } from "@/hooks";
 import { useSprintStore } from "@/store";
 import {
     Select,
@@ -58,14 +58,13 @@ const TasksViewInner = () => {
         pipeline,
         stats,
         isLoading: isFetchingTasks,
-        fetchKanban,
-        fetchPipeline,
-        fetchPipelineCounts,
-        fetchStats,
-        updateTask,
-        fetchTaskDetail,
+        setKanbanLocal,
+        setPipelineLocal,
         patchTaskLocal,
     } = useTasks();
+    const { kanbanHandler, pipelineHandler, pipelineCountsHandler, statsHandler } = useTaskViews();
+    const { getHandler: getTaskHandler } = useGetTask();
+    const { updateHandler: updateTaskHandler } = useUpdateTask();
 
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
     const blockers = getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? [];
@@ -75,8 +74,13 @@ const TasksViewInner = () => {
 
     useEffect(() => {
         if (!dialogOpen || !selectedTask) return;
-        fetchTaskDetail(selectedTask.id).then((res) => { if (res) setSelectedTask(res); });
-    }, [dialogOpen, selectedTask?.id, fetchTaskDetail]);
+        getTaskHandler(selectedTask.id).then((res) => {
+            if (res) {
+                setSelectedTask(res);
+                patchTaskLocal(res.id, res);
+            }
+        });
+    }, [dialogOpen, selectedTask?.id, getTaskHandler, patchTaskLocal]);
 
     const [addTaskDialogOpen, setAddTaskDialogOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -89,18 +93,18 @@ const TasksViewInner = () => {
 
     useEffect(() => {
         if (!activeSprintId) return;
-        fetchStats();
-    }, [activeSprintId, fetchStats]);
+        statsHandler(activeSprintId);
+    }, [activeSprintId, statsHandler]);
 
     useEffect(() => {
         if (!activeSprintId) return;
         if (viewMode === "board") {
-            fetchKanban();
+            kanbanHandler(activeSprintId).then((res) => { if (res) setKanbanLocal(res); });
         } else {
-            fetchPipeline();
-            fetchPipelineCounts();
+            pipelineHandler(activeSprintId).then((res) => { if (res) setPipelineLocal(res); });
+            pipelineCountsHandler(activeSprintId);
         }
-    }, [activeSprintId, viewMode, fetchKanban, fetchPipeline, fetchPipelineCounts]);
+    }, [activeSprintId, viewMode, kanbanHandler, pipelineHandler, pipelineCountsHandler, setKanbanLocal, setPipelineLocal]);
 
     const [draggedTask, setDraggedTask] = useState<TaskInterface | null>(null);
     const [dragOverPhase, setDragOverPhase] = useState<TaskPhase | null>(null);
@@ -166,13 +170,16 @@ const TasksViewInner = () => {
 
     const confirmTransition = useCallback(async () => {
         if (!transitionTask || !transitionTarget) return;
-        const updated = await updateTask(transitionTask.id, { phase: transitionTarget });
-        if (updated) toast_success(transitionTask, transitionTarget);
+        const updated = await updateTaskHandler(transitionTask.id, { phase: transitionTarget });
+        if (updated) {
+            patchTaskLocal(updated.id, updated);
+            toast_success(transitionTask, transitionTarget);
+        }
         setTransitionDialogOpen(false);
         setTransitionTask(null);
         setTransitionTarget(null);
         setTransitionResult(null);
-    }, [transitionTask, transitionTarget, updateTask]);
+    }, [transitionTask, transitionTarget, updateTaskHandler, patchTaskLocal]);
 
     const handleDragStart  = useCallback((_e: DragEvent<HTMLDivElement>, task: TaskInterface) => setDraggedTask(task), []);
     const handleDragOver   = useCallback((e: DragEvent<HTMLDivElement>) => e.preventDefault(), []);

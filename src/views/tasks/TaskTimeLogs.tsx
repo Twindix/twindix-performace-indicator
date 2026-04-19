@@ -1,15 +1,11 @@
 import { useEffect, useState } from "react";
 import { Clock, Trash2 } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button, Input } from "@/atoms";
-import { timeLogsConstants } from "@/constants/time-logs";
 import { useTasks } from "@/contexts";
 import { UserRole } from "@/enums";
-import { t } from "@/hooks";
+import { t, useCreateTimeLog, useDeleteTimeLog, useGetTimeLog } from "@/hooks";
 import type { TaskInterface, TimeLogInterface, UserInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
-import { timeLogsService } from "@/services";
 import { Avatar, AvatarFallback } from "@/ui";
 import { getStorageItem, storageKeys } from "@/utils";
 
@@ -20,6 +16,10 @@ interface Props {
 
 export const TaskTimeLogs = ({ task, members }: Props) => {
     const { patchTaskLocal } = useTasks();
+    const { getByTaskHandler } = useGetTimeLog();
+    const { createHandler: createTimeLogHandler, isLoading: isCreating } = useCreateTimeLog();
+    const { deleteHandler: deleteTimeLogHandler } = useDeleteTimeLog();
+
     const currentUserId = getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "";
     const authUser = members.find((m) => m.id === currentUserId);
     const isAssignee = (task.assigneeIds ?? []).includes(currentUserId);
@@ -28,14 +28,11 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
     const [logs, setLogs] = useState<TimeLogInterface[]>([]);
     const [logHours, setLogHours] = useState("");
     const [logNote, setLogNote] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (!isAssignee && !isManager) return;
-        timeLogsService.taskListHandler(task.id)
-            .then((res) => setLogs(res.data))
-            .catch((err) => toast.error(getErrorMessage(err, timeLogsConstants.errors.fetchFailed)));
-    }, [task.id, isAssignee, isManager]);
+        getByTaskHandler(task.id).then((res) => { if (res) setLogs(res); });
+    }, [task.id, isAssignee, isManager, getByTaskHandler]);
 
     if (!isAssignee && !isManager) return null;
 
@@ -45,33 +42,26 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
     const submitLog = async () => {
         const h = parseFloat(logHours);
         if (isNaN(h) || h <= 0) return;
-        setIsSubmitting(true);
-        try {
-            const res = await timeLogsService.createHandler(task.id, {
-                hours: h,
-                date: new Date().toISOString().split("T")[0],
-                description: logNote.trim() || undefined,
-            });
-            const next = [...logs, res.data];
+        const res = await createTimeLogHandler(task.id, {
+            hours: h,
+            date: new Date().toISOString().split("T")[0],
+            description: logNote.trim() || undefined,
+        });
+        if (res) {
+            const next = [...logs, res];
             setLogs(next);
             patchTaskLocal(task.id, { timeLogs: next as unknown as TaskInterface["timeLogs"] });
             setLogHours("");
             setLogNote("");
-        } catch (err) {
-            toast.error(getErrorMessage(err, timeLogsConstants.errors.createFailed));
-        } finally {
-            setIsSubmitting(false);
         }
     };
 
     const deleteLog = async (id: string) => {
-        try {
-            await timeLogsService.deleteHandler(id);
+        const ok = await deleteTimeLogHandler(id);
+        if (ok) {
             const next = logs.filter((l) => l.id !== id);
             setLogs(next);
             patchTaskLocal(task.id, { timeLogs: next as unknown as TaskInterface["timeLogs"] });
-        } catch (err) {
-            toast.error(getErrorMessage(err, timeLogsConstants.errors.deleteFailed));
         }
     };
 
@@ -105,9 +95,7 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between gap-2">
                                         <span className="text-xs font-medium text-text-dark">{author?.name ?? t("Unknown")}</span>
-                                        <span className="text-[10px] text-text-muted">
-                                            {log.date}
-                                        </span>
+                                        <span className="text-[10px] text-text-muted">{log.date}</span>
                                     </div>
                                     <div className="flex items-center justify-between gap-2 mt-0.5">
                                         <p className="text-xs text-text-secondary truncate">{log.description || <span className="italic opacity-50">{t("No note")}</span>}</p>
@@ -131,7 +119,7 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
                 <div className="flex gap-2 items-center bg-surface border border-border rounded-xl p-2">
                     <Input type="number" min="0.5" step="0.5" placeholder={t("Hrs")} value={logHours} onChange={(e) => setLogHours(e.target.value)} className="w-20 h-8 text-sm bg-muted" />
                     <Input placeholder={t("What did you work on? (optional)")} value={logNote} onChange={(e) => setLogNote(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submitLog(); }} className="flex-1 h-8 text-sm bg-muted" />
-                    <Button size="sm" onClick={submitLog} disabled={isSubmitting || !logHours || parseFloat(logHours) <= 0} className="h-8 shrink-0">{isSubmitting ? t("...") : t("Log")}</Button>
+                    <Button size="sm" onClick={submitLog} disabled={isCreating || !logHours || parseFloat(logHours) <= 0} className="h-8 shrink-0">{isCreating ? t("...") : t("Log")}</Button>
                 </div>
             )}
         </div>

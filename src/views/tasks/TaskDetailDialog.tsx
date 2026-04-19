@@ -4,7 +4,7 @@ import { Activity, AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Circle, Cli
 import { Badge, Button, Input } from "@/atoms";
 import { useTasks } from "@/contexts";
 import { BlockerStatus, TaskStatus } from "@/enums";
-import { t } from "@/hooks";
+import { t, useDeleteTask, useTaskTags, useUpdateTaskStatus } from "@/hooks";
 import type { TaskPhase } from "@/enums";
 import type { TaskInterface, TaskCommentInterface, UserInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
 import {
@@ -42,7 +42,10 @@ const STATUS_COLOR: Record<TaskStatus, string> = {
 };
 
 export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, onMoveRequest, onUpdateComments, onUpdateRequirements }: TaskDetailDialogProps) => {
-    const { deleteTask, addTags, removeTag, updateTaskStatus } = useTasks();
+    const { patchTaskLocal, removeTaskLocal } = useTasks();
+    const { deleteHandler: deleteTaskHandler } = useDeleteTask();
+    const { addHandler: addTagHandler, removeHandler: removeTagHandler } = useTaskTags();
+    const { updateStatusHandler: updateTaskStatusHandler } = useUpdateTaskStatus();
     const [tagInput, setTagInput] = useState("");
     const [showTagInput, setShowTagInput] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
@@ -59,18 +62,29 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
     const handleAddTag = async () => {
         const v = tagInput.trim();
         if (!v) return;
-        await addTags(task.id, [v]);
+        const res = await addTagHandler(task.id, [v]);
+        if (res) patchTaskLocal(task.id, { tags: res.tags });
         setTagInput("");
         setShowTagInput(false);
     };
 
-    const handleRemoveTag = (tag: string) => removeTag(task.id, tag);
+    const handleRemoveTag = async (tag: string) => {
+        const res = await removeTagHandler(task.id, tag);
+        if (res) patchTaskLocal(task.id, { tags: res.tags });
+    };
 
-    const handleStatusChange = (next: TaskStatus) => updateTaskStatus(task.id, next);
+    const handleStatusChange = async (next: TaskStatus) => {
+        const res = await updateTaskStatusHandler(task.id, next);
+        if (res) patchTaskLocal(task.id, { status: res.status });
+    };
 
     const handleDelete = async () => {
-        const ok = await deleteTask(task.id);
-        if (ok) { setConfirmDelete(false); onOpenChange(false); }
+        const ok = await deleteTaskHandler(task.id);
+        if (ok) {
+            removeTaskLocal(task.id);
+            setConfirmDelete(false);
+            onOpenChange(false);
+        }
     };
 
     return (

@@ -7,7 +7,8 @@ import { Button, Input, Label, Textarea } from "@/atoms";
 import { TaskPriority, TaskStatus } from "@/enums";
 import type { AddTaskDialogProps, AddTaskFormState } from "@/interfaces";
 import { useTasks } from "@/contexts";
-import { t } from "@/hooks";
+import { t, useCreateTask } from "@/hooks";
+import { useSprintStore } from "@/store";
 import {
     Dialog,
     DialogContent,
@@ -58,9 +59,10 @@ const INITIAL_FORM_STATE: AddTaskFormState = {
 /* -------------------------------------------------------------------------- */
 
 export const AddTaskDialog = ({ open, onOpenChange, members }: AddTaskDialogProps) => {
-    const { createTask } = useTasks();
+    const { activeSprintId } = useSprintStore();
+    const { addTaskLocal } = useTasks();
+    const { createHandler: createTaskHandler, isLoading: isSubmitting } = useCreateTask();
     const [formState, setFormState] = useState<AddTaskFormState>(INITIAL_FORM_STATE);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [requirementInput, setRequirementInput] = useState("");
     const requirementInputRef = useRef<HTMLInputElement>(null);
 
@@ -126,8 +128,8 @@ export const AddTaskDialog = ({ open, onOpenChange, members }: AddTaskDialogProp
             }
         }
 
-        setIsSubmitting(true);
-        const created = await createTask({
+        if (!activeSprintId) return;
+        const created = await createTaskHandler(activeSprintId, {
             title: formState.title.trim(),
             description: formState.description.trim(),
             assigneeIds: formState.assigneeIds,
@@ -135,12 +137,11 @@ export const AddTaskDialog = ({ open, onOpenChange, members }: AddTaskDialogProp
             status: formState.status,
             tags: [],
         });
-        setIsSubmitting(false);
         if (created) {
-            toast.success(t("Task created successfully"));
+            addTaskLocal(created);
             handleOpenChange(false);
         }
-    }, [formState, createTask, handleOpenChange]);
+    }, [formState, activeSprintId, createTaskHandler, addTaskLocal, handleOpenChange]);
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
