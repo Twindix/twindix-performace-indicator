@@ -11,3 +11,4 @@ export type { HandoffInterface, CriterionInterface } from "./handoffs";
 export type { CommentInterface } from "./comments";
 export type { RedFlagInterface, RedFlagSeverity } from "./red-flags";
 export type { AlertInterface } from "./alerts";
+export type { TimeLogInterface, TimeLogsListResponseInterface, TimeLogDetailResponseInterface, TimeLogsSummaryInterface, TimeLogsSummaryResponseInterface, CreateTimeLogPayloadInterface, UpdateTimeLogPayloadInterface } from "./time-logs";
