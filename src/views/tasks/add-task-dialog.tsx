@@ -4,10 +4,12 @@ import { toast } from "sonner";
 import { ValidationError } from "yup";
 
 import { Button, Input, Label, Textarea } from "@/atoms";
-import { TaskPriority, TaskPhase, TaskStatus } from "@/enums";
-import type { TaskInterface } from "@/interfaces";
+import { TaskPriority, TaskStatus } from "@/enums";
 import type { AddTaskDialogProps, AddTaskFormState } from "@/interfaces";
 import { t } from "@/hooks";
+import { getErrorMessage } from "@/lib/error";
+import { tasksService } from "@/services";
+import { tasksConstants } from "@/constants/tasks";
 import {
     Dialog,
     DialogContent,
@@ -113,8 +115,6 @@ export const AddTaskDialog = ({ open, onOpenChange, members, sprintId, onAddTask
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
     };
 
-    const generateTaskId = () => `tsk-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
-
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -130,41 +130,19 @@ export const AddTaskDialog = ({ open, onOpenChange, members, sprintId, onAddTask
         setIsSubmitting(true);
 
         try {
-            const now = new Date().toISOString().split("T")[0];
-            const newTask: TaskInterface = {
-                id: generateTaskId(),
+            const response = await tasksService.createHandler(sprintId, {
                 title: formState.title.trim(),
                 description: formState.description.trim(),
                 assigneeIds: formState.assigneeIds,
-                phase: TaskPhase.Backlog,
                 priority: formState.priority,
-                storyPoints: Math.ceil(formState.estimatedHours / 4),
-                sprintId,
-                readinessScore: 0,
-                readinessChecklist: {
-                    acceptanceCriteriaDefined: false,
-                    businessRulesClear: false,
-                    edgeCasesIdentified: false,
-                    dependenciesMapped: false,
-                    designAvailable: false,
-                    apiContractReady: false,
-                    estimationDone: true,
-                },
-                hasBlocker: false,
-                createdAt: now,
-                updatedAt: now,
-                tags: [],
-                workType: "Frontend",
                 status: formState.status,
-                requirements: formState.requirements.map((r) => ({ ...r, met: false })),
-            };
-
-            onAddTask(newTask);
+                tags: [],
+            });
+            onAddTask(response.data);
             toast.success(t("Task created successfully"));
             handleOpenChange(false);
-        } catch (error) {
-            toast.error(t("Failed to create task"));
-            console.error(error);
+        } catch (err) {
+            toast.error(getErrorMessage(err, tasksConstants.errors.createFailed));
         } finally {
             setIsSubmitting(false);
         }
