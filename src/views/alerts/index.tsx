@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Bell, Check, CheckCheck, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Bell, Check, CheckCheck, Pencil, Plus, Trash2 } from "lucide-react";
 
-import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
+import { Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
 import { AlertsSkeleton } from "@/components/skeletons";
 import { AlertsProvider, useAlerts } from "@/contexts";
@@ -14,7 +14,7 @@ import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
     Tabs, TabsContent, TabsList, TabsTrigger,
 } from "@/ui";
-import { cn, formatDateTime, getStorageItem, storageKeys } from "@/utils";
+import { formatDateTime, getStorageItem, storageKeys } from "@/utils";
 
 export const AlertsView = () => {
     const { activeSprintId } = useSprintStore();

@@ -4,7 +4,7 @@ import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { Header, MetricCard, ScoreGauge, StatusBadge } from "@/components/shared";
 import { DashboardSkeleton } from "@/components/skeletons";
 import { DashboardProvider, useDashboard } from "@/contexts";
-import { MetricStatus } from "@/enums";
+import { MetricStatus, MetricTrend } from "@/enums";
 import { t, useSettings, useCountUp, usePageLoader } from "@/hooks";
 import { useSprintStore } from "@/store";
 import { cn } from "@/utils";
@@ -148,7 +148,7 @@ const DashboardViewInner = () => {
                                 value={readNum(m, "value") ?? 0}
                                 unit={(m.unit as string) ?? ""}
                                 status={(m.status as MetricStatus) ?? MetricStatus.Healthy}
-                                trend={(m.trend as "up" | "down" | "flat") ?? "flat"}
+                                trend={(m.trend as MetricTrend) ?? MetricTrend.Stable}
                                 trendPercent={readNum(m, "trend_percent") ?? readNum(m, "trendPercent") ?? 0}
                                 description={(m.description as string) ?? ""}
                             />

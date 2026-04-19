@@ -29,7 +29,7 @@ export const SettingsView = () => {
     const syncSettings = (changes: Partial<AppSettings>) => {
         updateSettings(changes);
         updateHandler({
-            dark_mode: changes.darkMode ?? isDarkMode,
+            dark_mode: isDarkMode,
             compact_view: changes.compactView ?? settings.compactView,
             language: changes.language ?? settings.language,
             date_format: changes.dateFormat ?? settings.dateFormat,
