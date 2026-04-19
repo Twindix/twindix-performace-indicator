@@ -28,7 +28,7 @@ export const useAlertStore = create<AlertStore>((set, get) => ({
 
     update: (id, changes) => {
         const next = get().alerts.map((a) =>
-            a.id === id ? { ...a, ...changes, updatedAt: new Date().toISOString() } : a,
+            a.id === id ? { ...a, ...changes } : a,
         );
         setStorageItem(storageKeys.alerts, next);
         set({ alerts: next });
@@ -40,11 +40,9 @@ export const useAlertStore = create<AlertStore>((set, get) => ({
         set({ alerts: next });
     },
 
-    resolve: (id, userId) => {
+    resolve: (id, _userId) => {
         const next = get().alerts.map((a) =>
-            a.id === id && !a.resolvedByIds.includes(userId)
-                ? { ...a, resolvedByIds: [...a.resolvedByIds, userId], updatedAt: new Date().toISOString() }
-                : a,
+            a.id === id ? { ...a, status: "done" } : a,
         );
         setStorageItem(storageKeys.alerts, next);
         set({ alerts: next });

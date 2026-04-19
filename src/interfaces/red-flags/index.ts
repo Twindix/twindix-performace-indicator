@@ -6,10 +6,9 @@ export interface RedFlagInterface {
     description: string;
     severity: RedFlagSeverity;
     is_stalled?: boolean;
-    createdById: string;
-    createdAt: string;
-    updatedAt: string;
-    sprintId: string;
+    reporter: { id: string; full_name: string; avatar_initials: string };
+    created_at: string;
+    updated_at: string;
 }
 
 export interface RedFlagsListResponseInterface {
@@ -27,8 +26,7 @@ export interface RedFlagsCountInterface {
 }
 
 export interface RedFlagsCountResponseInterface {
-    data: RedFlagsCountInterface;
-    isSuccess: boolean;
+    count: number;
 }
 
 export interface CreateRedFlagPayloadInterface {

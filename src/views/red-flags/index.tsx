@@ -6,7 +6,7 @@ import { EmptyState, Header } from "@/components/shared";
 import { RedFlagsSkeleton } from "@/components/skeletons";
 import { useRedFlags } from "@/contexts";
 import { t, useAuth, useCreateRedFlag, useDeleteRedFlag, useGetRedFlag, usePageLoader, useUpdateRedFlag } from "@/hooks";
-import type { RedFlagInterface, RedFlagSeverity, UserInterface } from "@/interfaces";
+import type { RedFlagInterface, RedFlagSeverity } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import {
     Avatar,
@@ -22,7 +22,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/ui";
-import { cn, formatDateTime, getStorageItem, storageKeys } from "@/utils";
+import { cn, formatDateTime } from "@/utils";
 
 const severityConfig: Record<RedFlagSeverity, { label: string; variant: "error" | "warning" | "secondary" | "default"; color: string }> = {
     critical: { label: "Critical", variant: "error", color: "text-error" },
@@ -42,7 +42,6 @@ export const RedFlagsView = () => {
     const { updateHandler: updateRedFlagHandler } = useUpdateRedFlag();
     const { deleteHandler: deleteRedFlagHandler } = useDeleteRedFlag();
     const { getHandler: getRedFlagHandler, isLoading: isLoadingDetail } = useGetRedFlag();
-    const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
 
     const [addOpen, setAddOpen] = useState(false);
     const [viewTarget, setViewTarget] = useState<RedFlagInterface | null>(null);
@@ -50,8 +49,6 @@ export const RedFlagsView = () => {
     const [deleteTarget, setDeleteTarget] = useState<RedFlagInterface | null>(null);
     const [form, setForm] = useState(emptyForm);
     const [errors, setErrors] = useState<{ title?: string; description?: string }>({});
-
-    const getMember = (id: string) => members.find((m) => m.id === id);
 
     const validate = () => {
         const e: typeof errors = {};
@@ -143,9 +140,9 @@ export const RedFlagsView = () => {
             ) : (
                 <div className="flex flex-col gap-4">
                     {sprintFlags.map((flag) => {
-                        const creator = getMember(flag.createdById);
+                        const creator = flag.reporter;
                         const cfg = severityConfig[flag.severity];
-                        const isOwner = user?.id === flag.createdById;
+                        const isOwner = user?.id === flag.reporter?.id;
 
                         return (
                             <Card key={flag.id} className="border-s-4 cursor-pointer hover:shadow-md transition-shadow" style={{ borderLeftColor: `var(--color-${flag.severity === "critical" ? "error" : flag.severity === "high" ? "warning" : flag.severity === "medium" ? "primary" : "muted"})` }} onClick={() => handleView(flag)}>
@@ -165,14 +162,14 @@ export const RedFlagsView = () => {
                                                     {creator && (
                                                         <div className="flex items-center gap-1.5">
                                                             <Avatar className="h-5 w-5">
-                                                                <AvatarFallback className="text-[8px]">{creator.avatar}</AvatarFallback>
+                                                                <AvatarFallback className="text-[8px]">{creator.avatar_initials}</AvatarFallback>
                                                             </Avatar>
-                                                            <span>{creator.name}</span>
+                                                            <span>{creator.full_name}</span>
                                                         </div>
                                                     )}
-                                                    <span>{formatDateTime(flag.createdAt)}</span>
-                                                    {flag.updatedAt !== flag.createdAt && (
-                                                        <span className="italic">{t("edited")} {formatDateTime(flag.updatedAt)}</span>
+                                                    <span>{formatDateTime(flag.created_at)}</span>
+                                                    {flag.updated_at !== flag.created_at && (
+                                                        <span className="italic">{t("edited")} {formatDateTime(flag.updated_at)}</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -214,9 +211,9 @@ export const RedFlagsView = () => {
                         </DialogTitle>
                     </DialogHeader>
                     {viewTarget && (() => {
-                        const creator = getMember(viewTarget.createdById);
+                        const creator = viewTarget.reporter;
                         const cfg = severityConfig[viewTarget.severity];
-                        const wasEdited = viewTarget.updatedAt !== viewTarget.createdAt;
+                        const wasEdited = viewTarget.updated_at !== viewTarget.created_at;
                         return (
                             <div className="flex flex-col gap-4 py-2">
                                 <div className="flex items-center gap-2">
@@ -234,16 +231,16 @@ export const RedFlagsView = () => {
                                         <p className="text-xs font-medium text-text-muted mb-1.5">{t("Raised by")}</p>
                                         {creator && (
                                             <div className="flex items-center gap-2">
-                                                <Avatar className="h-6 w-6"><AvatarFallback className="text-[9px]">{creator.avatar}</AvatarFallback></Avatar>
-                                                <span className="text-sm text-text-secondary">{creator.name}</span>
+                                                <Avatar className="h-6 w-6"><AvatarFallback className="text-[9px]">{creator.avatar_initials}</AvatarFallback></Avatar>
+                                                <span className="text-sm text-text-secondary">{creator.full_name}</span>
                                             </div>
                                         )}
                                     </div>
                                     <div>
                                         <p className="text-xs font-medium text-text-muted mb-1">{t("Created")}</p>
-                                        <p className="text-sm text-text-secondary">{formatDateTime(viewTarget.createdAt)}</p>
+                                        <p className="text-sm text-text-secondary">{formatDateTime(viewTarget.created_at)}</p>
                                         {wasEdited && (
-                                            <p className="text-xs text-text-muted mt-0.5 italic">{t("Edited")} {formatDateTime(viewTarget.updatedAt)}</p>
+                                            <p className="text-xs text-text-muted mt-0.5 italic">{t("Edited")} {formatDateTime(viewTarget.updated_at)}</p>
                                         )}
                                     </div>
                                 </div>

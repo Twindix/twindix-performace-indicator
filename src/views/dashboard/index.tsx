@@ -49,20 +49,20 @@ const DashboardViewInner = () => {
     const pageLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
-    const { dashboard, healthScore, metrics, isLoading: isFetching } = useDashboard();
+    const { dashboard, healthScore, isLoading: isFetching } = useDashboard();
 
     if (pageLoading || isFetching) return <DashboardSkeleton />;
 
-    const overallScore = healthScore?.overall_score ?? 0;
+    const overallScore = healthScore?.overall ?? 0;
     const subScores = healthScore?.sub_scores ?? {};
     const frictionScore = (k: FrictionKey): number => {
         const raw = subScores[k] ?? subScores[k.replace(/([A-Z])/g, "_$1").toLowerCase()];
-        return typeof raw === "number" ? raw : 0;
+        return typeof raw === "object" && raw !== null ? (raw as { score: number }).score : 0;
     };
 
-    const totalTasks = metrics?.total_tasks ?? 0;
-    const completedTasks = metrics?.completed_tasks ?? 0;
-    const activeBlockersCount = metrics?.active_blockers ?? 0;
+    const totalTasks = healthScore?.summary?.total_tasks ?? 0;
+    const completedTasks = healthScore?.summary?.completed_tasks ?? 0;
+    const activeBlockersCount = healthScore?.summary?.active_blockers ?? 0;
 
     const rawBlockers = Array.isArray(dashboard?.active_blockers) ? dashboard!.active_blockers : [];
     const activeBlockers = rawBlockers.map((b, i) => {

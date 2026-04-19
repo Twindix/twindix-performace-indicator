@@ -7,7 +7,7 @@ export const seedDecisions: DecisionInterface[] = [
         description: "Use browser localStorage as the persistence layer for the POC instead of building a real backend.",
         context: "Need to ship the demo quickly without backend dependencies.",
         status: DecisionStatus.Approved, ownerId: "usr-005", participants: ["usr-005", "usr-001", "usr-008"],
-        sprintId: "spr-014", createdAt: "2026-03-23", decidedAt: "2026-03-23",
+        created_at: "2026-03-23", decided_at: "2026-03-23",
         category: DecisionCategory.Tooling, outcome: "localStorage with seed data on first load. Will migrate to real API in v2.",
     },
     {
@@ -15,7 +15,7 @@ export const seedDecisions: DecisionInterface[] = [
         description: "Skip charting libraries and use pure CSS for gauges, bars, and progress indicators.",
         context: "Reduce bundle size and avoid debugging chart library issues before the CEO demo.",
         status: DecisionStatus.Approved, ownerId: "usr-001", participants: ["usr-001", "usr-002", "usr-005"],
-        sprintId: "spr-014", createdAt: "2026-03-23", decidedAt: "2026-03-24",
+        created_at: "2026-03-23", decided_at: "2026-03-24",
         category: DecisionCategory.Tooling, outcome: "CSS conic-gradient for gauges, div-based bars for charts. Recharts planned for v2.",
     },
     {
@@ -23,7 +23,7 @@ export const seedDecisions: DecisionInterface[] = [
         description: "Tasks must have at least 70% readiness score before moving from Backlog to Ready phase.",
         context: "Balance between enforcing quality and not blocking the team too aggressively.",
         status: DecisionStatus.Approved, ownerId: "usr-005", participants: ["usr-005", "usr-001", "usr-008"],
-        sprintId: "spr-014", createdAt: "2026-03-24", decidedAt: "2026-03-25",
+        created_at: "2026-03-24", decided_at: "2026-03-25",
         category: DecisionCategory.Process, outcome: "70% threshold with manual override capability for senior engineers.",
     },
     {
@@ -31,7 +31,7 @@ export const seedDecisions: DecisionInterface[] = [
         description: "Use Radix UI as the base component library for accessibility and consistency.",
         context: "Need accessible, unstyled primitives that work well with Tailwind CSS.",
         status: DecisionStatus.Approved, ownerId: "usr-001", participants: ["usr-001", "usr-002"],
-        sprintId: "spr-014", createdAt: "2026-03-23", decidedAt: "2026-03-23",
+        created_at: "2026-03-23", decided_at: "2026-03-23",
         category: DecisionCategory.Tooling, outcome: "Radix UI for Dialog, Select, Tabs, DropdownMenu, Tooltip.",
     },
     {
@@ -39,7 +39,7 @@ export const seedDecisions: DecisionInterface[] = [
         description: "Define how the overall sprint health score is calculated from individual friction area scores.",
         context: "Need a single number that Mohamed Ismail (CEO) can understand at a glance.",
         status: DecisionStatus.Approved, ownerId: "usr-005", participants: ["usr-005", "usr-001", "usr-008", "usr-011"],
-        sprintId: "spr-014", createdAt: "2026-03-25", decidedAt: "2026-03-26",
+        created_at: "2026-03-25", decided_at: "2026-03-26",
         category: DecisionCategory.Process, outcome: "Weighted average of 6 friction areas. Requirements and Dependencies weighted 20% each, others 15% each.",
     },
     {
@@ -47,7 +47,7 @@ export const seedDecisions: DecisionInterface[] = [
         description: "Move all Twindix products into a single monorepo for shared code and consistent tooling.",
         context: "Multiple projects share UI components and utilities but currently duplicate code.",
         status: DecisionStatus.Pending, ownerId: "usr-005", participants: ["usr-005", "usr-001", "usr-003"],
-        sprintId: "spr-014", createdAt: "2026-03-24",
+        created_at: "2026-03-24",
         category: DecisionCategory.Tooling,
     },
     {
@@ -55,7 +55,7 @@ export const seedDecisions: DecisionInterface[] = [
         description: "Require architecture notes documentation before implementation of any task with 8+ story points.",
         context: "Reduce vibe-coding incidents and improve code quality through upfront design thinking.",
         status: DecisionStatus.Approved, ownerId: "usr-005", participants: ["usr-005", "usr-001", "usr-009"],
-        sprintId: "spr-014", createdAt: "2026-03-26", decidedAt: "2026-03-27",
+        created_at: "2026-03-26", decided_at: "2026-03-27",
         category: DecisionCategory.Process, outcome: "Required for 8+ point tasks. Template added to story creation form.",
     },
     {
@@ -63,7 +63,7 @@ export const seedDecisions: DecisionInterface[] = [
         description: "Set organizational SLA targets for responding to blocking questions across channels.",
         context: "Team members losing hours waiting for answers. Need enforceable response time expectations.",
         status: DecisionStatus.Pending, ownerId: "usr-008", participants: ["usr-005", "usr-001", "usr-008"],
-        sprintId: "spr-014", createdAt: "2026-03-29",
+        created_at: "2026-03-29",
         category: DecisionCategory.Process,
     },
     {
@@ -71,7 +71,7 @@ export const seedDecisions: DecisionInterface[] = [
         description: "Integrate Ahmed Eldairy's AI model for comparing candidate profiles against role requirements.",
         context: "High turnover and repeated mismatch between candidate skills and role expectations.",
         status: DecisionStatus.Approved, ownerId: "usr-005", participants: ["usr-005", "usr-010", "usr-007", "usr-006"],
-        sprintId: "spr-013", createdAt: "2026-03-12", decidedAt: "2026-03-14",
+        created_at: "2026-03-12", decided_at: "2026-03-14",
         category: DecisionCategory.Tooling, outcome: "Ahmed Eldairy to build ML pipeline. Integration with HR onboarding process.",
     },
     {
@@ -79,7 +79,7 @@ export const seedDecisions: DecisionInterface[] = [
         description: "Require owner approval before any PR that modifies shared components or cross-team code.",
         context: "Multiple incidents of shared component changes breaking other teams' code.",
         status: DecisionStatus.Approved, ownerId: "usr-001", participants: ["usr-005", "usr-001", "usr-003"],
-        sprintId: "spr-013", createdAt: "2026-03-10", decidedAt: "2026-03-12",
+        created_at: "2026-03-10", decided_at: "2026-03-12",
         category: DecisionCategory.Process, outcome: "CODEOWNERS file updated. PR checks enforced via GitHub branch protection.",
     },
     {
@@ -87,7 +87,7 @@ export const seedDecisions: DecisionInterface[] = [
         description: "Create standard entry and exit criteria for each phase transition in the task workflow.",
         context: "Inconsistent handoffs causing rework. Rashad (QC) receiving tasks without test documentation.",
         status: DecisionStatus.Approved, ownerId: "usr-008", participants: ["usr-005", "usr-009", "usr-008"],
-        sprintId: "spr-013", createdAt: "2026-03-11", decidedAt: "2026-03-13",
+        created_at: "2026-03-11", decided_at: "2026-03-13",
         category: DecisionCategory.Process, outcome: "Standard checklist defined per phase. Built into the platform's phase transition dialog.",
     },
     {
@@ -95,7 +95,7 @@ export const seedDecisions: DecisionInterface[] = [
         description: "Use Inter instead of Roboto to differentiate this product from the Admin panel.",
         context: "Performance Indicator targets engineering managers, not admins. Inter has a more modern feel.",
         status: DecisionStatus.Approved, ownerId: "usr-012", participants: ["usr-012", "usr-001"],
-        sprintId: "spr-014", createdAt: "2026-03-23", decidedAt: "2026-03-23",
+        created_at: "2026-03-23", decided_at: "2026-03-23",
         category: DecisionCategory.Design, outcome: "Inter loaded from Google Fonts. Weights: 300-800.",
     },
     {
@@ -103,7 +103,7 @@ export const seedDecisions: DecisionInterface[] = [
         description: "Automatically flag blockers for escalation if they remain unresolved for more than 48 hours.",
         context: "Some blockers sit unresolved for days without visibility. Need automatic escalation.",
         status: DecisionStatus.Pending, ownerId: "usr-005", participants: ["usr-005", "usr-001", "usr-008"],
-        sprintId: "spr-014", createdAt: "2026-04-01",
+        created_at: "2026-04-01",
         category: DecisionCategory.Process,
     },
 ];

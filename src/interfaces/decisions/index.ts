@@ -3,15 +3,14 @@ import type { DecisionCategory, DecisionStatus } from "@/enums";
 export interface DecisionInterface {
     id: string;
     title: string;
-    description: string;
-    context: string;
     status: DecisionStatus;
-    ownerId: string;
-    participants: string[];
-    sprintId: string;
-    createdAt: string;
-    decidedAt?: string;
-    category: DecisionCategory;
+    created_at: string;
+    decided_at?: string;
+    description?: string;
+    context?: string;
+    ownerId?: string;
+    participants?: string[];
+    category?: DecisionCategory;
     outcome?: string;
 }
 

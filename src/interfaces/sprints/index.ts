@@ -3,11 +3,10 @@ import type { SprintStatus } from "@/enums";
 export interface SprintInterface {
     id: string;
     name: string;
-    startDate: string;
-    endDate: string;
+    start_date: string;
+    end_date: string;
     status: SprintStatus;
-    healthScore: number;
-    goals: string[];
+    created_at?: string;
 }
 
 export interface SprintListResponseInterface {
@@ -28,10 +27,7 @@ export interface SprintSummaryInterface {
     blocked_count: number;
 }
 
-export interface SprintSummaryResponseInterface {
-    data: SprintSummaryInterface;
-    isSuccess: boolean;
-}
+export type SprintSummaryResponseInterface = SprintSummaryInterface;
 
 export interface CreateSprintPayloadInterface {
     name: string;

@@ -30,7 +30,6 @@ export const AlertsView = () => {
     const { doneHandler: doneAlertHandler } = useDoneAlert();
 
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
-    const getMember = (id: string) => members.find((m) => m.id === id);
 
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<AlertInterface | null>(null);
@@ -40,9 +39,9 @@ export const AlertsView = () => {
     const openEdit = (a: AlertInterface) => {
         setForm({
             title: a.title,
-            body: a.body ?? a.description ?? "",
+            body: a.body ?? "",
             target: a.target ?? "everyone",
-            mentioned_user_ids: a.mentioned_user_ids ?? a.mentionedIds ?? [],
+            mentioned_user_ids: a.mentioned_users?.map((u) => u.id) ?? [],
         });
         setEditTarget(a);
     };
@@ -103,10 +102,10 @@ export const AlertsView = () => {
     const acknowledgedAlerts = alerts.filter((a) => (a.status ?? "") === "acknowledged" || (a.status ?? "") === "done");
 
     const renderCard = (alert: AlertInterface) => {
-        const creator = getMember(alert.createdById);
-        const mentioned = alert.mentioned_user_ids ?? alert.mentionedIds ?? [];
-        const body = alert.body ?? alert.description ?? "";
-        const isOwner = user?.id === alert.createdById;
+        const creator = alert.creator;
+        const mentioned = alert.mentioned_users ?? [];
+        const body = alert.body ?? "";
+        const isOwner = user?.id === alert.creator?.id;
 
         return (
             <Card key={alert.id} className="hover:shadow-md transition-shadow">
@@ -133,14 +132,14 @@ export const AlertsView = () => {
                     <div className="flex items-center gap-3 flex-wrap text-xs text-text-muted mt-2">
                         {creator && (
                             <div className="flex items-center gap-1.5">
-                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{creator.avatar}</AvatarFallback></Avatar>
-                                <span>{creator.name}</span>
+                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{creator.avatar_initials}</AvatarFallback></Avatar>
+                                <span>{creator.full_name}</span>
                             </div>
                         )}
                         {mentioned.length > 0 && (
                             <span>{mentioned.length} {t("mentioned")}</span>
                         )}
-                        <span>{formatDateTime(alert.createdAt)}</span>
+                        <span>{formatDateTime(alert.created_at)}</span>
                     </div>
 
                     <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">

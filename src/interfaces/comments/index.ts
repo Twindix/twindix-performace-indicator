@@ -1,18 +1,13 @@
 export interface CommentInterface {
     id: string;
-    taskId: string;
-    taskTitle: string;
-    authorId: string;
-    mentionedId?: string;
-    mentioned_user_ids?: string[];
-    content: string;
-    body?: string;
-    createdAt: string;
-    hasResponse: boolean;
-    responseAt?: string;
-    responderId?: string;
-    response_status?: string;
-    sprintId: string;
+    task_id?: string;
+    task_title?: string;
+    body: string;
+    author: { id: string; full_name: string; avatar_initials: string };
+    response_status: string;
+    responded_at?: string;
+    mentions: Array<{ id: string; full_name: string; avatar_initials: string }>;
+    created_at: string;
 }
 
 export interface CommentsListResponseInterface {
@@ -32,10 +27,7 @@ export interface CommentsAnalyticsInterface {
     no_response: number;
 }
 
-export interface CommentsAnalyticsResponseInterface {
-    data: CommentsAnalyticsInterface;
-    isSuccess: boolean;
-}
+export type CommentsAnalyticsResponseInterface = CommentsAnalyticsInterface;
 
 export interface CreateCommentPayloadInterface {
     body: string;

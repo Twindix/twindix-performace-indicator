@@ -2,16 +2,13 @@ export interface AlertInterface {
     id: string;
     title: string;
     body?: string;
-    description?: string;
     target?: string;
-    mentionedIds: string[];
-    mentioned_user_ids?: string[];
-    resolvedByIds: string[];
-    createdById: string;
-    createdAt: string;
-    updatedAt: string;
-    sprintId: string;
     status?: string;
+    creator: { id: string; full_name: string; avatar_initials: string };
+    mentioned_users: Array<{ id: string; full_name: string; avatar_initials: string }>;
+    acknowledgment_count?: number;
+    total_targets?: number;
+    created_at: string;
 }
 
 export interface AlertsListResponseInterface {
@@ -29,8 +26,7 @@ export interface AlertsCountInterface {
 }
 
 export interface AlertsCountResponseInterface {
-    data: AlertsCountInterface;
-    isSuccess: boolean;
+    count: number;
 }
 
 export interface CreateAlertPayloadInterface {

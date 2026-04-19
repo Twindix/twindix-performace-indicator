@@ -35,8 +35,6 @@ const CommentsLogViewInner = () => {
     const { respondHandler: respondCommentHandler } = useRespondComment();
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
 
-    const getMember = (id?: string) => members.find((m) => m.id === id);
-
     // Filters
     const [mentionFilter, setMentionFilter] = useState<string>("all");
     const [responseFilter, setResponseFilter] = useState<string>("all");
@@ -50,9 +48,9 @@ const CommentsLogViewInner = () => {
 
     const openEdit = (c: CommentInterface) => {
         setForm({
-            body: c.body ?? c.content ?? "",
-            task_title: c.taskTitle ?? "",
-            mentioned_user_ids: c.mentioned_user_ids ?? (c.mentionedId ? [c.mentionedId] : []),
+            body: c.body ?? "",
+            task_title: c.task_title ?? "",
+            mentioned_user_ids: c.mentions?.map((m) => m.id) ?? [],
         });
         setEditTarget(c);
     };
@@ -110,21 +108,21 @@ const CommentsLogViewInner = () => {
         }
         return {
             total: comments.length,
-            withMention: comments.filter((c) => !!c.mentionedId).length,
-            withResponse: comments.filter((c) => c.hasResponse).length,
-            noResponse: comments.filter((c) => !c.hasResponse).length,
+            withMention: comments.filter((c) => (c.mentions?.length ?? 0) > 0).length,
+            withResponse: comments.filter((c) => c.response_status !== "no_response").length,
+            noResponse: comments.filter((c) => c.response_status === "no_response").length,
         };
     }, [analytics, comments]);
 
     const filtered = useMemo(() => {
         return comments.filter((c) => {
-            if (mentionFilter !== "all" && c.mentionedId !== mentionFilter) return false;
-            if (responseFilter === "responded" && !c.hasResponse) return false;
-            if (responseFilter === "pending" && c.hasResponse) return false;
-            if (fromDate && new Date(c.createdAt) < new Date(fromDate)) return false;
-            if (toDate && new Date(c.createdAt) > new Date(`${toDate}T23:59:59Z`)) return false;
+            if (mentionFilter !== "all" && !c.mentions?.some((m) => m.id === mentionFilter)) return false;
+            if (responseFilter === "responded" && c.response_status === "no_response") return false;
+            if (responseFilter === "pending" && c.response_status !== "no_response") return false;
+            if (fromDate && new Date(c.created_at) < new Date(fromDate)) return false;
+            if (toDate && new Date(c.created_at) > new Date(`${toDate}T23:59:59Z`)) return false;
             return true;
-        }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }, [comments, mentionFilter, responseFilter, fromDate, toDate]);
 
     if (pageLoading || isFetching) return <CommentsLogSkeleton />;
@@ -325,11 +323,10 @@ const CommentsLogViewInner = () => {
             ) : (
                 <div className="flex flex-col gap-3">
                     {filtered.map((comment) => {
-                        const author = getMember(comment.authorId);
-                        const mentioned = getMember(comment.mentionedId);
-                        const responder = getMember(comment.responderId);
+                        const author = comment.author;
+                        const mentioned = comment.mentions?.[0];
 
-                        const isOwner = user?.id === comment.authorId;
+                        const isOwner = user?.id === comment.author?.id;
 
                         return (
                             <Card key={comment.id} className="hover:shadow-md transition-shadow">
@@ -337,10 +334,10 @@ const CommentsLogViewInner = () => {
                                     {/* Task label + actions */}
                                     <div className="flex items-center justify-between gap-2 mb-2">
                                         <Badge variant="outline" className="text-xs font-normal">
-                                            {comment.taskTitle}
+                                            {comment.task_title}
                                         </Badge>
                                         <div className="flex items-center gap-1 shrink-0">
-                                            {!comment.hasResponse && (
+                                            {comment.response_status === "no_response" && (
                                                 <button onClick={() => handleRespond(comment.id)} className="p-1.5 rounded hover:bg-success-light text-text-muted hover:text-success cursor-pointer" title={t("Respond")}>
                                                     <Reply className="h-3.5 w-3.5" />
                                                 </button>
@@ -359,7 +356,7 @@ const CommentsLogViewInner = () => {
                                     </div>
 
                                     {/* Comment content */}
-                                    <p className="text-sm text-text-dark mb-3 cursor-pointer" onClick={() => setViewTarget(comment)}>{comment.content}</p>
+                                    <p className="text-sm text-text-dark mb-3 cursor-pointer" onClick={() => setViewTarget(comment)}>{comment.body}</p>
 
                                     {/* Meta row */}
                                     <div className="flex flex-wrap items-center gap-3">
@@ -367,9 +364,9 @@ const CommentsLogViewInner = () => {
                                         <div className="flex items-center gap-1.5">
                                             <User className="h-3.5 w-3.5 text-text-muted" />
                                             <Avatar className="h-5 w-5">
-                                                <AvatarFallback className="text-[8px]">{author?.avatar}</AvatarFallback>
+                                                <AvatarFallback className="text-[8px]">{author?.avatar_initials}</AvatarFallback>
                                             </Avatar>
-                                            <span className="text-xs text-text-secondary">{author?.name ?? "Unknown"}</span>
+                                            <span className="text-xs text-text-secondary">{author?.full_name ?? "Unknown"}</span>
                                         </div>
 
                                         {/* Mention */}
@@ -379,9 +376,9 @@ const CommentsLogViewInner = () => {
                                                 <div className="flex items-center gap-1.5">
                                                     <AtSign className="h-3.5 w-3.5 text-primary" />
                                                     <Avatar className="h-5 w-5">
-                                                        <AvatarFallback className="text-[8px]">{mentioned.avatar}</AvatarFallback>
+                                                        <AvatarFallback className="text-[8px]">{mentioned.avatar_initials}</AvatarFallback>
                                                     </Avatar>
-                                                    <span className="text-xs text-primary font-medium">{mentioned.name}</span>
+                                                    <span className="text-xs text-primary font-medium">{mentioned.full_name}</span>
                                                 </div>
                                             </>
                                         )}
@@ -389,17 +386,17 @@ const CommentsLogViewInner = () => {
                                         {/* Time */}
                                         <div className="flex items-center gap-1">
                                             <Clock className="h-3.5 w-3.5 text-text-muted" />
-                                            <span className="text-xs text-text-muted">{formatDateTime(comment.createdAt)}</span>
+                                            <span className="text-xs text-text-muted">{formatDateTime(comment.created_at)}</span>
                                         </div>
 
                                         {/* Response status */}
-                                        {comment.hasResponse ? (
+                                        {comment.response_status !== "no_response" ? (
                                             <div className="flex items-center gap-1.5 ms-auto">
                                                 <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                                                 <span className="text-xs text-success font-medium">{t("Responded")}</span>
-                                                {responder && (
+                                                {comment.responded_at && (
                                                     <span className="text-xs text-text-muted">
-                                                        {t("by")} {responder.name} · {formatDate(comment.responseAt!)}
+                                                        · {formatDate(comment.responded_at)}
                                                     </span>
                                                 )}
                                             </div>
@@ -426,21 +423,20 @@ const CommentsLogViewInner = () => {
                         </DialogTitle>
                     </DialogHeader>
                     {viewTarget && (() => {
-                        const author = getMember(viewTarget.authorId);
-                        const mentioned = getMember(viewTarget.mentionedId);
-                        const responder = getMember(viewTarget.responderId);
+                        const author = viewTarget.author;
+                        const mentioned = viewTarget.mentions?.[0];
                         return (
                             <div className="flex flex-col gap-4 py-2">
                                 {/* Task */}
                                 <div>
                                     <p className="text-xs font-medium text-text-muted mb-1">{t("Task")}</p>
-                                    <Badge variant="outline" className="text-xs font-normal">{viewTarget.taskTitle}</Badge>
+                                    <Badge variant="outline" className="text-xs font-normal">{viewTarget.task_title}</Badge>
                                 </div>
 
                                 {/* Content */}
                                 <div>
                                     <p className="text-xs font-medium text-text-muted mb-1">{t("Comment")}</p>
-                                    <p className="text-sm text-text-dark">{viewTarget.content}</p>
+                                    <p className="text-sm text-text-dark">{viewTarget.body}</p>
                                 </div>
 
                                 {/* Author + mention */}
@@ -448,8 +444,8 @@ const CommentsLogViewInner = () => {
                                     <div>
                                         <p className="text-xs font-medium text-text-muted mb-1.5">{t("Written by")}</p>
                                         <div className="flex items-center gap-2">
-                                            <Avatar className="h-6 w-6"><AvatarFallback className="text-[9px]">{author?.avatar}</AvatarFallback></Avatar>
-                                            <span className="text-sm text-text-secondary">{author?.name ?? t("Unknown")}</span>
+                                            <Avatar className="h-6 w-6"><AvatarFallback className="text-[9px]">{author?.avatar_initials}</AvatarFallback></Avatar>
+                                            <span className="text-sm text-text-secondary">{author?.full_name ?? t("Unknown")}</span>
                                         </div>
                                     </div>
                                     {mentioned && (
@@ -457,8 +453,8 @@ const CommentsLogViewInner = () => {
                                             <p className="text-xs font-medium text-text-muted mb-1.5">{t("Mentioned")}</p>
                                             <div className="flex items-center gap-2">
                                                 <AtSign className="h-4 w-4 text-primary" />
-                                                <Avatar className="h-6 w-6"><AvatarFallback className="text-[9px]">{mentioned.avatar}</AvatarFallback></Avatar>
-                                                <span className="text-sm text-primary font-medium">{mentioned.name}</span>
+                                                <Avatar className="h-6 w-6"><AvatarFallback className="text-[9px]">{mentioned.avatar_initials}</AvatarFallback></Avatar>
+                                                <span className="text-sm text-primary font-medium">{mentioned.full_name}</span>
                                             </div>
                                         </div>
                                     )}
@@ -468,18 +464,17 @@ const CommentsLogViewInner = () => {
                                 <div className="grid grid-cols-2 gap-4 border-t border-border pt-3">
                                     <div>
                                         <p className="text-xs font-medium text-text-muted mb-1">{t("Posted")}</p>
-                                        <p className="text-sm text-text-secondary">{formatDateTime(viewTarget.createdAt)}</p>
+                                        <p className="text-sm text-text-secondary">{formatDateTime(viewTarget.created_at)}</p>
                                     </div>
                                     <div>
                                         <p className="text-xs font-medium text-text-muted mb-1">{t("Response")}</p>
-                                        {viewTarget.hasResponse ? (
+                                        {viewTarget.response_status !== "no_response" ? (
                                             <div className="flex flex-col gap-0.5">
                                                 <div className="flex items-center gap-1 text-success">
                                                     <CheckCircle2 className="h-3.5 w-3.5" />
                                                     <span className="text-xs font-medium">{t("Responded")}</span>
                                                 </div>
-                                                {responder && <span className="text-xs text-text-muted">{t("by")} {responder.name}</span>}
-                                                {viewTarget.responseAt && <span className="text-xs text-text-muted">{formatDate(viewTarget.responseAt)}</span>}
+                                                {viewTarget.responded_at && <span className="text-xs text-text-muted">{formatDate(viewTarget.responded_at)}</span>}
                                             </div>
                                         ) : (
                                             <Badge variant="warning" className="text-xs">{t("No Response")}</Badge>

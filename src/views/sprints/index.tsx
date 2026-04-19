@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, CheckCircle2, Edit, MoreHorizontal, Plus, Target, Trash2, Zap } from "lucide-react";
+import { Calendar, Edit, MoreHorizontal, Plus, Target, Trash2, Zap } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
@@ -44,11 +44,11 @@ export const SprintsView = () => {
     const openEdit = (s: SprintInterface) => {
         setForm({
             name: s.name,
-            startDate: s.startDate,
-            endDate: s.endDate,
-            goals: s.goals,
+            startDate: s.start_date,
+            endDate: s.end_date,
+            goals: [],
             status: s.status,
-            goalsRaw: (s.goals ?? []).join("\n"),
+            goalsRaw: "",
         });
         setEditTarget(s);
     };
@@ -141,11 +141,6 @@ export const SprintsView = () => {
                                         <h3 className="text-base font-semibold text-text-dark truncate">{s.name}</h3>
                                         <div className="flex items-center gap-2 mt-1">
                                             {statusBadge(s.status)}
-                                            {typeof s.healthScore === "number" && (
-                                                <span className="text-xs text-text-muted">
-                                                    {t("Health")}: <strong className="text-text-dark">{s.healthScore}</strong>
-                                                </span>
-                                            )}
                                         </div>
                                     </div>
                                     <DropdownMenu>
@@ -178,7 +173,7 @@ export const SprintsView = () => {
 
                                 <div className="flex items-center gap-2 text-xs text-text-muted">
                                     <Calendar className="h-3.5 w-3.5" />
-                                    <span>{s.startDate} → {s.endDate}</span>
+                                    <span>{s.start_date} → {s.end_date}</span>
                                 </div>
 
                                 {summaries[s.id] && (
@@ -209,22 +204,6 @@ export const SprintsView = () => {
                                     </div>
                                 )}
 
-                                {s.goals?.length > 0 && (
-                                    <div className="pt-2 border-t border-border">
-                                        <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-1.5">{t("Goals")}</p>
-                                        <ul className="space-y-1">
-                                            {s.goals.slice(0, 3).map((g, i) => (
-                                                <li key={i} className="flex items-start gap-1.5 text-xs text-text-dark">
-                                                    <CheckCircle2 className="h-3 w-3 text-text-muted shrink-0 mt-0.5" />
-                                                    <span className="line-clamp-2">{g}</span>
-                                                </li>
-                                            ))}
-                                            {s.goals.length > 3 && (
-                                                <li className="text-[10px] text-text-muted">+ {s.goals.length - 3} {t("more")}</li>
-                                            )}
-                                        </ul>
-                                    </div>
-                                )}
                             </CardContent>
                         </Card>
                     ))}

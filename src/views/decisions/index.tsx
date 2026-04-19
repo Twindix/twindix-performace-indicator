@@ -65,7 +65,7 @@ const DecisionsViewInner = () => {
 
     const filteredDecisions = decisions.filter((d) => {
         if (statusFilter !== "all" && d.status !== statusFilter) return false;
-        if (categoryFilter !== "all" && d.category !== categoryFilter) return false;
+        if (categoryFilter !== "all" && d.category !== undefined && d.category !== categoryFilter) return false;
         return true;
     });
 
@@ -224,7 +224,7 @@ const DecisionsViewInner = () => {
             ) : (
                 <div className={cn("flex flex-col", compact ? "gap-2" : "gap-4")}>
                     {filteredDecisions.map((decision) => {
-                        const owner = getMember(decision.ownerId);
+                        const owner = decision.ownerId ? getMember(decision.ownerId) : undefined;
                         const isPending = decision.status === DecisionStatus.Pending;
 
                         return (
@@ -258,11 +258,11 @@ const DecisionsViewInner = () => {
                                                 <span>{owner.name}</span>
                                             </div>
                                         )}
-                                        {(decision.participants ?? []).length > 0 && (
+                                        {(decision.participants?.length ?? 0) > 0 && (
                                             <div className="flex items-center gap-1">
                                                 <Users className="h-3 w-3" />
                                                 <div className="flex -space-x-1.5">
-                                                    {decision.participants.slice(0, 4).map((pId) => {
+                                                    {(decision.participants ?? []).slice(0, 4).map((pId) => {
                                                         const p = getMember(pId);
                                                         return (
                                                             <Avatar key={pId} className="h-5 w-5 border-2 border-card">
@@ -270,18 +270,18 @@ const DecisionsViewInner = () => {
                                                             </Avatar>
                                                         );
                                                     })}
-                                                    {decision.participants.length > 4 && (
-                                                        <span className="ms-1">+{decision.participants.length - 4}</span>
+                                                    {(decision.participants?.length ?? 0) > 4 && (
+                                                        <span className="ms-1">+{(decision.participants?.length ?? 0) - 4}</span>
                                                     )}
                                                 </div>
                                             </div>
                                         )}
                                         <div className="flex items-center gap-1">
                                             <Calendar className="h-3 w-3" />
-                                            <span>{formatDate(decision.createdAt)}</span>
+                                            <span>{formatDate(decision.created_at)}</span>
                                         </div>
-                                        {decision.decidedAt && (
-                                            <span>{t("Decided")}: {formatDate(decision.decidedAt)}</span>
+                                        {decision.decided_at && (
+                                            <span>{t("Decided")}: {formatDate(decision.decided_at)}</span>
                                         )}
                                     </div>
 
@@ -317,7 +317,7 @@ const DecisionsViewInner = () => {
             <Dialog open={!!viewTarget} onOpenChange={(open) => { if (!open) setViewTarget(null); }}>
                 <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                     {viewTarget && (() => {
-                        const owner = getMember(viewTarget.ownerId);
+                        const owner = viewTarget.ownerId ? getMember(viewTarget.ownerId) : undefined;
                         return (
                             <>
                                 <DialogHeader>
@@ -378,7 +378,7 @@ const DecisionsViewInner = () => {
                                             <div>
                                                 <h4 className="text-sm font-semibold text-text-dark mb-1">{t("Participants")}</h4>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {viewTarget.participants.map((pId) => {
+                                                    {(viewTarget.participants ?? []).map((pId) => {
                                                         const p = getMember(pId);
                                                         return (
                                                             <div key={pId} className="flex items-center gap-1.5">
@@ -396,12 +396,12 @@ const DecisionsViewInner = () => {
                                     <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border">
                                         <div>
                                             <h4 className="text-xs font-medium text-text-muted">{t("Created")}</h4>
-                                            <p className="text-sm text-text-secondary">{formatDate(viewTarget.createdAt)}</p>
+                                            <p className="text-sm text-text-secondary">{formatDate(viewTarget.created_at)}</p>
                                         </div>
-                                        {viewTarget.decidedAt && (
+                                        {viewTarget.decided_at && (
                                             <div>
                                                 <h4 className="text-xs font-medium text-text-muted">{t("Decided")}</h4>
-                                                <p className="text-sm text-text-secondary">{formatDate(viewTarget.decidedAt)}</p>
+                                                <p className="text-sm text-text-secondary">{formatDate(viewTarget.decided_at)}</p>
                                             </div>
                                         )}
                                     </div>

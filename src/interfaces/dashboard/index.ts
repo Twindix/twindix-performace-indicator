@@ -1,15 +1,28 @@
+export interface HealthScoreSubScoreInterface {
+    score: number;
+    label: string;
+}
+
 export interface HealthScoreInterface {
-    overall_score: number;
-    sub_scores?: Record<string, number>;
+    overall: number;
+    label: string;
+    sub_scores?: Record<string, HealthScoreSubScoreInterface>;
+    summary?: {
+        total_tasks: number;
+        active_blockers: number;
+        completed_tasks: number;
+    };
+    active_blockers?: Array<{ id: string; title: string; severity: string; duration_days: number }>;
 }
 
 export interface DashboardMetricsInterface {
-    total_tasks?: number;
-    completed_tasks?: number;
-    blocked_tasks?: number;
-    active_blockers?: number;
-    velocity?: number;
-    cycle_time?: number;
+    on_time_delivery_rate?: number;
+    task_rejection_rate?: number;
+    urgent_alert_count?: number;
+    stalled_red_flags?: number;
+    total_red_flags?: number;
+    total_comments?: number;
+    responded_comments?: number;
     [key: string]: unknown;
 }
 
@@ -20,20 +33,11 @@ export interface DashboardInterface {
     [key: string]: unknown;
 }
 
-export interface DashboardResponseInterface {
-    data: DashboardInterface;
-    isSuccess: boolean;
-}
+export type DashboardResponseInterface = DashboardInterface;
 
-export interface HealthScoreResponseInterface {
-    data: HealthScoreInterface;
-    isSuccess: boolean;
-}
+export type HealthScoreResponseInterface = HealthScoreInterface;
 
-export interface DashboardMetricsResponseInterface {
-    data: DashboardMetricsInterface;
-    isSuccess: boolean;
-}
+export type DashboardMetricsResponseInterface = DashboardMetricsInterface;
 
 export interface DashboardContextInterface {
     dashboard: DashboardInterface | null;
