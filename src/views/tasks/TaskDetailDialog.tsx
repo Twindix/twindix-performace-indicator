@@ -6,7 +6,7 @@ import { useTasks } from "@/contexts";
 import { BlockerStatus, TaskStatus } from "@/enums";
 import { t } from "@/hooks";
 import type { TaskPhase } from "@/enums";
-import type { TaskInterface, TaskCommentInterface, TaskTimeLogInterface, UserInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
+import type { TaskInterface, TaskCommentInterface, UserInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
 import {
     Avatar, AvatarFallback, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -25,7 +25,6 @@ export interface TaskDetailDialogProps {
     onOpenChange: (open: boolean) => void;
     onMoveRequest: (task: TaskInterface, targetPhase: TaskPhase) => void;
     onUpdateComments?: (taskId: string, comments: TaskCommentInterface[]) => void;
-    onUpdateTimeLogs?: (taskId: string, timeLogs: TaskTimeLogInterface[]) => void;
     onUpdateRequirements?: (taskId: string, requirements: RequirementInterface[]) => void;
 }
 
@@ -42,7 +41,7 @@ const STATUS_COLOR: Record<TaskStatus, string> = {
     [TaskStatus.OnHold]: "text-gray-500",
 };
 
-export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, onMoveRequest, onUpdateComments, onUpdateTimeLogs, onUpdateRequirements }: TaskDetailDialogProps) => {
+export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, onMoveRequest, onUpdateComments, onUpdateRequirements }: TaskDetailDialogProps) => {
     const { deleteTask, addTags, removeTag, updateTaskStatus } = useTasks();
     const [tagInput, setTagInput] = useState("");
     const [showTagInput, setShowTagInput] = useState(false);
@@ -275,7 +274,7 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                 )}
 
                 <TaskAttachments task={task} />
-                <TaskTimeLogs task={task} members={members} onUpdateTimeLogs={onUpdateTimeLogs} />
+                <TaskTimeLogs task={task} members={members} />
                 <TaskComments task={task} currentUserId={currentUserId} members={members} onUpdateComments={onUpdateComments} />
 
                 {/* Delete confirmation */}

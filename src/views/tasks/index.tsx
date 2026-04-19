@@ -192,12 +192,7 @@ const TasksViewInner = () => {
         setSelectedTask((prev) => prev?.id === taskId ? { ...prev, comments } : prev);
     }, [patchTaskLocal]);
 
-    const handleUpdateTimeLogs = useCallback((taskId: string, timeLogs: TaskInterface["timeLogs"]) => {
-        patchTaskLocal(taskId, { timeLogs });
-        setSelectedTask((prev) => prev?.id === taskId ? { ...prev, timeLogs } : prev);
-    }, [patchTaskLocal]);
-
-    const handleUpdateRequirements = useCallback((taskId: string, requirements: TaskInterface["requirements"]) => {
+const handleUpdateRequirements = useCallback((taskId: string, requirements: TaskInterface["requirements"]) => {
         patchTaskLocal(taskId, { requirements });
         setSelectedTask((prev) => prev?.id === taskId ? { ...prev, requirements } : prev);
     }, [patchTaskLocal]);
@@ -369,7 +364,6 @@ const TasksViewInner = () => {
                 onOpenChange={setDialogOpen}
                 onMoveRequest={requestTransition}
                 onUpdateComments={handleUpdateComments}
-                onUpdateTimeLogs={handleUpdateTimeLogs}
                 onUpdateRequirements={handleUpdateRequirements}
             />
 
