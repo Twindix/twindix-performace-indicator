@@ -3,3 +3,4 @@ export { buttonsConstants } from "./buttons";
 export { sprintsConstants } from "./sprints";
 export { tasksConstants } from "./tasks";
 export { timeLogsConstants } from "./time-logs";
+export { requirementsConstants } from "./requirements";
