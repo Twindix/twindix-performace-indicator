@@ -46,8 +46,6 @@ export interface DecisionsContextInterface {
     decisions: DecisionInterface[];
     isLoading: boolean;
     refetch: (filters?: DecisionsListFiltersInterface) => Promise<void>;
-    fetchDecisionDetail: (id: string) => Promise<DecisionInterface | null>;
-    createDecision: (payload: CreateDecisionPayloadInterface) => Promise<DecisionInterface | null>;
-    updateDecision: (id: string, payload: UpdateDecisionPayloadInterface) => Promise<DecisionInterface | null>;
-    deleteDecision: (id: string) => Promise<boolean>;
+    patchDecisionLocal: (decision: DecisionInterface) => void;
+    removeDecisionLocal: (id: string) => void;
 }

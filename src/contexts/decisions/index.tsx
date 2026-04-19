@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { toast } from "sonner";
 
 import { decisionsConstants } from "@/constants/decisions";
-import type { CreateDecisionPayloadInterface, DecisionInterface, DecisionsContextInterface, DecisionsListFiltersInterface, UpdateDecisionPayloadInterface } from "@/interfaces";
+import type { DecisionInterface, DecisionsContextInterface, DecisionsListFiltersInterface } from "@/interfaces";
 import { getErrorMessage } from "@/lib/error";
 import { decisionsService } from "@/services";
 
@@ -27,60 +27,24 @@ export const DecisionsProvider = ({ sprintId, children }: { sprintId: string | n
 
     useEffect(() => { refetch(); }, [refetch]);
 
-    const fetchDecisionDetail = useCallback(async (id: string): Promise<DecisionInterface | null> => {
-        try {
-            const res = await decisionsService.detailHandler(id);
-            setDecisions((prev) => prev.map((d) => d.id === id ? res.data : d));
-            return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, decisionsConstants.errors.fetchDetailFailed));
-            return null;
-        }
+    const patchDecisionLocal = useCallback((decision: DecisionInterface) => {
+        setDecisions((prev) => {
+            const exists = prev.some((d) => d.id === decision.id);
+            return exists ? prev.map((d) => d.id === decision.id ? decision : d) : [...prev, decision];
+        });
     }, []);
 
-    const createDecision = useCallback(async (payload: CreateDecisionPayloadInterface): Promise<DecisionInterface | null> => {
-        if (!sprintId) return null;
-        try {
-            const res = await decisionsService.createHandler(sprintId, payload);
-            setDecisions((prev) => [...prev, res.data]);
-            return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, decisionsConstants.errors.createFailed));
-            return null;
-        }
-    }, [sprintId]);
-
-    const updateDecision = useCallback(async (id: string, payload: UpdateDecisionPayloadInterface): Promise<DecisionInterface | null> => {
-        try {
-            const res = await decisionsService.updateHandler(id, payload);
-            setDecisions((prev) => prev.map((d) => d.id === id ? res.data : d));
-            return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, decisionsConstants.errors.updateFailed));
-            return null;
-        }
-    }, []);
-
-    const deleteDecision = useCallback(async (id: string): Promise<boolean> => {
-        try {
-            await decisionsService.deleteHandler(id);
-            setDecisions((prev) => prev.filter((d) => d.id !== id));
-            return true;
-        } catch (err) {
-            toast.error(getErrorMessage(err, decisionsConstants.errors.deleteFailed));
-            return false;
-        }
+    const removeDecisionLocal = useCallback((id: string) => {
+        setDecisions((prev) => prev.filter((d) => d.id !== id));
     }, []);
 
     const value = useMemo<DecisionsContextInterface>(() => ({
         decisions,
         isLoading,
         refetch,
-        fetchDecisionDetail,
-        createDecision,
-        updateDecision,
-        deleteDecision,
-    }), [decisions, isLoading, refetch, fetchDecisionDetail, createDecision, updateDecision, deleteDecision]);
+        patchDecisionLocal,
+        removeDecisionLocal,
+    }), [decisions, isLoading, refetch, patchDecisionLocal, removeDecisionLocal]);
 
     return <DecisionsContext.Provider value={value}>{children}</DecisionsContext.Provider>;
 };
