@@ -29,9 +29,25 @@ apiClient.interceptors.request.use(
 
 type RetryableConfig = AxiosRequestConfig & { _retry?: boolean };
 
+export const AUTH_UNAUTHORIZED_EVENT = "auth:unauthorized";
+
 let refreshPromise: Promise<string | null> | null = null;
+let unauthorized = false;
+
+const dispatchUnauthorized = () => {
+    if (unauthorized) return;
+    unauthorized = true;
+    deleteCookieHandler(commonData.token.tokenKey);
+    window.dispatchEvent(new Event(AUTH_UNAUTHORIZED_EVENT));
+};
+
+export const resetAuthState = () => {
+    unauthorized = false;
+    refreshPromise = null;
+};
 
 const refreshToken = async (): Promise<string | null> => {
+    if (unauthorized) return null;
     if (refreshPromise) return refreshPromise;
     refreshPromise = axios
         .post<{ data: { token: string } }>(`${apisData.baseUrl}${apisData.auth.refresh}`, {}, {
@@ -55,6 +71,14 @@ apiClient.interceptors.response.use(
         const original = config as RetryableConfig | undefined;
 
         if (status === 401 && original && !original._retry && !original.url?.includes(apisData.auth.refresh)) {
+            if (unauthorized) {
+                return Promise.reject(new ApiError(401, "Unauthorized", data));
+            }
+            const hadToken = !!getCookieHandler(commonData.token.tokenKey);
+            if (!hadToken) {
+                dispatchUnauthorized();
+                return Promise.reject(new ApiError(401, "Unauthorized", data));
+            }
             original._retry = true;
             const newToken = await refreshToken();
             if (newToken) {
@@ -64,7 +88,7 @@ apiClient.interceptors.response.use(
                 };
                 return apiClient(original);
             }
-            deleteCookieHandler(commonData.token.tokenKey);
+            dispatchUnauthorized();
         }
 
         const errorMessage =
