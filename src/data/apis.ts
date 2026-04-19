@@ -13,6 +13,14 @@ export const apisData = {
         activate: (id: string) => `/sprints/${id}/activate`,
         summary: (id: string) => `/sprints/${id}/summary`,
     },
+    timeLogs: {
+        sprintList: (sprintId: string) => `/sprints/${sprintId}/time-logs`,
+        sprintSummary: (sprintId: string) => `/sprints/${sprintId}/time-logs/summary`,
+        taskList: (taskId: string) => `/tasks/${taskId}/time-logs`,
+        create: (taskId: string) => `/tasks/${taskId}/time-logs`,
+        update: (id: string) => `/time-logs/${id}`,
+        delete: (id: string) => `/time-logs/${id}`,
+    },
     tasks: {
         kanban: (sprintId: string) => `/sprints/${sprintId}/tasks/kanban`,
         pipeline: (sprintId: string) => `/sprints/${sprintId}/tasks/pipeline`,
