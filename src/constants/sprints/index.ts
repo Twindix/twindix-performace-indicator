@@ -7,5 +7,12 @@ export const sprintsConstants = {
         deleteFailed: "Failed to delete sprint.",
         activateFailed: "Failed to activate sprint.",
         summaryFailed: "Failed to load sprint summary.",
+        genericError: "Something went wrong.",
+    },
+    messages: {
+        createSuccess: "Sprint created successfully.",
+        updateSuccess: "Sprint updated successfully.",
+        deleteSuccess: "Sprint deleted successfully.",
+        activateSuccess: "Sprint activated successfully.",
     },
 };
