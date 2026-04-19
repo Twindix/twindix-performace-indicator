@@ -149,7 +149,7 @@ const TRANSITION_RULES: Partial<Record<string, TransitionRule>> = {
 };
 
 export const checkTransition = (task: TaskInterface, toPhase: TaskPhase, blockers: BlockerInterface[]): TransitionResult => {
-    const fromIndex = PHASE_INDEX[task.phase];
+    const fromIndex = PHASE_INDEX[task.phase ?? TaskPhase.Backlog];
     const toIndex = PHASE_INDEX[toPhase];
 
     if (toIndex < fromIndex)

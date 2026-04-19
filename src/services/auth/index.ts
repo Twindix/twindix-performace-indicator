@@ -25,7 +25,7 @@ export const authService = {
         return data.data;
     },
 
-    updateMeHandler: async (updates: Partial<Pick<UserInterface, "name" | "status">>): Promise<UserInterface> => {
+    updateMeHandler: async (updates: Partial<Pick<UserInterface, "full_name" | "status">>): Promise<UserInterface> => {
         const { data } = await apiClient.put<MeResponseInterface>(apisData.auth.me, updates);
         return data.data;
     },

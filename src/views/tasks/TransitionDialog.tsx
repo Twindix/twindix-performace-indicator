@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { cn } from "@/utils";
 import { t, useTaskViews } from "@/hooks";
 import type { TaskInterface } from "@/interfaces";
-import type { TaskPhase } from "@/enums";
+import { TaskPhase } from "@/enums";
 import {
     PHASE_INDEX,
     PRIORITY_VARIANT,
@@ -48,7 +48,7 @@ export const TransitionDialog = ({
 
     if (!task || !targetPhase || !transitionResult) return null;
 
-    const isBackward = PHASE_INDEX[targetPhase] < PHASE_INDEX[task.phase];
+    const isBackward = PHASE_INDEX[targetPhase] < PHASE_INDEX[task.phase ?? TaskPhase.Backlog];
     const showTimeInput = isAssignee && transitionResult.allowed && !isBackward;
 
     const handleConfirm = () => {
@@ -70,7 +70,7 @@ export const TransitionDialog = ({
                     </div>
                     <DialogDescription>
                         {isBackward ? t("Moving back") : t("Moving forward")}:{" "}
-                        <strong>{t(phaseLabel(task.phase))}</strong> → <strong>{t(phaseLabel(targetPhase))}</strong>
+                        <strong>{t(phaseLabel(task.phase ?? TaskPhase.Backlog))}</strong> → <strong>{t(phaseLabel(targetPhase))}</strong>
                     </DialogDescription>
                 </DialogHeader>
 
@@ -78,7 +78,7 @@ export const TransitionDialog = ({
                 <div className="rounded-xl bg-muted p-3 mt-2">
                     <p className="text-sm font-semibold text-text-dark">{task.title}</p>
                     <div className="flex items-center gap-2 mt-1">
-                        <Badge variant={PRIORITY_VARIANT[task.priority]} className="text-[10px]">{t(capitalize(task.priority))}</Badge>
+                        <Badge variant={PRIORITY_VARIANT[task.priority ?? "medium"]} className="text-[10px]">{t(capitalize(task.priority ?? "medium"))}</Badge>
                         <span className="text-xs text-text-muted">{task.story_points ?? 0} {t("points")}</span>
                     </div>
                 </div>

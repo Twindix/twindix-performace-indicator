@@ -175,7 +175,7 @@ export const ReportsView = () => {
 
     const getMetricsForArea = (metricsFilter: string[]) => {
         if (!sprintMetrics?.metrics) return [];
-        return sprintMetrics.metrics.filter((m) => metricsFilter.some((f) => m.full_name.toLowerCase().includes(f.toLowerCase()))).slice(0, 3);
+        return sprintMetrics.metrics.filter((m) => metricsFilter.some((f) => m.name.toLowerCase().includes(f.toLowerCase()))).slice(0, 3);
     };
 
     return (
@@ -372,7 +372,7 @@ export const ReportsView = () => {
                                                     {areaMetrics.map((m) => (
                                                         <MetricCard
                                                             key={m.id}
-                                                            name={m.full_name}
+                                                            name={m.name}
                                                             value={m.value}
                                                             unit={m.unit}
                                                             status={m.status}

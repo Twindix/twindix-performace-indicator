@@ -63,7 +63,7 @@ export const AnalyticsView = () => {
         const names = new Set<string>();
         for (const sm of allMetrics) {
             for (const m of sm.metrics) {
-                names.add(m.full_name);
+                names.add(m.name);
             }
         }
         return Array.from(names);
@@ -125,7 +125,7 @@ export const AnalyticsView = () => {
                                 {activeMetrics.metrics.slice(0, 8).map((m) => (
                                     <MetricCard
                                         key={m.id}
-                                        name={m.full_name}
+                                        name={m.name}
                                         value={m.value}
                                         unit={m.unit}
                                         status={m.status}
@@ -149,7 +149,7 @@ export const AnalyticsView = () => {
                             {activeMetrics.metrics.map((m) => (
                                 <MetricCard
                                     key={m.id}
-                                    name={m.full_name}
+                                    name={m.name}
                                     value={m.value}
                                     unit={m.unit}
                                     status={m.status}
@@ -182,7 +182,7 @@ export const AnalyticsView = () => {
                         {allMetricNames.map((metricName) => {
                             const values = orderedSprintIds.map((sprintId) => {
                                 const sm = sprintMetricsMap[sprintId];
-                                const metric = sm?.metrics.find((m) => m.full_name === metricName);
+                                const metric = sm?.metrics.find((m) => m.name === metricName);
                                 return { sprintId, value: metric?.value ?? 0, unit: metric?.unit ?? "" };
                             });
                             const maxVal = Math.max(...values.map((v) => v.value), 1);

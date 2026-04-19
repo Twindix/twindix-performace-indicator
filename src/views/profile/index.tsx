@@ -32,7 +32,7 @@ export const ProfileView = () => {
         if (!editedName.trim()) return;
         const res = await updateProfileHandler({ full_name: editedName.trim() });
         if (res) {
-            onUpdateUser({ name: res.full_name });
+            onUpdateUser({ full_name: res.full_name });
             setIsEditingName(false);
         }
     };

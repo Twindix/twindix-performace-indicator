@@ -109,8 +109,8 @@ export const BoardView = ({
                                         </div>
 
                                         <div className="flex items-center gap-1.5">
-                                                <Badge variant={PRIORITY_VARIANT[task.priority]} className="text-[9px] px-1.5 py-0.5 rounded shadow-sm relative z-30">
-                                                    {t(task.priority.charAt(0).toUpperCase() + task.priority.slice(1))}
+                                                <Badge variant={PRIORITY_VARIANT[task.priority ?? "medium"]} className="text-[9px] px-1.5 py-0.5 rounded shadow-sm relative z-30">
+                                                    {t((task.priority ?? "medium").charAt(0).toUpperCase() + (task.priority ?? "medium").slice(1))}
                                                 </Badge>
                                                 {(task.story_points ?? 0) > 0 && (
                                                     <span className="text-[10px] font-semibold text-text-muted bg-muted rounded-full h-5 w-5 flex items-center justify-center relative z-30">

@@ -130,8 +130,8 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                           </Button>
                         : <div />}
                     <div className="flex items-center gap-2">
-                        <div className={cn("h-2.5 w-2.5 rounded-full", COLUMN_COLORS[task.phase])} />
-                        <span className="text-sm font-semibold text-text-dark">{t(phaseLabel(task.phase))}</span>
+                        <div className={cn("h-2.5 w-2.5 rounded-full", COLUMN_COLORS[task.phase ?? TaskPhase.Backlog])} />
+                        <span className="text-sm font-semibold text-text-dark">{t(phaseLabel(task.phase ?? TaskPhase.Backlog))}</span>
                     </div>
                     {nextPhase
                         ? <Button size="sm" onClick={() => { onOpenChange(false); onMoveRequest(task, nextPhase); }} className="gap-1.5">
@@ -171,7 +171,7 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                         <ClipboardList className="h-4 w-4 text-text-muted" />
                         <div>
                             <p className="text-xs text-text-muted">{t("Phase")}</p>
-                            <p className="text-sm font-medium text-text-dark">{t(phaseLabel(task.phase))}</p>
+                            <p className="text-sm font-medium text-text-dark">{t(phaseLabel(task.phase ?? TaskPhase.Backlog))}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -216,7 +216,7 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                         )}
                     </div>
                     <div className="flex flex-wrap gap-1.5 items-center">
-                        {task.tags.map((tag) => (
+                        {(task.tags ?? []).map((tag) => (
                             <span key={tag} className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs">
                                 {tag}
                                 <button onClick={() => handleRemoveTag(tag)} className="text-text-muted hover:text-error cursor-pointer">
@@ -238,7 +238,7 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                                 <Button size="sm" variant="ghost" onClick={() => { setShowTagInput(false); setTagInput(""); }} className="h-7 px-2 text-xs">{t("Cancel")}</Button>
                             </div>
                         )}
-                        {task.tags.length === 0 && !showTagInput && (
+                        {(task.tags ?? []).length === 0 && !showTagInput && (
                             <span className="text-xs text-text-muted italic">{t("No tags")}</span>
                         )}
                     </div>

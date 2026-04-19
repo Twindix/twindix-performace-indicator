@@ -124,7 +124,7 @@ const TasksViewInner = () => {
         let result = list;
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
-            result = result.filter((t) => t.title.toLowerCase().includes(q) || t.tags.some((tag) => tag.toLowerCase().includes(q)));
+            result = result.filter((t) => t.title.toLowerCase().includes(q) || (t.tags ?? []).some((tag) => tag.toLowerCase().includes(q)));
         }
         if (phaseFilter !== "all") {
             if (phaseFilter === "blocked") result = result.filter((t) => t.is_blocked);
@@ -405,7 +405,7 @@ const handleUpdateRequirements = useCallback((taskId: string, requirements: Task
 
 function toast_success(task: TaskInterface, targetPhase: TaskPhase) {
     const toLabel = COLUMNS.find((c) => c.phase === targetPhase)?.label ?? targetPhase;
-    const fromLabel = COLUMNS.find((c) => c.phase === task.phase)?.label ?? task.phase;
+    const fromLabel = COLUMNS.find((c) => c.phase === task.phase)?.label ?? task.phase ?? "";
     import("sonner").then(({ toast }) => {
         toast.success(`${t("Task moved")}: ${t(fromLabel)} → ${t(toLabel)}`, { description: task.title });
     });

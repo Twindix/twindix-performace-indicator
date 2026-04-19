@@ -17,7 +17,6 @@ const WORK_TYPES = ["Design", "Frontend", "Backend", "QA", "Done"] as const;
 
 export const PipelineView = ({
     tasks,
-    members,
     setSelectedTask,
     setDialogOpen,
 }: PipelineViewProps) => {
@@ -105,9 +104,9 @@ export const PipelineView = ({
                                         </h4>
 
                                         <div className="flex items-center gap-1.5 mb-5 flex-wrap">
-                                            <Badge variant={PRIORITY_VARIANT[task.priority]} className="text-[9px] px-2 shadow-none font-bold bg-opacity-20 text-opacity-100 rounded">
+                                            <Badge variant={PRIORITY_VARIANT[task.priority ?? "medium"]} className="text-[9px] px-2 shadow-none font-bold bg-opacity-20 text-opacity-100 rounded">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-current mr-1 inline-block opacity-80" />
-                                                {t(task.priority)}
+                                                {t(task.priority ?? "medium")}
                                             </Badge>
 
                                             {reworks > 0 && (

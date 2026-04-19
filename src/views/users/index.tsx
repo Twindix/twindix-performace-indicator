@@ -70,7 +70,7 @@ const UsersViewInner = () => {
             email: user.email,
             password: "",
             role: user.role,
-            team: user.team,
+            team: user.team ?? "Frontend",
             avatar: user.avatar_initials ?? "",
         });
         setErrors({});
