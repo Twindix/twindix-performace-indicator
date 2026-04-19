@@ -49,10 +49,7 @@ export interface SprintsContextInterface {
     summaries: Record<string, SprintSummaryInterface | undefined>;
     isLoading: boolean;
     refetch: () => Promise<void>;
-    fetchSprintDetail: (id: string) => Promise<SprintInterface | null>;
-    fetchSprintSummary: (id: string) => Promise<SprintSummaryInterface | null>;
-    createSprint: (payload: CreateSprintPayloadInterface) => Promise<SprintInterface | null>;
-    updateSprint: (id: string, payload: UpdateSprintPayloadInterface) => Promise<SprintInterface | null>;
-    deleteSprint: (id: string) => Promise<boolean>;
-    activateSprint: (id: string) => Promise<SprintInterface | null>;
+    setSummary: (id: string, summary: SprintSummaryInterface) => void;
+    patchSprintLocal: (sprint: SprintInterface) => void;
+    removeSprintLocal: (id: string) => void;
 }
