@@ -15,3 +15,4 @@ export type { AlertInterface } from "./alerts";
 export type { UsersListResponseInterface, UserDetailResponseInterface, CreateUserPayloadInterface, UpdateUserPayloadInterface, UserSettingsInterface, UserSettingsResponseInterface, UpdateProfilePayloadInterface, UsersListFiltersInterface, UsersContextInterface } from "./users";
 export type { TeamInterface, TeamsListResponseInterface, TeamDetailResponseInterface, CreateTeamPayloadInterface, TeamsContextInterface } from "./teams";
 export type { TimeLogInterface, TimeLogsListResponseInterface, TimeLogDetailResponseInterface, TimeLogsSummaryInterface, TimeLogsSummaryResponseInterface, CreateTimeLogPayloadInterface, UpdateTimeLogPayloadInterface } from "./time-logs";
+export type { RequirementItemInterface, RequirementsListResponseInterface, RequirementDetailResponseInterface, CreateRequirementPayloadInterface, UpdateRequirementPayloadInterface } from "./requirements";

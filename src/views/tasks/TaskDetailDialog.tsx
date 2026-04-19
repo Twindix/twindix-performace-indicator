@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { Activity, AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Circle, ClipboardList, Layers, ListChecks, Plus, Tag, Trash2, User, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Activity, AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Circle, ClipboardList, Layers, ListChecks, Pencil, Plus, Tag, Trash2, User, X } from "lucide-react";
 
 import { Badge, Button, Input } from "@/atoms";
 import { useTasks } from "@/contexts";
 import { BlockerStatus, TaskStatus } from "@/enums";
-import { t, useDeleteTask, useTaskTags, useUpdateTaskStatus } from "@/hooks";
+import { t, useCreateRequirement, useDeleteRequirement, useDeleteTask, useGetRequirement, useTaskTags, useToggleRequirement, useUpdateRequirement, useUpdateTaskStatus } from "@/hooks";
 import type { TaskPhase } from "@/enums";
 import type { TaskInterface, TaskCommentInterface, UserInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
 import {
@@ -41,17 +41,33 @@ const STATUS_COLOR: Record<TaskStatus, string> = {
     [TaskStatus.OnHold]: "text-gray-500",
 };
 
-export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, onMoveRequest, onUpdateComments, onUpdateRequirements }: TaskDetailDialogProps) => {
+export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, onMoveRequest, onUpdateComments, onUpdateRequirements: _onUpdateRequirements }: TaskDetailDialogProps) => {
     const { patchTaskLocal, removeTaskLocal } = useTasks();
     const { deleteHandler: deleteTaskHandler } = useDeleteTask();
     const { addHandler: addTagHandler, removeHandler: removeTagHandler } = useTaskTags();
     const { updateStatusHandler: updateTaskStatusHandler } = useUpdateTaskStatus();
+    const { getAllHandler: getRequirementsHandler } = useGetRequirement();
+    const { createHandler: createRequirementHandler } = useCreateRequirement();
+    const { toggleHandler: toggleRequirementHandler } = useToggleRequirement();
+    const { updateHandler: updateRequirementHandler } = useUpdateRequirement();
+    const { deleteHandler: deleteRequirementHandler } = useDeleteRequirement();
+    const [editingReqId, setEditingReqId] = useState<string | null>(null);
+    const [editingReqLabel, setEditingReqLabel] = useState("");
     const [tagInput, setTagInput] = useState("");
     const [showTagInput, setShowTagInput] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
+    const [reqInput, setReqInput] = useState("");
+    const [showReqInput, setShowReqInput] = useState(false);
 
     const currentUserId = getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "";
     const allMembers = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? members;
+
+    useEffect(() => {
+        if (!open || !task) return;
+        getRequirementsHandler(task.id).then((res) => {
+            if (res) patchTaskLocal(task.id, { requirements: res.map((r) => ({ id: r.id, label: r.label, met: r.met })) });
+        });
+    }, [open, task?.id, getRequirementsHandler, patchTaskLocal]);
 
     if (!task) return null;
 
@@ -251,41 +267,124 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                 )}
 
                 {/* Requirements */}
-                {(task.requirements ?? []).length > 0 && (
-                    <div className="mt-4 pb-4 border-b border-border">
-                        <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                <div className="mt-4 pb-4 border-b border-border">
+                    <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide flex items-center gap-1.5">
                             <ListChecks className="h-3.5 w-3.5" />
                             {t("Requirements")}
+                            {(task.requirements ?? []).length > 0 && (
+                                <span className="bg-muted rounded-full px-1.5 py-0.5 text-[10px] font-bold">{(task.requirements ?? []).length}</span>
+                            )}
                         </p>
-                        <div className="space-y-2">
-                            {(task.requirements ?? []).map((req) => (
-                                <button
-                                    key={req.id}
-                                    type="button"
-                                    onClick={() => {
-                                        if (!onUpdateRequirements) return;
-                                        const updated = (task.requirements ?? []).map((r) =>
-                                            r.id === req.id ? { ...r, met: !r.met } : r,
-                                        );
-                                        onUpdateRequirements(task.id, updated);
-                                    }}
-                                    className={cn(
-                                        "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-start transition-opacity",
-                                        req.met ? "bg-success-light/50" : "bg-error-light/50",
-                                        onUpdateRequirements ? "cursor-pointer hover:opacity-80" : "cursor-default",
-                                    )}
-                                >
-                                    {req.met
-                                        ? <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                                        : <AlertCircle className="h-4 w-4 text-error shrink-0" />}
-                                    <span className={cn("text-sm", req.met ? "text-text-dark" : "text-error font-medium")}>
-                                        {req.label}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
+                        {!showReqInput && (
+                            <button onClick={() => setShowReqInput(true)} className="text-xs text-primary hover:text-primary-dark font-medium flex items-center gap-1 cursor-pointer">
+                                <Plus className="h-3 w-3" /> {t("Add")}
+                            </button>
+                        )}
                     </div>
-                )}
+                    <div className="space-y-2">
+                        {(task.requirements ?? []).map((req) => (
+                            <div key={req.id} className={cn("flex items-center gap-3 rounded-lg px-3 py-2 group", req.met ? "bg-success-light/50" : "bg-error-light/50")}>
+                                {editingReqId === req.id ? (
+                                    <>
+                                        {req.met
+                                            ? <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                                            : <AlertCircle className="h-4 w-4 text-error shrink-0" />}
+                                        <Input
+                                            autoFocus
+                                            value={editingReqLabel}
+                                            onChange={(e) => setEditingReqLabel(e.target.value)}
+                                            onKeyDown={async (e) => {
+                                                if (e.key === "Enter") {
+                                                    const v = editingReqLabel.trim();
+                                                    if (!v) return;
+                                                    const res = await updateRequirementHandler(req.id, { label: v });
+                                                    if (res) {
+                                                        const updated = (task.requirements ?? []).map((r) => r.id === req.id ? { ...r, label: res.label } : r);
+                                                        patchTaskLocal(task.id, { requirements: updated });
+                                                        setEditingReqId(null);
+                                                    }
+                                                } else if (e.key === "Escape") {
+                                                    setEditingReqId(null);
+                                                }
+                                            }}
+                                            className="h-7 text-sm flex-1"
+                                        />
+                                        <Button size="sm" variant="ghost" onClick={() => setEditingReqId(null)} className="h-7 px-2 text-xs">{t("Cancel")}</Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                const res = await toggleRequirementHandler(req.id);
+                                                if (res) {
+                                                    const updated = (task.requirements ?? []).map((r) => r.id === req.id ? { ...r, met: res.met } : r);
+                                                    patchTaskLocal(task.id, { requirements: updated });
+                                                }
+                                            }}
+                                            className="flex items-center gap-3 flex-1 text-start cursor-pointer hover:opacity-80"
+                                        >
+                                            {req.met
+                                                ? <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                                                : <AlertCircle className="h-4 w-4 text-error shrink-0" />}
+                                            <span className={cn("text-sm", req.met ? "text-text-dark" : "text-error font-medium")}>
+                                                {req.label}
+                                            </span>
+                                        </button>
+                                        <button
+                                            onClick={() => { setEditingReqId(req.id); setEditingReqLabel(req.label); }}
+                                            className="text-text-muted hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                            aria-label={t("Edit")}
+                                        >
+                                            <Pencil className="h-3 w-3" />
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                const ok = await deleteRequirementHandler(req.id);
+                                                if (ok) patchTaskLocal(task.id, { requirements: (task.requirements ?? []).filter((r) => r.id !== req.id) });
+                                            }}
+                                            className="text-text-muted hover:text-error opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        ))}
+                        {showReqInput && (
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    autoFocus
+                                    value={reqInput}
+                                    onChange={(e) => setReqInput(e.target.value)}
+                                    onKeyDown={async (e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            const v = reqInput.trim();
+                                            if (!v) return;
+                                            const res = await createRequirementHandler(task.id, { label: v });
+                                            if (res) {
+                                                patchTaskLocal(task.id, {
+                                                    requirements: [...(task.requirements ?? []), { id: res.id, label: res.label, met: res.met }],
+                                                });
+                                                setReqInput("");
+                                                setShowReqInput(false);
+                                            }
+                                        }
+                                    }}
+                                    placeholder={t("Requirement label")}
+                                    className="h-8 text-sm"
+                                />
+                                <Button size="sm" variant="ghost" onClick={() => { setShowReqInput(false); setReqInput(""); }} className="h-8 px-2 text-xs">{t("Cancel")}</Button>
+                            </div>
+                        )}
+                        {(task.requirements ?? []).length === 0 && !showReqInput && (
+                            <p className="text-xs text-text-muted italic">{t("No requirements yet")}</p>
+                        )}
+                    </div>
+                </div>
+
 
                 <TaskAttachments task={task} />
                 <TaskTimeLogs task={task} members={members} />

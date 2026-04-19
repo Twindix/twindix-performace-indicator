@@ -28,6 +28,13 @@ export const apisData = {
         activate: (id: string) => `/sprints/${id}/activate`,
         summary: (id: string) => `/sprints/${id}/summary`,
     },
+    requirements: {
+        list: (taskId: string) => `/tasks/${taskId}/requirements`,
+        create: (taskId: string) => `/tasks/${taskId}/requirements`,
+        update: (id: string) => `/requirements/${id}`,
+        toggle: (id: string) => `/requirements/${id}/toggle`,
+        delete: (id: string) => `/requirements/${id}`,
+    },
     timeLogs: {
         sprintList: (sprintId: string) => `/sprints/${sprintId}/time-logs`,
         sprintSummary: (sprintId: string) => `/sprints/${sprintId}/time-logs/summary`,
