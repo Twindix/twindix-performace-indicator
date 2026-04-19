@@ -6,11 +6,11 @@ import {
     Plus,
     Search,
 } from "lucide-react";
-import { toast } from "sonner";
 
 import { Badge, Button, Card, CardContent, Input } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
 import { TasksSkeleton } from "@/components/skeletons";
+import { TasksProvider, useTasks } from "@/contexts";
 import { TaskPhase, TaskPriority } from "@/enums";
 import type {
     TaskInterface,
@@ -18,8 +18,6 @@ import type {
     BlockerInterface,
 } from "@/interfaces";
 import { t, useSettings, usePageLoader } from "@/hooks";
-import { getErrorMessage } from "@/lib/error";
-import { tasksService } from "@/services";
 import { useSprintStore } from "@/store";
 import {
     Select,
@@ -29,7 +27,6 @@ import {
     SelectValue,
 } from "@/ui";
 import { cn, getStorageItem, storageKeys } from "@/utils";
-import { tasksConstants } from "@/constants/tasks";
 import {
     COLUMNS,
     COLUMN_COLORS,
@@ -42,26 +39,20 @@ import { TaskDetailDialog } from "./TaskDetailDialog";
 import { TransitionDialog } from "./TransitionDialog";
 import { AddTaskDialog } from "./add-task-dialog";
 
-/* -------------------------------------------------------------------------- */
-/*  Main View                                                                  */
-/* -------------------------------------------------------------------------- */
-
 export const TasksView = () => {
-    const isLoading = usePageLoader();
+    const { activeSprintId } = useSprintStore();
+    return (
+        <TasksProvider sprintId={activeSprintId}>
+            <TasksViewInner />
+        </TasksProvider>
+    );
+};
+
+const TasksViewInner = () => {
+    const pageLoading = usePageLoader();
     useSettings();
     const { activeSprintId } = useSprintStore();
-
-    const [allTasks, setAllTasks] = useState<TaskInterface[]>([]);
-    const [isFetchingTasks, setIsFetchingTasks] = useState(false);
-
-    useEffect(() => {
-        if (!activeSprintId) return;
-        setIsFetchingTasks(true);
-        tasksService.listHandler(activeSprintId)
-            .then((res) => setAllTasks(res.data))
-            .catch((err) => toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed)))
-            .finally(() => setIsFetchingTasks(false));
-    }, [activeSprintId]);
+    const { tasks: allTasks, isLoading: isFetchingTasks, updateTask, fetchTaskDetail, patchTaskLocal } = useTasks();
 
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
     const blockers = getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? [];
@@ -71,13 +62,8 @@ export const TasksView = () => {
 
     useEffect(() => {
         if (!dialogOpen || !selectedTask) return;
-        tasksService.detailHandler(selectedTask.id)
-            .then((res) => {
-                setSelectedTask(res.data);
-                setAllTasks((prev) => prev.map((t) => t.id === res.data.id ? res.data : t));
-            })
-            .catch((err) => toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed)));
-    }, [dialogOpen, selectedTask?.id]);
+        fetchTaskDetail(selectedTask.id).then((res) => { if (res) setSelectedTask(res); });
+    }, [dialogOpen, selectedTask?.id, fetchTaskDetail]);
 
     const [addTaskDialogOpen, setAddTaskDialogOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -135,16 +121,6 @@ export const TasksView = () => {
     const donePoints = sprintTasks.filter((t) => t.phase === TaskPhase.Done).reduce((sum, t) => sum + t.storyPoints, 0);
     const blockedCount = sprintTasks.filter((t) => t.hasBlocker).length;
 
-    const handleAddTask = useCallback((task: TaskInterface) => {
-        setAllTasks((prev) => [...prev, task]);
-    }, []);
-
-    const moveTask = useCallback((taskId: string, newPhase: TaskPhase, extraProps?: Partial<TaskInterface>) => {
-        setAllTasks((prev) => prev.map((t) =>
-            t.id === taskId ? { ...t, phase: newPhase, updatedAt: new Date().toISOString().split("T")[0], ...extraProps } : t,
-        ));
-    }, []);
-
     const requestTransition = useCallback((task: TaskInterface, targetPhase: TaskPhase) => {
         if (task.phase === targetPhase) return;
         setTransitionTask(task);
@@ -153,22 +129,15 @@ export const TasksView = () => {
         setTransitionDialogOpen(true);
     }, [blockers]);
 
-    const confirmTransition = useCallback(async (payload?: { loggedHours?: number; note?: string }) => {
+    const confirmTransition = useCallback(async () => {
         if (!transitionTask || !transitionTarget) return;
-
-        try {
-            const response = await tasksService.updateHandler(transitionTask.id, { phase: transitionTarget });
-            moveTask(transitionTask.id, transitionTarget, response.data);
-            toast_success(transitionTask, transitionTarget);
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.statusUpdateFailed));
-        } finally {
-            setTransitionDialogOpen(false);
-            setTransitionTask(null);
-            setTransitionTarget(null);
-            setTransitionResult(null);
-        }
-    }, [transitionTask, transitionTarget, moveTask]);
+        const updated = await updateTask(transitionTask.id, { phase: transitionTarget });
+        if (updated) toast_success(transitionTask, transitionTarget);
+        setTransitionDialogOpen(false);
+        setTransitionTask(null);
+        setTransitionTarget(null);
+        setTransitionResult(null);
+    }, [transitionTask, transitionTarget, updateTask]);
 
     const handleDragStart  = useCallback((_e: DragEvent<HTMLDivElement>, task: TaskInterface) => setDraggedTask(task), []);
     const handleDragOver   = useCallback((e: DragEvent<HTMLDivElement>) => e.preventDefault(), []);
@@ -183,32 +152,27 @@ export const TasksView = () => {
         setDraggedTask(null);
     }, [draggedTask, requestTransition]);
 
-    const handleUpdateAttachments = useCallback((taskId: string, attachments: TaskInterface["attachments"]) => {
-        setAllTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, attachments } : t));
-        setSelectedTask((prev) => prev?.id === taskId ? { ...prev, attachments } : prev);
-    }, []);
-
     const handleUpdateComments = useCallback((taskId: string, comments: TaskInterface["comments"]) => {
-        setAllTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, comments } : t));
+        patchTaskLocal(taskId, { comments });
         setSelectedTask((prev) => prev?.id === taskId ? { ...prev, comments } : prev);
-    }, []);
+    }, [patchTaskLocal]);
 
     const handleUpdateTimeLogs = useCallback((taskId: string, timeLogs: TaskInterface["timeLogs"]) => {
-        setAllTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, timeLogs } : t));
+        patchTaskLocal(taskId, { timeLogs });
         setSelectedTask((prev) => prev?.id === taskId ? { ...prev, timeLogs } : prev);
-    }, []);
+    }, [patchTaskLocal]);
 
     const handleUpdateRequirements = useCallback((taskId: string, requirements: TaskInterface["requirements"]) => {
-        setAllTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, requirements } : t));
+        patchTaskLocal(taskId, { requirements });
         setSelectedTask((prev) => prev?.id === taskId ? { ...prev, requirements } : prev);
-    }, []);
+    }, [patchTaskLocal]);
 
     const selectedBlocker = useMemo(() => {
         if (!selectedTask?.blockerId) return undefined;
         return blockers.find((b) => b.id === selectedTask.blockerId);
     }, [selectedTask, blockers]);
 
-    if (isLoading || isFetchingTasks) return <TasksSkeleton />;
+    if (pageLoading || isFetchingTasks) return <TasksSkeleton />;
 
     return (
         <div>
@@ -216,17 +180,24 @@ export const TasksView = () => {
                 title={t("Task Management")}
                 description={t("Drag tasks between columns to change their phase. Phase gates enforce readiness criteria.")}
                 actions={
-                    <div className="flex items-center gap-2 text-sm text-text-secondary">
-                        <span><strong className="text-text-dark">{sprintTasks.length}</strong> {t("tasks")}</span>
-                        <span className="text-border">|</span>
-                        <span><strong className="text-text-dark">{donePoints}</strong>/{totalPoints} {t("points")}</span>
-                        {blockedCount > 0 && (
-                            <>
-                                <span className="text-border">|</span>
-                                <Badge variant="error">{blockedCount} {t("blocked")}</Badge>
-                            </>
-                        )}
-                    </div>
+                    allTasks.length === 0 ? (
+                        <Button size="sm" className="gap-1.5" onClick={() => setAddTaskDialogOpen(true)}>
+                            <Plus className="h-4 w-4" />
+                            {t("Add Task")}
+                        </Button>
+                    ) : (
+                        <div className="flex items-center gap-2 text-sm text-text-secondary">
+                            <span><strong className="text-text-dark">{sprintTasks.length}</strong> {t("tasks")}</span>
+                            <span className="text-border">|</span>
+                            <span><strong className="text-text-dark">{donePoints}</strong>/{totalPoints} {t("points")}</span>
+                            {blockedCount > 0 && (
+                                <>
+                                    <span className="text-border">|</span>
+                                    <Badge variant="error">{blockedCount} {t("blocked")}</Badge>
+                                </>
+                            )}
+                        </div>
+                    )
                 }
             />
 
@@ -363,7 +334,6 @@ export const TasksView = () => {
                 onOpenChange={setDialogOpen}
                 onMoveRequest={requestTransition}
                 onUpdateComments={handleUpdateComments}
-                onUpdateAttachments={handleUpdateAttachments}
                 onUpdateTimeLogs={handleUpdateTimeLogs}
                 onUpdateRequirements={handleUpdateRequirements}
             />
@@ -382,18 +352,14 @@ export const TasksView = () => {
                 open={addTaskDialogOpen}
                 onOpenChange={setAddTaskDialogOpen}
                 members={members}
-                sprintId={activeSprintId ?? ""}
-                onAddTask={handleAddTask}
             />
         </div>
     );
 };
 
-// helper to avoid importing toast at top level (toast is already imported in sub-files)
 function toast_success(task: TaskInterface, targetPhase: TaskPhase) {
     const toLabel = COLUMNS.find((c) => c.phase === targetPhase)?.label ?? targetPhase;
     const fromLabel = COLUMNS.find((c) => c.phase === task.phase)?.label ?? task.phase;
-    // fire-and-forget — import toast lazily to avoid circular issues
     import("sonner").then(({ toast }) => {
         toast.success(`${t("Task moved")}: ${t(fromLabel)} → ${t(toLabel)}`, { description: task.title });
     });

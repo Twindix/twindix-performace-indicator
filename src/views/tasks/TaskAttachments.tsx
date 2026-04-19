@@ -1,44 +1,25 @@
 import { Paperclip, Trash2 } from "lucide-react";
-import { toast } from "sonner";
 
-import { tasksConstants } from "@/constants/tasks";
+import { useTasks } from "@/contexts";
 import { t } from "@/hooks";
-import type { TaskInterface, TaskAttachmentInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
-import { tasksService } from "@/services";
+import type { TaskInterface } from "@/interfaces";
 
 interface Props {
     task: TaskInterface;
-    onUpdateAttachments?: (taskId: string, attachments: TaskAttachmentInterface[]) => void;
 }
 
 const formatSize = (bytes: number) =>
     bytes < 1024 ? `${bytes} B` : bytes < 1048576 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
 
-export const TaskAttachments = ({ task, onUpdateAttachments }: Props) => {
+export const TaskAttachments = ({ task }: Props) => {
+    const { uploadAttachment, removeAttachment } = useTasks();
     const attachments = task.attachments ?? [];
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files ?? []);
         e.target.value = "";
-        if (!files.length || !onUpdateAttachments) return;
         for (const file of files) {
-            try {
-                const res = await tasksService.addAttachmentHandler(task.id, file);
-                onUpdateAttachments(task.id, res.data.attachments ?? []);
-            } catch (err) {
-                toast.error(getErrorMessage(err, tasksConstants.errors.attachmentUploadFailed));
-            }
-        }
-    };
-
-    const remove = async (id: string) => {
-        if (!onUpdateAttachments) return;
-        try {
-            await tasksService.removeAttachmentHandler(task.id, id);
-            onUpdateAttachments(task.id, attachments.filter((a) => a.id !== id));
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.attachmentDeleteFailed));
+            await uploadAttachment(task.id, file);
         }
     };
 
@@ -80,7 +61,7 @@ export const TaskAttachments = ({ task, onUpdateAttachments }: Props) => {
                                 <a href={att.dataUrl} download={att.name} className="text-xs font-medium text-text-dark hover:text-primary truncate block transition-colors">{att.name}</a>
                                 <p className="text-[10px] text-text-muted">{formatSize(att.size)}</p>
                             </div>
-                            <button onClick={() => remove(att.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                            <button onClick={() => removeAttachment(task.id, att.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
                                 <Trash2 className="h-3.5 w-3.5" />
                             </button>
                         </div>

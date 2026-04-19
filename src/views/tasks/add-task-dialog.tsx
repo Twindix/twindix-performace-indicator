@@ -6,10 +6,8 @@ import { ValidationError } from "yup";
 import { Button, Input, Label, Textarea } from "@/atoms";
 import { TaskPriority, TaskStatus } from "@/enums";
 import type { AddTaskDialogProps, AddTaskFormState } from "@/interfaces";
+import { useTasks } from "@/contexts";
 import { t } from "@/hooks";
-import { getErrorMessage } from "@/lib/error";
-import { tasksService } from "@/services";
-import { tasksConstants } from "@/constants/tasks";
 import {
     Dialog,
     DialogContent,
@@ -59,7 +57,8 @@ const INITIAL_FORM_STATE: AddTaskFormState = {
 /*  Add Task Dialog                                                            */
 /* -------------------------------------------------------------------------- */
 
-export const AddTaskDialog = ({ open, onOpenChange, members, sprintId, onAddTask }: AddTaskDialogProps) => {
+export const AddTaskDialog = ({ open, onOpenChange, members }: AddTaskDialogProps) => {
+    const { createTask } = useTasks();
     const [formState, setFormState] = useState<AddTaskFormState>(INITIAL_FORM_STATE);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [requirementInput, setRequirementInput] = useState("");
@@ -128,25 +127,20 @@ export const AddTaskDialog = ({ open, onOpenChange, members, sprintId, onAddTask
         }
 
         setIsSubmitting(true);
-
-        try {
-            const response = await tasksService.createHandler(sprintId, {
-                title: formState.title.trim(),
-                description: formState.description.trim(),
-                assigneeIds: formState.assigneeIds,
-                priority: formState.priority,
-                status: formState.status,
-                tags: [],
-            });
-            onAddTask(response.data);
+        const created = await createTask({
+            title: formState.title.trim(),
+            description: formState.description.trim(),
+            assigneeIds: formState.assigneeIds,
+            priority: formState.priority,
+            status: formState.status,
+            tags: [],
+        });
+        setIsSubmitting(false);
+        if (created) {
             toast.success(t("Task created successfully"));
             handleOpenChange(false);
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.createFailed));
-        } finally {
-            setIsSubmitting(false);
         }
-    }, [formState, sprintId, onAddTask, handleOpenChange]);
+    }, [formState, createTask, handleOpenChange]);
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>

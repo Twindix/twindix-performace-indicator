@@ -6,7 +6,7 @@ import { t } from "@/hooks";
 import { BlockerStatus } from "@/enums";
 import type { TaskPhase } from "@/enums";
 import { TaskStatus } from "@/enums";
-import type { TaskInterface, TaskAttachmentInterface, TaskCommentInterface, TaskTimeLogInterface, UserInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
+import type { TaskInterface, TaskCommentInterface, TaskTimeLogInterface, UserInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
 import { PHASE_INDEX, COLUMNS, COLUMN_COLORS, PRIORITY_VARIANT, capitalize, phaseLabel } from "../../data/seed/constants";
 import { TaskAttachments } from "./TaskAttachments";
 import { TaskTimeLogs } from "./TaskTimeLogs";
@@ -20,12 +20,11 @@ export interface TaskDetailDialogProps {
     onOpenChange: (open: boolean) => void;
     onMoveRequest: (task: TaskInterface, targetPhase: TaskPhase) => void;
     onUpdateComments?: (taskId: string, comments: TaskCommentInterface[]) => void;
-    onUpdateAttachments?: (taskId: string, attachments: TaskAttachmentInterface[]) => void;
     onUpdateTimeLogs?: (taskId: string, timeLogs: TaskTimeLogInterface[]) => void;
     onUpdateRequirements?: (taskId: string, requirements: RequirementInterface[]) => void;
 }
 
-export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, onMoveRequest, onUpdateComments, onUpdateAttachments, onUpdateTimeLogs, onUpdateRequirements }: TaskDetailDialogProps) => {
+export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, onMoveRequest, onUpdateComments, onUpdateTimeLogs, onUpdateRequirements }: TaskDetailDialogProps) => {
     const currentUserId = getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "";
     const allMembers = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? members;
 
@@ -199,7 +198,7 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                     </div>
                 )}
 
-                <TaskAttachments task={task} onUpdateAttachments={onUpdateAttachments} />
+                <TaskAttachments task={task} />
                 <TaskTimeLogs task={task} members={members} onUpdateTimeLogs={onUpdateTimeLogs} />
                 <TaskComments task={task} currentUserId={currentUserId} members={members} onUpdateComments={onUpdateComments} />
             </DialogContent>

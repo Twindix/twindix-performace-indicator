@@ -151,8 +151,6 @@ export interface AddTaskDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     members: UserInterface[];
-    sprintId: string;
-    onAddTask: (task: TaskInterface) => void;
 }
 
 export interface TasksContextInterface {
