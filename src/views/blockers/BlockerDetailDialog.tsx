@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
 import { AlertCircle, Calendar, CheckCircle2, Clock, Edit, Layers, ShieldAlert, User, X } from "lucide-react";
-import { toast } from "sonner";
 
 import { Badge, Button } from "@/atoms";
-import { blockersConstants } from "@/constants/blockers";
 import { useBlockers } from "@/contexts";
 import { BlockerImpact, BlockerStatus, BlockerType } from "@/enums";
-import { t } from "@/hooks";
+import { t, useGetBlocker, useResolveBlocker, useUnlinkBlockerTask } from "@/hooks";
 import type { BlockerInterface, TaskInterface, UserInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { tasksService } from "@/services";
 import { Avatar, AvatarFallback, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/ui";
 import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
@@ -43,9 +40,11 @@ const STATUS_VARIANTS: Record<BlockerStatus, "error" | "success" | "warning"> = 
 };
 
 export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Props) => {
-    const { fetchBlockerDetail, resolveBlocker, unlinkTask } = useBlockers();
+    const { patchBlockerLocal, refetchAnalytics } = useBlockers();
+    const { getHandler: getBlockerHandler } = useGetBlocker();
+    const { resolveHandler: resolveBlockerHandler, isLoading: isResolving } = useResolveBlocker();
+    const { unlinkHandler: unlinkBlockerTaskHandler } = useUnlinkBlockerTask();
     const [current, setCurrent] = useState<BlockerInterface | null>(blocker);
-    const [isResolving, setIsResolving] = useState(false);
     const [tasks, setTasks] = useState<TaskInterface[]>([]);
 
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
@@ -54,8 +53,13 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
 
     useEffect(() => {
         if (!open || !blocker) return;
-        fetchBlockerDetail(blocker.id).then((res) => { if (res) setCurrent(res); });
-    }, [open, blocker?.id, fetchBlockerDetail]);
+        getBlockerHandler(blocker.id).then((res) => {
+            if (res) {
+                setCurrent(res);
+                patchBlockerLocal(res);
+            }
+        });
+    }, [open, blocker?.id, getBlockerHandler, patchBlockerLocal]);
 
     useEffect(() => {
         if (!open || !current?.sprintId) return;
@@ -71,18 +75,20 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
     const linkedTasks = (current.taskIds ?? []).map((id) => tasks.find((t) => t.id === id) ?? null);
 
     const handleResolve = async () => {
-        setIsResolving(true);
-        const res = await resolveBlocker(current.id);
-        setIsResolving(false);
-        if (res) setCurrent(res);
+        const res = await resolveBlockerHandler(current.id);
+        if (res) {
+            setCurrent(res);
+            patchBlockerLocal(res);
+            refetchAnalytics();
+        }
     };
 
     const handleUnlink = async (taskId: string) => {
-        try {
-            const res = await unlinkTask(current.id, taskId);
-            if (res) setCurrent(res);
-        } catch (err) {
-            toast.error(getErrorMessage(err, blockersConstants.errors.unlinkTaskFailed));
+        const ok = await unlinkBlockerTaskHandler(current.id, taskId);
+        if (ok) {
+            const next = { ...current, taskIds: (current.taskIds ?? []).filter((t) => t !== taskId) };
+            setCurrent(next);
+            patchBlockerLocal(next);
         }
     };
 

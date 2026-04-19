@@ -4,7 +4,7 @@ import { Plus, ShieldAlert } from "lucide-react";
 import { Button, Input, Label, Textarea } from "@/atoms";
 import { useBlockers } from "@/contexts";
 import { BlockerImpact, BlockerType } from "@/enums";
-import { t } from "@/hooks";
+import { t, useCreateBlocker, useUpdateBlocker } from "@/hooks";
 import type { BlockerInterface, TaskInterface, UserInterface } from "@/interfaces";
 import { tasksService } from "@/services";
 import {
@@ -37,7 +37,10 @@ const SEVERITY_OPTIONS = [
 ];
 
 export const BlockerFormDialog = ({ open, onOpenChange, sprintId, initial }: Props) => {
-    const { createBlocker, updateBlocker } = useBlockers();
+    const { patchBlockerLocal, refetchAnalytics } = useBlockers();
+    const { createHandler: createBlockerHandler, isLoading: isCreating } = useCreateBlocker();
+    const { updateHandler: updateBlockerHandler, isLoading: isUpdating } = useUpdateBlocker();
+    const isSubmitting = isCreating || isUpdating;
     const isEdit = Boolean(initial);
 
     const [title, setTitle] = useState("");
@@ -46,7 +49,6 @@ export const BlockerFormDialog = ({ open, onOpenChange, sprintId, initial }: Pro
     const [type, setType] = useState<BlockerType>(BlockerType.Technical);
     const [ownedBy, setOwnedBy] = useState<string>("");
     const [taskIds, setTaskIds] = useState<string[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [members, setMembers] = useState<UserInterface[]>([]);
     const [tasks, setTasks] = useState<TaskInterface[]>([]);
@@ -85,16 +87,18 @@ export const BlockerFormDialog = ({ open, onOpenChange, sprintId, initial }: Pro
 
     const handleSubmit = async () => {
         if (!canSubmit) return;
-        setIsSubmitting(true);
-        const result = isEdit && initial
-            ? await updateBlocker(initial.id, {
+        let result: BlockerInterface | null;
+        if (isEdit && initial) {
+            result = await updateBlockerHandler(initial.id, {
                 title: title.trim(),
                 description: description.trim() || undefined,
                 severity,
                 type,
                 owned_by: ownedBy,
-            })
-            : await createBlocker({
+            });
+        } else {
+            if (!sprintId) return;
+            result = await createBlockerHandler(sprintId, {
                 title: title.trim(),
                 description: description.trim() || undefined,
                 severity,
@@ -102,8 +106,12 @@ export const BlockerFormDialog = ({ open, onOpenChange, sprintId, initial }: Pro
                 owned_by: ownedBy,
                 task_ids: taskIds.length ? taskIds : undefined,
             });
-        setIsSubmitting(false);
-        if (result) onOpenChange(false);
+        }
+        if (result) {
+            patchBlockerLocal(result);
+            refetchAnalytics();
+            onOpenChange(false);
+        }
     };
 
     return (
