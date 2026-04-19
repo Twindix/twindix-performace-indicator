@@ -68,6 +68,17 @@ export const TasksView = () => {
 
     const [selectedTask, setSelectedTask] = useState<TaskInterface | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
+
+    useEffect(() => {
+        if (!dialogOpen || !selectedTask) return;
+        tasksService.detailHandler(selectedTask.id)
+            .then((res) => {
+                setSelectedTask(res.data);
+                setAllTasks((prev) => prev.map((t) => t.id === res.data.id ? res.data : t));
+            })
+            .catch((err) => toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed)));
+    }, [dialogOpen, selectedTask?.id]);
+
     const [addTaskDialogOpen, setAddTaskDialogOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [priorityFilter, setPriorityFilter] = useState<string>("all");
