@@ -7,3 +7,4 @@ export { sprintsConstants } from "./sprints";
 export { tasksConstants } from "./tasks";
 export { timeLogsConstants } from "./time-logs";
 export { requirementsConstants } from "./requirements";
+export { blockersConstants } from "./blockers";

@@ -1,15 +1,18 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Calendar, Clock, Filter, GitBranch, Layers, MessageSquare, PenTool, Shield, ShieldAlert, Users } from "lucide-react";
+import { AlertTriangle, Calendar, Clock, Filter, GitBranch, Layers, MessageSquare, PenTool, Plus, Shield, ShieldAlert, Users } from "lucide-react";
 
-import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { BlockersSkeleton } from "@/components/skeletons";
+import { BlockersProvider, useBlockers } from "@/contexts";
 import { BlockerImpact, BlockerStatus, BlockerType } from "@/enums";
 import { t, useSettings, usePageLoader } from "@/hooks";
 import type { BlockerInterface, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
+import { BlockerDetailDialog } from "./BlockerDetailDialog";
+import { BlockerFormDialog } from "./BlockerFormDialog";
 
 const blockerTypeConfig: Record<BlockerType, { labelKey: string; icon: typeof AlertTriangle; color: string }> = {
     [BlockerType.Requirements]: { labelKey: "Requirements", icon: AlertTriangle, color: "bg-friction-requirements text-friction-requirements" },
@@ -43,42 +46,67 @@ const barColors: Record<BlockerType, string> = {
 };
 
 export const BlockerView = () => {
-    const isLoading = usePageLoader();
+    const { activeSprintId } = useSprintStore();
+    return (
+        <BlockersProvider sprintId={activeSprintId}>
+            <BlockerViewInner />
+        </BlockersProvider>
+    );
+};
+
+const BlockerViewInner = () => {
+    const pageLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
     const { activeSprintId } = useSprintStore();
+    const { blockers, analytics, isLoading: isFetching } = useBlockers();
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [typeFilter, setTypeFilter] = useState<string>("all");
 
-    const allBlockers = getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? [];
+    const [addOpen, setAddOpen] = useState(false);
+    const [editTarget, setEditTarget] = useState<BlockerInterface | null>(null);
+    const [detailTarget, setDetailTarget] = useState<BlockerInterface | null>(null);
+    const [detailOpen, setDetailOpen] = useState(false);
+
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
-    const sprintBlockers = allBlockers.filter((b) => b.sprintId === activeSprintId);
 
     const filteredBlockers = useMemo(() => {
-        let result = sprintBlockers;
+        let result = blockers;
         if (statusFilter !== "all") result = result.filter((b) => b.status === statusFilter);
         if (typeFilter !== "all") result = result.filter((b) => b.type === typeFilter);
         return result;
-    }, [sprintBlockers, statusFilter, typeFilter]);
+    }, [blockers, statusFilter, typeFilter]);
 
     const getMember = (id: string) => members.find((m) => m.id === id);
 
     const stats = useMemo(() => {
-        const active = sprintBlockers.filter((b) => b.status === BlockerStatus.Active || b.status === BlockerStatus.Escalated).length;
-        const resolved = sprintBlockers.filter((b) => b.status === BlockerStatus.Resolved).length;
-        const avgDuration = sprintBlockers.length > 0 ? Math.round(sprintBlockers.reduce((sum, b) => sum + b.durationDays, 0) / sprintBlockers.length) : 0;
-        return { total: sprintBlockers.length, active, resolved, avgDuration };
-    }, [sprintBlockers]);
+        if (analytics) {
+            return {
+                total: analytics.total,
+                active: analytics.active,
+                resolved: analytics.resolved,
+                avgDuration: Math.round(analytics.avg_duration ?? 0),
+            };
+        }
+        const active = blockers.filter((b) => b.status === BlockerStatus.Active || b.status === BlockerStatus.Escalated).length;
+        const resolved = blockers.filter((b) => b.status === BlockerStatus.Resolved).length;
+        const avgDuration = blockers.length > 0 ? Math.round(blockers.reduce((sum, b) => sum + b.durationDays, 0) / blockers.length) : 0;
+        return { total: blockers.length, active, resolved, avgDuration };
+    }, [analytics, blockers]);
 
     const impactByType = useMemo(() => {
         const counts: Record<string, number> = {};
         for (const bt of Object.values(BlockerType)) counts[bt] = 0;
-        for (const b of sprintBlockers) counts[b.type]++;
+        if (analytics?.by_type) {
+            for (const [k, v] of Object.entries(analytics.by_type)) counts[k] = v;
+        } else {
+            for (const b of blockers) counts[b.type] = (counts[b.type] ?? 0) + 1;
+        }
         const max = Math.max(...Object.values(counts), 1);
         return { counts, max };
-    }, [sprintBlockers]);
+    }, [analytics, blockers]);
 
-    if (isLoading) return <BlockersSkeleton />;
+    if (pageLoading || isFetching) return <BlockersSkeleton />;
 
     return (
         <div>
@@ -110,6 +138,10 @@ export const BlockerView = () => {
                                 ))}
                             </SelectContent>
                         </Select>
+                        <Button size="sm" className="gap-1.5" onClick={() => setAddOpen(true)}>
+                            <Plus className="h-4 w-4" />
+                            {t("Add Blocker")}
+                        </Button>
                     </div>
                 }
             />
@@ -162,7 +194,11 @@ export const BlockerView = () => {
                             const TypeIcon = typeInfo.icon;
 
                             return (
-                                <Card key={blocker.id} className="overflow-hidden">
+                                <Card
+                                    key={blocker.id}
+                                    className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                                    onClick={() => { setDetailTarget(blocker); setDetailOpen(true); }}
+                                >
                                     <CardContent className={compact ? "p-3" : "p-5"}>
                                         {/* Header: title + badges */}
                                         <div className="flex items-start justify-between gap-3 mb-3">
@@ -262,6 +298,22 @@ export const BlockerView = () => {
                     </Card>
                 </div>
             </div>
+
+            <BlockerFormDialog
+                open={addOpen || !!editTarget}
+                onOpenChange={(open) => {
+                    if (!open) { setAddOpen(false); setEditTarget(null); }
+                }}
+                sprintId={activeSprintId}
+                initial={editTarget}
+            />
+
+            <BlockerDetailDialog
+                blocker={detailTarget}
+                open={detailOpen}
+                onOpenChange={setDetailOpen}
+                onEdit={(b) => { setDetailOpen(false); setEditTarget(b); }}
+            />
         </div>
     );
 };

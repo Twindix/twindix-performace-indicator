@@ -5,3 +5,4 @@ export * from "./sprints";
 export * from "./tasks";
 export * from "./time-logs";
 export * from "./requirements";
+export * from "./blockers";

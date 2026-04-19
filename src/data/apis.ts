@@ -35,6 +35,17 @@ export const apisData = {
         toggle: (id: string) => `/requirements/${id}/toggle`,
         delete: (id: string) => `/requirements/${id}`,
     },
+    blockers: {
+        list: (sprintId: string) => `/sprints/${sprintId}/blockers`,
+        analytics: (sprintId: string) => `/sprints/${sprintId}/blockers/analytics`,
+        create: (sprintId: string) => `/sprints/${sprintId}/blockers`,
+        detail: (id: string) => `/blockers/${id}`,
+        update: (id: string) => `/blockers/${id}`,
+        resolve: (id: string) => `/blockers/${id}/resolve`,
+        escalate: (id: string) => `/blockers/${id}/escalate`,
+        linkTasks: (id: string) => `/blockers/${id}/tasks`,
+        unlinkTask: (id: string, taskId: string) => `/blockers/${id}/tasks/${taskId}`,
+    },
     timeLogs: {
         sprintList: (sprintId: string) => `/sprints/${sprintId}/time-logs`,
         sprintSummary: (sprintId: string) => `/sprints/${sprintId}/time-logs/summary`,
