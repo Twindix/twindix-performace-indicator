@@ -12,3 +12,4 @@ export type { CommentInterface } from "./comments";
 export type { RedFlagInterface, RedFlagSeverity } from "./red-flags";
 export type { AlertInterface } from "./alerts";
 export type { TimeLogInterface, TimeLogsListResponseInterface, TimeLogDetailResponseInterface, TimeLogsSummaryInterface, TimeLogsSummaryResponseInterface, CreateTimeLogPayloadInterface, UpdateTimeLogPayloadInterface } from "./time-logs";
+export type { RequirementItemInterface, RequirementsListResponseInterface, RequirementDetailResponseInterface, CreateRequirementPayloadInterface, UpdateRequirementPayloadInterface } from "./requirements";
