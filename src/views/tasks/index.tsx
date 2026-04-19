@@ -158,8 +158,8 @@ const TasksViewInner = () => {
     );
 
     const totalPoints = sprintTasks.reduce((sum, t) => sum + t.storyPoints, 0);
-    const donePoints = stats?.completed ?? sprintTasks.filter((t) => t.phase === TaskPhase.Done).reduce((sum, t) => sum + t.storyPoints, 0);
-    const blockedCount = stats?.blocked ?? sprintTasks.filter((t) => t.hasBlocker).length;
+    const donePoints = stats?.story_points?.used ?? sprintTasks.filter((t) => t.phase === TaskPhase.Done).reduce((sum, t) => sum + t.storyPoints, 0);
+    const blockedCount = stats?.blocked_count ?? sprintTasks.filter((t) => t.hasBlocker).length;
 
     const requestTransition = useCallback((task: TaskInterface, targetPhase: TaskPhase) => {
         if (task.phase === targetPhase) return;
@@ -234,7 +234,7 @@ const handleUpdateRequirements = useCallback((taskId: string, requirements: Task
                         </Button>
                     ) : (
                         <div className="flex items-center gap-2 text-sm text-text-secondary">
-                            <span><strong className="text-text-dark">{stats?.total ?? sprintTasks.length}</strong> {t("tasks")}</span>
+                            <span><strong className="text-text-dark">{stats?.total_tasks ?? sprintTasks.length}</strong> {t("tasks")}</span>
                             <span className="text-border">|</span>
                             <span><strong className="text-text-dark">{donePoints}</strong>/{totalPoints} {t("points")}</span>
                             {blockedCount > 0 && (

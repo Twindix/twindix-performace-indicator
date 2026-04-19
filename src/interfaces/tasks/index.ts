@@ -70,25 +70,13 @@ export interface TaskInterface {
     workType: "Design" | "Frontend" | "Backend" | "QA" | "Done";
 }
 
-export interface TaskKanbanResponseInterface {
-    data: Record<string, TaskInterface[]>;
-    isSuccess: boolean;
-}
+export type TaskKanbanResponseInterface = Record<string, TaskInterface[]>;
 
-export interface TaskPipelineResponseInterface {
-    data: TaskInterface[];
-    isSuccess: boolean;
-}
+export type TaskPipelineResponseInterface = Record<string, TaskInterface[]>;
 
-export interface TaskPipelineCountsResponseInterface {
-    data: Record<string, number>;
-    isSuccess: boolean;
-}
+export type TaskPipelineCountsResponseInterface = Record<string, number>;
 
-export interface TaskStatsResponseInterface {
-    data: TaskStatsInterface;
-    isSuccess: boolean;
-}
+export type TaskStatsResponseInterface = TaskStatsInterface;
 
 export interface TaskListResponseInterface {
     data: TaskInterface[];
@@ -149,10 +137,9 @@ export interface AddTaskDialogProps {
 }
 
 export interface TaskStatsInterface {
-    total: number;
-    completed: number;
-    in_progress: number;
-    blocked: number;
+    total_tasks: number;
+    story_points: { used: number; total: number };
+    blocked_count: number;
 }
 
 export interface TasksContextInterface {
