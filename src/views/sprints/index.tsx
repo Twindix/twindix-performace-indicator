@@ -5,7 +5,7 @@ import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atom
 import { EmptyState, Header } from "@/components/shared";
 import { useSprints } from "@/contexts";
 import { SprintStatus } from "@/enums";
-import { t } from "@/hooks";
+import { t, useActivateSprint, useCreateSprint, useDeleteSprint, useUpdateSprint } from "@/hooks";
 import type { CreateSprintPayloadInterface, SprintInterface } from "@/interfaces";
 import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
@@ -23,13 +23,18 @@ const emptyForm: CreateSprintPayloadInterface & { status?: SprintStatus; goalsRa
 };
 
 export const SprintsView = () => {
-    const { sprints, summaries, isLoading, createSprint, updateSprint, deleteSprint, activateSprint } = useSprints();
+    const { sprints, summaries, isLoading, patchSprintLocal, removeSprintLocal } = useSprints();
+    const { createHandler: createSprintHandler, isLoading: isCreating } = useCreateSprint();
+    const { updateHandler: updateSprintHandler, isLoading: isUpdating } = useUpdateSprint();
+    const { deleteHandler: deleteSprintHandler } = useDeleteSprint();
+    const { activateHandler: activateSprintHandler } = useActivateSprint();
+
+    const isSubmitting = isCreating || isUpdating;
 
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<SprintInterface | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<SprintInterface | null>(null);
     const [form, setForm] = useState(emptyForm);
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const openAdd = () => {
         setForm(emptyForm);
@@ -59,40 +64,46 @@ export const SprintsView = () => {
 
     const handleSubmitAdd = async () => {
         if (!form.name.trim() || !form.startDate || !form.endDate) return;
-        setIsSubmitting(true);
-        const created = await createSprint({
+        const created = await createSprintHandler({
             name: form.name.trim(),
             startDate: form.startDate,
             endDate: form.endDate,
             goals: parseGoals(form.goalsRaw),
         });
-        setIsSubmitting(false);
-        if (created) closeDialogs();
+        if (created) {
+            patchSprintLocal(created);
+            closeDialogs();
+        }
     };
 
     const handleSubmitEdit = async () => {
         if (!editTarget) return;
         if (!form.name.trim() || !form.startDate || !form.endDate) return;
-        setIsSubmitting(true);
-        const updated = await updateSprint(editTarget.id, {
+        const updated = await updateSprintHandler(editTarget.id, {
             name: form.name.trim(),
             startDate: form.startDate,
             endDate: form.endDate,
             goals: parseGoals(form.goalsRaw),
             status: form.status,
         });
-        setIsSubmitting(false);
-        if (updated) closeDialogs();
+        if (updated) {
+            patchSprintLocal(updated);
+            closeDialogs();
+        }
     };
 
     const handleDelete = async () => {
         if (!deleteTarget) return;
-        const ok = await deleteSprint(deleteTarget.id);
-        if (ok) setDeleteTarget(null);
+        const ok = await deleteSprintHandler(deleteTarget.id);
+        if (ok) {
+            removeSprintLocal(deleteTarget.id);
+            setDeleteTarget(null);
+        }
     };
 
     const handleActivate = async (s: SprintInterface) => {
-        await activateSprint(s.id);
+        const updated = await activateSprintHandler(s.id);
+        if (updated) patchSprintLocal(updated);
     };
 
     const statusBadge = (status: SprintStatus) => {
