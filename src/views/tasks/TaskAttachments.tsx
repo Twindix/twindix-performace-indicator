@@ -1,6 +1,11 @@
 import { Paperclip, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+
+import { tasksConstants } from "@/constants/tasks";
 import { t } from "@/hooks";
 import type { TaskInterface, TaskAttachmentInterface } from "@/interfaces";
+import { getErrorMessage } from "@/lib/error";
+import { tasksService } from "@/services";
 
 interface Props {
     task: TaskInterface;
@@ -13,29 +18,29 @@ const formatSize = (bytes: number) =>
 export const TaskAttachments = ({ task, onUpdateAttachments }: Props) => {
     const attachments = task.attachments ?? [];
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files ?? []);
-        if (!files.length || !onUpdateAttachments) return;
-        files.forEach((file) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const att: TaskAttachmentInterface = {
-                    id: `att-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-                    name: file.name,
-                    size: file.size,
-                    type: file.type,
-                    dataUrl: reader.result as string,
-                    uploadedAt: new Date().toISOString(),
-                };
-                onUpdateAttachments(task.id, [...(task.attachments ?? []), att]);
-            };
-            reader.readAsDataURL(file);
-        });
         e.target.value = "";
+        if (!files.length || !onUpdateAttachments) return;
+        for (const file of files) {
+            try {
+                const res = await tasksService.addAttachmentHandler(task.id, file);
+                onUpdateAttachments(task.id, res.data.attachments ?? []);
+            } catch (err) {
+                toast.error(getErrorMessage(err, tasksConstants.errors.attachmentUploadFailed));
+            }
+        }
     };
 
-    const remove = (id: string) =>
-        onUpdateAttachments?.(task.id, attachments.filter((a) => a.id !== id));
+    const remove = async (id: string) => {
+        if (!onUpdateAttachments) return;
+        try {
+            await tasksService.removeAttachmentHandler(task.id, id);
+            onUpdateAttachments(task.id, attachments.filter((a) => a.id !== id));
+        } catch (err) {
+            toast.error(getErrorMessage(err, tasksConstants.errors.attachmentDeleteFailed));
+        }
+    };
 
     return (
         <div className="mt-4 pb-4 border-b border-border">
