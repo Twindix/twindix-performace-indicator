@@ -8,3 +8,4 @@ export * from "./requirements";
 export * from "./blockers";
 export * from "./alerts";
 export * from "./red-flags";
+export * from "./decisions";

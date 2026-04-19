@@ -8,3 +8,4 @@ export { requirementsService } from "./requirements";
 export { blockersService } from "./blockers";
 export { alertsService } from "./alerts";
 export { redFlagsService } from "./red-flags";
+export { decisionsService } from "./decisions";

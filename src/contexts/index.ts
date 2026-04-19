@@ -7,3 +7,4 @@ export { TasksProvider, useTasks } from "./tasks";
 export { BlockersProvider, useBlockers } from "./blockers";
 export { AlertsProvider, useAlerts } from "./alerts";
 export { RedFlagsProvider, useRedFlags } from "./red-flags";
+export { DecisionsProvider, useDecisions } from "./decisions";
