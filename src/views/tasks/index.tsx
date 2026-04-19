@@ -52,7 +52,19 @@ const TasksViewInner = () => {
     const pageLoading = usePageLoader();
     useSettings();
     const { activeSprintId } = useSprintStore();
-    const { tasks: allTasks, isLoading: isFetchingTasks, updateTask, fetchTaskDetail, patchTaskLocal } = useTasks();
+    const {
+        tasks: allTasks,
+        kanban,
+        pipeline,
+        stats,
+        isLoading: isFetchingTasks,
+        fetchKanban,
+        fetchPipeline,
+        fetchStats,
+        updateTask,
+        fetchTaskDetail,
+        patchTaskLocal,
+    } = useTasks();
 
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
     const blockers = getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? [];
@@ -74,6 +86,17 @@ const TasksViewInner = () => {
     const [typeFilter, setTypeFilter] = useState<string>("all");
     const [viewMode, setViewMode] = useState<"board" | "pipeline">("board");
 
+    useEffect(() => {
+        if (!activeSprintId) return;
+        fetchStats();
+    }, [activeSprintId, fetchStats]);
+
+    useEffect(() => {
+        if (!activeSprintId) return;
+        if (viewMode === "board") fetchKanban();
+        else fetchPipeline();
+    }, [activeSprintId, viewMode, fetchKanban, fetchPipeline]);
+
     const [draggedTask, setDraggedTask] = useState<TaskInterface | null>(null);
     const [dragOverPhase, setDragOverPhase] = useState<TaskPhase | null>(null);
 
@@ -87,8 +110,8 @@ const TasksViewInner = () => {
         [allTasks, activeSprintId],
     );
 
-    const filteredTasks = useMemo(() => {
-        let result = sprintTasks;
+    const applyFilters = useCallback((list: TaskInterface[]) => {
+        let result = list;
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             result = result.filter((t) => t.title.toLowerCase().includes(q) || t.tags.some((tag) => tag.toLowerCase().includes(q)));
@@ -103,14 +126,21 @@ const TasksViewInner = () => {
         if (readinessFilter === "not_ready") result = result.filter((t) => t.readinessScore < 70);
         if (typeFilter !== "all") result = result.filter((t) => (t.type ?? "feature") === typeFilter);
         return result;
-    }, [sprintTasks, searchQuery, phaseFilter, priorityFilter, assigneeFilter, readinessFilter, typeFilter]);
+    }, [searchQuery, phaseFilter, priorityFilter, assigneeFilter, readinessFilter, typeFilter]);
+
+    const filteredPipeline = useMemo(() => applyFilters(pipeline), [pipeline, applyFilters]);
 
     const tasksByPhase = useMemo(() => {
         const map = new Map<TaskPhase, TaskInterface[]>();
-        for (const col of COLUMNS) map.set(col.phase, []);
-        for (const task of filteredTasks) map.get(task.phase)?.push(task);
+        for (const col of COLUMNS) {
+            map.set(col.phase, applyFilters(kanban[col.phase] ?? []));
+        }
         return map;
-    }, [filteredTasks]);
+    }, [kanban, applyFilters]);
+
+    const filteredCount = viewMode === "board"
+        ? Array.from(tasksByPhase.values()).reduce((sum, arr) => sum + arr.length, 0)
+        : filteredPipeline.length;
 
     const sprintAssigneeIds = useMemo(
         () => [...new Set(sprintTasks.flatMap((t) => t.assigneeIds ?? []))],
@@ -118,8 +148,8 @@ const TasksViewInner = () => {
     );
 
     const totalPoints = sprintTasks.reduce((sum, t) => sum + t.storyPoints, 0);
-    const donePoints = sprintTasks.filter((t) => t.phase === TaskPhase.Done).reduce((sum, t) => sum + t.storyPoints, 0);
-    const blockedCount = sprintTasks.filter((t) => t.hasBlocker).length;
+    const donePoints = stats?.completed ?? sprintTasks.filter((t) => t.phase === TaskPhase.Done).reduce((sum, t) => sum + t.storyPoints, 0);
+    const blockedCount = stats?.blocked ?? sprintTasks.filter((t) => t.hasBlocker).length;
 
     const requestTransition = useCallback((task: TaskInterface, targetPhase: TaskPhase) => {
         if (task.phase === targetPhase) return;
@@ -187,7 +217,7 @@ const TasksViewInner = () => {
                         </Button>
                     ) : (
                         <div className="flex items-center gap-2 text-sm text-text-secondary">
-                            <span><strong className="text-text-dark">{sprintTasks.length}</strong> {t("tasks")}</span>
+                            <span><strong className="text-text-dark">{stats?.total ?? sprintTasks.length}</strong> {t("tasks")}</span>
                             <span className="text-border">|</span>
                             <span><strong className="text-text-dark">{donePoints}</strong>/{totalPoints} {t("points")}</span>
                             {blockedCount > 0 && (
@@ -302,7 +332,7 @@ const TasksViewInner = () => {
                 ))}
             </div>
 
-            {filteredTasks.length === 0 ? (
+            {filteredCount === 0 ? (
                 <EmptyState icon={ClipboardList} title={t("No tasks found")} description={t("Try adjusting your filters or search query.")} />
             ) : viewMode === "board" ? (
                 <BoardView
@@ -319,7 +349,7 @@ const TasksViewInner = () => {
                 />
             ) : (
                 <PipelineView
-                    tasks={filteredTasks}
+                    tasks={filteredPipeline}
                     members={members}
                     setSelectedTask={setSelectedTask}
                     setDialogOpen={setDialogOpen}
