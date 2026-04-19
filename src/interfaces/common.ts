@@ -1,4 +1,4 @@
-import type { SprintStatus, UserRole } from "@/enums";
+import type { UserRole } from "@/enums";
 
 export interface ApiSuccessResponse<T> {
     data: T;
@@ -28,16 +28,6 @@ export interface UserInterface {
     avatar: string;
     team: string;
     status?: string;
-}
-
-export interface SprintInterface {
-    id: string;
-    name: string;
-    startDate: string;
-    endDate: string;
-    status: SprintStatus;
-    healthScore: number;
-    goals: string[];
 }
 
 export interface AuthContextInterface {
