@@ -7,7 +7,7 @@ import { Button, Input, Label, Textarea } from "@/atoms";
 import { TaskPriority, TaskStatus } from "@/enums";
 import type { AddTaskDialogProps, AddTaskFormState } from "@/interfaces";
 import { useTasks } from "@/contexts";
-import { t, useCreateTask } from "@/hooks";
+import { t, useCreateRequirement, useCreateTask } from "@/hooks";
 import { useSprintStore } from "@/store";
 import {
     Dialog,
@@ -60,8 +60,9 @@ const INITIAL_FORM_STATE: AddTaskFormState = {
 
 export const AddTaskDialog = ({ open, onOpenChange, members }: AddTaskDialogProps) => {
     const { activeSprintId } = useSprintStore();
-    const { addTaskLocal } = useTasks();
+    const { addTaskLocal, patchTaskLocal } = useTasks();
     const { createHandler: createTaskHandler, isLoading: isSubmitting } = useCreateTask();
+    const { createHandler: createRequirementHandler } = useCreateRequirement();
     const [formState, setFormState] = useState<AddTaskFormState>(INITIAL_FORM_STATE);
     const [requirementInput, setRequirementInput] = useState("");
     const requirementInputRef = useRef<HTMLInputElement>(null);
@@ -139,9 +140,19 @@ export const AddTaskDialog = ({ open, onOpenChange, members }: AddTaskDialogProp
         });
         if (created) {
             addTaskLocal(created);
+
+            if (formState.requirements.length > 0) {
+                const requirements = [];
+                for (const req of formState.requirements) {
+                    const reqRes = await createRequirementHandler(created.id, { label: req.label });
+                    if (reqRes) requirements.push({ id: reqRes.id, label: reqRes.label, met: reqRes.met });
+                }
+                if (requirements.length > 0) patchTaskLocal(created.id, { requirements });
+            }
+
             handleOpenChange(false);
         }
-    }, [formState, activeSprintId, createTaskHandler, addTaskLocal, handleOpenChange]);
+    }, [formState, activeSprintId, createTaskHandler, createRequirementHandler, addTaskLocal, patchTaskLocal, handleOpenChange]);
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
