@@ -1,12 +1,17 @@
-import { Activity, AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Circle, ClipboardList, Layers, ListChecks, Tag, User } from "lucide-react";
-import { Badge, Button } from "@/atoms";
-import { Avatar, AvatarFallback, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
-import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
+import { useState } from "react";
+import { Activity, AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Circle, ClipboardList, Layers, ListChecks, Plus, Tag, Trash2, User, X } from "lucide-react";
+
+import { Badge, Button, Input } from "@/atoms";
+import { useTasks } from "@/contexts";
+import { BlockerStatus, TaskStatus } from "@/enums";
 import { t } from "@/hooks";
-import { BlockerStatus } from "@/enums";
 import type { TaskPhase } from "@/enums";
-import { TaskStatus } from "@/enums";
 import type { TaskInterface, TaskCommentInterface, TaskTimeLogInterface, UserInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
+import {
+    Avatar, AvatarFallback, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/ui";
+import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
 import { PHASE_INDEX, COLUMNS, COLUMN_COLORS, PRIORITY_VARIANT, capitalize, phaseLabel } from "../../data/seed/constants";
 import { TaskAttachments } from "./TaskAttachments";
 import { TaskTimeLogs } from "./TaskTimeLogs";
@@ -24,28 +29,50 @@ export interface TaskDetailDialogProps {
     onUpdateRequirements?: (taskId: string, requirements: RequirementInterface[]) => void;
 }
 
+const STATUS_LABEL: Record<TaskStatus, string> = {
+    [TaskStatus.OnTrack]: "On Track",
+    [TaskStatus.AtRisk]: "At Risk",
+    [TaskStatus.Delayed]: "Delayed",
+    [TaskStatus.OnHold]: "On Hold",
+};
+const STATUS_COLOR: Record<TaskStatus, string> = {
+    [TaskStatus.OnTrack]: "text-green-600",
+    [TaskStatus.AtRisk]: "text-yellow-600",
+    [TaskStatus.Delayed]: "text-orange-600",
+    [TaskStatus.OnHold]: "text-gray-500",
+};
+
 export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, onMoveRequest, onUpdateComments, onUpdateTimeLogs, onUpdateRequirements }: TaskDetailDialogProps) => {
+    const { deleteTask, addTags, removeTag, updateTaskStatus } = useTasks();
+    const [tagInput, setTagInput] = useState("");
+    const [showTagInput, setShowTagInput] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
+
     const currentUserId = getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "";
     const allMembers = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? members;
 
     if (!task) return null;
 
-    const STATUS_LABEL: Record<TaskStatus, string> = {
-        [TaskStatus.OnTrack]: "On Track",
-        [TaskStatus.AtRisk]: "At Risk",
-        [TaskStatus.Delayed]: "Delayed",
-        [TaskStatus.OnHold]: "On Hold",
-    };
-    const STATUS_COLOR: Record<TaskStatus, string> = {
-        [TaskStatus.OnTrack]: "text-green-600",
-        [TaskStatus.AtRisk]: "text-yellow-600",
-        [TaskStatus.Delayed]: "text-orange-600",
-        [TaskStatus.OnHold]: "text-gray-500",
-    };
-
     const currentIndex = PHASE_INDEX[task.phase];
     const prevPhase = currentIndex > 0 ? COLUMNS[currentIndex - 1].phase : null;
     const nextPhase = currentIndex < COLUMNS.length - 1 ? COLUMNS[currentIndex + 1].phase : null;
+
+    const handleAddTag = async () => {
+        const v = tagInput.trim();
+        if (!v) return;
+        await addTags(task.id, [v]);
+        setTagInput("");
+        setShowTagInput(false);
+    };
+
+    const handleRemoveTag = (tag: string) => removeTag(task.id, tag);
+
+    const handleStatusChange = (next: TaskStatus) => updateTaskStatus(task.id, next);
+
+    const handleDelete = async () => {
+        const ok = await deleteTask(task.id);
+        if (ok) { setConfirmDelete(false); onOpenChange(false); }
+    };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -54,6 +81,15 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                     <div className="flex items-center gap-2 mb-1">
                         <Badge variant={PRIORITY_VARIANT[task.priority]}>{t(capitalize(task.priority))}</Badge>
                         {task.hasBlocker && <Badge variant="error"><AlertCircle className="h-3 w-3 me-1" />{t("Blocked")}</Badge>}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setConfirmDelete(true)}
+                            className="ms-auto text-error hover:text-error hover:bg-error-light gap-1.5 h-7 px-2 me-8"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            {t("Delete")}
+                        </Button>
                     </div>
                     <DialogTitle className="text-xl">{task.title}</DialogTitle>
                     <DialogDescription>{task.description}</DialogDescription>
@@ -121,28 +157,68 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                             <p className="text-sm font-medium text-text-dark">{formatDate(task.createdAt)}</p>
                         </div>
                     </div>
-                    {task.status && (
-                        <div className="flex items-center gap-2">
-                            <Activity className="h-4 w-4 text-text-muted" />
-                            <div>
-                                <p className="text-xs text-text-muted">{t("Status")}</p>
-                                <p className={cn("text-sm font-semibold", STATUS_COLOR[task.status])}>
-                                    {t(STATUS_LABEL[task.status])}
-                                </p>
-                            </div>
+                    <div className="flex items-center gap-2 col-span-2">
+                        <Activity className="h-4 w-4 text-text-muted" />
+                        <div className="flex-1">
+                            <p className="text-xs text-text-muted mb-1">{t("Status")}</p>
+                            <Select value={task.status ?? TaskStatus.OnTrack} onValueChange={(v) => handleStatusChange(v as TaskStatus)}>
+                                <SelectTrigger className="h-8 text-sm w-44">
+                                    <SelectValue>
+                                        <span className={cn("font-semibold", task.status && STATUS_COLOR[task.status])}>
+                                            {t(STATUS_LABEL[task.status ?? TaskStatus.OnTrack])}
+                                        </span>
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Object.values(TaskStatus).map((s) => (
+                                        <SelectItem key={s} value={s}>
+                                            <span className={cn("font-semibold", STATUS_COLOR[s])}>{t(STATUS_LABEL[s])}</span>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
-                    )}
+                    </div>
                 </div>
 
                 {/* Tags */}
-                {task.tags.length > 0 && (
-                    <div className="mt-4 pb-4 border-b border-border">
-                        <p className="text-xs font-medium text-text-muted mb-2 flex items-center gap-1"><Tag className="h-3 w-3" />{t("Tags")}</p>
-                        <div className="flex flex-wrap gap-1.5">
-                            {task.tags.map((tag) => <Badge key={tag} variant="outline">{tag}</Badge>)}
-                        </div>
+                <div className="mt-4 pb-4 border-b border-border">
+                    <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-medium text-text-muted flex items-center gap-1"><Tag className="h-3 w-3" />{t("Tags")}</p>
+                        {!showTagInput && (
+                            <button onClick={() => setShowTagInput(true)} className="text-xs text-primary hover:text-primary-dark font-medium flex items-center gap-1 cursor-pointer">
+                                <Plus className="h-3 w-3" /> {t("Add")}
+                            </button>
+                        )}
                     </div>
-                )}
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                        {task.tags.map((tag) => (
+                            <span key={tag} className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs">
+                                {tag}
+                                <button onClick={() => handleRemoveTag(tag)} className="text-text-muted hover:text-error cursor-pointer">
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </span>
+                        ))}
+                        {showTagInput && (
+                            <div className="flex items-center gap-1">
+                                <Input
+                                    autoFocus
+                                    value={tagInput}
+                                    onChange={(e) => setTagInput(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddTag(); } }}
+                                    placeholder={t("Tag name")}
+                                    className="h-7 text-xs w-28"
+                                />
+                                <Button size="sm" onClick={handleAddTag} className="h-7 px-2 text-xs">{t("Add")}</Button>
+                                <Button size="sm" variant="ghost" onClick={() => { setShowTagInput(false); setTagInput(""); }} className="h-7 px-2 text-xs">{t("Cancel")}</Button>
+                            </div>
+                        )}
+                        {task.tags.length === 0 && !showTagInput && (
+                            <span className="text-xs text-text-muted italic">{t("No tags")}</span>
+                        )}
+                    </div>
+                </div>
 
                 {/* Blocker */}
                 {task.hasBlocker && blocker && (
@@ -201,6 +277,22 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                 <TaskAttachments task={task} />
                 <TaskTimeLogs task={task} members={members} onUpdateTimeLogs={onUpdateTimeLogs} />
                 <TaskComments task={task} currentUserId={currentUserId} members={members} onUpdateComments={onUpdateComments} />
+
+                {/* Delete confirmation */}
+                <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+                    <DialogContent className="max-w-sm">
+                        <DialogHeader>
+                            <DialogTitle>{t("Delete Task")}</DialogTitle>
+                        </DialogHeader>
+                        <p className="text-sm text-text-secondary">
+                            {t("Are you sure you want to delete")} <strong className="text-text-dark">{task.title}</strong>? {t("This action cannot be undone.")}
+                        </p>
+                        <div className="flex justify-end gap-2 mt-4">
+                            <Button variant="outline" onClick={() => setConfirmDelete(false)}>{t("Cancel")}</Button>
+                            <Button variant="destructive" onClick={handleDelete}>{t("Delete")}</Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </DialogContent>
         </Dialog>
     );
