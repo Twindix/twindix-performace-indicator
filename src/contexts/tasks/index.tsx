@@ -2,8 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { toast } from "sonner";
 
 import { tasksConstants } from "@/constants/tasks";
-import type { TaskStatus } from "@/enums";
-import type { CreateTaskPayloadInterface, TaskInterface, TaskStatsInterface, TasksContextInterface, UpdateTaskPayloadInterface } from "@/interfaces";
+import type { TaskInterface, TaskStatsInterface, TasksContextInterface } from "@/interfaces";
 import { getErrorMessage } from "@/lib/error";
 import { tasksService } from "@/services";
 
@@ -26,7 +25,7 @@ export const TasksProvider = ({ sprintId, children }: { sprintId: string | null 
             .finally(() => setIsLoading(false));
     }, [sprintId]);
 
-    const fetchKanban = useCallback(async (): Promise<void> => {
+    const refetchKanban = useCallback(async (): Promise<void> => {
         if (!sprintId) return;
         try {
             const res = await tasksService.kanbanHandler(sprintId);
@@ -36,7 +35,7 @@ export const TasksProvider = ({ sprintId, children }: { sprintId: string | null 
         }
     }, [sprintId]);
 
-    const fetchPipeline = useCallback(async (): Promise<void> => {
+    const refetchPipeline = useCallback(async (): Promise<void> => {
         if (!sprintId) return;
         try {
             const res = await tasksService.pipelineHandler(sprintId);
@@ -46,7 +45,7 @@ export const TasksProvider = ({ sprintId, children }: { sprintId: string | null 
         }
     }, [sprintId]);
 
-    const fetchPipelineCounts = useCallback(async (): Promise<void> => {
+    const refetchPipelineCounts = useCallback(async (): Promise<void> => {
         if (!sprintId) return;
         try {
             const res = await tasksService.pipelineCountsHandler(sprintId);
@@ -56,7 +55,7 @@ export const TasksProvider = ({ sprintId, children }: { sprintId: string | null 
         }
     }, [sprintId]);
 
-    const fetchStats = useCallback(async (): Promise<void> => {
+    const refetchStats = useCallback(async (): Promise<void> => {
         if (!sprintId) return;
         try {
             const res = await tasksService.statsHandler(sprintId);
@@ -66,120 +65,24 @@ export const TasksProvider = ({ sprintId, children }: { sprintId: string | null 
         }
     }, [sprintId]);
 
-    const createTask = useCallback(async (payload: CreateTaskPayloadInterface): Promise<TaskInterface | null> => {
-        if (!sprintId) return null;
-        try {
-            const res = await tasksService.createHandler(sprintId, payload);
-            setTasks((prev) => [...prev, res.data]);
-            return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.createFailed));
-            return null;
-        }
-    }, [sprintId]);
-
-    const updateTask = useCallback(async (id: string, payload: UpdateTaskPayloadInterface): Promise<TaskInterface | null> => {
-        try {
-            const res = await tasksService.updateHandler(id, payload);
-            setTasks((prev) => prev.map((t) => t.id === id ? res.data : t));
-            return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.updateFailed));
-            return null;
-        }
-    }, []);
-
-    const updateTaskStatus = useCallback(async (id: string, status: TaskStatus): Promise<TaskInterface | null> => {
-        try {
-            const res = await tasksService.updateStatusHandler(id, { status });
-            setTasks((prev) => prev.map((t) => t.id === id ? res.data : t));
-            return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.statusUpdateFailed));
-            return null;
-        }
-    }, []);
-
-    const deleteTask = useCallback(async (id: string): Promise<boolean> => {
-        try {
-            await tasksService.deleteHandler(id);
-            setTasks((prev) => prev.filter((t) => t.id !== id));
-            return true;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.deleteFailed));
-            return false;
-        }
-    }, []);
-
-    const fetchTaskDetail = useCallback(async (id: string): Promise<TaskInterface | null> => {
-        try {
-            const res = await tasksService.detailHandler(id);
-            setTasks((prev) => prev.map((t) => t.id === id ? res.data : t));
-            return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
-            return null;
-        }
-    }, []);
-
-    const fetchTransitionCriteria = useCallback(async (id: string): Promise<TaskInterface[] | null> => {
-        try {
-            const res = await tasksService.transitionCriteriaHandler(id);
-            return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
-            return null;
-        }
-    }, []);
-
-    const uploadAttachment = useCallback(async (taskId: string, file: File): Promise<TaskInterface | null> => {
-        try {
-            const res = await tasksService.addAttachmentHandler(taskId, file);
-            setTasks((prev) => prev.map((t) => t.id === taskId ? res.data : t));
-            return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.attachmentUploadFailed));
-            return null;
-        }
-    }, []);
-
-    const removeAttachment = useCallback(async (taskId: string, attachmentId: string): Promise<void> => {
-        try {
-            await tasksService.removeAttachmentHandler(taskId, attachmentId);
-            setTasks((prev) => prev.map((t) =>
-                t.id === taskId
-                    ? { ...t, attachments: (t.attachments ?? []).filter((a) => a.id !== attachmentId) }
-                    : t,
-            ));
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.attachmentDeleteFailed));
-        }
-    }, []);
-
-    const addTags = useCallback(async (taskId: string, tagsToAdd: string[]): Promise<TaskInterface | null> => {
-        try {
-            const res = await tasksService.addTagsHandler(taskId, tagsToAdd);
-            setTasks((prev) => prev.map((t) => t.id === taskId ? res.data : t));
-            return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.tagAddFailed));
-            return null;
-        }
-    }, []);
-
-    const removeTag = useCallback(async (taskId: string, tag: string): Promise<TaskInterface | null> => {
-        try {
-            const res = await tasksService.removeTagHandler(taskId, tag);
-            setTasks((prev) => prev.map((t) => t.id === taskId ? res.data : t));
-            return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.tagRemoveFailed));
-            return null;
-        }
-    }, []);
-
     const patchTaskLocal = useCallback((id: string, updates: Partial<TaskInterface>) => {
         setTasks((prev) => prev.map((t) => t.id === id ? { ...t, ...updates } : t));
+    }, []);
+
+    const addTaskLocal = useCallback((task: TaskInterface) => {
+        setTasks((prev) => [...prev, task]);
+    }, []);
+
+    const removeTaskLocal = useCallback((id: string) => {
+        setTasks((prev) => prev.filter((t) => t.id !== id));
+    }, []);
+
+    const setKanbanLocal = useCallback((data: Record<string, TaskInterface[]>) => {
+        setKanban(data);
+    }, []);
+
+    const setPipelineLocal = useCallback((data: TaskInterface[]) => {
+        setPipeline(data);
     }, []);
 
     const value = useMemo<TasksContextInterface>(() => ({
@@ -189,22 +92,16 @@ export const TasksProvider = ({ sprintId, children }: { sprintId: string | null 
         pipelineCounts,
         stats,
         isLoading,
-        fetchKanban,
-        fetchPipeline,
-        fetchPipelineCounts,
-        fetchStats,
-        createTask,
-        updateTask,
-        updateTaskStatus,
-        deleteTask,
-        fetchTaskDetail,
-        fetchTransitionCriteria,
-        uploadAttachment,
-        removeAttachment,
-        addTags,
-        removeTag,
+        refetchKanban,
+        refetchPipeline,
+        refetchPipelineCounts,
+        refetchStats,
         patchTaskLocal,
-    }), [tasks, kanban, pipeline, pipelineCounts, stats, isLoading, fetchKanban, fetchPipeline, fetchPipelineCounts, fetchStats, createTask, updateTask, updateTaskStatus, deleteTask, fetchTaskDetail, fetchTransitionCriteria, uploadAttachment, removeAttachment, addTags, removeTag, patchTaskLocal]);
+        addTaskLocal,
+        removeTaskLocal,
+        setKanbanLocal,
+        setPipelineLocal,
+    }), [tasks, kanban, pipeline, pipelineCounts, stats, isLoading, refetchKanban, refetchPipeline, refetchPipelineCounts, refetchStats, patchTaskLocal, addTaskLocal, removeTaskLocal, setKanbanLocal, setPipelineLocal]);
 
     return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
 };
