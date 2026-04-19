@@ -76,7 +76,7 @@ export const BoardView = ({
                                         draggable
                                         className={cn(
                                             "bg-surface rounded-lg p-3 border cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-all z-20 pointer-events-auto relative",
-                                            task.hasBlocker ? "border-error/50 bg-error-light/10" : "border-border",
+                                            task.is_blocked ? "border-error/50 bg-error-light/10" : "border-border",
                                             draggedTask?.id === task.id ? "opacity-50 scale-95" : "hover:border-primary",
                                             dragOverPhase === phase ? "pointer-events-none" : ""
                                         )}
@@ -89,10 +89,10 @@ export const BoardView = ({
                                         <div className="flex items-start justify-between mb-2">
                                             <div className="flex items-center gap-1.5 flex-1 min-w-0">
                                                 <GripVertical className="h-4 w-4 text-text-muted shrink-0 cursor-grab" />
-                                                <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0", COLUMN_COLORS[task.phase], "text-white")}>
+                                                <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0", COLUMN_COLORS[task.phase ?? TaskPhase.Backlog], "text-white")}>
                                                     {task.id}
                                                 </span>
-                                                {task.hasBlocker && <Lock className="h-3 w-3 text-error shrink-0" />}
+                                                {task.is_blocked && <Lock className="h-3 w-3 text-error shrink-0" />}
                                             </div>
                                         </div>
 
@@ -101,7 +101,7 @@ export const BoardView = ({
                                         </h4>
 
                                         <div className="flex items-center gap-1 mb-3 flex-wrap">
-                                            {task.tags.map((tag) => (
+                                            {(task.tags ?? []).map((tag) => (
                                                 <span key={tag} className="text-[9px] font-medium text-text-secondary bg-muted px-1.5 py-0.5 rounded">
                                                     #{tag}
                                                 </span>
@@ -112,9 +112,9 @@ export const BoardView = ({
                                                 <Badge variant={PRIORITY_VARIANT[task.priority]} className="text-[9px] px-1.5 py-0.5 rounded shadow-sm relative z-30">
                                                     {t(task.priority.charAt(0).toUpperCase() + task.priority.slice(1))}
                                                 </Badge>
-                                                {task.storyPoints > 0 && (
+                                                {(task.story_points ?? 0) > 0 && (
                                                     <span className="text-[10px] font-semibold text-text-muted bg-muted rounded-full h-5 w-5 flex items-center justify-center relative z-30">
-                                                        {task.storyPoints}
+                                                        {task.story_points}
                                                     </span>
                                                 )}
                                             </div>

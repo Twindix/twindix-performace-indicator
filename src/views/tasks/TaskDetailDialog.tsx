@@ -3,9 +3,8 @@ import { Activity, AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Circle, Cli
 
 import { Badge, Button, Input } from "@/atoms";
 import { useTasks } from "@/contexts";
-import { BlockerStatus, TaskStatus } from "@/enums";
+import { BlockerStatus, TaskPhase, TaskStatus } from "@/enums";
 import { t, useCreateRequirement, useDeleteRequirement, useDeleteTask, useGetRequirement, useTaskTags, useToggleRequirement, useUpdateRequirement, useUpdateTaskStatus } from "@/hooks";
-import type { TaskPhase } from "@/enums";
 import type { TaskInterface, TaskCommentInterface, UserInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
 import {
     Avatar, AvatarFallback, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
@@ -60,7 +59,6 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
     const [showReqInput, setShowReqInput] = useState(false);
 
     const currentUserId = getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "";
-    const allMembers = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? members;
 
     useEffect(() => {
         if (!open || !task) return;
@@ -71,7 +69,7 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
 
     if (!task) return null;
 
-    const currentIndex = PHASE_INDEX[task.phase];
+    const currentIndex = PHASE_INDEX[task.phase ?? TaskPhase.Backlog];
     const prevPhase = currentIndex > 0 ? COLUMNS[currentIndex - 1].phase : null;
     const nextPhase = currentIndex < COLUMNS.length - 1 ? COLUMNS[currentIndex + 1].phase : null;
 
@@ -108,8 +106,8 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
             <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <div className="flex items-center gap-2 mb-1">
-                        <Badge variant={PRIORITY_VARIANT[task.priority]}>{t(capitalize(task.priority))}</Badge>
-                        {task.hasBlocker && <Badge variant="error"><AlertCircle className="h-3 w-3 me-1" />{t("Blocked")}</Badge>}
+                        <Badge variant={PRIORITY_VARIANT[task.priority ?? "medium"]}>{t(capitalize(task.priority ?? ""))}</Badge>
+                        {task.is_blocked && <Badge variant="error"><AlertCircle className="h-3 w-3 me-1" />{t("Blocked")}</Badge>}
                         <Button
                             variant="ghost"
                             size="sm"
@@ -149,16 +147,13 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                         <div>
                             <p className="text-xs text-text-muted">{t("Assignees")}</p>
                             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                {(task.assigneeIds ?? []).length > 0 ? (
-                                    (task.assigneeIds ?? []).map((id) => {
-                                        const assignee = allMembers.find((m) => m.id === id);
-                                        return assignee ? (
-                                            <div key={id} className="flex items-center gap-1">
-                                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{assignee.avatar}</AvatarFallback></Avatar>
-                                                <span className="text-sm font-medium text-text-dark">{assignee.name}</span>
-                                            </div>
-                                        ) : null;
-                                    })
+                                {(task.assignees ?? []).length > 0 ? (
+                                    (task.assignees ?? []).map((assignee) => (
+                                        <div key={assignee.id} className="flex items-center gap-1">
+                                            <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{assignee.avatar_initials}</AvatarFallback></Avatar>
+                                            <span className="text-sm font-medium text-text-dark">{assignee.full_name}</span>
+                                        </div>
+                                    ))
                                 ) : (
                                     <span className="text-sm font-medium text-text-muted">{t("Unassigned")}</span>
                                 )}
@@ -169,7 +164,7 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                         <Layers className="h-4 w-4 text-text-muted" />
                         <div>
                             <p className="text-xs text-text-muted">{t("Story Points")}</p>
-                            <p className="text-sm font-medium text-text-dark">{task.storyPoints}</p>
+                            <p className="text-sm font-medium text-text-dark">{task.story_points ?? 0}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -183,7 +178,7 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                         <Circle className="h-4 w-4 text-text-muted" />
                         <div>
                             <p className="text-xs text-text-muted">{t("Created")}</p>
-                            <p className="text-sm font-medium text-text-dark">{formatDate(task.createdAt)}</p>
+                            <p className="text-sm font-medium text-text-dark">{formatDate(task.created_at ?? "")}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 col-span-2">
@@ -250,7 +245,7 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                 </div>
 
                 {/* Blocker */}
-                {task.hasBlocker && blocker && (
+                {task.is_blocked && blocker && (
                     <div className="mt-4 pb-4 border-b border-border rounded-xl bg-error-light p-4">
                         <div className="flex items-center gap-2 mb-2">
                             <AlertCircle className="h-4 w-4 text-error" />

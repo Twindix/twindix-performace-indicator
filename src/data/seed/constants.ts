@@ -57,7 +57,7 @@ export const phaseLabel = (phase: TaskPhase): string =>
     COLUMNS.find((c) => c.phase === phase)?.label ?? capitalize(phase);
 
 /** Infer the best-guess workType from a task's tags (for legacy data migration). */
-export const inferWorkType = (tags: string[]): TaskInterface["workType"] => {
+export const inferWorkType = (tags: string[]): TaskInterface["work_type"] => {
     const lower = tags.map((t) => t.toLowerCase());
     if (lower.some((t) => ["design", "ux", "ui", "figma"].includes(t))) return "Design";
     if (lower.some((t) => ["backend", "api", "db", "sql", "auth"].includes(t))) return "Backend";
@@ -82,19 +82,19 @@ type TransitionRule = (task: TaskInterface, blocker: BlockerInterface | undefine
 // One entry per valid forward transition — replaces the if/else chain in index.tsx
 const TRANSITION_RULES: Partial<Record<string, TransitionRule>> = {
     [`${TaskPhase.Backlog}->${TaskPhase.Ready}`]: (task) => {
-        const criteria = READINESS_LABELS.map(({ key, label }) => ({ label, met: task.readinessChecklist[key] }));
-        const ok = task.readinessScore >= READINESS_THRESHOLD;
-        criteria.push({ label: `Readiness score ≥ ${READINESS_THRESHOLD}% (currently ${task.readinessScore}%)`, met: ok });
+        const criteria = READINESS_LABELS.map(({ key, label }) => ({ label, met: (task.readiness_checklist ?? {})[key] ?? false }));
+        const ok = (task.readiness_score ?? 0) >= READINESS_THRESHOLD;
+        criteria.push({ label: `Readiness score ≥ ${READINESS_THRESHOLD}% (currently ${task.readiness_score ?? 0}%)`, met: ok });
         return {
             allowed: ok,
             reason: ok
                 ? "All readiness criteria met. Task is ready for development."
-                : `Readiness score is ${task.readinessScore}% — needs ${READINESS_THRESHOLD}%. Complete the missing checklist items first.`,
+                : `Readiness score is ${task.readiness_score ?? 0}% — needs ${READINESS_THRESHOLD}%. Complete the missing checklist items first.`,
             criteria,
         };
     },
     [`${TaskPhase.Ready}->${TaskPhase.InProgress}`]: (task, blocker) => {
-        const hasAssignee = (task.assigneeIds ?? []).length > 0;
+        const hasAssignee = (task.assignees ?? []).length > 0;
         const notBlocked = !blocker;
         const criteria = [
             { label: "Task has an assignee", met: hasAssignee },
@@ -158,8 +158,8 @@ export const checkTransition = (task: TaskInterface, toPhase: TaskPhase, blocker
     if (toIndex > fromIndex + 1)
         return { allowed: false, reason: "Tasks can only move one phase forward at a time.", criteria: [{ label: "Sequential phase transition (one step at a time)", met: false }] };
 
-    const activeBlocker = task.hasBlocker
-        ? blockers.find((b) => b.id === task.blockerId && (b.status === BlockerStatus.Active || b.status === BlockerStatus.Escalated))
+    const activeBlocker = task.is_blocked
+        ? blockers.find((b) => b.id === task.blocker_id && (b.status === BlockerStatus.Active || b.status === BlockerStatus.Escalated))
         : undefined;
 
     const rule = TRANSITION_RULES[`${task.phase}->${toPhase}`];

@@ -133,7 +133,7 @@ export const AddTaskDialog = ({ open, onOpenChange, members }: AddTaskDialogProp
         const created = await createTaskHandler(activeSprintId, {
             title: formState.title.trim(),
             description: formState.description.trim(),
-            assigneeIds: formState.assigneeIds,
+            assignee_ids: formState.assigneeIds,
             priority: formState.priority,
             status: formState.status,
             tags: [],

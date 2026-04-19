@@ -126,13 +126,13 @@ export const ReportsView = () => {
     const sprint = sprints.find((s) => s.id === activeSprintId);
     const allMetrics = getStorageItem<SprintMetricsInterface[]>(storageKeys.metrics) ?? [];
     const sprintMetrics = allMetrics.find((m) => m.sprintId === activeSprintId);
-    const tasks = (getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? []).filter((t) => t.sprintId === activeSprintId);
-    const blockers = (getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? []).filter((b) => b.sprintId === activeSprintId);
+    const tasks = (getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? []).filter((t) => t.sprint_id === activeSprintId);
+    const blockers = (getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? []);
 
     const taskStats = useMemo(() => {
         const total = tasks.length;
         const completed = tasks.filter((t) => t.phase === TaskPhase.Done).length;
-        const blocked = tasks.filter((t) => t.hasBlocker).length;
+        const blocked = tasks.filter((t) => t.is_blocked).length;
         const completionPct = total > 0 ? Math.round((completed / total) * 100) : 0;
         return { total, completed, blocked, completionPct };
     }, [tasks]);
@@ -202,7 +202,7 @@ export const ReportsView = () => {
                             <h2 className="text-xl sm:text-3xl font-bold text-text-dark">{sprint?.name ?? t("Current Sprint")}</h2>
                             {sprint && (
                                 <p className="text-base text-text-secondary mt-2">
-                                    {formatDate(sprint.startDate)} - {formatDate(sprint.endDate)}
+                                    {formatDate(sprint.start_date)} - {formatDate(sprint.end_date)}
                                 </p>
                             )}
                         </div>

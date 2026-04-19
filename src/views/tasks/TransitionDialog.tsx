@@ -79,7 +79,7 @@ export const TransitionDialog = ({
                     <p className="text-sm font-semibold text-text-dark">{task.title}</p>
                     <div className="flex items-center gap-2 mt-1">
                         <Badge variant={PRIORITY_VARIANT[task.priority]} className="text-[10px]">{t(capitalize(task.priority))}</Badge>
-                        <span className="text-xs text-text-muted">{task.storyPoints} {t("points")}</span>
+                        <span className="text-xs text-text-muted">{task.story_points ?? 0} {t("points")}</span>
                     </div>
                 </div>
 

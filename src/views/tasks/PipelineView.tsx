@@ -1,6 +1,6 @@
 import { Circle, AlertCircle, Clock } from "lucide-react";
 import { Badge } from "@/atoms";
-import { TaskPriority } from "@/enums";
+import { TaskPhase, TaskPriority } from "@/enums";
 import type { TaskInterface, UserInterface } from "@/interfaces";
 import { t } from "@/hooks";
 import { cn } from "@/utils";
@@ -29,7 +29,7 @@ export const PipelineView = ({
 
     for (const task of tasks) {
         // Fallback to "Frontend" if undefined for legacy data handling
-        const type = task.workType || "Frontend";
+        const type = task.work_type || "Frontend";
         if (tasksByWorkType.has(type)) {
             tasksByWorkType.get(type)!.push(task);
         } else {
@@ -72,9 +72,9 @@ export const PipelineView = ({
                         {/* Task List */}
                         <div className="flex-1 p-3 overflow-y-auto space-y-3 bg-muted/20">
                             {columnTasks.map((task) => {
-                                const assignees = (task.assigneeIds ?? []).map(id => members.find((m) => m.id === id)).filter(Boolean);
-                                const assignee = assignees[0]; // Use first assignee for display
-                                const progressIndex = PHASE_INDEX[task.phase];
+                                const assignees = task.assignees ?? [];
+                                const assignee = assignees[0];
+                                const progressIndex = PHASE_INDEX[task.phase ?? TaskPhase.Backlog];
                                 const maxStages = 5; // Backlog is 0, Done is 5
 
                                 // Mock data for realism in this view based on screenshot
@@ -129,7 +129,7 @@ export const PipelineView = ({
                                             {assignee ? (
                                                 <div className="flex items-center gap-2">
                                                     <span className="w-6 h-6 rounded-full bg-primary-lighter text-primary text-[10px] flex items-center justify-center font-bold">
-                                                        {assignee.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
+                                                        {assignee.avatar_initials}
                                                     </span>
                                                     <span className="text-[10px] text-text-secondary font-medium">
                                                         {progressIndex}/{maxStages} stages

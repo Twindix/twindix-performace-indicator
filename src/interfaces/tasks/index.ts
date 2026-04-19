@@ -48,26 +48,26 @@ export interface TaskTimeLogInterface {
 export interface TaskInterface {
     id: string;
     title: string;
-    description: string;
-    assigneeIds: string[];
-    phase: TaskPhase;
-    priority: TaskPriority;
-    storyPoints: number;
-    sprintId: string;
-    readinessScore: number;
-    readinessChecklist: ReadinessChecklistInterface;
-    hasBlocker: boolean;
-    blockerId?: string;
-    createdAt: string;
-    updatedAt: string;
-    tags: string[];
+    description?: string;
+    assignees?: { id: string; full_name: string; avatar_initials: string }[];
+    phase?: TaskPhase;
+    priority?: TaskPriority;
+    story_points?: number;
+    sprint_id?: string;
+    readiness_score?: number;
+    readiness_checklist?: ReadinessChecklistInterface;
+    is_blocked?: boolean;
+    blocker_id?: string;
+    created_at?: string;
+    updated_at?: string;
+    tags?: string[];
     type?: "feature" | "bug";
     status?: TaskStatus;
     requirements?: RequirementInterface[];
     attachments?: TaskAttachmentInterface[];
     comments?: TaskCommentInterface[];
     timeLogs?: TaskTimeLogInterface[];
-    workType: "Design" | "Frontend" | "Backend" | "QA" | "Done";
+    work_type?: "Design" | "Frontend" | "Backend" | "QA" | "Done";
 }
 
 export type TaskKanbanResponseInterface = Record<string, TaskInterface[]>;
@@ -91,7 +91,7 @@ export interface TaskDetailResponseInterface {
 export interface CreateTaskPayloadInterface {
     title: string;
     description?: string;
-    assigneeIds?: string[];
+    assignee_ids?: string[];
     priority?: TaskPriority;
     status?: TaskStatus;
     tags?: string[];
@@ -99,7 +99,7 @@ export interface CreateTaskPayloadInterface {
 
 export interface UpdateTaskPayloadInterface extends Partial<CreateTaskPayloadInterface> {
     phase?: TaskPhase;
-    storyPoints?: number;
+    story_points?: number;
 }
 
 export interface UpdateTaskStatusPayloadInterface {

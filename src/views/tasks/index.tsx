@@ -116,7 +116,7 @@ const TasksViewInner = () => {
     const [transitionResult, setTransitionResult] = useState<TransitionResult | null>(null);
 
     const sprintTasks = useMemo(
-        () => allTasks.filter((t) => t.sprintId === activeSprintId),
+        () => allTasks.filter((t) => t.sprint_id === activeSprintId),
         [allTasks, activeSprintId],
     );
 
@@ -127,13 +127,13 @@ const TasksViewInner = () => {
             result = result.filter((t) => t.title.toLowerCase().includes(q) || t.tags.some((tag) => tag.toLowerCase().includes(q)));
         }
         if (phaseFilter !== "all") {
-            if (phaseFilter === "blocked") result = result.filter((t) => t.hasBlocker);
+            if (phaseFilter === "blocked") result = result.filter((t) => t.is_blocked);
             else result = result.filter((t) => t.phase === phaseFilter);
         }
         if (priorityFilter !== "all") result = result.filter((t) => t.priority === priorityFilter);
-        if (assigneeFilter !== "all") result = result.filter((t) => (t.assigneeIds ?? []).includes(assigneeFilter));
-        if (readinessFilter === "ready") result = result.filter((t) => t.readinessScore >= 70);
-        if (readinessFilter === "not_ready") result = result.filter((t) => t.readinessScore < 70);
+        if (assigneeFilter !== "all") result = result.filter((t) => (t.assignees ?? []).some((a) => a.id === assigneeFilter));
+        if (readinessFilter === "ready") result = result.filter((t) => (t.readiness_score ?? 0) >= 70);
+        if (readinessFilter === "not_ready") result = result.filter((t) => (t.readiness_score ?? 0) < 70);
         if (typeFilter !== "all") result = result.filter((t) => (t.type ?? "feature") === typeFilter);
         return result;
     }, [searchQuery, phaseFilter, priorityFilter, assigneeFilter, readinessFilter, typeFilter]);
@@ -153,13 +153,13 @@ const TasksViewInner = () => {
         : filteredPipeline.length;
 
     const sprintAssigneeIds = useMemo(
-        () => [...new Set(sprintTasks.flatMap((t) => t.assigneeIds ?? []))],
+        () => [...new Set(sprintTasks.flatMap((t) => (t.assignees ?? []).map((a) => a.id)))],
         [sprintTasks],
     );
 
-    const totalPoints = sprintTasks.reduce((sum, t) => sum + t.storyPoints, 0);
-    const donePoints = stats?.story_points?.used ?? sprintTasks.filter((t) => t.phase === TaskPhase.Done).reduce((sum, t) => sum + t.storyPoints, 0);
-    const blockedCount = stats?.blocked_count ?? sprintTasks.filter((t) => t.hasBlocker).length;
+    const totalPoints = sprintTasks.reduce((sum, t) => sum + (t.story_points ?? 0), 0);
+    const donePoints = stats?.story_points?.used ?? sprintTasks.filter((t) => t.phase === TaskPhase.Done).reduce((sum, t) => sum + (t.story_points ?? 0), 0);
+    const blockedCount = stats?.blocked_count ?? sprintTasks.filter((t) => t.is_blocked).length;
 
     const requestTransition = useCallback((task: TaskInterface, targetPhase: TaskPhase) => {
         if (task.phase === targetPhase) return;
@@ -215,8 +215,8 @@ const handleUpdateRequirements = useCallback((taskId: string, requirements: Task
     }, [patchTaskLocal]);
 
     const selectedBlocker = useMemo(() => {
-        if (!selectedTask?.blockerId) return undefined;
-        return blockers.find((b) => b.id === selectedTask.blockerId);
+        if (!selectedTask?.blocker_id) return undefined;
+        return blockers.find((b) => b.id === selectedTask.blocker_id);
     }, [selectedTask, blockers]);
 
     if (pageLoading || isFetchingTasks) return <TasksSkeleton />;
@@ -390,7 +390,7 @@ const handleUpdateRequirements = useCallback((taskId: string, requirements: Task
                 task={transitionTask}
                 targetPhase={transitionTarget}
                 transitionResult={transitionResult}
-                isAssignee={(transitionTask?.assigneeIds ?? []).includes(getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "")}
+                isAssignee={(transitionTask?.assignees ?? []).some((a) => a.id === (getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? ""))}
                 onConfirm={confirmTransition}
             />
 
