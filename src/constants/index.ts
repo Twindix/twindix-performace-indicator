@@ -11,3 +11,4 @@ export { blockersConstants } from "./blockers";
 export { alertsConstants } from "./alerts";
 export { redFlagsConstants } from "./red-flags";
 export { decisionsConstants } from "./decisions";
+export { commentsConstants } from "./comments";

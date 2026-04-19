@@ -8,3 +8,4 @@ export { BlockersProvider, useBlockers } from "./blockers";
 export { AlertsProvider, useAlerts } from "./alerts";
 export { RedFlagsProvider, useRedFlags } from "./red-flags";
 export { DecisionsProvider, useDecisions } from "./decisions";
+export { CommentsProvider, useComments } from "./comments";

@@ -9,7 +9,7 @@ export type { TeamMemberWorkloadInterface } from "./workload";
 export type { MetricInterface, FrictionScoresInterface, SprintMetricsInterface } from "./metrics";
 export type { OwnershipEntryInterface } from "./ownership";
 export type { HandoffInterface, CriterionInterface } from "./handoffs";
-export type { CommentInterface } from "./comments";
+export type { CommentInterface, CommentsListResponseInterface, CommentDetailResponseInterface, CommentsAnalyticsInterface, CommentsAnalyticsResponseInterface, CreateCommentPayloadInterface, UpdateCommentPayloadInterface, CommentsListFiltersInterface, CommentsContextInterface } from "./comments";
 export type { RedFlagInterface, RedFlagSeverity, RedFlagsListResponseInterface, RedFlagDetailResponseInterface, RedFlagsCountInterface, RedFlagsCountResponseInterface, CreateRedFlagPayloadInterface, UpdateRedFlagPayloadInterface, RedFlagsListFiltersInterface, RedFlagsContextInterface } from "./red-flags";
 export type { AlertInterface, AlertsListResponseInterface, AlertDetailResponseInterface, AlertsCountInterface, AlertsCountResponseInterface, CreateAlertPayloadInterface, UpdateAlertPayloadInterface, AlertsListFiltersInterface, AlertsContextInterface } from "./alerts";
 export type { UsersListResponseInterface, UserDetailResponseInterface, CreateUserPayloadInterface, UpdateUserPayloadInterface, UserSettingsInterface, UserSettingsResponseInterface, UpdateProfilePayloadInterface, UsersListFiltersInterface, UsersContextInterface } from "./users";
