@@ -2,30 +2,16 @@ import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react
 
 import { AuthContext } from "@/contexts";
 import { commonData } from "@/data";
-import { UserRole } from "@/enums";
 import type { UserInterface } from "@/interfaces";
 import { deleteCookieHandler, getCookieHandler, setCookieHandler } from "@/lib/cookies";
 import { authService } from "@/services";
 
-const DEV_FAKE_USER: UserInterface = {
-    id: "dev-admin",
-    name: "Dev Admin",
-    email: "dev@twindix.com",
-    role: UserRole.CEO,
-    avatar: "DA",
-    team: "Leadership",
-    status: "active",
-};
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState<UserInterface | null>(
-        () => (import.meta.env.DEV ? DEV_FAKE_USER : null),
-    );
-    const [isLoading, setIsLoading] = useState(!import.meta.env.DEV);
+    const [user, setUser] = useState<UserInterface | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Restore session on mount if token exists (skipped in DEV — fake user already set)
+    // Restore session on mount if token exists
     useEffect(() => {
-        if (import.meta.env.DEV) return;
         const token = getCookieHandler(commonData.token.tokenKey);
         if (!token) {
             setIsLoading(false);
