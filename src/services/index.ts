@@ -2,3 +2,5 @@ export { authService } from "./auth";
 export { usersService } from "./users";
 export { teamsService } from "./teams";
 export { sprintsService } from "./sprints";
+export { tasksService } from "./tasks";
+export { timeLogsService } from "./time-logs";

@@ -2,3 +2,5 @@ export { useAuth, useTheme, useLocalStorage, useSettings, t, defaultSettings, sa
 export * from "./users";
 export * from "./teams";
 export * from "./sprints";
+export * from "./tasks";
+export * from "./time-logs";
