@@ -11,8 +11,21 @@ export const authService = {
         return data;
     },
 
+    logoutHandler: async (): Promise<void> => {
+        await apiClient.post(apisData.auth.logout);
+    },
+
     meHandler: async (): Promise<UserInterface> => {
         const { data } = await apiClient.get<MeResponseInterface>(apisData.auth.me);
         return data.data;
+    },
+
+    updateMeHandler: async (updates: Partial<Pick<UserInterface, "name" | "status">>): Promise<UserInterface> => {
+        const { data } = await apiClient.put<MeResponseInterface>(apisData.auth.me, updates);
+        return data.data;
+    },
+
+    heartbeatHandler: async (): Promise<void> => {
+        await apiClient.patch(apisData.auth.heartbeat);
     },
 };

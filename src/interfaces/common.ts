@@ -6,20 +6,6 @@ export interface ApiSuccessResponse<T> {
     message?: string;
 }
 
-export interface LoginResponseInterface {
-    data: {
-        token: string;
-        user: UserInterface;
-    };
-    isSuccess: boolean;
-    message: string;
-}
-
-export interface MeResponseInterface {
-    data: UserInterface;
-    isSuccess: boolean;
-}
-
 export interface UserInterface {
     id: string;
     name: string;
@@ -38,14 +24,6 @@ export interface SprintInterface {
     status: SprintStatus;
     healthScore: number;
     goals: string[];
-}
-
-export interface AuthContextInterface {
-    isAuthenticated: boolean;
-    user: UserInterface | null;
-    onLogin: (email: string, password: string) => boolean;
-    onLogout: () => void;
-    onUpdateUser: (updates: Partial<UserInterface>) => void;
 }
 
 export interface ThemeContextInterface {
