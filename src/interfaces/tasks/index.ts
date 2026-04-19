@@ -86,12 +86,7 @@ export interface TaskPipelineCountsResponseInterface {
 }
 
 export interface TaskStatsResponseInterface {
-    data: {
-        total: number;
-        completed: number;
-        inProgress: number;
-        blocked: number;
-    };
+    data: TaskStatsInterface;
     isSuccess: boolean;
 }
 
@@ -153,13 +148,33 @@ export interface AddTaskDialogProps {
     members: UserInterface[];
 }
 
+export interface TaskStatsInterface {
+    total: number;
+    completed: number;
+    in_progress: number;
+    blocked: number;
+}
+
 export interface TasksContextInterface {
     tasks: TaskInterface[];
+    kanban: Record<string, TaskInterface[]>;
+    pipeline: TaskInterface[];
+    pipelineCounts: Record<string, number>;
+    stats: TaskStatsInterface | null;
     isLoading: boolean;
+    fetchKanban: () => Promise<void>;
+    fetchPipeline: () => Promise<void>;
+    fetchPipelineCounts: () => Promise<void>;
+    fetchStats: () => Promise<void>;
     createTask: (payload: CreateTaskPayloadInterface) => Promise<TaskInterface | null>;
     updateTask: (id: string, payload: UpdateTaskPayloadInterface) => Promise<TaskInterface | null>;
+    updateTaskStatus: (id: string, status: TaskStatus) => Promise<TaskInterface | null>;
+    deleteTask: (id: string) => Promise<boolean>;
     fetchTaskDetail: (id: string) => Promise<TaskInterface | null>;
+    fetchTransitionCriteria: (id: string) => Promise<TaskInterface[] | null>;
     uploadAttachment: (taskId: string, file: File) => Promise<TaskInterface | null>;
     removeAttachment: (taskId: string, attachmentId: string) => Promise<void>;
+    addTags: (taskId: string, tags: string[]) => Promise<TaskInterface | null>;
+    removeTag: (taskId: string, tag: string) => Promise<TaskInterface | null>;
     patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
 }
