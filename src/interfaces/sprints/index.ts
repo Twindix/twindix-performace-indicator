@@ -20,13 +20,16 @@ export interface SprintDetailResponseInterface {
     isSuccess: boolean;
 }
 
+export interface SprintSummaryInterface {
+    total_tasks: number;
+    completed_tasks: number;
+    total_story_points: number;
+    total_estimated_hours: number;
+    blocked_count: number;
+}
+
 export interface SprintSummaryResponseInterface {
-    data: {
-        totalTasks: number;
-        completedTasks: number;
-        blockedTasks: number;
-        healthScore: number;
-    };
+    data: SprintSummaryInterface;
     isSuccess: boolean;
 }
 
@@ -43,9 +46,11 @@ export interface UpdateSprintPayloadInterface extends Partial<CreateSprintPayloa
 
 export interface SprintsContextInterface {
     sprints: SprintInterface[];
+    summaries: Record<string, SprintSummaryInterface | undefined>;
     isLoading: boolean;
     refetch: () => Promise<void>;
     fetchSprintDetail: (id: string) => Promise<SprintInterface | null>;
+    fetchSprintSummary: (id: string) => Promise<SprintSummaryInterface | null>;
     createSprint: (payload: CreateSprintPayloadInterface) => Promise<SprintInterface | null>;
     updateSprint: (id: string, payload: UpdateSprintPayloadInterface) => Promise<SprintInterface | null>;
     deleteSprint: (id: string) => Promise<boolean>;
