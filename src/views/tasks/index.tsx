@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, type DragEvent } from "react";
+import { useState, useMemo, useCallback, useEffect, type DragEvent } from "react";
 import {
     ArrowRight,
     ClipboardList,
@@ -6,6 +6,7 @@ import {
     Plus,
     Search,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge, Button, Card, CardContent, Input } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
@@ -17,6 +18,8 @@ import type {
     BlockerInterface,
 } from "@/interfaces";
 import { t, useSettings, usePageLoader } from "@/hooks";
+import { getErrorMessage } from "@/lib/error";
+import { tasksService } from "@/services";
 import { useSprintStore } from "@/store";
 import {
     Select,
@@ -25,11 +28,11 @@ import {
     SelectItem,
     SelectValue,
 } from "@/ui";
-import { cn, getStorageItem, setStorageItem, storageKeys } from "@/utils";
+import { cn, getStorageItem, storageKeys } from "@/utils";
+import { tasksConstants } from "@/constants/tasks";
 import {
     COLUMNS,
     COLUMN_COLORS,
-    inferWorkType,
     checkTransition,
     type TransitionResult,
 } from "../../data/seed/constants";
@@ -48,14 +51,17 @@ export const TasksView = () => {
     useSettings();
     const { activeSprintId } = useSprintStore();
 
-    const [allTasks, setAllTasks] = useState<TaskInterface[]>(() => {
-        const stored = getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? [];
-        const hasMissing = stored.some((t) => !t.workType);
-        if (!hasMissing) return stored;
-        const migrated = stored.map((t) => t.workType ? t : { ...t, workType: inferWorkType(t.tags) });
-        setStorageItem(storageKeys.tasks, migrated);
-        return migrated;
-    });
+    const [allTasks, setAllTasks] = useState<TaskInterface[]>([]);
+    const [isFetchingTasks, setIsFetchingTasks] = useState(false);
+
+    useEffect(() => {
+        if (!activeSprintId) return;
+        setIsFetchingTasks(true);
+        tasksService.listHandler(activeSprintId)
+            .then((res) => setAllTasks(res.data))
+            .catch((err) => toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed)))
+            .finally(() => setIsFetchingTasks(false));
+    }, [activeSprintId]);
 
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
     const blockers = getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? [];
@@ -118,23 +124,15 @@ export const TasksView = () => {
     const donePoints = sprintTasks.filter((t) => t.phase === TaskPhase.Done).reduce((sum, t) => sum + t.storyPoints, 0);
     const blockedCount = sprintTasks.filter((t) => t.hasBlocker).length;
 
-    const updateTasks = useCallback((updater: (prev: TaskInterface[]) => TaskInterface[]) => {
-        setAllTasks((prev) => {
-            const next = updater(prev);
-            setStorageItem(storageKeys.tasks, next);
-            return next;
-        });
+    const handleAddTask = useCallback((task: TaskInterface) => {
+        setAllTasks((prev) => [...prev, task]);
     }, []);
 
-    const handleAddTask = useCallback((task: TaskInterface) => {
-        updateTasks((prev) => [...prev, task]);
-    }, [updateTasks]);
-
     const moveTask = useCallback((taskId: string, newPhase: TaskPhase, extraProps?: Partial<TaskInterface>) => {
-        updateTasks((prev) => prev.map((t) =>
+        setAllTasks((prev) => prev.map((t) =>
             t.id === taskId ? { ...t, phase: newPhase, updatedAt: new Date().toISOString().split("T")[0], ...extraProps } : t,
         ));
-    }, [updateTasks]);
+    }, []);
 
     const requestTransition = useCallback((task: TaskInterface, targetPhase: TaskPhase) => {
         if (task.phase === targetPhase) return;
@@ -185,31 +183,31 @@ export const TasksView = () => {
     }, [draggedTask, requestTransition]);
 
     const handleUpdateAttachments = useCallback((taskId: string, attachments: TaskInterface["attachments"]) => {
-        updateTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, attachments } : t));
+        setAllTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, attachments } : t));
         setSelectedTask((prev) => prev?.id === taskId ? { ...prev, attachments } : prev);
-    }, [updateTasks]);
+    }, []);
 
     const handleUpdateComments = useCallback((taskId: string, comments: TaskInterface["comments"]) => {
-        updateTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, comments } : t));
+        setAllTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, comments } : t));
         setSelectedTask((prev) => prev?.id === taskId ? { ...prev, comments } : prev);
-    }, [updateTasks]);
+    }, []);
 
     const handleUpdateTimeLogs = useCallback((taskId: string, timeLogs: TaskInterface["timeLogs"]) => {
-        updateTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, timeLogs } : t));
+        setAllTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, timeLogs } : t));
         setSelectedTask((prev) => prev?.id === taskId ? { ...prev, timeLogs } : prev);
-    }, [updateTasks]);
+    }, []);
 
     const handleUpdateRequirements = useCallback((taskId: string, requirements: TaskInterface["requirements"]) => {
-        updateTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, requirements } : t));
+        setAllTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, requirements } : t));
         setSelectedTask((prev) => prev?.id === taskId ? { ...prev, requirements } : prev);
-    }, [updateTasks]);
+    }, []);
 
     const selectedBlocker = useMemo(() => {
         if (!selectedTask?.blockerId) return undefined;
         return blockers.find((b) => b.id === selectedTask.blockerId);
     }, [selectedTask, blockers]);
 
-    if (isLoading) return <TasksSkeleton />;
+    if (isLoading || isFetchingTasks) return <TasksSkeleton />;
 
     return (
         <div>
