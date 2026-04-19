@@ -23,7 +23,7 @@ const emptyForm: CreateSprintPayloadInterface & { status?: SprintStatus; goalsRa
 };
 
 export const SprintsView = () => {
-    const { sprints, isLoading, createSprint, updateSprint, deleteSprint, activateSprint } = useSprints();
+    const { sprints, summaries, isLoading, createSprint, updateSprint, deleteSprint, activateSprint } = useSprints();
 
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<SprintInterface | null>(null);
@@ -169,6 +169,34 @@ export const SprintsView = () => {
                                     <Calendar className="h-3.5 w-3.5" />
                                     <span>{s.startDate} → {s.endDate}</span>
                                 </div>
+
+                                {summaries[s.id] && (
+                                    <div className="pt-2 border-t border-border">
+                                        <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-1.5">{t("Summary")}</p>
+                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                            <div>
+                                                <p className="text-text-muted">{t("Tasks")}</p>
+                                                <p className="font-semibold text-text-dark">
+                                                    {summaries[s.id]!.completed_tasks}/{summaries[s.id]!.total_tasks}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-text-muted">{t("Story Points")}</p>
+                                                <p className="font-semibold text-text-dark">{summaries[s.id]!.total_story_points}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-text-muted">{t("Est. Hours")}</p>
+                                                <p className="font-semibold text-text-dark">{summaries[s.id]!.total_estimated_hours}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-text-muted">{t("Blocked")}</p>
+                                                <p className={summaries[s.id]!.blocked_count > 0 ? "font-semibold text-error" : "font-semibold text-text-dark"}>
+                                                    {summaries[s.id]!.blocked_count}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {s.goals?.length > 0 && (
                                     <div className="pt-2 border-t border-border">
