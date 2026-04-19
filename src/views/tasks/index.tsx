@@ -142,31 +142,21 @@ export const TasksView = () => {
         setTransitionDialogOpen(true);
     }, [blockers]);
 
-    const confirmTransition = useCallback((payload?: { loggedHours?: number; note?: string }) => {
+    const confirmTransition = useCallback(async (payload?: { loggedHours?: number; note?: string }) => {
         if (!transitionTask || !transitionTarget) return;
 
-        const toLabel = COLUMNS.find((c) => c.phase === transitionTarget)?.label;
-        const extraProps: Partial<TaskInterface> = {};
-
-        if (payload?.loggedHours) {
-            const currentUserId = getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "";
-            const newLog = {
-                id: `log-${Date.now()}`,
-                userId: currentUserId,
-                phase: transitionTask.phase,
-                hours: payload.loggedHours,
-                description: payload.note || `Time tracked moving to ${toLabel ?? transitionTarget}`,
-                createdAt: new Date().toISOString(),
-            };
-            extraProps.timeLogs = [...(transitionTask.timeLogs ?? []), newLog];
+        try {
+            const response = await tasksService.updateHandler(transitionTask.id, { phase: transitionTarget });
+            moveTask(transitionTask.id, transitionTarget, response.data);
+            toast_success(transitionTask, transitionTarget);
+        } catch (err) {
+            toast.error(getErrorMessage(err, tasksConstants.errors.statusUpdateFailed));
+        } finally {
+            setTransitionDialogOpen(false);
+            setTransitionTask(null);
+            setTransitionTarget(null);
+            setTransitionResult(null);
         }
-
-        moveTask(transitionTask.id, transitionTarget, extraProps);
-        toast_success(transitionTask, transitionTarget);
-        setTransitionDialogOpen(false);
-        setTransitionTask(null);
-        setTransitionTarget(null);
-        setTransitionResult(null);
     }, [transitionTask, transitionTarget, moveTask]);
 
     const handleDragStart  = useCallback((_e: DragEvent<HTMLDivElement>, task: TaskInterface) => setDraggedTask(task), []);
