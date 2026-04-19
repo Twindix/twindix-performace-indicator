@@ -17,7 +17,7 @@ import type {
     UserInterface,
     BlockerInterface,
 } from "@/interfaces";
-import { t, useGetTask, useSettings, usePageLoader, useTaskViews, useUpdateTask } from "@/hooks";
+import { t, useCreateTimeLog, useGetTask, useSettings, usePageLoader, useTaskViews, useUpdateTask } from "@/hooks";
 import { useSprintStore } from "@/store";
 import {
     Select,
@@ -65,6 +65,7 @@ const TasksViewInner = () => {
     const { kanbanHandler, pipelineHandler, pipelineCountsHandler, statsHandler } = useTaskViews();
     const { getHandler: getTaskHandler } = useGetTask();
     const { updateHandler: updateTaskHandler } = useUpdateTask();
+    const { createHandler: createTimeLogHandler } = useCreateTimeLog();
 
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
     const blockers = getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? [];
@@ -168,8 +169,17 @@ const TasksViewInner = () => {
         setTransitionDialogOpen(true);
     }, [blockers]);
 
-    const confirmTransition = useCallback(async () => {
+    const confirmTransition = useCallback(async (payload?: { loggedHours?: number; note?: string }) => {
         if (!transitionTask || !transitionTarget) return;
+
+        if (payload?.loggedHours && payload.loggedHours > 0) {
+            await createTimeLogHandler(transitionTask.id, {
+                hours: payload.loggedHours,
+                date: new Date().toISOString().split("T")[0],
+                description: payload.note || undefined,
+            });
+        }
+
         const updated = await updateTaskHandler(transitionTask.id, { phase: transitionTarget });
         if (updated) {
             patchTaskLocal(updated.id, updated);
@@ -179,7 +189,7 @@ const TasksViewInner = () => {
         setTransitionTask(null);
         setTransitionTarget(null);
         setTransitionResult(null);
-    }, [transitionTask, transitionTarget, updateTaskHandler, patchTaskLocal]);
+    }, [transitionTask, transitionTarget, updateTaskHandler, createTimeLogHandler, patchTaskLocal]);
 
     const handleDragStart  = useCallback((_e: DragEvent<HTMLDivElement>, task: TaskInterface) => setDraggedTask(task), []);
     const handleDragOver   = useCallback((e: DragEvent<HTMLDivElement>) => e.preventDefault(), []);
