@@ -9,3 +9,4 @@ export { timeLogsConstants } from "./time-logs";
 export { requirementsConstants } from "./requirements";
 export { blockersConstants } from "./blockers";
 export { alertsConstants } from "./alerts";
+export { redFlagsConstants } from "./red-flags";

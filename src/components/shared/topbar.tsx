@@ -1,12 +1,11 @@
 import { Bell, Flag, LogOut, Moon, Settings, Sun, User } from "lucide-react";
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/atoms";
-import { AlertsProvider, useAlerts, useSprints } from "@/contexts";
+import { AlertsProvider, RedFlagsProvider, useAlerts, useRedFlags, useSprints } from "@/contexts";
 import { routesData } from "@/data";
 import { useAuth, useTheme, t, useSettings, usePresence, type PresenceStatus } from "@/hooks";
-import { useRedFlagStore, useSprintStore } from "@/store";
+import { useSprintStore } from "@/store";
 import { MobileNav } from "./mobile-nav";
 import {
     Avatar,
@@ -36,9 +35,11 @@ const presenceConfig: Record<PresenceStatus, { label: string; dot: string }> = {
 export const Topbar = () => {
     const { activeSprintId } = useSprintStore();
     return (
-        <AlertsProvider sprintId={activeSprintId}>
-            <TopbarInner />
-        </AlertsProvider>
+        <RedFlagsProvider sprintId={activeSprintId}>
+            <AlertsProvider sprintId={activeSprintId}>
+                <TopbarInner />
+            </AlertsProvider>
+        </RedFlagsProvider>
     );
 };
 
@@ -47,16 +48,13 @@ const TopbarInner = () => {
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings] = useSettings();
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
-    const { flags, load: loadFlags } = useRedFlagStore();
+    const { count: redFlagCount } = useRedFlags();
     const { count: pendingAlertCount } = useAlerts();
     const { sprints } = useSprints();
     const navigate = useNavigate();
     const { status, updateStatus } = usePresence(user?.id);
 
-    useEffect(() => { loadFlags(); }, [loadFlags]);
-
     const isArabic = settings.language === "ar";
-    const redFlagCount = flags.filter((f) => f.sprintId === activeSprintId).length;
 
     return (
         <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between border-b border-border bg-surface/80 backdrop-blur-sm px-3 sm:px-6">
