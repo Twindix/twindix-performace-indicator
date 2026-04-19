@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Calendar, Clock, Filter, GitBranch, Layers, MessageSquare, PenTool, Plus, Shield, ShieldAlert, Users } from "lucide-react";
+import { AlertTriangle, Calendar, Clock, Filter, GitBranch, Layers, MessageSquare, PenTool, Plus, Shield, ShieldAlert } from "lucide-react";
 
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
+import { Badge, Button, Card, CardContent } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { BlockersSkeleton } from "@/components/skeletons";
 import { BlockersProvider, useBlockers } from "@/contexts";
@@ -34,15 +34,6 @@ const impactConfig: Record<BlockerImpact, { labelKey: string; variant: "error" |
     [BlockerImpact.High]: { labelKey: "High", variant: "warning" },
     [BlockerImpact.Medium]: { labelKey: "Medium", variant: "secondary" },
     [BlockerImpact.Low]: { labelKey: "Low", variant: "outline" },
-};
-
-const barColors: Record<BlockerType, string> = {
-    [BlockerType.Requirements]: "bg-friction-requirements",
-    [BlockerType.ApiDependency]: "bg-friction-dependencies",
-    [BlockerType.Design]: "bg-primary",
-    [BlockerType.QAHandoff]: "bg-friction-process",
-    [BlockerType.Communication]: "bg-friction-communication",
-    [BlockerType.Technical]: "bg-friction-team",
 };
 
 export const BlockerView = () => {
@@ -92,18 +83,6 @@ const BlockerViewInner = () => {
         const resolved = blockers.filter((b) => b.status === BlockerStatus.Resolved).length;
         const avgDuration = blockers.length > 0 ? Math.round(blockers.reduce((sum, b) => sum + b.durationDays, 0) / blockers.length) : 0;
         return { total: blockers.length, active, resolved, avgDuration };
-    }, [analytics, blockers]);
-
-    const impactByType = useMemo(() => {
-        const counts: Record<string, number> = {};
-        for (const bt of Object.values(BlockerType)) counts[bt] = 0;
-        if (analytics?.by_type) {
-            for (const [k, v] of Object.entries(analytics.by_type)) counts[k] = v;
-        } else {
-            for (const b of blockers) counts[b.type] = (counts[b.type] ?? 0) + 1;
-        }
-        const max = Math.max(...Object.values(counts), 1);
-        return { counts, max };
     }, [analytics, blockers]);
 
     if (pageLoading || isFetching) return <BlockersSkeleton />;
@@ -174,9 +153,9 @@ const BlockerViewInner = () => {
                 </Card>
             </div>
 
-            <div className={cn("grid grid-cols-1 lg:grid-cols-3", compact ? "gap-3" : "gap-6")}>
+            <div>
                 {/* Blocker List */}
-                <div className={cn("lg:col-span-2 flex flex-col", compact ? "gap-2" : "gap-4")}>
+                <div className={cn("flex flex-col", compact ? "gap-2" : "gap-4")}>
                     <h2 className="text-lg font-semibold text-text-dark">
                         {t("Blockers")}
                         <Badge className="ms-2" variant="secondary">{filteredBlockers.length}</Badge>
@@ -260,43 +239,6 @@ const BlockerViewInner = () => {
                     )}
                 </div>
 
-                {/* Impact by Type Bar Chart */}
-                <div>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-base">
-                                <Users className="h-4 w-4 text-primary" />
-                                {t("Blocker Impact by Type")}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex flex-col gap-4">
-                            {Object.values(BlockerType).map((type) => {
-                                const count = impactByType.counts[type];
-                                const widthPercent = impactByType.max > 0 ? (count / impactByType.max) * 100 : 0;
-                                const config = blockerTypeConfig[type];
-                                const TypeIcon = config.icon;
-
-                                return (
-                                    <div key={type}>
-                                        <div className="flex items-center justify-between mb-1.5">
-                                            <div className="flex items-center gap-2">
-                                                <TypeIcon className={cn("h-3.5 w-3.5", config.color.split(" ")[1])} />
-                                                <span className="text-xs font-medium text-text-secondary">{t(config.labelKey)}</span>
-                                            </div>
-                                            <span className="text-xs font-bold text-text-dark">{count}</span>
-                                        </div>
-                                        <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-                                            <div
-                                                className={cn("h-full rounded-full transition-all duration-500 progress-animated", barColors[type])}
-                                                style={{ width: `${widthPercent}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </CardContent>
-                    </Card>
-                </div>
             </div>
 
             <BlockerFormDialog
