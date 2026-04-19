@@ -1,16 +1,18 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Calendar, Clock, Filter, GitBranch, Layers, MessageSquare, PenTool, Shield, ShieldAlert, Users } from "lucide-react";
+import { AlertTriangle, Calendar, Clock, Filter, GitBranch, Layers, MessageSquare, PenTool, Plus, Shield, ShieldAlert, Users } from "lucide-react";
 
-import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { BlockersSkeleton } from "@/components/skeletons";
 import { BlockersProvider, useBlockers } from "@/contexts";
 import { BlockerImpact, BlockerStatus, BlockerType } from "@/enums";
 import { t, useSettings, usePageLoader } from "@/hooks";
-import type { UserInterface } from "@/interfaces";
+import type { BlockerInterface, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
+import { BlockerDetailDialog } from "./BlockerDetailDialog";
+import { BlockerFormDialog } from "./BlockerFormDialog";
 
 const blockerTypeConfig: Record<BlockerType, { labelKey: string; icon: typeof AlertTriangle; color: string }> = {
     [BlockerType.Requirements]: { labelKey: "Requirements", icon: AlertTriangle, color: "bg-friction-requirements text-friction-requirements" },
@@ -56,9 +58,15 @@ const BlockerViewInner = () => {
     const pageLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
+    const { activeSprintId } = useSprintStore();
     const { blockers, analytics, isLoading: isFetching } = useBlockers();
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [typeFilter, setTypeFilter] = useState<string>("all");
+
+    const [addOpen, setAddOpen] = useState(false);
+    const [editTarget, setEditTarget] = useState<BlockerInterface | null>(null);
+    const [detailTarget, setDetailTarget] = useState<BlockerInterface | null>(null);
+    const [detailOpen, setDetailOpen] = useState(false);
 
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
 
@@ -130,6 +138,10 @@ const BlockerViewInner = () => {
                                 ))}
                             </SelectContent>
                         </Select>
+                        <Button size="sm" className="gap-1.5" onClick={() => setAddOpen(true)}>
+                            <Plus className="h-4 w-4" />
+                            {t("Add Blocker")}
+                        </Button>
                     </div>
                 }
             />
@@ -182,7 +194,11 @@ const BlockerViewInner = () => {
                             const TypeIcon = typeInfo.icon;
 
                             return (
-                                <Card key={blocker.id} className="overflow-hidden">
+                                <Card
+                                    key={blocker.id}
+                                    className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                                    onClick={() => { setDetailTarget(blocker); setDetailOpen(true); }}
+                                >
                                     <CardContent className={compact ? "p-3" : "p-5"}>
                                         {/* Header: title + badges */}
                                         <div className="flex items-start justify-between gap-3 mb-3">
@@ -282,6 +298,22 @@ const BlockerViewInner = () => {
                     </Card>
                 </div>
             </div>
+
+            <BlockerFormDialog
+                open={addOpen || !!editTarget}
+                onOpenChange={(open) => {
+                    if (!open) { setAddOpen(false); setEditTarget(null); }
+                }}
+                sprintId={activeSprintId}
+                initial={editTarget}
+            />
+
+            <BlockerDetailDialog
+                blocker={detailTarget}
+                open={detailOpen}
+                onOpenChange={setDetailOpen}
+                onEdit={(b) => { setDetailOpen(false); setEditTarget(b); }}
+            />
         </div>
     );
 };
