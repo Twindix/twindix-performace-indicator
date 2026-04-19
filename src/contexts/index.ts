@@ -5,3 +5,4 @@ export { TeamsProvider, useTeams } from "./teams";
 export { SprintsProvider, useSprints } from "./sprints";
 export { TasksProvider, useTasks } from "./tasks";
 export { BlockersProvider, useBlockers } from "./blockers";
+export { AlertsProvider, useAlerts } from "./alerts";

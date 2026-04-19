@@ -6,3 +6,4 @@ export { tasksService } from "./tasks";
 export { timeLogsService } from "./time-logs";
 export { requirementsService } from "./requirements";
 export { blockersService } from "./blockers";
+export { alertsService } from "./alerts";

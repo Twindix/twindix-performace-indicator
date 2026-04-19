@@ -3,10 +3,10 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/atoms";
-import { useSprints } from "@/contexts";
+import { AlertsProvider, useAlerts, useSprints } from "@/contexts";
 import { routesData } from "@/data";
 import { useAuth, useTheme, t, useSettings, usePresence, type PresenceStatus } from "@/hooks";
-import { useRedFlagStore, useSprintStore, useAlertStore } from "@/store";
+import { useRedFlagStore, useSprintStore } from "@/store";
 import { MobileNav } from "./mobile-nav";
 import {
     Avatar,
@@ -34,27 +34,29 @@ const presenceConfig: Record<PresenceStatus, { label: string; dot: string }> = {
 };
 
 export const Topbar = () => {
+    const { activeSprintId } = useSprintStore();
+    return (
+        <AlertsProvider sprintId={activeSprintId}>
+            <TopbarInner />
+        </AlertsProvider>
+    );
+};
+
+const TopbarInner = () => {
     const { user, onLogout } = useAuth();
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings] = useSettings();
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
     const { flags, load: loadFlags } = useRedFlagStore();
-    const { alerts, load: loadAlerts } = useAlertStore();
+    const { count: pendingAlertCount } = useAlerts();
     const { sprints } = useSprints();
     const navigate = useNavigate();
     const { status, updateStatus } = usePresence(user?.id);
 
     useEffect(() => { loadFlags(); }, [loadFlags]);
-    useEffect(() => { loadAlerts(); }, [loadAlerts]);
 
     const isArabic = settings.language === "ar";
     const redFlagCount = flags.filter((f) => f.sprintId === activeSprintId).length;
-
-    const pendingAlertCount = alerts.filter((a) => {
-        if (a.sprintId !== activeSprintId) return false;
-        if (a.mentionedIds.length > 0 && !a.mentionedIds.includes(user?.id ?? "")) return false;
-        return !a.resolvedByIds.includes(user?.id ?? "");
-    }).length;
 
     return (
         <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between border-b border-border bg-surface/80 backdrop-blur-sm px-3 sm:px-6">
