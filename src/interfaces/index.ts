@@ -11,3 +11,4 @@ export type { CommentInterface } from "./comments";
 export type { RedFlagInterface, RedFlagSeverity } from "./red-flags";
 export type { AlertInterface } from "./alerts";
 export type { AttachmentInterface, AddTaskFormState, AddTaskDialogProps, RequirementDraftInterface } from "./tasks-dialog";
+export type { DashboardInterface, HealthScoreInterface, DashboardMetricsInterface, DashboardResponseInterface, HealthScoreResponseInterface, DashboardMetricsResponseInterface, DashboardContextInterface } from "./dashboard";
