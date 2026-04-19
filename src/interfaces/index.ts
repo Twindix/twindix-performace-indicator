@@ -1,7 +1,7 @@
 export type { UserInterface, AuthContextInterface, ThemeContextInterface, ApiSuccessResponse, LoginResponseInterface, MeResponseInterface } from "./common";
 export type { SprintInterface, SprintSummaryInterface, SprintListResponseInterface, SprintDetailResponseInterface, SprintSummaryResponseInterface, CreateSprintPayloadInterface, UpdateSprintPayloadInterface, SprintsContextInterface } from "./sprints";
 export type { TaskInterface, TaskStatsInterface, ReadinessChecklistInterface, TaskAttachmentInterface, TaskCommentInterface, TaskTimeLogInterface, RequirementInterface, TaskKanbanResponseInterface, TaskPipelineResponseInterface, TaskPipelineCountsResponseInterface, TaskStatsResponseInterface, TaskListResponseInterface, TaskDetailResponseInterface, CreateTaskPayloadInterface, UpdateTaskPayloadInterface, UpdateTaskStatusPayloadInterface, RequirementDraftInterface, AttachmentInterface, AddTaskFormState, AddTaskDialogProps, TasksContextInterface } from "./tasks";
-export type { BlockerInterface } from "./blockers";
+export type { BlockerInterface, BlockersAnalyticsInterface, BlockersListResponseInterface, BlockerDetailResponseInterface, BlockersAnalyticsResponseInterface, CreateBlockerPayloadInterface, UpdateBlockerPayloadInterface, BlockersListFiltersInterface, BlockersContextInterface } from "./blockers";
 export type { DecisionInterface } from "./decisions";
 export type { CommunicationInterface, CommunicationChannel, CommunicationStatus } from "./communications";
 export type { TeamMemberWorkloadInterface } from "./workload";
