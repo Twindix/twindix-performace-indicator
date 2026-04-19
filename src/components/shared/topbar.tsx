@@ -3,11 +3,10 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/atoms";
+import { useSprints } from "@/contexts";
 import { routesData } from "@/data";
 import { useAuth, useTheme, t, useSettings, usePresence, type PresenceStatus } from "@/hooks";
 import { useRedFlagStore, useSprintStore, useAlertStore } from "@/store";
-import { storageKeys, getStorageItem } from "@/utils";
-import type { SprintInterface } from "@/interfaces";
 import { MobileNav } from "./mobile-nav";
 import {
     Avatar,
@@ -41,7 +40,7 @@ export const Topbar = () => {
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
     const { flags, load: loadFlags } = useRedFlagStore();
     const { alerts, load: loadAlerts } = useAlertStore();
-    const sprints = getStorageItem<SprintInterface[]>(storageKeys.sprints) ?? [];
+    const { sprints } = useSprints();
     const navigate = useNavigate();
     const { status, updateStatus } = usePresence(user?.id);
 
