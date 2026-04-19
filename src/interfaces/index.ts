@@ -13,3 +13,4 @@ export type { RedFlagInterface, RedFlagSeverity } from "./red-flags";
 export type { AlertInterface } from "./alerts";
 export type { AttachmentInterface, AddTaskFormState, AddTaskDialogProps, RequirementDraftInterface } from "./tasks-dialog";
 export type { UsersListResponseInterface, UserDetailResponseInterface, CreateUserPayloadInterface, UpdateUserPayloadInterface, UserSettingsInterface, UserSettingsResponseInterface, UpdateProfilePayloadInterface, UsersListFiltersInterface, UsersContextInterface } from "./users";
+export type { TeamInterface, TeamsListResponseInterface, TeamDetailResponseInterface, CreateTeamPayloadInterface, TeamsContextInterface } from "./teams";

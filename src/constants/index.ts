@@ -2,3 +2,4 @@ export { msgsConstants } from "./msgs";
 export { buttonsConstants } from "./buttons";
 export { authConstants } from "./auth";
 export { usersConstants } from "./users";
+export { teamsConstants } from "./teams";

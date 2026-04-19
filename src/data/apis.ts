@@ -15,5 +15,9 @@ export const apisData = {
         meSettings: "/users/me/settings",
         meProfile: "/users/me/profile",
     },
+    teams: {
+        list: "/teams",
+        create: "/teams",
+    },
     baseUrl: import.meta.env.VITE_API_URL as string,
 };
