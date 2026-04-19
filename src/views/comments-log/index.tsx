@@ -4,6 +4,7 @@ import { AtSign, MessageCircle, CheckCircle2, Clock, User } from "lucide-react";
 import { Badge, Card, CardContent, Input } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { CommentsLogSkeleton } from "@/components/skeletons";
+import { CommentsProvider, useComments } from "@/contexts";
 import { t, useSettings, usePageLoader } from "@/hooks";
 import type { CommentInterface, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
@@ -11,13 +12,19 @@ import { Avatar, AvatarFallback, Dialog, DialogContent, DialogHeader, DialogTitl
 import { cn, formatDate, formatDateTime, getStorageItem, storageKeys } from "@/utils";
 
 export const CommentsLogView = () => {
-    const isLoading = usePageLoader();
+    const { activeSprintId } = useSprintStore();
+    return (
+        <CommentsProvider sprintId={activeSprintId}>
+            <CommentsLogViewInner />
+        </CommentsProvider>
+    );
+};
+
+const CommentsLogViewInner = () => {
+    const pageLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
-    const { activeSprintId } = useSprintStore();
-
-    const allComments = getStorageItem<CommentInterface[]>(storageKeys.comments) ?? [];
-    const comments = allComments.filter((c) => c.sprintId === activeSprintId);
+    const { comments, analytics, isLoading: isFetching } = useComments();
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
 
     const getMember = (id?: string) => members.find((m) => m.id === id);
@@ -29,12 +36,22 @@ export const CommentsLogView = () => {
     const [toDate, setToDate] = useState<string>("");
     const [viewTarget, setViewTarget] = useState<CommentInterface | null>(null);
 
-    const stats = useMemo(() => ({
-        total: comments.length,
-        withMention: comments.filter((c) => !!c.mentionedId).length,
-        withResponse: comments.filter((c) => c.hasResponse).length,
-        noResponse: comments.filter((c) => !c.hasResponse).length,
-    }), [comments]);
+    const stats = useMemo(() => {
+        if (analytics) {
+            return {
+                total: analytics.total_comments,
+                withMention: analytics.with_mention,
+                withResponse: analytics.responded,
+                noResponse: analytics.no_response,
+            };
+        }
+        return {
+            total: comments.length,
+            withMention: comments.filter((c) => !!c.mentionedId).length,
+            withResponse: comments.filter((c) => c.hasResponse).length,
+            noResponse: comments.filter((c) => !c.hasResponse).length,
+        };
+    }, [analytics, comments]);
 
     const filtered = useMemo(() => {
         return comments.filter((c) => {
@@ -47,7 +64,7 @@ export const CommentsLogView = () => {
         }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }, [comments, mentionFilter, responseFilter, fromDate, toDate]);
 
-    if (isLoading) return <CommentsLogSkeleton />;
+    if (pageLoading || isFetching) return <CommentsLogSkeleton />;
 
     if (comments.length === 0) {
         return (
