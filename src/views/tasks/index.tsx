@@ -60,6 +60,7 @@ const TasksViewInner = () => {
         isLoading: isFetchingTasks,
         fetchKanban,
         fetchPipeline,
+        fetchPipelineCounts,
         fetchStats,
         updateTask,
         fetchTaskDetail,
@@ -93,9 +94,13 @@ const TasksViewInner = () => {
 
     useEffect(() => {
         if (!activeSprintId) return;
-        if (viewMode === "board") fetchKanban();
-        else fetchPipeline();
-    }, [activeSprintId, viewMode, fetchKanban, fetchPipeline]);
+        if (viewMode === "board") {
+            fetchKanban();
+        } else {
+            fetchPipeline();
+            fetchPipelineCounts();
+        }
+    }, [activeSprintId, viewMode, fetchKanban, fetchPipeline, fetchPipelineCounts]);
 
     const [draggedTask, setDraggedTask] = useState<TaskInterface | null>(null);
     const [dragOverPhase, setDragOverPhase] = useState<TaskPhase | null>(null);
