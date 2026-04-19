@@ -1,9 +1,9 @@
-import type { AxiosError, InternalAxiosRequestConfig } from "axios";
+import type { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
 import axios from "axios";
 
 import { apisData, commonData } from "@/data";
 
-import { deleteCookieHandler, getCookieHandler } from "./cookies";
+import { deleteCookieHandler, getCookieHandler, setCookieHandler } from "./cookies";
 import { ApiError } from "./error";
 
 export const apiClient = axios.create({
@@ -27,12 +27,43 @@ apiClient.interceptors.request.use(
     (error: AxiosError) => Promise.reject(error),
 );
 
+type RetryableConfig = AxiosRequestConfig & { _retry?: boolean };
+
+let refreshPromise: Promise<string | null> | null = null;
+
+const refreshToken = async (): Promise<string | null> => {
+    if (refreshPromise) return refreshPromise;
+    refreshPromise = axios
+        .post<{ data: { token: string } }>(`${apisData.baseUrl}${apisData.auth.refresh}`, {}, {
+            headers: { "Accept": "application/json" },
+            withCredentials: true,
+        })
+        .then((res) => {
+            const token = res.data?.data?.token ?? null;
+            if (token) setCookieHandler(commonData.token.tokenKey, token);
+            return token;
+        })
+        .catch(() => null)
+        .finally(() => { refreshPromise = null; });
+    return refreshPromise;
+};
+
 apiClient.interceptors.response.use(
     (response) => response,
-    (error: AxiosError) => {
-        const { message, response: { data, status } = {} } = error;
+    async (error: AxiosError) => {
+        const { message, response: { data, status } = {}, config } = error;
+        const original = config as RetryableConfig | undefined;
 
-        if (status === 401) {
+        if (status === 401 && original && !original._retry && !original.url?.includes(apisData.auth.refresh)) {
+            original._retry = true;
+            const newToken = await refreshToken();
+            if (newToken) {
+                original.headers = {
+                    ...original.headers,
+                    [commonData.token.authorizationHeader]: `${commonData.token.bearerPrefix}${newToken}`,
+                };
+                return apiClient(original);
+            }
             deleteCookieHandler(commonData.token.tokenKey);
         }
 

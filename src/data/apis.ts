@@ -2,6 +2,7 @@ export const apisData = {
     auth: {
         login: "/auth/login",
         logout: "/auth/logout",
+        refresh: "/auth/refresh",
         me: "/auth/me",
         heartbeat: "/auth/heartbeat",
     },

@@ -15,6 +15,11 @@ export const authService = {
         await apiClient.post(apisData.auth.logout);
     },
 
+    refreshHandler: async (): Promise<LoginResponseInterface> => {
+        const { data } = await apiClient.post<LoginResponseInterface>(apisData.auth.refresh);
+        return data;
+    },
+
     meHandler: async (): Promise<UserInterface> => {
         const { data } = await apiClient.get<MeResponseInterface>(apisData.auth.me);
         return data.data;
