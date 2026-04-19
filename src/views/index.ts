@@ -1,5 +1,6 @@
 export { LoginView } from "./auth/login";
 export { DashboardView } from "./dashboard";
+export { SprintsView } from "./sprints";
 export { TasksView } from "./tasks";
 export { BlockerView } from "./blockers";
 export { DecisionsView } from "./decisions";
