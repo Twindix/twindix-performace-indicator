@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Clock, Trash2 } from "lucide-react";
+import { Check, Clock, Pencil, Trash2, X } from "lucide-react";
 
 import { Button, Input } from "@/atoms";
 import { useTasks } from "@/contexts";
 import { UserRole } from "@/enums";
-import { t, useCreateTimeLog, useDeleteTimeLog, useGetTimeLog } from "@/hooks";
+import { t, useCreateTimeLog, useDeleteTimeLog, useGetTimeLog, useUpdateTimeLog } from "@/hooks";
 import type { TaskInterface, TimeLogInterface, UserInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
 import { getStorageItem, storageKeys } from "@/utils";
@@ -18,6 +18,7 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
     const { patchTaskLocal } = useTasks();
     const { getByTaskHandler } = useGetTimeLog();
     const { createHandler: createTimeLogHandler, isLoading: isCreating } = useCreateTimeLog();
+    const { updateHandler: updateTimeLogHandler } = useUpdateTimeLog();
     const { deleteHandler: deleteTimeLogHandler } = useDeleteTimeLog();
 
     const currentUserId = getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "";
@@ -28,6 +29,9 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
     const [logs, setLogs] = useState<TimeLogInterface[]>([]);
     const [logHours, setLogHours] = useState("");
     const [logNote, setLogNote] = useState("");
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editHours, setEditHours] = useState("");
+    const [editNote, setEditNote] = useState("");
 
     useEffect(() => {
         if (!isAssignee && !isManager) return;
@@ -53,6 +57,27 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
             patchTaskLocal(task.id, { timeLogs: next as unknown as TaskInterface["timeLogs"] });
             setLogHours("");
             setLogNote("");
+        }
+    };
+
+    const startEdit = (log: TimeLogInterface) => {
+        setEditingId(log.id);
+        setEditHours(String(log.hours));
+        setEditNote(log.description ?? "");
+    };
+
+    const saveEdit = async (id: string) => {
+        const h = parseFloat(editHours);
+        if (isNaN(h) || h <= 0) return;
+        const res = await updateTimeLogHandler(id, {
+            hours: h,
+            description: editNote.trim() || undefined,
+        });
+        if (res) {
+            const next = logs.map((l) => l.id === id ? res : l);
+            setLogs(next);
+            patchTaskLocal(task.id, { timeLogs: next as unknown as TaskInterface["timeLogs"] });
+            setEditingId(null);
         }
     };
 
@@ -87,6 +112,7 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
                     {logs.map((log) => {
                         const author = getMember(log.user_id);
                         const isOwner = log.user_id === currentUserId;
+                        const isEditing = editingId === log.id;
                         return (
                             <div key={log.id} className="flex gap-2.5 items-start p-2.5 rounded-lg bg-muted group">
                                 <Avatar className="h-6 w-6 shrink-0 mt-0.5">
@@ -97,17 +123,31 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
                                         <span className="text-xs font-medium text-text-dark">{author?.name ?? t("Unknown")}</span>
                                         <span className="text-[10px] text-text-muted">{log.date}</span>
                                     </div>
-                                    <div className="flex items-center justify-between gap-2 mt-0.5">
-                                        <p className="text-xs text-text-secondary truncate">{log.description || <span className="italic opacity-50">{t("No note")}</span>}</p>
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            <span className="text-xs font-bold text-primary bg-primary-lighter/30 px-1.5 py-0.5 rounded">{log.hours} {t("h")}</span>
-                                            {isOwner && (
-                                                <button onClick={() => deleteLog(log.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
-                                                    <Trash2 className="h-3 w-3" />
-                                                </button>
-                                            )}
+                                    {isEditing ? (
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <Input type="number" min="0.5" step="0.5" value={editHours} onChange={(e) => setEditHours(e.target.value)} className="w-20 h-7 text-xs bg-surface" />
+                                            <Input value={editNote} onChange={(e) => setEditNote(e.target.value)} className="flex-1 h-7 text-xs bg-surface" />
+                                            <button onClick={() => saveEdit(log.id)} className="p-1 rounded text-success hover:bg-success-light cursor-pointer"><Check className="h-3 w-3" /></button>
+                                            <button onClick={() => setEditingId(null)} className="p-1 rounded text-text-muted hover:bg-muted cursor-pointer"><X className="h-3 w-3" /></button>
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <div className="flex items-center justify-between gap-2 mt-0.5">
+                                            <p className="text-xs text-text-secondary truncate">{log.description || <span className="italic opacity-50">{t("No note")}</span>}</p>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <span className="text-xs font-bold text-primary bg-primary-lighter/30 px-1.5 py-0.5 rounded">{log.hours} {t("h")}</span>
+                                                {isOwner && (
+                                                    <>
+                                                        <button onClick={() => startEdit(log)} className="p-1 rounded text-text-muted hover:text-primary hover:bg-primary-lighter opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                                                            <Pencil className="h-3 w-3" />
+                                                        </button>
+                                                        <button onClick={() => deleteLog(log.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                                                            <Trash2 className="h-3 w-3" />
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         );
