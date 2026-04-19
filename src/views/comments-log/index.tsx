@@ -1,14 +1,14 @@
 import { useMemo, useState } from "react";
-import { AtSign, MessageCircle, CheckCircle2, Clock, User } from "lucide-react";
+import { AtSign, MessageCircle, CheckCircle2, Clock, User, Plus, Pencil, Trash2, Reply } from "lucide-react";
 
-import { Badge, Card, CardContent, Input } from "@/atoms";
+import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { CommentsLogSkeleton } from "@/components/skeletons";
 import { CommentsProvider, useComments } from "@/contexts";
-import { t, useSettings, usePageLoader } from "@/hooks";
+import { t, useAuth, useSettings, usePageLoader, useCreateComment, useUpdateComment, useDeleteComment, useRespondComment } from "@/hooks";
 import type { CommentInterface, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
-import { Avatar, AvatarFallback, Dialog, DialogContent, DialogHeader, DialogTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
+import { Avatar, AvatarFallback, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 import { cn, formatDate, formatDateTime, getStorageItem, storageKeys } from "@/utils";
 
 export const CommentsLogView = () => {
@@ -20,11 +20,19 @@ export const CommentsLogView = () => {
     );
 };
 
+const emptyForm = { body: "", task_title: "", mentioned_user_ids: [] as string[] };
+
 const CommentsLogViewInner = () => {
     const pageLoading = usePageLoader();
     const [settings] = useSettings();
+    const { user } = useAuth();
+    const { activeSprintId } = useSprintStore();
     const compact = settings.compactView;
-    const { comments, analytics, isLoading: isFetching } = useComments();
+    const { comments, analytics, isLoading: isFetching, patchCommentLocal, removeCommentLocal, refetchAnalytics } = useComments();
+    const { createHandler: createCommentHandler, isLoading: isCreating } = useCreateComment();
+    const { updateHandler: updateCommentHandler, isLoading: isUpdating } = useUpdateComment();
+    const { deleteHandler: deleteCommentHandler } = useDeleteComment();
+    const { respondHandler: respondCommentHandler } = useRespondComment();
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
 
     const getMember = (id?: string) => members.find((m) => m.id === id);
@@ -35,6 +43,61 @@ const CommentsLogViewInner = () => {
     const [fromDate, setFromDate] = useState<string>("");
     const [toDate, setToDate] = useState<string>("");
     const [viewTarget, setViewTarget] = useState<CommentInterface | null>(null);
+    const [addOpen, setAddOpen] = useState(false);
+    const [editTarget, setEditTarget] = useState<CommentInterface | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<CommentInterface | null>(null);
+    const [form, setForm] = useState(emptyForm);
+
+    const openEdit = (c: CommentInterface) => {
+        setForm({
+            body: c.body ?? c.content ?? "",
+            task_title: c.taskTitle ?? "",
+            mentioned_user_ids: c.mentioned_user_ids ?? (c.mentionedId ? [c.mentionedId] : []),
+        });
+        setEditTarget(c);
+    };
+
+    const handleAdd = async () => {
+        if (!form.body.trim() || !activeSprintId) return;
+        const res = await createCommentHandler(activeSprintId, {
+            body: form.body.trim(),
+            task_title: form.task_title.trim() || undefined,
+            mentioned_user_ids: form.mentioned_user_ids.length ? form.mentioned_user_ids : undefined,
+        });
+        if (res) {
+            patchCommentLocal(res);
+            refetchAnalytics();
+            setAddOpen(false);
+            setForm(emptyForm);
+        }
+    };
+
+    const handleEdit = async () => {
+        if (!editTarget) return;
+        const res = await updateCommentHandler(editTarget.id, {
+            body: form.body.trim(),
+            mentioned_user_ids: form.mentioned_user_ids.length ? form.mentioned_user_ids : undefined,
+        });
+        if (res) {
+            patchCommentLocal(res);
+            setEditTarget(null);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
+        const ok = await deleteCommentHandler(deleteTarget.id);
+        if (ok) {
+            removeCommentLocal(deleteTarget.id);
+            refetchAnalytics();
+            setDeleteTarget(null);
+        }
+    };
+
+    const handleRespond = async (id: string) => {
+        const res = await respondCommentHandler(id);
+        if (res) { patchCommentLocal(res); refetchAnalytics(); }
+    };
 
     const stats = useMemo(() => {
         if (analytics) {
@@ -66,18 +129,77 @@ const CommentsLogViewInner = () => {
 
     if (pageLoading || isFetching) return <CommentsLogSkeleton />;
 
+    const headerActions = (
+        <Button onClick={() => { setForm(emptyForm); setAddOpen(true); }} className="gap-2" disabled={!activeSprintId}>
+            <Plus className="h-4 w-4" />
+            {t("Add Comment")}
+        </Button>
+    );
+
     if (comments.length === 0) {
         return (
             <div>
-                <Header title={t("Comments Log")} description={t("Track all task comments, mentions, and responses")} />
+                <Header title={t("Comments Log")} description={t("Track all task comments, mentions, and responses")} actions={headerActions} />
                 <EmptyState icon={MessageCircle} title={t("No Comments")} description={t("No comments found for the current sprint")} />
+                {renderFormDialog()}
             </div>
+        );
+    }
+
+    function renderFormDialog() {
+        return (
+            <Dialog open={addOpen || !!editTarget} onOpenChange={(open) => { if (!open) { setAddOpen(false); setEditTarget(null); setForm(emptyForm); } }}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>{editTarget ? t("Edit Comment") : t("Add Comment")}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-3">
+                        {!editTarget && (
+                            <div className="space-y-2">
+                                <Label>{t("Task Title")}</Label>
+                                <Input value={form.task_title} onChange={(e) => setForm({ ...form, task_title: e.target.value })} placeholder={t("Optional task title")} />
+                            </div>
+                        )}
+                        <div className="space-y-2">
+                            <Label>{t("Body")} <span className="text-error">*</span></Label>
+                            <Textarea rows={4} value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} placeholder={t("Write a comment...")} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>{t("Mention Users")}</Label>
+                            <div className="max-h-40 overflow-y-auto border border-border rounded-lg p-2 space-y-1">
+                                {members.map((m) => {
+                                    const checked = form.mentioned_user_ids.includes(m.id);
+                                    return (
+                                        <label key={m.id} className="flex items-center gap-2 cursor-pointer rounded px-2 py-1 hover:bg-muted">
+                                            <input type="checkbox" checked={checked} onChange={(e) => {
+                                                setForm((prev) => ({
+                                                    ...prev,
+                                                    mentioned_user_ids: e.target.checked
+                                                        ? [...prev.mentioned_user_ids, m.id]
+                                                        : prev.mentioned_user_ids.filter((i) => i !== m.id),
+                                                }));
+                                            }} />
+                                            <span className="text-xs">{m.name}</span>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-2 mt-4">
+                        <DialogClose asChild><Button variant="outline">{t("Cancel")}</Button></DialogClose>
+                        <Button onClick={editTarget ? handleEdit : handleAdd} disabled={isCreating || isUpdating || !form.body.trim()}>
+                            {(isCreating || isUpdating) ? t("Saving...") : editTarget ? t("Save") : t("Create")}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         );
     }
 
     return (
         <div>
-            <Header title={t("Comments Log")} description={t("Track all task comments, mentions, and responses")} />
+            <Header title={t("Comments Log")} description={t("Track all task comments, mentions, and responses")} actions={headerActions} />
 
             {/* Stats */}
             <div className={cn("grid grid-cols-2 lg:grid-cols-4", compact ? "gap-2 mb-3" : "gap-4 mb-6")}>
@@ -207,18 +329,37 @@ const CommentsLogViewInner = () => {
                         const mentioned = getMember(comment.mentionedId);
                         const responder = getMember(comment.responderId);
 
+                        const isOwner = user?.id === comment.authorId;
+
                         return (
-                            <Card key={comment.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setViewTarget(comment)}>
+                            <Card key={comment.id} className="hover:shadow-md transition-shadow">
                                 <CardContent className="p-4">
-                                    {/* Task label */}
-                                    <div className="flex items-center gap-2 mb-2">
+                                    {/* Task label + actions */}
+                                    <div className="flex items-center justify-between gap-2 mb-2">
                                         <Badge variant="outline" className="text-xs font-normal">
                                             {comment.taskTitle}
                                         </Badge>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            {!comment.hasResponse && (
+                                                <button onClick={() => handleRespond(comment.id)} className="p-1.5 rounded hover:bg-success-light text-text-muted hover:text-success cursor-pointer" title={t("Respond")}>
+                                                    <Reply className="h-3.5 w-3.5" />
+                                                </button>
+                                            )}
+                                            {isOwner && (
+                                                <>
+                                                    <button onClick={() => openEdit(comment)} className="p-1.5 rounded hover:bg-muted text-text-muted hover:text-primary cursor-pointer" title={t("Edit")}>
+                                                        <Pencil className="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <button onClick={() => setDeleteTarget(comment)} className="p-1.5 rounded hover:bg-error-light text-text-muted hover:text-error cursor-pointer" title={t("Delete")}>
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Comment content */}
-                                    <p className="text-sm text-text-dark mb-3">{comment.content}</p>
+                                    <p className="text-sm text-text-dark mb-3 cursor-pointer" onClick={() => setViewTarget(comment)}>{comment.content}</p>
 
                                     {/* Meta row */}
                                     <div className="flex flex-wrap items-center gap-3">
@@ -348,6 +489,20 @@ const CommentsLogViewInner = () => {
                             </div>
                         );
                     })()}
+                </DialogContent>
+            </Dialog>
+
+            {renderFormDialog()}
+
+            {/* Delete confirm */}
+            <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader><DialogTitle>{t("Delete Comment")}</DialogTitle></DialogHeader>
+                    <p className="text-sm text-text-secondary py-2">{t("Are you sure?")}</p>
+                    <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setDeleteTarget(null)}>{t("Cancel")}</Button>
+                        <Button variant="destructive" onClick={handleDelete}>{t("Delete")}</Button>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>
