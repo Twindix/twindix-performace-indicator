@@ -6,7 +6,7 @@ import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { DecisionsSkeleton } from "@/components/skeletons";
 import { DecisionsProvider, useDecisions } from "@/contexts";
 import { DecisionCategory, DecisionStatus, UserRole } from "@/enums";
-import { t, useAuth, useSettings, usePageLoader } from "@/hooks";
+import { t, useAuth, useCreateDecision, useDeleteDecision, usePageLoader, useSettings, useUpdateDecision } from "@/hooks";
 import type { DecisionInterface, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import {
@@ -45,7 +45,11 @@ const DecisionsViewInner = () => {
     const [settings] = useSettings();
     const compact = settings.compactView;
     const { user } = useAuth();
-    const { decisions, isLoading: isFetching, createDecision, updateDecision, deleteDecision } = useDecisions();
+    const { activeSprintId } = useSprintStore();
+    const { decisions, isLoading: isFetching, patchDecisionLocal, removeDecisionLocal } = useDecisions();
+    const { createHandler: createDecisionHandler, isLoading: isSubmitting } = useCreateDecision();
+    const { updateHandler: updateDecisionHandler } = useUpdateDecision();
+    const { deleteHandler: deleteDecisionHandler } = useDeleteDecision();
 
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
 
@@ -54,7 +58,6 @@ const DecisionsViewInner = () => {
     const [addOpen, setAddOpen] = useState(false);
     const [title, setTitle] = useState("");
     const [error, setError] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [viewTarget, setViewTarget] = useState<DecisionInterface | null>(null);
 
     const isPM = user ? PM_ROLES.includes(user.role as UserRole) : false;
@@ -69,10 +72,10 @@ const DecisionsViewInner = () => {
 
     const handleAdd = async () => {
         if (!title.trim()) { setError(t("Title is required")); return; }
-        setIsSubmitting(true);
-        const res = await createDecision({ title: title.trim(), status: DecisionStatus.Pending });
-        setIsSubmitting(false);
+        if (!activeSprintId) return;
+        const res = await createDecisionHandler(activeSprintId, { title: title.trim(), status: DecisionStatus.Pending });
         if (res) {
+            patchDecisionLocal(res);
             setTitle("");
             setError("");
             setAddOpen(false);
@@ -80,24 +83,33 @@ const DecisionsViewInner = () => {
     };
 
     const handleApprove = async (id: string) => {
-        const res = await updateDecision(id, {
+        const res = await updateDecisionHandler(id, {
             status: DecisionStatus.Approved,
             decided_at: new Date().toISOString().split("T")[0],
         });
-        if (res && viewTarget?.id === id) setViewTarget(res);
+        if (res) {
+            patchDecisionLocal(res);
+            if (viewTarget?.id === id) setViewTarget(res);
+        }
     };
 
     const handleReject = async (id: string) => {
-        const res = await updateDecision(id, {
+        const res = await updateDecisionHandler(id, {
             status: DecisionStatus.Rejected,
             decided_at: new Date().toISOString().split("T")[0],
         });
-        if (res && viewTarget?.id === id) setViewTarget(res);
+        if (res) {
+            patchDecisionLocal(res);
+            if (viewTarget?.id === id) setViewTarget(res);
+        }
     };
 
     const handleDelete = async (id: string) => {
-        const ok = await deleteDecision(id);
-        if (ok) setViewTarget(null);
+        const ok = await deleteDecisionHandler(id);
+        if (ok) {
+            removeDecisionLocal(id);
+            setViewTarget(null);
+        }
     };
 
     if (pageLoading || isFetching) return <DecisionsSkeleton />;
