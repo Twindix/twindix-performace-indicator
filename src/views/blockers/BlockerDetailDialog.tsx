@@ -5,10 +5,11 @@ import { Badge, Button } from "@/atoms";
 import { useBlockers } from "@/contexts";
 import { BlockerImpact, BlockerStatus, BlockerType } from "@/enums";
 import { t, useEscalateBlocker, useGetBlocker, useLinkBlockerTasks, useResolveBlocker, useUnlinkBlockerTask } from "@/hooks";
-import type { BlockerInterface, TaskInterface, UserInterface } from "@/interfaces";
+import type { BlockerInterface, TaskInterface } from "@/interfaces";
 import { tasksService } from "@/services";
+import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/ui";
-import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
+import { cn, formatDate } from "@/utils";
 
 interface Props {
     blocker: BlockerInterface | null;
@@ -46,12 +47,11 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
     const { escalateHandler: escalateBlockerHandler, isLoading: isEscalating } = useEscalateBlocker();
     const { linkHandler: linkBlockerTasksHandler } = useLinkBlockerTasks();
     const { unlinkHandler: unlinkBlockerTaskHandler } = useUnlinkBlockerTask();
+    const { activeSprintId } = useSprintStore();
     const [current, setCurrent] = useState<BlockerInterface | null>(blocker);
     const [tasks, setTasks] = useState<TaskInterface[]>([]);
     const [showLinkUI, setShowLinkUI] = useState(false);
     const [linkSelection, setLinkSelection] = useState<string[]>([]);
-
-    const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
 
     useEffect(() => { setCurrent(blocker); }, [blocker]);
 
@@ -66,17 +66,15 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
     }, [open, blocker?.id, getBlockerHandler, patchBlockerLocal]);
 
     useEffect(() => {
-        if (!open || !current?.sprintId) return;
-        tasksService.listHandler(current.sprintId)
+        if (!open || !activeSprintId) return;
+        tasksService.listHandler(activeSprintId)
             .then((res) => setTasks(res.data))
             .catch(() => setTasks([]));
-    }, [open, current?.sprintId]);
+    }, [open, activeSprintId]);
 
     if (!current) return null;
 
-    const reporter = members.find((m) => m.id === current.reporterId);
-    const owner = members.find((m) => m.id === current.ownerId);
-    const linkedTasks = (current.taskIds ?? []).map((id) => tasks.find((t) => t.id === id) ?? null);
+    const linkedTasks = current.tasks ?? [];
 
     const handleResolve = async () => {
         const res = await resolveBlockerHandler(current.id);
@@ -110,13 +108,13 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
     const handleUnlink = async (taskId: string) => {
         const ok = await unlinkBlockerTaskHandler(current.id, taskId);
         if (ok) {
-            const next = { ...current, taskIds: (current.taskIds ?? []).filter((t) => t !== taskId) };
+            const next = { ...current, tasks: (current.tasks ?? []).filter((t) => t.id !== taskId) };
             setCurrent(next);
             patchBlockerLocal(next);
         }
     };
 
-    const availableTasks = tasks.filter((t) => !(current.taskIds ?? []).includes(t.id));
+    const availableTasks = tasks.filter((t) => !(current.tasks ?? []).some((lt) => lt.id === t.id));
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -147,8 +145,8 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
                         <div>
                             <p className="text-xs text-text-muted">{t("Reported by")}</p>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{reporter?.avatar ?? "?"}</AvatarFallback></Avatar>
-                                <span className="text-sm font-medium text-text-dark">{reporter?.name ?? t("Unknown")}</span>
+                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{current.reporter?.avatar_initials ?? "?"}</AvatarFallback></Avatar>
+                                <span className="text-sm font-medium text-text-dark">{current.reporter?.full_name ?? t("Unknown")}</span>
                             </div>
                         </div>
                     </div>
@@ -157,8 +155,8 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
                         <div>
                             <p className="text-xs text-text-muted">{t("Owned by")}</p>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{owner?.avatar ?? "?"}</AvatarFallback></Avatar>
-                                <span className="text-sm font-medium text-text-dark">{owner?.name ?? t("Unassigned")}</span>
+                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{current.owner?.avatar_initials ?? "?"}</AvatarFallback></Avatar>
+                                <span className="text-sm font-medium text-text-dark">{current.owner?.full_name ?? t("Unassigned")}</span>
                             </div>
                         </div>
                     </div>
@@ -166,14 +164,14 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
                         <Calendar className="h-4 w-4 text-text-muted" />
                         <div>
                             <p className="text-xs text-text-muted">{t("Created")}</p>
-                            <p className="text-sm font-medium text-text-dark">{formatDate(current.createdAt)}</p>
+                            <p className="text-sm font-medium text-text-dark">{formatDate(current.created_at)}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-text-muted" />
                         <div>
                             <p className="text-xs text-text-muted">{t("Duration")}</p>
-                            <p className="text-sm font-medium text-text-dark">{current.durationDays} {t("days")}</p>
+                            <p className="text-sm font-medium text-text-dark">{current.duration_days ?? 0} {t("days")}</p>
                         </div>
                     </div>
                 </div>
@@ -183,7 +181,7 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
                     <div className="flex items-center justify-between mb-2">
                         <p className="text-xs font-semibold text-text-muted uppercase tracking-wide flex items-center gap-1.5">
                             <Layers className="h-3.5 w-3.5" />
-                            {t("Linked Tasks")} ({(current.taskIds ?? []).length})
+                            {t("Linked Tasks")} ({linkedTasks.length})
                         </p>
                         {!showLinkUI && availableTasks.length > 0 && (
                             <button onClick={() => setShowLinkUI(true)} className="text-xs text-primary hover:text-primary-dark font-medium flex items-center gap-1 cursor-pointer">
@@ -191,25 +189,22 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
                             </button>
                         )}
                     </div>
-                    {(current.taskIds ?? []).length === 0 && !showLinkUI ? (
+                    {linkedTasks.length === 0 && !showLinkUI ? (
                         <p className="text-xs text-text-muted italic">{t("No tasks linked")}</p>
                     ) : (
                         <div className="space-y-1.5">
-                            {linkedTasks.map((task, i) => {
-                                const id = current.taskIds[i];
-                                return (
-                                    <div key={id} className="flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2 group">
-                                        <span className="text-sm text-text-dark truncate">{task?.title ?? id}</span>
-                                        <button
-                                            onClick={() => handleUnlink(id)}
-                                            className="text-text-muted hover:text-error opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                                            aria-label={t("Unlink task")}
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                );
-                            })}
+                            {linkedTasks.map((task) => (
+                                <div key={task.id} className="flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2 group">
+                                    <span className="text-sm text-text-dark truncate">{task.title}</span>
+                                    <button
+                                        onClick={() => handleUnlink(task.id)}
+                                        className="text-text-muted hover:text-error opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                        aria-label={t("Unlink task")}
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            ))}
                         </div>
                     )}
                     {showLinkUI && (
@@ -261,7 +256,7 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
                             <CheckCircle2 className="h-4 w-4" />
                             <span className="text-sm font-medium">
                                 {t("Resolved")}
-                                {current.resolvedAt && <> · {formatDate(current.resolvedAt)}</>}
+                                {current.resolved_at && <> · {formatDate(current.resolved_at)}</>}
                             </span>
                         </div>
                     )}

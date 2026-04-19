@@ -5,12 +5,12 @@ import { Badge, Button, Card, CardContent } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { BlockersSkeleton } from "@/components/skeletons";
 import { BlockersProvider, useBlockers } from "@/contexts";
-import { BlockerImpact, BlockerStatus, BlockerType } from "@/enums";
+import { BlockerStatus, BlockerType } from "@/enums";
 import { t, useSettings, usePageLoader } from "@/hooks";
-import type { BlockerInterface, UserInterface } from "@/interfaces";
+import type { BlockerInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
-import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
+import { cn, formatDate } from "@/utils";
 import { BlockerDetailDialog } from "./BlockerDetailDialog";
 import { BlockerFormDialog } from "./BlockerFormDialog";
 
@@ -29,11 +29,11 @@ const blockerStatusConfig: Record<BlockerStatus, { labelKey: string; variant: "e
     [BlockerStatus.Escalated]: { labelKey: "Escalated", variant: "warning" },
 };
 
-const impactConfig: Record<BlockerImpact, { labelKey: string; variant: "error" | "warning" | "secondary" | "outline" }> = {
-    [BlockerImpact.Critical]: { labelKey: "Critical", variant: "error" },
-    [BlockerImpact.High]: { labelKey: "High", variant: "warning" },
-    [BlockerImpact.Medium]: { labelKey: "Medium", variant: "secondary" },
-    [BlockerImpact.Low]: { labelKey: "Low", variant: "outline" },
+const severityConfig: Record<string, { labelKey: string; variant: "error" | "warning" | "secondary" | "outline" }> = {
+    critical: { labelKey: "Critical", variant: "error" },
+    high: { labelKey: "High", variant: "warning" },
+    medium: { labelKey: "Medium", variant: "secondary" },
+    low: { labelKey: "Low", variant: "outline" },
 };
 
 export const BlockerView = () => {
@@ -59,8 +59,6 @@ const BlockerViewInner = () => {
     const [detailTarget, setDetailTarget] = useState<BlockerInterface | null>(null);
     const [detailOpen, setDetailOpen] = useState(false);
 
-    const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
-
     const filteredBlockers = useMemo(() => {
         let result = blockers;
         if (statusFilter !== "all") result = result.filter((b) => b.status === statusFilter);
@@ -68,20 +66,18 @@ const BlockerViewInner = () => {
         return result;
     }, [blockers, statusFilter, typeFilter]);
 
-    const getMember = (id: string) => members.find((m) => m.id === id);
-
     const stats = useMemo(() => {
         if (analytics) {
             return {
                 total: analytics.total,
                 active: analytics.active,
                 resolved: analytics.resolved,
-                avgDuration: Math.round(analytics.avg_duration ?? 0),
+                avgDuration: Math.round(analytics.avg_duration_days ?? 0),
             };
         }
         const active = blockers.filter((b) => b.status === BlockerStatus.Active || b.status === BlockerStatus.Escalated).length;
         const resolved = blockers.filter((b) => b.status === BlockerStatus.Resolved).length;
-        const avgDuration = blockers.length > 0 ? Math.round(blockers.reduce((sum, b) => sum + b.durationDays, 0) / blockers.length) : 0;
+        const avgDuration = blockers.length > 0 ? Math.round(blockers.reduce((sum, b) => sum + (b.duration_days ?? 0), 0) / blockers.length) : 0;
         return { total: blockers.length, active, resolved, avgDuration };
     }, [analytics, blockers]);
 
@@ -167,9 +163,7 @@ const BlockerViewInner = () => {
                         filteredBlockers.map((blocker) => {
                             const typeInfo = blockerTypeConfig[blocker.type];
                             const statusInfo = blockerStatusConfig[blocker.status];
-                            const impactInfo = impactConfig[blocker.impact];
-                            const reporter = getMember(blocker.reporterId);
-                            const owner = getMember(blocker.ownerId);
+                            const severityInfo = severityConfig[blocker.severity?.toLowerCase() ?? ""] ?? { labelKey: blocker.severity ?? "", variant: "outline" as const };
                             const TypeIcon = typeInfo.icon;
 
                             return (
@@ -192,7 +186,7 @@ const BlockerViewInner = () => {
                                             </div>
                                             <div className="flex items-center gap-1.5 shrink-0">
                                                 <Badge variant={statusInfo.variant}>{t(statusInfo.labelKey)}</Badge>
-                                                <Badge variant={impactInfo.variant}>{t(impactInfo.labelKey)}</Badge>
+                                                <Badge variant={severityInfo.variant}>{t(severityInfo.labelKey)}</Badge>
                                             </div>
                                         </div>
 
@@ -201,35 +195,35 @@ const BlockerViewInner = () => {
                                             {/* Reporter */}
                                             <div className="flex items-center gap-1.5">
                                                 <Avatar className="h-5 w-5">
-                                                    <AvatarFallback className="text-[8px]">{reporter?.avatar}</AvatarFallback>
+                                                    <AvatarFallback className="text-[8px]">{blocker.reporter?.avatar_initials}</AvatarFallback>
                                                 </Avatar>
-                                                <span>{t("Reported by")} <span className="font-medium text-text-secondary">{reporter?.name ?? t("Unknown")}</span></span>
+                                                <span>{t("Reported by")} <span className="font-medium text-text-secondary">{blocker.reporter?.full_name ?? t("Unknown")}</span></span>
                                             </div>
 
                                             {/* Owner */}
                                             <div className="flex items-center gap-1.5">
                                                 <Avatar className="h-5 w-5">
-                                                    <AvatarFallback className="text-[8px]">{owner?.avatar}</AvatarFallback>
+                                                    <AvatarFallback className="text-[8px]">{blocker.owner?.avatar_initials}</AvatarFallback>
                                                 </Avatar>
-                                                <span>{t("Owned by")} <span className="font-medium text-text-secondary">{owner?.name ?? t("Unassigned")}</span></span>
+                                                <span>{t("Owned by")} <span className="font-medium text-text-secondary">{blocker.owner?.full_name ?? t("Unassigned")}</span></span>
                                             </div>
 
                                             {/* Duration */}
                                             <div className="flex items-center gap-1">
                                                 <Clock className="h-3 w-3" />
-                                                <span>{blocker.durationDays} {t("days")}</span>
+                                                <span>{blocker.duration_days ?? 0} {t("days")}</span>
                                             </div>
 
                                             {/* Created */}
                                             <div className="flex items-center gap-1">
                                                 <Calendar className="h-3 w-3" />
-                                                <span>{formatDate(blocker.createdAt)}</span>
+                                                <span>{formatDate(blocker.created_at)}</span>
                                             </div>
 
                                             {/* Affected tasks */}
                                             <div className="flex items-center gap-1">
                                                 <Layers className="h-3 w-3" />
-                                                <span>{blocker.taskIds.length} {t("tasks affected")}</span>
+                                                <span>{(blocker.tasks ?? []).length} {t("tasks affected")}</span>
                                             </div>
                                         </div>
                                     </CardContent>

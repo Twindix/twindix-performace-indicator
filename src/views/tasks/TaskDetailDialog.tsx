@@ -260,8 +260,8 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                         <p className="text-sm font-medium text-text-dark">{blocker.title}</p>
                         <p className="text-xs text-text-secondary mt-1">{blocker.description}</p>
                         <div className="flex items-center gap-3 mt-2">
-                            <span className="text-xs text-text-muted">{t("Impact")}: <strong className="text-error">{t(capitalize(blocker.impact))}</strong></span>
-                            <span className="text-xs text-text-muted">{t("Duration")}: <strong>{blocker.durationDays} {t("days")}</strong></span>
+                            <span className="text-xs text-text-muted">{t("Severity")}: <strong className="text-error">{t(capitalize(blocker.severity))}</strong></span>
+                            <span className="text-xs text-text-muted">{t("Duration")}: <strong>{blocker.duration_days ?? 0} {t("days")}</strong></span>
                         </div>
                     </div>
                 )}

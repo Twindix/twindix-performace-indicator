@@ -1,28 +1,25 @@
-import type { BlockerImpact, BlockerStatus, BlockerType } from "@/enums";
+import type { BlockerStatus, BlockerType } from "@/enums";
 
 export interface BlockerInterface {
     id: string;
     title: string;
-    description: string;
+    description?: string;
     type: BlockerType;
     status: BlockerStatus;
-    impact: BlockerImpact;
-    severity?: string;
-    reporterId: string;
-    ownerId: string;
-    taskIds: string[];
-    sprintId: string;
-    createdAt: string;
-    resolvedAt?: string;
-    durationDays: number;
-    notes: string;
+    severity: string;
+    reporter: { id: string; full_name: string; avatar_initials: string };
+    owner: { id: string; full_name: string; avatar_initials: string };
+    tasks?: { id: string; title: string }[];
+    created_at: string;
+    resolved_at?: string | null;
+    duration_days?: number;
 }
 
 export interface BlockersAnalyticsInterface {
     total: number;
     active: number;
     resolved: number;
-    avg_duration: number;
+    avg_duration_days: number;
     by_type?: Record<string, number>;
     by_severity?: Record<string, number>;
 }
@@ -37,10 +34,7 @@ export interface BlockerDetailResponseInterface {
     isSuccess: boolean;
 }
 
-export interface BlockersAnalyticsResponseInterface {
-    data: BlockersAnalyticsInterface;
-    isSuccess: boolean;
-}
+export type BlockersAnalyticsResponseInterface = BlockersAnalyticsInterface;
 
 export interface CreateBlockerPayloadInterface {
     title: string;

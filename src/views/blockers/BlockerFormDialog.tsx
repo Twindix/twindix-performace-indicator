@@ -69,10 +69,10 @@ export const BlockerFormDialog = ({ open, onOpenChange, sprintId, initial }: Pro
         if (initial) {
             setTitle(initial.title);
             setDescription(initial.description ?? "");
-            setSeverity(initial.severity ?? initial.impact);
+            setSeverity(initial.severity ?? BlockerImpact.Medium);
             setType(initial.type);
-            setOwnedBy(initial.ownerId);
-            setTaskIds(initial.taskIds ?? []);
+            setOwnedBy(initial.owner?.id ?? "");
+            setTaskIds([]);
         } else {
             setTitle("");
             setDescription("");
