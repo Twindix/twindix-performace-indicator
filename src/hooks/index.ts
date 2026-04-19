@@ -10,3 +10,4 @@ export * from "./alerts";
 export * from "./red-flags";
 export * from "./decisions";
 export * from "./comments";
+export * from "./dashboard";

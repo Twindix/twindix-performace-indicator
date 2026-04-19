@@ -10,3 +10,4 @@ export { alertsService } from "./alerts";
 export { redFlagsService } from "./red-flags";
 export { decisionsService } from "./decisions";
 export { commentsService } from "./comments";
+export { dashboardService } from "./dashboard";

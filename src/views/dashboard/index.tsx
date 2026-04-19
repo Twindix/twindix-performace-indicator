@@ -3,18 +3,18 @@ import { AlertTriangle, Bell, Flag, MessageCircle, TrendingUp, Zap, XCircle } fr
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { Header, MetricCard, ScoreGauge, StatusBadge } from "@/components/shared";
 import { DashboardSkeleton } from "@/components/skeletons";
-import { BlockerStatus, MetricStatus } from "@/enums";
+import { DashboardProvider, useDashboard } from "@/contexts";
+import { MetricStatus } from "@/enums";
 import { t, useSettings, useCountUp, usePageLoader } from "@/hooks";
-import type { BlockerInterface, SprintMetricsInterface, TaskInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
-import { cn, getStorageItem, storageKeys } from "@/utils";
+import { cn } from "@/utils";
 
 const frictionAreaConfig = [
-    { key: "alertResponse" as const, labelKey: "Alert Response", icon: Bell, color: "bg-blue-500/10", textColor: "text-blue-500" },
-    { key: "redFlagResponse" as const, labelKey: "Red Flag Response", icon: Flag, color: "bg-error/10", textColor: "text-error" },
-    { key: "deliveryTime" as const, labelKey: "Time Delivery", icon: Zap, color: "bg-success/10", textColor: "text-success" },
-    { key: "commentsResponse" as const, labelKey: "Comments Response", icon: MessageCircle, color: "bg-purple-500/10", textColor: "text-purple-500" },
-    { key: "rejectionRate" as const, labelKey: "Not Approval (%)", icon: XCircle, color: "bg-warning/10", textColor: "text-warning" },
+    { key: "alertResponse", labelKey: "Alert Response", icon: Bell, textColor: "text-blue-500" },
+    { key: "redFlagResponse", labelKey: "Red Flag Response", icon: Flag, textColor: "text-error" },
+    { key: "deliveryTime", labelKey: "Time Delivery", icon: Zap, textColor: "text-success" },
+    { key: "commentsResponse", labelKey: "Comments Response", icon: MessageCircle, textColor: "text-purple-500" },
+    { key: "rejectionRate", labelKey: "Not Approval (%)", icon: XCircle, textColor: "text-warning" },
 ];
 
 const getScoreStatus = (score: number): MetricStatus => {
@@ -29,18 +29,53 @@ const AnimNum = ({ value, className }: { value: number; className?: string }) =>
 };
 
 export const DashboardView = () => {
-    const isLoading = usePageLoader();
+    const { activeSprintId } = useSprintStore();
+    return (
+        <DashboardProvider sprintId={activeSprintId}>
+            <DashboardViewInner />
+        </DashboardProvider>
+    );
+};
+
+type FrictionKey = "alertResponse" | "redFlagResponse" | "deliveryTime" | "commentsResponse" | "rejectionRate";
+
+const readNum = (obj: unknown, key: string): number | undefined => {
+    if (!obj || typeof obj !== "object") return undefined;
+    const v = (obj as Record<string, unknown>)[key];
+    return typeof v === "number" ? v : undefined;
+};
+
+const DashboardViewInner = () => {
+    const pageLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
-    const { activeSprintId } = useSprintStore();
-    const allMetrics = getStorageItem<SprintMetricsInterface[]>(storageKeys.metrics) ?? [];
-    const sprintMetrics = allMetrics.find((m) => m.sprintId === activeSprintId);
-    const tasks = (getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? []).filter((t) => t.sprintId === activeSprintId);
-    const blockers = (getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? []).filter((b) => b.sprintId === activeSprintId);
-    const activeBlockers = blockers.filter((b) => b.status === BlockerStatus.Active || b.status === BlockerStatus.Escalated);
-    const topMetrics = sprintMetrics?.metrics.slice(0, 8) ?? [];
+    const { dashboard, healthScore, metrics, isLoading: isFetching } = useDashboard();
 
-    if (isLoading) return <DashboardSkeleton />;
+    if (pageLoading || isFetching) return <DashboardSkeleton />;
+
+    const overallScore = healthScore?.overall_score ?? 0;
+    const subScores = healthScore?.sub_scores ?? {};
+    const frictionScore = (k: FrictionKey): number => {
+        const raw = subScores[k] ?? subScores[k.replace(/([A-Z])/g, "_$1").toLowerCase()];
+        return typeof raw === "number" ? raw : 0;
+    };
+
+    const totalTasks = metrics?.total_tasks ?? 0;
+    const completedTasks = metrics?.completed_tasks ?? 0;
+    const activeBlockersCount = metrics?.active_blockers ?? 0;
+
+    const rawBlockers = Array.isArray(dashboard?.active_blockers) ? dashboard!.active_blockers : [];
+    const activeBlockers = rawBlockers.map((b, i) => {
+        const rec = (b ?? {}) as Record<string, unknown>;
+        return {
+            id: (rec.id as string) ?? `bl-${i}`,
+            title: (rec.title as string) ?? "",
+            durationDays: readNum(b, "duration_days") ?? readNum(b, "durationDays") ?? 0,
+            impact: (rec.impact as string) ?? "medium",
+        };
+    });
+
+    const topMetrics = Array.isArray(dashboard?.top_metrics) ? (dashboard!.top_metrics as Array<Record<string, unknown>>) : [];
 
     return (
         <div>
@@ -57,19 +92,19 @@ export const DashboardView = () => {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center gap-4">
-                        <ScoreGauge score={sprintMetrics?.healthScore ?? 0} size="lg" label={t("Health")} />
-                        <StatusBadge status={getScoreStatus(sprintMetrics?.healthScore ?? 0)} />
+                        <ScoreGauge score={overallScore} size="lg" label={t("Health")} />
+                        <StatusBadge status={getScoreStatus(overallScore)} />
                         <div className="w-full grid grid-cols-3 gap-2 mt-2">
                             <div className="text-center">
-                                <p className="text-2xl font-bold text-text-dark"><AnimNum value={tasks.length} /></p>
+                                <p className="text-2xl font-bold text-text-dark"><AnimNum value={totalTasks} /></p>
                                 <p className="text-xs text-text-muted">{t("Total Tasks")}</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-2xl font-bold text-error"><AnimNum value={activeBlockers.length} /></p>
+                                <p className="text-2xl font-bold text-error"><AnimNum value={activeBlockersCount} /></p>
                                 <p className="text-xs text-text-muted">{t("Active Blockers")}</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-2xl font-bold text-text-dark"><AnimNum value={tasks.filter((tk) => tk.phase === "done").length} /></p>
+                                <p className="text-2xl font-bold text-text-dark"><AnimNum value={completedTasks} /></p>
                                 <p className="text-xs text-text-muted">{t("Completed")}</p>
                             </div>
                         </div>
@@ -79,7 +114,7 @@ export const DashboardView = () => {
                 {/* Friction Areas Grid */}
                 <div className={cn("lg:col-span-2 grid grid-cols-2 stagger-children", compact ? "gap-2" : "gap-3")}>
                     {frictionAreaConfig.map(({ key, labelKey, icon: Icon, textColor }) => {
-                        const score = sprintMetrics?.frictionScores[key] ?? 0;
+                        const score = frictionScore(key as FrictionKey);
                         return (
                             <Card key={key} className="overflow-hidden">
                                 <CardContent className={compact ? "p-3" : "p-4"}>
@@ -102,14 +137,25 @@ export const DashboardView = () => {
             </div>
 
             {/* Performance Metrics Row */}
-            <div className={compact ? "mb-3" : "mb-6"}>
-                <h2 className={cn("font-semibold text-text-dark", compact ? "text-base mb-2" : "text-lg mb-3")}>{t("Performance Metrics")}</h2>
-                <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 stagger-children", compact ? "gap-2" : "gap-3")}>
-                    {topMetrics.map((m) => (
-                        <MetricCard key={m.id} name={m.name} value={m.value} unit={m.unit} status={m.status} trend={m.trend} trendPercent={m.trendPercent} description={m.description} />
-                    ))}
+            {topMetrics.length > 0 && (
+                <div className={compact ? "mb-3" : "mb-6"}>
+                    <h2 className={cn("font-semibold text-text-dark", compact ? "text-base mb-2" : "text-lg mb-3")}>{t("Performance Metrics")}</h2>
+                    <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 stagger-children", compact ? "gap-2" : "gap-3")}>
+                        {topMetrics.map((m, i) => (
+                            <MetricCard
+                                key={(m.id as string) ?? i}
+                                name={(m.name as string) ?? ""}
+                                value={readNum(m, "value") ?? 0}
+                                unit={(m.unit as string) ?? ""}
+                                status={(m.status as MetricStatus) ?? MetricStatus.Healthy}
+                                trend={(m.trend as "up" | "down" | "flat") ?? "flat"}
+                                trendPercent={readNum(m, "trend_percent") ?? readNum(m, "trendPercent") ?? 0}
+                                description={(m.description as string) ?? ""}
+                            />
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Bottom Section: Active Blockers */}
             <Card>

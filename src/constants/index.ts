@@ -12,3 +12,4 @@ export { alertsConstants } from "./alerts";
 export { redFlagsConstants } from "./red-flags";
 export { decisionsConstants } from "./decisions";
 export { commentsConstants } from "./comments";
+export { dashboardConstants } from "./dashboard";

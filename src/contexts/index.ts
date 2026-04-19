@@ -9,3 +9,4 @@ export { AlertsProvider, useAlerts } from "./alerts";
 export { RedFlagsProvider, useRedFlags } from "./red-flags";
 export { DecisionsProvider, useDecisions } from "./decisions";
 export { CommentsProvider, useComments } from "./comments";
+export { DashboardProvider, useDashboard } from "./dashboard";

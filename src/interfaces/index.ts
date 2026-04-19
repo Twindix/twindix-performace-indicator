@@ -16,3 +16,4 @@ export type { UsersListResponseInterface, UserDetailResponseInterface, CreateUse
 export type { TeamInterface, TeamsListResponseInterface, TeamDetailResponseInterface, CreateTeamPayloadInterface, TeamsContextInterface } from "./teams";
 export type { TimeLogInterface, TimeLogsListResponseInterface, TimeLogDetailResponseInterface, TimeLogsSummaryInterface, TimeLogsSummaryResponseInterface, CreateTimeLogPayloadInterface, UpdateTimeLogPayloadInterface } from "./time-logs";
 export type { RequirementItemInterface, RequirementsListResponseInterface, RequirementDetailResponseInterface, CreateRequirementPayloadInterface, UpdateRequirementPayloadInterface } from "./requirements";
+export type { DashboardInterface, HealthScoreInterface, DashboardMetricsInterface, DashboardResponseInterface, HealthScoreResponseInterface, DashboardMetricsResponseInterface, DashboardContextInterface } from "./dashboard";
