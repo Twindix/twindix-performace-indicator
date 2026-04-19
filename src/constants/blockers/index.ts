@@ -9,5 +9,14 @@ export const blockersConstants = {
         escalateFailed: "Failed to escalate blocker.",
         linkTasksFailed: "Failed to link tasks.",
         unlinkTaskFailed: "Failed to unlink task.",
+        genericError: "Something went wrong.",
+    },
+    messages: {
+        createSuccess: "Blocker created successfully.",
+        updateSuccess: "Blocker updated successfully.",
+        resolveSuccess: "Blocker marked as resolved.",
+        escalateSuccess: "Blocker escalated.",
+        linkTasksSuccess: "Tasks linked successfully.",
+        unlinkTaskSuccess: "Task unlinked.",
     },
 };
