@@ -5,7 +5,7 @@ import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
 import { RedFlagsSkeleton } from "@/components/skeletons";
 import { RedFlagsProvider, useRedFlags } from "@/contexts";
-import { t, useAuth, useCreateRedFlag, useDeleteRedFlag, usePageLoader, useUpdateRedFlag } from "@/hooks";
+import { t, useAuth, useCreateRedFlag, useDeleteRedFlag, useGetRedFlag, usePageLoader, useUpdateRedFlag } from "@/hooks";
 import type { RedFlagInterface, RedFlagSeverity, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import {
@@ -50,6 +50,7 @@ const RedFlagsViewInner = () => {
     const { createHandler: createRedFlagHandler } = useCreateRedFlag();
     const { updateHandler: updateRedFlagHandler } = useUpdateRedFlag();
     const { deleteHandler: deleteRedFlagHandler } = useDeleteRedFlag();
+    const { getHandler: getRedFlagHandler, isLoading: isLoadingDetail } = useGetRedFlag();
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
 
     const [addOpen, setAddOpen] = useState(false);
@@ -109,6 +110,15 @@ const RedFlagsViewInner = () => {
         }
     };
 
+    const handleView = async (flag: RedFlagInterface) => {
+        setViewTarget(flag);
+        const fresh = await getRedFlagHandler(flag.id);
+        if (fresh) {
+            patchRedFlagLocal(fresh);
+            setViewTarget(fresh);
+        }
+    };
+
     const handleDelete = async () => {
         if (!deleteTarget) return;
         const ok = await deleteRedFlagHandler(deleteTarget.id);
@@ -147,7 +157,7 @@ const RedFlagsViewInner = () => {
                         const isOwner = user?.id === flag.createdById;
 
                         return (
-                            <Card key={flag.id} className="border-s-4 cursor-pointer hover:shadow-md transition-shadow" style={{ borderLeftColor: `var(--color-${flag.severity === "critical" ? "error" : flag.severity === "high" ? "warning" : flag.severity === "medium" ? "primary" : "muted"})` }} onClick={() => setViewTarget(flag)}>
+                            <Card key={flag.id} className="border-s-4 cursor-pointer hover:shadow-md transition-shadow" style={{ borderLeftColor: `var(--color-${flag.severity === "critical" ? "error" : flag.severity === "high" ? "warning" : flag.severity === "medium" ? "primary" : "muted"})` }} onClick={() => handleView(flag)}>
                                 <CardContent className="p-5">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -218,7 +228,10 @@ const RedFlagsViewInner = () => {
                         const wasEdited = viewTarget.updatedAt !== viewTarget.createdAt;
                         return (
                             <div className="flex flex-col gap-4 py-2">
-                                <Badge variant={cfg.variant} className="w-fit">{t(cfg.label)}</Badge>
+                                <div className="flex items-center gap-2">
+                                    <Badge variant={cfg.variant} className="w-fit">{t(cfg.label)}</Badge>
+                                    {isLoadingDetail && <span className="text-xs text-text-muted">{t("Refreshing...")}</span>}
+                                </div>
 
                                 <div>
                                     <p className="text-xs font-medium text-text-muted mb-1">{t("Description")}</p>
