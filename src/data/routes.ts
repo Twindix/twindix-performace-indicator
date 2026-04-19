@@ -1,6 +1,7 @@
 export const routesData = {
     login: "/login",
     dashboard: "/",
+    teams: "/teams",
     tasks: "/tasks",
     blockers: "/blockers",
     decisions: "/decisions",

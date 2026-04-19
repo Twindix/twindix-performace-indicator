@@ -13,6 +13,7 @@ export { SettingsView } from "./settings";
 export { NotFoundView, ServerErrorView } from "./errors";
 export { UsersView } from "./users/index";
 export { UserDetailView } from "./users/detail";
+export { TeamsView } from "./teams";
 export { CommentsLogView } from "./comments-log";
 export { RedFlagsView } from "./red-flags";
 export { AlertsView } from "./alerts";
