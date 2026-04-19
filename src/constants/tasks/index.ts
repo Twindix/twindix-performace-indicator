@@ -9,5 +9,16 @@ export const tasksConstants = {
         attachmentDeleteFailed: "Failed to delete attachment.",
         tagAddFailed: "Failed to add tag.",
         tagRemoveFailed: "Failed to remove tag.",
+        genericError: "Something went wrong.",
+    },
+    messages: {
+        createSuccess: "Task created successfully.",
+        updateSuccess: "Task updated successfully.",
+        deleteSuccess: "Task deleted successfully.",
+        statusUpdateSuccess: "Task status updated.",
+        attachmentUploadSuccess: "Attachment uploaded.",
+        attachmentDeleteSuccess: "Attachment deleted.",
+        tagAddSuccess: "Tag added.",
+        tagRemoveSuccess: "Tag removed.",
     },
 };
