@@ -4,7 +4,7 @@ import { Flag, Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
 import { RedFlagsSkeleton } from "@/components/skeletons";
-import { RedFlagsProvider, useRedFlags } from "@/contexts";
+import { useRedFlags } from "@/contexts";
 import { t, useAuth, useCreateRedFlag, useDeleteRedFlag, useGetRedFlag, usePageLoader, useUpdateRedFlag } from "@/hooks";
 import type { RedFlagInterface, RedFlagSeverity, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
@@ -34,15 +34,6 @@ const severityConfig: Record<RedFlagSeverity, { label: string; variant: "error" 
 const emptyForm = { title: "", description: "", severity: "high" as RedFlagSeverity };
 
 export const RedFlagsView = () => {
-    const { activeSprintId } = useSprintStore();
-    return (
-        <RedFlagsProvider sprintId={activeSprintId}>
-            <RedFlagsViewInner />
-        </RedFlagsProvider>
-    );
-};
-
-const RedFlagsViewInner = () => {
     const pageLoading = usePageLoader();
     const { user } = useAuth();
     const { activeSprintId } = useSprintStore();
