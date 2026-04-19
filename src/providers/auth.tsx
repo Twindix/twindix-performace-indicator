@@ -3,6 +3,7 @@ import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react
 import { AuthContext } from "@/contexts";
 import { commonData } from "@/data";
 import type { UserInterface } from "@/interfaces";
+import { AUTH_UNAUTHORIZED_EVENT, resetAuthState } from "@/lib/axios";
 import { deleteCookieHandler, getCookieHandler, setCookieHandler } from "@/lib/cookies";
 import { authService } from "@/services";
 
@@ -23,9 +24,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             .finally(() => setIsLoading(false));
     }, []);
 
+    // React to "unauthorized" events raised by the axios interceptor.
+    useEffect(() => {
+        const handleUnauthorized = () => setUser(null);
+        window.addEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
+        return () => window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
+    }, []);
+
     const onLogin = useCallback(async (email: string, password: string): Promise<void> => {
         const response = await authService.loginHandler(email, password);
         setCookieHandler(commonData.token.tokenKey, response.data.token);
+        resetAuthState();
         setUser(response.data.user);
     }, []);
 
