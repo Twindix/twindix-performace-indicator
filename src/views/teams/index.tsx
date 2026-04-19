@@ -4,7 +4,7 @@ import { Plus, Users } from "lucide-react";
 import { Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
 import { TeamsProvider, useTeams } from "@/contexts";
-import { t } from "@/hooks";
+import { t, useCreateTeam } from "@/hooks";
 import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
 } from "@/ui";
@@ -16,18 +16,17 @@ export const TeamsView = () => (
 );
 
 const TeamsViewInner = () => {
-    const { teams, isLoading, createTeam } = useTeams();
+    const { teams, isLoading, patchTeamLocal } = useTeams();
+    const { createHandler, isLoading: isSubmitting } = useCreateTeam();
     const [addOpen, setAddOpen] = useState(false);
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async () => {
         if (!name.trim()) return;
-        setIsSubmitting(true);
-        const res = await createTeam({ name: name.trim(), description: description.trim() || undefined });
-        setIsSubmitting(false);
+        const res = await createHandler({ name: name.trim(), description: description.trim() || undefined });
         if (res) {
+            patchTeamLocal(res);
             setAddOpen(false);
             setName("");
             setDescription("");
