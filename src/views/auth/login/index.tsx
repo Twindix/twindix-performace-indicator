@@ -1,4 +1,5 @@
 import { Activity, Eye, EyeOff, Globe, Moon, Sun } from "lucide-react";
+import { getErrorMessage } from "@/lib/error";
 import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -17,14 +18,19 @@ export const LoginView = () => {
     const navigate = useNavigate();
     const isArabic = settings.language === "ar";
 
-    const handleSubmit = (e: FormEvent) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setError("");
-        const success = onLogin(email, password);
-        if (success) {
+        setIsSubmitting(true);
+        try {
+            await onLogin(email, password);
             navigate(routesData.dashboard);
-        } else {
-            setError(t("Invalid credentials. Please try again."));
+        } catch (err) {
+            setError(getErrorMessage(err));
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -69,7 +75,9 @@ export const LoginView = () => {
 
                     {error && <p className="text-sm text-error font-medium">{error}</p>}
 
-                    <Button type="submit" className="w-full mt-2 h-11 text-base font-semibold">{t("Sign In")}</Button>
+                    <Button type="submit" disabled={isSubmitting} className="w-full mt-2 h-11 text-base font-semibold">
+                        {isSubmitting ? t("Signing in...") : t("Sign In")}
+                    </Button>
                 </form>
 
                 <div className="mt-6 rounded-xl bg-muted p-4">

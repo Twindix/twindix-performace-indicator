@@ -1,29 +1,22 @@
 import { useEffect, useState } from "react";
 
-import { getStorageItem, setStorageItem } from "@/utils";
-
-const PRESENCE_KEY = "twindix_perf_presence";
+import { authConstants } from "@/constants/auth";
+import { authService } from "@/services";
 
 export type PresenceStatus = "active" | "away" | "offline";
 
 export const usePresence = (userId: string | undefined) => {
-    const [status, setStatus] = useState<PresenceStatus>(() => {
-        if (!userId) return "offline";
-        const stored = getStorageItem<Record<string, PresenceStatus>>(PRESENCE_KEY) ?? {};
-        return stored[userId] ?? "offline";
-    });
+    const [status, setStatus] = useState<PresenceStatus>("offline");
 
     const updateStatus = (next: PresenceStatus) => {
         if (!userId) return;
-        const stored = getStorageItem<Record<string, PresenceStatus>>(PRESENCE_KEY) ?? {};
-        stored[userId] = next;
-        setStorageItem(PRESENCE_KEY, stored);
         setStatus(next);
+        authService.updateMeHandler({ status: next }).catch(() => null);
     };
 
     useEffect(() => {
         if (!userId) return;
-        // Mark active on mount
+
         updateStatus("active");
 
         const handleVisibilityChange = () => {
@@ -34,13 +27,17 @@ export const usePresence = (userId: string | undefined) => {
             updateStatus("offline");
         };
 
+        const interval = setInterval(() => {
+            authService.heartbeatHandler().catch(() => null);
+        }, authConstants.heartbeatIntervalMs);
+
         document.addEventListener("visibilitychange", handleVisibilityChange);
         window.addEventListener("beforeunload", handleBeforeUnload);
 
         return () => {
+            clearInterval(interval);
             document.removeEventListener("visibilitychange", handleVisibilityChange);
             window.removeEventListener("beforeunload", handleBeforeUnload);
-            updateStatus("offline");
         };
     }, [userId]);
 
