@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { toast } from "sonner";
 
 import { teamsConstants } from "@/constants/teams";
-import type { CreateTeamPayloadInterface, TeamInterface, TeamsContextInterface } from "@/interfaces";
+import type { TeamInterface, TeamsContextInterface } from "@/interfaces";
 import { getErrorMessage } from "@/lib/error";
 import { teamsService } from "@/services";
 
@@ -26,23 +26,19 @@ export const TeamsProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => { refetch(); }, [refetch]);
 
-    const createTeam = useCallback(async (payload: CreateTeamPayloadInterface): Promise<TeamInterface | null> => {
-        try {
-            const res = await teamsService.createHandler(payload);
-            setTeams((prev) => [...prev, res.data]);
-            return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, teamsConstants.errors.createFailed));
-            return null;
-        }
+    const patchTeamLocal = useCallback((team: TeamInterface) => {
+        setTeams((prev) => {
+            const exists = prev.some((t) => t.id === team.id);
+            return exists ? prev.map((t) => t.id === team.id ? team : t) : [...prev, team];
+        });
     }, []);
 
     const value = useMemo<TeamsContextInterface>(() => ({
         teams,
         isLoading,
         refetch,
-        createTeam,
-    }), [teams, isLoading, refetch, createTeam]);
+        patchTeamLocal,
+    }), [teams, isLoading, refetch, patchTeamLocal]);
 
     return <TeamsContext.Provider value={value}>{children}</TeamsContext.Provider>;
 };

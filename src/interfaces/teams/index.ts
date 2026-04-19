@@ -25,5 +25,5 @@ export interface TeamsContextInterface {
     teams: TeamInterface[];
     isLoading: boolean;
     refetch: () => Promise<void>;
-    createTeam: (payload: CreateTeamPayloadInterface) => Promise<TeamInterface | null>;
+    patchTeamLocal: (team: TeamInterface) => void;
 }
