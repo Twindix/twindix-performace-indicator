@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Flag, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
 import { RedFlagsSkeleton } from "@/components/skeletons";
-import { t, useAuth, usePageLoader } from "@/hooks";
+import { RedFlagsProvider, useRedFlags } from "@/contexts";
+import { t, useAuth, useCreateRedFlag, useDeleteRedFlag, usePageLoader, useUpdateRedFlag } from "@/hooks";
 import type { RedFlagInterface, RedFlagSeverity, UserInterface } from "@/interfaces";
-import { useRedFlagStore, useSprintStore } from "@/store";
+import { useSprintStore } from "@/store";
 import {
     Avatar,
     AvatarFallback,
@@ -33,15 +34,23 @@ const severityConfig: Record<RedFlagSeverity, { label: string; variant: "error" 
 const emptyForm = { title: "", description: "", severity: "high" as RedFlagSeverity };
 
 export const RedFlagsView = () => {
-    const isLoading = usePageLoader();
+    const { activeSprintId } = useSprintStore();
+    return (
+        <RedFlagsProvider sprintId={activeSprintId}>
+            <RedFlagsViewInner />
+        </RedFlagsProvider>
+    );
+};
+
+const RedFlagsViewInner = () => {
+    const pageLoading = usePageLoader();
     const { user } = useAuth();
     const { activeSprintId } = useSprintStore();
-    const { flags, load, add, update, remove } = useRedFlagStore();
+    const { redFlags: sprintFlags, isLoading: isFetching, patchRedFlagLocal, removeRedFlagLocal, refetchCount } = useRedFlags();
+    const { createHandler: createRedFlagHandler } = useCreateRedFlag();
+    const { updateHandler: updateRedFlagHandler } = useUpdateRedFlag();
+    const { deleteHandler: deleteRedFlagHandler } = useDeleteRedFlag();
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
-
-    useEffect(() => { load(); }, [load]);
-
-    const sprintFlags = flags.filter((f) => f.sprintId === activeSprintId);
 
     const [addOpen, setAddOpen] = useState(false);
     const [viewTarget, setViewTarget] = useState<RedFlagInterface | null>(null);
@@ -72,35 +81,45 @@ export const RedFlagsView = () => {
         setEditTarget(flag);
     };
 
-    const handleSubmitAdd = () => {
+    const handleSubmitAdd = async () => {
         if (!validate()) return;
-        const now = new Date().toISOString();
-        add({
-            id: `rf-${Date.now()}`,
+        if (!activeSprintId) return;
+        const res = await createRedFlagHandler(activeSprintId, {
             title: form.title.trim(),
             description: form.description.trim(),
             severity: form.severity,
-            createdById: user?.id ?? "unknown",
-            createdAt: now,
-            updatedAt: now,
-            sprintId: activeSprintId,
         });
-        setAddOpen(false);
+        if (res) {
+            patchRedFlagLocal(res);
+            refetchCount();
+            setAddOpen(false);
+        }
     };
 
-    const handleSubmitEdit = () => {
+    const handleSubmitEdit = async () => {
         if (!validate() || !editTarget) return;
-        update(editTarget.id, { title: form.title.trim(), description: form.description.trim(), severity: form.severity });
-        setEditTarget(null);
+        const res = await updateRedFlagHandler(editTarget.id, {
+            title: form.title.trim(),
+            description: form.description.trim(),
+            severity: form.severity,
+        });
+        if (res) {
+            patchRedFlagLocal(res);
+            setEditTarget(null);
+        }
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!deleteTarget) return;
-        remove(deleteTarget.id);
-        setDeleteTarget(null);
+        const ok = await deleteRedFlagHandler(deleteTarget.id);
+        if (ok) {
+            removeRedFlagLocal(deleteTarget.id);
+            refetchCount();
+            setDeleteTarget(null);
+        }
     };
 
-    if (isLoading) return <RedFlagsSkeleton />;
+    if (pageLoading || isFetching) return <RedFlagsSkeleton />;
 
     return (
         <div>
