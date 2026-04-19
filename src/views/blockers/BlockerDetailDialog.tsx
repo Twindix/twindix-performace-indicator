@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { AlertCircle, Calendar, CheckCircle2, Clock, Edit, Layers, ShieldAlert, User, X } from "lucide-react";
+import { AlertCircle, Calendar, CheckCircle2, Clock, Edit, Layers, Plus, ShieldAlert, TrendingUp, User, X } from "lucide-react";
 
 import { Badge, Button } from "@/atoms";
 import { useBlockers } from "@/contexts";
 import { BlockerImpact, BlockerStatus, BlockerType } from "@/enums";
-import { t, useGetBlocker, useResolveBlocker, useUnlinkBlockerTask } from "@/hooks";
+import { t, useEscalateBlocker, useGetBlocker, useLinkBlockerTasks, useResolveBlocker, useUnlinkBlockerTask } from "@/hooks";
 import type { BlockerInterface, TaskInterface, UserInterface } from "@/interfaces";
 import { tasksService } from "@/services";
 import { Avatar, AvatarFallback, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/ui";
@@ -43,9 +43,13 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
     const { patchBlockerLocal, refetchAnalytics } = useBlockers();
     const { getHandler: getBlockerHandler } = useGetBlocker();
     const { resolveHandler: resolveBlockerHandler, isLoading: isResolving } = useResolveBlocker();
+    const { escalateHandler: escalateBlockerHandler, isLoading: isEscalating } = useEscalateBlocker();
+    const { linkHandler: linkBlockerTasksHandler } = useLinkBlockerTasks();
     const { unlinkHandler: unlinkBlockerTaskHandler } = useUnlinkBlockerTask();
     const [current, setCurrent] = useState<BlockerInterface | null>(blocker);
     const [tasks, setTasks] = useState<TaskInterface[]>([]);
+    const [showLinkUI, setShowLinkUI] = useState(false);
+    const [linkSelection, setLinkSelection] = useState<string[]>([]);
 
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
 
@@ -83,6 +87,26 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
         }
     };
 
+    const handleEscalate = async () => {
+        const res = await escalateBlockerHandler(current.id);
+        if (res) {
+            setCurrent(res);
+            patchBlockerLocal(res);
+            refetchAnalytics();
+        }
+    };
+
+    const handleLinkMore = async () => {
+        if (linkSelection.length === 0) return;
+        const res = await linkBlockerTasksHandler(current.id, linkSelection);
+        if (res) {
+            setCurrent(res);
+            patchBlockerLocal(res);
+            setLinkSelection([]);
+            setShowLinkUI(false);
+        }
+    };
+
     const handleUnlink = async (taskId: string) => {
         const ok = await unlinkBlockerTaskHandler(current.id, taskId);
         if (ok) {
@@ -91,6 +115,8 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
             patchBlockerLocal(next);
         }
     };
+
+    const availableTasks = tasks.filter((t) => !(current.taskIds ?? []).includes(t.id));
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -154,11 +180,18 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
 
                 {/* Linked tasks */}
                 <div className="mt-4 pb-4 border-b border-border">
-                    <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                        <Layers className="h-3.5 w-3.5" />
-                        {t("Linked Tasks")} ({(current.taskIds ?? []).length})
-                    </p>
-                    {(current.taskIds ?? []).length === 0 ? (
+                    <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold text-text-muted uppercase tracking-wide flex items-center gap-1.5">
+                            <Layers className="h-3.5 w-3.5" />
+                            {t("Linked Tasks")} ({(current.taskIds ?? []).length})
+                        </p>
+                        {!showLinkUI && availableTasks.length > 0 && (
+                            <button onClick={() => setShowLinkUI(true)} className="text-xs text-primary hover:text-primary-dark font-medium flex items-center gap-1 cursor-pointer">
+                                <Plus className="h-3 w-3" /> {t("Link Tasks")}
+                            </button>
+                        )}
+                    </div>
+                    {(current.taskIds ?? []).length === 0 && !showLinkUI ? (
                         <p className="text-xs text-text-muted italic">{t("No tasks linked")}</p>
                     ) : (
                         <div className="space-y-1.5">
@@ -179,15 +212,50 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
                             })}
                         </div>
                     )}
+                    {showLinkUI && (
+                        <div className="mt-3 space-y-2">
+                            <div className="max-h-40 overflow-y-auto border border-border rounded-lg p-2 space-y-1 bg-surface">
+                                {availableTasks.map((tk) => {
+                                    const checked = linkSelection.includes(tk.id);
+                                    return (
+                                        <label key={tk.id} className="flex items-center gap-2 cursor-pointer rounded px-2 py-1 hover:bg-muted">
+                                            <input
+                                                type="checkbox"
+                                                checked={checked}
+                                                onChange={(e) => {
+                                                    setLinkSelection((prev) => e.target.checked ? [...prev, tk.id] : prev.filter((i) => i !== tk.id));
+                                                }}
+                                            />
+                                            <span className="text-xs text-text-dark truncate">{tk.title}</span>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button size="sm" onClick={handleLinkMore} disabled={linkSelection.length === 0}>
+                                    {t("Link")} {linkSelection.length > 0 && `(${linkSelection.length})`}
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => { setShowLinkUI(false); setLinkSelection([]); }}>{t("Cancel")}</Button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 mt-4">
                     {current.status !== BlockerStatus.Resolved ? (
-                        <Button onClick={handleResolve} disabled={isResolving} className="gap-1.5">
-                            <CheckCircle2 className={cn("h-4 w-4", isResolving && "animate-spin")} />
-                            {isResolving ? t("Resolving...") : t("Mark as Resolved")}
-                        </Button>
+                        <>
+                            <Button onClick={handleResolve} disabled={isResolving} className="gap-1.5">
+                                <CheckCircle2 className={cn("h-4 w-4", isResolving && "animate-spin")} />
+                                {isResolving ? t("Resolving...") : t("Mark as Resolved")}
+                            </Button>
+                            {current.status !== BlockerStatus.Escalated && (
+                                <Button variant="outline" onClick={handleEscalate} disabled={isEscalating} className="gap-1.5 border-warning text-warning hover:bg-warning-light">
+                                    <TrendingUp className="h-4 w-4" />
+                                    {isEscalating ? t("Escalating...") : t("Escalate")}
+                                </Button>
+                            )}
+                        </>
                     ) : (
                         <div className="flex items-center gap-1.5 text-success">
                             <CheckCircle2 className="h-4 w-4" />
