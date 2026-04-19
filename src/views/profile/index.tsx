@@ -26,13 +26,13 @@ export const ProfileView = () => {
     const { user, onUpdateUser } = useAuth();
     const { updateHandler: updateProfileHandler, isLoading: isSaving } = useUpdateProfile();
     const [isEditingName, setIsEditingName] = useState(false);
-    const [editedName, setEditedName] = useState(user?.name ?? "");
+    const [editedName, setEditedName] = useState(user?.full_name ?? "");
 
     const handleSave = async () => {
         if (!editedName.trim()) return;
         const res = await updateProfileHandler({ full_name: editedName.trim() });
         if (res) {
-            onUpdateUser({ name: res.name });
+            onUpdateUser({ name: res.full_name });
             setIsEditingName(false);
         }
     };
@@ -47,7 +47,7 @@ export const ProfileView = () => {
             <Card className="max-w-2xl">
                 <CardContent className="p-6 flex flex-col items-center text-center">
                     <Avatar className="h-20 w-20 sm:h-24 sm:w-24 mb-4">
-                        <AvatarFallback className="text-2xl font-bold">{user.avatar}</AvatarFallback>
+                        <AvatarFallback className="text-2xl font-bold">{user.avatar_initials}</AvatarFallback>
                     </Avatar>
                     {isEditingName ? (
                         <div className="flex items-center gap-2 mt-1">
@@ -57,19 +57,19 @@ export const ProfileView = () => {
                                 onChange={(e) => setEditedName(e.target.value)}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter") handleSave();
-                                    else if (e.key === "Escape") { setEditedName(user.name); setIsEditingName(false); }
+                                    else if (e.key === "Escape") { setEditedName(user.full_name); setIsEditingName(false); }
                                 }}
                                 className="text-xl font-bold text-center h-9"
                             />
                             <Button size="sm" onClick={handleSave} disabled={isSaving || !editedName.trim()}>
                                 {isSaving ? t("Saving...") : t("Save")}
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => { setEditedName(user.name); setIsEditingName(false); }}>{t("Cancel")}</Button>
+                            <Button size="sm" variant="outline" onClick={() => { setEditedName(user.full_name); setIsEditingName(false); }}>{t("Cancel")}</Button>
                         </div>
                     ) : (
                         <div className="flex items-center gap-2">
-                            <h2 className="text-xl font-bold text-text-dark">{user.name}</h2>
-                            <button onClick={() => { setEditedName(user.name); setIsEditingName(true); }} className="text-text-muted hover:text-text-dark transition-colors cursor-pointer" aria-label="Edit name">
+                            <h2 className="text-xl font-bold text-text-dark">{user.full_name}</h2>
+                            <button onClick={() => { setEditedName(user.full_name); setIsEditingName(true); }} className="text-text-muted hover:text-text-dark transition-colors cursor-pointer" aria-label="Edit name">
                                 <Pencil className="h-4 w-4" />
                             </button>
                         </div>

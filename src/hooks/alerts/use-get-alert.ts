@@ -42,7 +42,7 @@ export const useGetAlert = () => {
         setIsLoading(true);
         try {
             const res = await alertsService.countHandler(sprintId);
-            return res.data;
+            return res;
         } catch (err) {
             toast.error(getErrorMessage(err, alertsConstants.errors.countFailed));
             return null;

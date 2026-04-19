@@ -144,7 +144,7 @@ const DashboardViewInner = () => {
                         {topMetrics.map((m, i) => (
                             <MetricCard
                                 key={(m.id as string) ?? i}
-                                name={(m.name as string) ?? ""}
+                                name={(m.full_name as string) ?? ""}
                                 value={readNum(m, "value") ?? 0}
                                 unit={(m.unit as string) ?? ""}
                                 status={(m.status as MetricStatus) ?? MetricStatus.Healthy}

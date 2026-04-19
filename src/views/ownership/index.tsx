@@ -122,18 +122,18 @@ export const OwnershipView = () => {
                                             <td className={cn("px-3", compact ? "py-1.5" : "py-3")}>
                                                 <div className="flex items-center gap-2">
                                                     <Avatar className="h-6 w-6">
-                                                        <AvatarFallback className="text-[8px]">{owner?.avatar}</AvatarFallback>
+                                                        <AvatarFallback className="text-[8px]">{owner?.avatar_initials}</AvatarFallback>
                                                     </Avatar>
-                                                    <span className="text-text-secondary">{owner?.name ?? "Unknown"}</span>
+                                                    <span className="text-text-secondary">{owner?.full_name ?? "Unknown"}</span>
                                                 </div>
                                             </td>
                                             <td className={cn("px-3", compact ? "py-1.5" : "py-3")}>
                                                 {backup ? (
                                                     <div className="flex items-center gap-2">
                                                         <Avatar className="h-6 w-6">
-                                                            <AvatarFallback className="text-[8px]">{backup.avatar}</AvatarFallback>
+                                                            <AvatarFallback className="text-[8px]">{backup.avatar_initials}</AvatarFallback>
                                                         </Avatar>
-                                                        <span className="text-text-secondary">{backup.name}</span>
+                                                        <span className="text-text-secondary">{backup.full_name}</span>
                                                     </div>
                                                 ) : (
                                                     <span className="text-text-muted text-xs">{t("None")}</span>
@@ -179,13 +179,13 @@ export const OwnershipView = () => {
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2 text-xs text-text-secondary mb-1">
-                                        <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{owner?.avatar}</AvatarFallback></Avatar>
-                                        <span>{owner?.name ?? "Unknown"}</span>
+                                        <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{owner?.avatar_initials}</AvatarFallback></Avatar>
+                                        <span>{owner?.full_name ?? "Unknown"}</span>
                                         {backup && (
                                             <>
                                                 <span className="text-text-muted">/</span>
-                                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{backup.avatar}</AvatarFallback></Avatar>
-                                                <span>{backup.name}</span>
+                                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{backup.avatar_initials}</AvatarFallback></Avatar>
+                                                <span>{backup.full_name}</span>
                                             </>
                                         )}
                                     </div>
@@ -228,18 +228,18 @@ export const OwnershipView = () => {
                                                 <div className="flex items-center gap-3 mt-2">
                                                     <div className="flex items-center gap-1.5">
                                                         <Avatar className="h-5 w-5">
-                                                            <AvatarFallback className="text-[7px]">{owner?.avatar}</AvatarFallback>
+                                                            <AvatarFallback className="text-[7px]">{owner?.avatar_initials}</AvatarFallback>
                                                         </Avatar>
-                                                        <span className="text-xs text-text-secondary">{owner?.name ?? "Unknown"}</span>
+                                                        <span className="text-xs text-text-secondary">{owner?.full_name ?? "Unknown"}</span>
                                                     </div>
                                                     {backup && (
                                                         <>
                                                             <span className="text-xs text-text-muted">/</span>
                                                             <div className="flex items-center gap-1.5">
                                                                 <Avatar className="h-5 w-5">
-                                                                    <AvatarFallback className="text-[7px]">{backup.avatar}</AvatarFallback>
+                                                                    <AvatarFallback className="text-[7px]">{backup.avatar_initials}</AvatarFallback>
                                                                 </Avatar>
-                                                                <span className="text-xs text-text-secondary">{backup.name}</span>
+                                                                <span className="text-xs text-text-secondary">{backup.full_name}</span>
                                                             </div>
                                                         </>
                                                     )}

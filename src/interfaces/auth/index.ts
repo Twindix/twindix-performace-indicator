@@ -1,12 +1,8 @@
 import type { UserInterface } from "@/interfaces/common";
 
 export interface LoginResponseInterface {
-    data: {
-        token: string;
-        user: UserInterface;
-    };
-    isSuccess: boolean;
-    message: string;
+    token: string;
+    user: UserInterface;
 }
 
 export interface MeResponseInterface {

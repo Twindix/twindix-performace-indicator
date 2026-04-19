@@ -251,9 +251,9 @@ export const AddTaskDialog = ({ open, onOpenChange, members }: AddTaskDialogProp
                                                 className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5 text-sm"
                                             >
                                                 <span className="text-xs font-medium bg-primary rounded-full h-5 w-5 flex items-center justify-center text-primary-foreground">
-                                                    {member.avatar}
+                                                    {member.avatar_initials}
                                                 </span>
-                                                <span>{member.name}</span>
+                                                <span>{member.full_name}</span>
                                                 <button
                                                     type="button"
                                                     onClick={() =>
@@ -288,9 +288,9 @@ export const AddTaskDialog = ({ open, onOpenChange, members }: AddTaskDialogProp
                                                 <SelectItem key={member.id} value={member.id}>
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-xs font-medium bg-muted rounded-full h-5 w-5 flex items-center justify-center">
-                                                            {member.avatar}
+                                                            {member.avatar_initials}
                                                         </span>
-                                                        <span>{member.name}</span>
+                                                        <span>{member.full_name}</span>
                                                         <span className="text-xs text-text-muted">({member.role})</span>
                                                     </div>
                                                 </SelectItem>

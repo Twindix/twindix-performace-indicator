@@ -30,7 +30,7 @@ export const BlockersProvider = ({ sprintId, children }: { sprintId: string | nu
         if (!sprintId) { setAnalytics(null); return; }
         try {
             const res = await blockersService.analyticsHandler(sprintId);
-            setAnalytics(res.data);
+            setAnalytics(res);
         } catch (err) {
             toast.error(getErrorMessage(err, blockersConstants.errors.analyticsFailed));
         }

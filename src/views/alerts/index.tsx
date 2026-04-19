@@ -232,7 +232,7 @@ export const AlertsView = () => {
                                                             : prev.mentioned_user_ids.filter((i) => i !== m.id),
                                                     }));
                                                 }} />
-                                                <span className="text-xs">{m.name}</span>
+                                                <span className="text-xs">{m.full_name}</span>
                                             </label>
                                         );
                                     })}

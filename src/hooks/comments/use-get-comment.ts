@@ -42,7 +42,7 @@ export const useGetComment = () => {
         setIsLoading(true);
         try {
             const res = await commentsService.analyticsHandler(sprintId);
-            return res.data;
+            return res;
         } catch (err) {
             toast.error(getErrorMessage(err, commentsConstants.errors.analyticsFailed));
             return null;

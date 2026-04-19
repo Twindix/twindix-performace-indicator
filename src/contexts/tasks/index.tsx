@@ -29,7 +29,7 @@ export const TasksProvider = ({ sprintId, children }: { sprintId: string | null 
         if (!sprintId) return;
         try {
             const res = await tasksService.kanbanHandler(sprintId);
-            setKanban(res.data);
+            setKanban(res);
         } catch (err) {
             toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
         }
@@ -39,7 +39,7 @@ export const TasksProvider = ({ sprintId, children }: { sprintId: string | null 
         if (!sprintId) return;
         try {
             const res = await tasksService.pipelineHandler(sprintId);
-            setPipeline(res.data);
+            setPipeline(Object.values(res).flat());
         } catch (err) {
             toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
         }
@@ -49,7 +49,7 @@ export const TasksProvider = ({ sprintId, children }: { sprintId: string | null 
         if (!sprintId) return;
         try {
             const res = await tasksService.pipelineCountsHandler(sprintId);
-            setPipelineCounts(res.data);
+            setPipelineCounts(res);
         } catch (err) {
             toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
         }
@@ -59,7 +59,7 @@ export const TasksProvider = ({ sprintId, children }: { sprintId: string | null 
         if (!sprintId) return;
         try {
             const res = await tasksService.statsHandler(sprintId);
-            setStats(res.data);
+            setStats(res);
         } catch (err) {
             toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
         }

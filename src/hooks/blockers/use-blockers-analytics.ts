@@ -14,7 +14,7 @@ export const useBlockersAnalytics = () => {
         setIsLoading(true);
         try {
             const res = await blockersService.analyticsHandler(sprintId);
-            return res.data;
+            return res;
         } catch (err) {
             toast.error(getErrorMessage(err, blockersConstants.errors.analyticsFailed));
             return null;

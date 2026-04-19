@@ -14,7 +14,7 @@ export const useGetDashboard = () => {
         setIsLoading(true);
         try {
             const res = await dashboardService.fullHandler(sprintId);
-            return res.data;
+            return res;
         } catch (err) {
             toast.error(getErrorMessage(err, dashboardConstants.errors.fetchFailed));
             return null;
@@ -28,7 +28,7 @@ export const useGetDashboard = () => {
         setIsLoading(true);
         try {
             const res = await dashboardService.healthScoreHandler(sprintId);
-            return res.data;
+            return res;
         } catch (err) {
             toast.error(getErrorMessage(err, dashboardConstants.errors.healthScoreFailed));
             return null;
@@ -42,7 +42,7 @@ export const useGetDashboard = () => {
         setIsLoading(true);
         try {
             const res = await dashboardService.metricsHandler(sprintId);
-            return res.data;
+            return res;
         } catch (err) {
             toast.error(getErrorMessage(err, dashboardConstants.errors.metricsFailed));
             return null;

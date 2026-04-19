@@ -66,12 +66,12 @@ const UsersViewInner = () => {
 
     const openEdit = (user: UserInterface) => {
         setForm({
-            name: user.name,
+            name: user.full_name,
             email: user.email,
             password: "",
             role: user.role,
             team: user.team,
-            avatar: user.avatar ?? "",
+            avatar: user.avatar_initials ?? "",
         });
         setErrors({});
         setEditTarget(user);
@@ -141,12 +141,12 @@ const UsersViewInner = () => {
                                 <CardContent className="p-4">
                                     <div className="flex items-center gap-4">
                                         <Avatar className="h-10 w-10 shrink-0">
-                                            <AvatarFallback className="text-sm font-semibold">{member.avatar}</AvatarFallback>
+                                            <AvatarFallback className="text-sm font-semibold">{member.avatar_initials}</AvatarFallback>
                                         </Avatar>
 
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <p className="text-sm font-semibold text-text-dark">{member.name}</p>
+                                                <p className="text-sm font-semibold text-text-dark">{member.full_name}</p>
                                                 <Badge variant="outline" className="text-xs">{ROLE_LABELS[member.role] ?? member.role}</Badge>
                                                 <Badge variant="secondary" className="text-xs">{member.team}</Badge>
                                                 {isInactive && <Badge variant="error" className="text-xs">{t("Inactive")}</Badge>}
@@ -271,7 +271,7 @@ const UsersViewInner = () => {
                 <DialogContent className="max-w-sm">
                     <DialogHeader><DialogTitle className="text-error">{t("Deactivate User")}</DialogTitle></DialogHeader>
                     <p className="text-sm text-text-secondary py-2">
-                        {t("Are you sure you want to deactivate")} <span className="font-semibold text-text-dark">{deleteTarget?.name}</span>? {t("They will lose access.")}
+                        {t("Are you sure you want to deactivate")} <span className="font-semibold text-text-dark">{deleteTarget?.full_name}</span>? {t("They will lose access.")}
                     </p>
                     <div className="flex justify-end gap-2">
                         <Button variant="outline" onClick={() => setDeleteTarget(null)}>{t("Cancel")}</Button>

@@ -42,7 +42,7 @@ export const useGetRedFlag = () => {
         setIsLoading(true);
         try {
             const res = await redFlagsService.countHandler(sprintId);
-            return res.data;
+            return res;
         } catch (err) {
             toast.error(getErrorMessage(err, redFlagsConstants.errors.countFailed));
             return null;

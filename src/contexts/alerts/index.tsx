@@ -30,7 +30,7 @@ export const AlertsProvider = ({ sprintId, children }: { sprintId: string | null
         if (!sprintId) { setCount(0); return; }
         try {
             const res = await alertsService.countHandler(sprintId);
-            setCount(res.data.count);
+            setCount(res.count);
         } catch (err) {
             toast.error(getErrorMessage(err, alertsConstants.errors.countFailed));
         }

@@ -19,9 +19,9 @@ export const DashboardProvider = ({ sprintId, children }: { sprintId: string | n
         setIsLoading(true);
         try {
             const res = await dashboardService.fullHandler(sprintId);
-            setDashboard(res.data);
-            if (res.data.health_score) setHealthScore(res.data.health_score);
-            if (res.data.metrics) setMetrics(res.data.metrics);
+            setDashboard(res);
+            if (res.health_score) setHealthScore(res.health_score);
+            if (res.metrics) setMetrics(res.metrics);
         } catch (err) {
             toast.error(getErrorMessage(err, dashboardConstants.errors.fetchFailed));
         } finally {
@@ -33,7 +33,7 @@ export const DashboardProvider = ({ sprintId, children }: { sprintId: string | n
         if (!sprintId) return;
         try {
             const res = await dashboardService.healthScoreHandler(sprintId);
-            setHealthScore(res.data);
+            setHealthScore(res);
         } catch (err) {
             toast.error(getErrorMessage(err, dashboardConstants.errors.healthScoreFailed));
         }
@@ -43,7 +43,7 @@ export const DashboardProvider = ({ sprintId, children }: { sprintId: string | n
         if (!sprintId) return;
         try {
             const res = await dashboardService.metricsHandler(sprintId);
-            setMetrics(res.data);
+            setMetrics(res);
         } catch (err) {
             toast.error(getErrorMessage(err, dashboardConstants.errors.metricsFailed));
         }

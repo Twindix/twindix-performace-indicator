@@ -20,7 +20,7 @@ export const SprintsProvider = ({ children }: { children: ReactNode }) => {
             setSprints(res.data);
             res.data.forEach((s) => {
                 sprintsService.summaryHandler(s.id)
-                    .then((r) => setSummaries((prev) => ({ ...prev, [s.id]: r.data })))
+                    .then((r) => setSummaries((prev) => ({ ...prev, [s.id]: r })))
                     .catch(() => null);
             });
         } catch (err) {

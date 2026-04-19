@@ -14,7 +14,7 @@ export const useTaskViews = () => {
         setIsLoading(true);
         try {
             const res = await tasksService.kanbanHandler(sprintId);
-            return res.data;
+            return res;
         } catch (err) {
             toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
             return null;
@@ -28,7 +28,7 @@ export const useTaskViews = () => {
         setIsLoading(true);
         try {
             const res = await tasksService.pipelineHandler(sprintId);
-            return res.data;
+            return Object.values(res).flat();
         } catch (err) {
             toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
             return null;
@@ -42,7 +42,7 @@ export const useTaskViews = () => {
         setIsLoading(true);
         try {
             const res = await tasksService.pipelineCountsHandler(sprintId);
-            return res.data;
+            return res;
         } catch (err) {
             toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
             return null;
@@ -56,7 +56,7 @@ export const useTaskViews = () => {
         setIsLoading(true);
         try {
             const res = await tasksService.statsHandler(sprintId);
-            return res.data;
+            return res;
         } catch (err) {
             toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
             return null;

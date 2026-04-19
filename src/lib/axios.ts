@@ -50,12 +50,12 @@ const refreshToken = async (): Promise<string | null> => {
     if (unauthorized) return null;
     if (refreshPromise) return refreshPromise;
     refreshPromise = axios
-        .post<{ data: { token: string } }>(`${apisData.baseUrl}${apisData.auth.refresh}`, {}, {
+        .post<{ token: string }>(`${apisData.baseUrl}${apisData.auth.refresh}`, {}, {
             headers: { "Accept": "application/json" },
             withCredentials: true,
         })
         .then((res) => {
-            const token = res.data?.data?.token ?? null;
+            const token = res.data?.token ?? null;
             if (token) setCookieHandler(commonData.token.tokenKey, token);
             return token;
         })

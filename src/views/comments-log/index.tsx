@@ -177,7 +177,7 @@ const CommentsLogViewInner = () => {
                                                         : prev.mentioned_user_ids.filter((i) => i !== m.id),
                                                 }));
                                             }} />
-                                            <span className="text-xs">{m.name}</span>
+                                            <span className="text-xs">{m.full_name}</span>
                                         </label>
                                     );
                                 })}
@@ -267,7 +267,7 @@ const CommentsLogViewInner = () => {
                             <SelectContent>
                                 <SelectItem value="all">{t("All Mentions")}</SelectItem>
                                 {members.map((m) => (
-                                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                                    <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>

@@ -30,7 +30,7 @@ export const RedFlagsProvider = ({ sprintId, children }: { sprintId: string | nu
         if (!sprintId) { setCount(0); return; }
         try {
             const res = await redFlagsService.countHandler(sprintId);
-            setCount(res.data.count);
+            setCount(res.count);
         } catch (err) {
             toast.error(getErrorMessage(err, redFlagsConstants.errors.countFailed));
         }

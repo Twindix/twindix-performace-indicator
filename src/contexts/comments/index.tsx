@@ -30,7 +30,7 @@ export const CommentsProvider = ({ sprintId, children }: { sprintId: string | nu
         if (!sprintId) { setAnalytics(null); return; }
         try {
             const res = await commentsService.analyticsHandler(sprintId);
-            setAnalytics(res.data);
+            setAnalytics(res);
         } catch (err) {
             toast.error(getErrorMessage(err, commentsConstants.errors.analyticsFailed));
         }

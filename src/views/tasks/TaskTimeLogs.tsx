@@ -116,11 +116,11 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
                         return (
                             <div key={log.id} className="flex gap-2.5 items-start p-2.5 rounded-lg bg-muted group">
                                 <Avatar className="h-6 w-6 shrink-0 mt-0.5">
-                                    <AvatarFallback className="text-[8px]">{author?.avatar ?? "?"}</AvatarFallback>
+                                    <AvatarFallback className="text-[8px]">{author?.avatar_initials ?? "?"}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between gap-2">
-                                        <span className="text-xs font-medium text-text-dark">{author?.name ?? t("Unknown")}</span>
+                                        <span className="text-xs font-medium text-text-dark">{author?.full_name ?? t("Unknown")}</span>
                                         <span className="text-[10px] text-text-muted">{log.date}</span>
                                     </div>
                                     {isEditing ? (

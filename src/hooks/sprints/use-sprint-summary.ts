@@ -14,7 +14,7 @@ export const useSprintSummary = () => {
         setIsLoading(true);
         try {
             const res = await sprintsService.summaryHandler(id);
-            return res.data;
+            return res;
         } catch (err) {
             toast.error(getErrorMessage(err, sprintsConstants.errors.summaryFailed));
             return null;

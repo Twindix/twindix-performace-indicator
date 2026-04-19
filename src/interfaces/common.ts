@@ -8,11 +8,11 @@ export interface ApiSuccessResponse<T> {
 
 export interface UserInterface {
     id: string;
-    name: string;
+    full_name: string;
     email: string;
     role: UserRole;
-    avatar: string;
-    team: string;
+    avatar_initials: string;
+    team?: string;
     status?: string;
 }
 

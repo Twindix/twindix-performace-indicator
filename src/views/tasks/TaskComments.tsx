@@ -27,7 +27,7 @@ export const TaskComments = ({ task, currentUserId, members, onUpdateComments }:
     const getMember = (id: string) => members.find((m) => m.id === id);
 
     const mentionSuggestions = members.filter(
-        (m) => mentionQuery.length > 0 && m.name.toLowerCase().includes(mentionQuery.toLowerCase())
+        (m) => mentionQuery.length > 0 && m.full_name.toLowerCase().includes(mentionQuery.toLowerCase())
     );
 
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -44,7 +44,7 @@ export const TaskComments = ({ task, currentUserId, members, onUpdateComments }:
 
     const pickMention = (m: UserInterface) => {
         const atIdx = commentText.lastIndexOf("@");
-        setCommentText(commentText.slice(0, atIdx) + `@${m.name} `);
+        setCommentText(commentText.slice(0, atIdx) + `@${m.full_name} `);
         setShowMentions(false);
         textareaRef.current?.focus();
     };
@@ -107,11 +107,11 @@ export const TaskComments = ({ task, currentUserId, members, onUpdateComments }:
                         return (
                             <div key={c.id} className="flex gap-2.5 group">
                                 <Avatar className="h-7 w-7 shrink-0 mt-0.5">
-                                    <AvatarFallback className="text-[9px]">{author?.avatar ?? "?"}</AvatarFallback>
+                                    <AvatarFallback className="text-[9px]">{author?.avatar_initials ?? "?"}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-xs font-semibold text-text-dark">{author?.name ?? t("Unknown")}</span>
+                                        <span className="text-xs font-semibold text-text-dark">{author?.full_name ?? t("Unknown")}</span>
                                         <span className="text-[10px] text-text-muted ms-auto">
                                             {new Date(c.createdAt).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                                             {c.updatedAt && <span className="ms-1 italic opacity-60">({t("edited")})</span>}
@@ -175,9 +175,9 @@ export const TaskComments = ({ task, currentUserId, members, onUpdateComments }:
                     <div className="absolute bottom-full mb-1 start-0 w-full max-h-40 overflow-y-auto rounded-xl border border-border bg-surface shadow-lg z-50">
                         {mentionSuggestions.map((m) => (
                             <button key={m.id} onMouseDown={(e) => { e.preventDefault(); pickMention(m); }} className="flex items-center gap-2 w-full px-3 py-2 hover:bg-accent text-left transition-colors cursor-pointer">
-                                <Avatar className="h-6 w-6 shrink-0"><AvatarFallback className="text-[9px]">{m.avatar}</AvatarFallback></Avatar>
+                                <Avatar className="h-6 w-6 shrink-0"><AvatarFallback className="text-[9px]">{m.avatar_initials}</AvatarFallback></Avatar>
                                 <div>
-                                    <p className="text-xs font-medium text-text-dark">{m.name}</p>
+                                    <p className="text-xs font-medium text-text-dark">{m.full_name}</p>
                                     <p className="text-[10px] text-text-muted flex items-center gap-1"><AtSign className="h-2.5 w-2.5" />{m.team}</p>
                                 </div>
                             </button>

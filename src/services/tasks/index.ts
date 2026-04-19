@@ -14,8 +14,8 @@ export const tasksService = {
     },
 
     pipelineCountsHandler: async (sprintId: string): Promise<TaskPipelineCountsResponseInterface> => {
-        const { data } = await apiClient.get<TaskPipelineCountsResponseInterface>(apisData.tasks.pipelineCounts(sprintId));
-        return data;
+        const { data } = await apiClient.get<TaskPipelineResponseInterface>(apisData.tasks.pipeline(sprintId));
+        return Object.fromEntries(Object.entries(data).map(([key, tasks]) => [key, tasks.length]));
     },
 
     statsHandler: async (sprintId: string): Promise<TaskStatsResponseInterface> => {

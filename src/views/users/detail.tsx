@@ -53,16 +53,16 @@ export const UserDetailView = () => {
                 </Button>
             </div>
 
-            <Header title={user.name} description={t("User details")} />
+            <Header title={user.full_name} description={t("User details")} />
 
             <Card>
                 <CardContent className="p-6">
                     <div className="flex items-start gap-4">
                         <Avatar className="h-16 w-16 shrink-0">
-                            <AvatarFallback className="text-xl font-semibold">{user.avatar}</AvatarFallback>
+                            <AvatarFallback className="text-xl font-semibold">{user.avatar_initials}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                            <h2 className="text-xl font-semibold text-text-dark">{user.name}</h2>
+                            <h2 className="text-xl font-semibold text-text-dark">{user.full_name}</h2>
                             <div className="flex items-center gap-2 flex-wrap mt-2">
                                 <Badge variant="outline" className="gap-1"><Shield className="h-3 w-3" />{ROLE_LABELS[user.role] ?? user.role}</Badge>
                                 <Badge variant="secondary" className="gap-1"><Users className="h-3 w-3" />{user.team}</Badge>
