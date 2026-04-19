@@ -154,3 +154,14 @@ export interface AddTaskDialogProps {
     sprintId: string;
     onAddTask: (task: TaskInterface) => void;
 }
+
+export interface TasksContextInterface {
+    tasks: TaskInterface[];
+    isLoading: boolean;
+    createTask: (payload: CreateTaskPayloadInterface) => Promise<TaskInterface | null>;
+    updateTask: (id: string, payload: UpdateTaskPayloadInterface) => Promise<TaskInterface | null>;
+    fetchTaskDetail: (id: string) => Promise<TaskInterface | null>;
+    uploadAttachment: (taskId: string, file: File) => Promise<TaskInterface | null>;
+    removeAttachment: (taskId: string, attachmentId: string) => Promise<void>;
+    patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
+}
