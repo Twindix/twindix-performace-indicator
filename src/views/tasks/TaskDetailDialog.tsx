@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Activity, AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Circle, ClipboardList, Layers, ListChecks, Plus, Tag, Trash2, User, X } from "lucide-react";
+import { Activity, AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Circle, ClipboardList, Layers, ListChecks, Pencil, Plus, Tag, Trash2, User, X } from "lucide-react";
 
 import { Badge, Button, Input } from "@/atoms";
 import { useTasks } from "@/contexts";
 import { BlockerStatus, TaskStatus } from "@/enums";
-import { t, useCreateRequirement, useDeleteRequirement, useDeleteTask, useGetRequirement, useTaskTags, useToggleRequirement, useUpdateTaskStatus } from "@/hooks";
+import { t, useCreateRequirement, useDeleteRequirement, useDeleteTask, useGetRequirement, useTaskTags, useToggleRequirement, useUpdateRequirement, useUpdateTaskStatus } from "@/hooks";
 import type { TaskPhase } from "@/enums";
 import type { TaskInterface, TaskCommentInterface, UserInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
 import {
@@ -49,7 +49,10 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
     const { getAllHandler: getRequirementsHandler } = useGetRequirement();
     const { createHandler: createRequirementHandler } = useCreateRequirement();
     const { toggleHandler: toggleRequirementHandler } = useToggleRequirement();
+    const { updateHandler: updateRequirementHandler } = useUpdateRequirement();
     const { deleteHandler: deleteRequirementHandler } = useDeleteRequirement();
+    const [editingReqId, setEditingReqId] = useState<string | null>(null);
+    const [editingReqLabel, setEditingReqLabel] = useState("");
     const [tagInput, setTagInput] = useState("");
     const [showTagInput, setShowTagInput] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
@@ -282,33 +285,71 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                     <div className="space-y-2">
                         {(task.requirements ?? []).map((req) => (
                             <div key={req.id} className={cn("flex items-center gap-3 rounded-lg px-3 py-2 group", req.met ? "bg-success-light/50" : "bg-error-light/50")}>
-                                <button
-                                    type="button"
-                                    onClick={async () => {
-                                        const res = await toggleRequirementHandler(req.id);
-                                        if (res) {
-                                            const updated = (task.requirements ?? []).map((r) => r.id === req.id ? { ...r, met: res.met } : r);
-                                            patchTaskLocal(task.id, { requirements: updated });
-                                        }
-                                    }}
-                                    className="flex items-center gap-3 flex-1 text-start cursor-pointer hover:opacity-80"
-                                >
-                                    {req.met
-                                        ? <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                                        : <AlertCircle className="h-4 w-4 text-error shrink-0" />}
-                                    <span className={cn("text-sm", req.met ? "text-text-dark" : "text-error font-medium")}>
-                                        {req.label}
-                                    </span>
-                                </button>
-                                <button
-                                    onClick={async () => {
-                                        const ok = await deleteRequirementHandler(req.id);
-                                        if (ok) patchTaskLocal(task.id, { requirements: (task.requirements ?? []).filter((r) => r.id !== req.id) });
-                                    }}
-                                    className="text-text-muted hover:text-error opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                                >
-                                    <X className="h-3 w-3" />
-                                </button>
+                                {editingReqId === req.id ? (
+                                    <>
+                                        {req.met
+                                            ? <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                                            : <AlertCircle className="h-4 w-4 text-error shrink-0" />}
+                                        <Input
+                                            autoFocus
+                                            value={editingReqLabel}
+                                            onChange={(e) => setEditingReqLabel(e.target.value)}
+                                            onKeyDown={async (e) => {
+                                                if (e.key === "Enter") {
+                                                    const v = editingReqLabel.trim();
+                                                    if (!v) return;
+                                                    const res = await updateRequirementHandler(req.id, { label: v });
+                                                    if (res) {
+                                                        const updated = (task.requirements ?? []).map((r) => r.id === req.id ? { ...r, label: res.label } : r);
+                                                        patchTaskLocal(task.id, { requirements: updated });
+                                                        setEditingReqId(null);
+                                                    }
+                                                } else if (e.key === "Escape") {
+                                                    setEditingReqId(null);
+                                                }
+                                            }}
+                                            className="h-7 text-sm flex-1"
+                                        />
+                                        <Button size="sm" variant="ghost" onClick={() => setEditingReqId(null)} className="h-7 px-2 text-xs">{t("Cancel")}</Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                const res = await toggleRequirementHandler(req.id);
+                                                if (res) {
+                                                    const updated = (task.requirements ?? []).map((r) => r.id === req.id ? { ...r, met: res.met } : r);
+                                                    patchTaskLocal(task.id, { requirements: updated });
+                                                }
+                                            }}
+                                            className="flex items-center gap-3 flex-1 text-start cursor-pointer hover:opacity-80"
+                                        >
+                                            {req.met
+                                                ? <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                                                : <AlertCircle className="h-4 w-4 text-error shrink-0" />}
+                                            <span className={cn("text-sm", req.met ? "text-text-dark" : "text-error font-medium")}>
+                                                {req.label}
+                                            </span>
+                                        </button>
+                                        <button
+                                            onClick={() => { setEditingReqId(req.id); setEditingReqLabel(req.label); }}
+                                            className="text-text-muted hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                            aria-label={t("Edit")}
+                                        >
+                                            <Pencil className="h-3 w-3" />
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                const ok = await deleteRequirementHandler(req.id);
+                                                if (ok) patchTaskLocal(task.id, { requirements: (task.requirements ?? []).filter((r) => r.id !== req.id) });
+                                            }}
+                                            className="text-text-muted hover:text-error opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         ))}
                         {showReqInput && (
