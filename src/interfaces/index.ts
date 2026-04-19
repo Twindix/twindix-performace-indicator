@@ -1,5 +1,6 @@
-export type { UserInterface, SprintInterface, ThemeContextInterface, ApiSuccessResponse } from "./common";
+export type { UserInterface, ThemeContextInterface, ApiSuccessResponse } from "./common";
 export type { AuthContextInterface, LoginResponseInterface, MeResponseInterface } from "./auth";
+export type { SprintInterface, SprintSummaryInterface, SprintListResponseInterface, SprintDetailResponseInterface, SprintSummaryResponseInterface, CreateSprintPayloadInterface, UpdateSprintPayloadInterface, SprintsContextInterface } from "./sprints";
 export type { TaskInterface, ReadinessChecklistInterface, TaskAttachmentInterface, TaskCommentInterface, TaskTimeLogInterface, RequirementInterface } from "./tasks";
 export type { BlockerInterface } from "./blockers";
 export type { DecisionInterface } from "./decisions";
