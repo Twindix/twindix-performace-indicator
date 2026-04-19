@@ -73,12 +73,7 @@ export interface BlockersContextInterface {
     analytics: BlockersAnalyticsInterface | null;
     isLoading: boolean;
     refetch: (filters?: BlockersListFiltersInterface) => Promise<void>;
-    fetchAnalytics: () => Promise<void>;
-    fetchBlockerDetail: (id: string) => Promise<BlockerInterface | null>;
-    createBlocker: (payload: CreateBlockerPayloadInterface) => Promise<BlockerInterface | null>;
-    updateBlocker: (id: string, payload: UpdateBlockerPayloadInterface) => Promise<BlockerInterface | null>;
-    resolveBlocker: (id: string) => Promise<BlockerInterface | null>;
-    escalateBlocker: (id: string) => Promise<BlockerInterface | null>;
-    linkTasks: (id: string, taskIds: string[]) => Promise<BlockerInterface | null>;
-    unlinkTask: (id: string, taskId: string) => Promise<BlockerInterface | null>;
+    refetchAnalytics: () => Promise<void>;
+    patchBlockerLocal: (blocker: BlockerInterface) => void;
+    removeBlockerLocal: (id: string) => void;
 }
