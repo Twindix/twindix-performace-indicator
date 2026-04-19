@@ -6,7 +6,7 @@ import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { DecisionsSkeleton } from "@/components/skeletons";
 import { DecisionsProvider, useDecisions } from "@/contexts";
 import { DecisionCategory, DecisionStatus, UserRole } from "@/enums";
-import { t, useAuth, useCreateDecision, useDeleteDecision, usePageLoader, useSettings, useUpdateDecision } from "@/hooks";
+import { t, useAuth, useCreateDecision, useDeleteDecision, useGetDecision, usePageLoader, useSettings, useUpdateDecision } from "@/hooks";
 import type { DecisionInterface, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import {
@@ -50,6 +50,7 @@ const DecisionsViewInner = () => {
     const { createHandler: createDecisionHandler, isLoading: isSubmitting } = useCreateDecision();
     const { updateHandler: updateDecisionHandler } = useUpdateDecision();
     const { deleteHandler: deleteDecisionHandler } = useDeleteDecision();
+    const { getHandler: getDecisionHandler, isLoading: isLoadingDetail } = useGetDecision();
 
     const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
 
@@ -101,6 +102,15 @@ const DecisionsViewInner = () => {
         if (res) {
             patchDecisionLocal(res);
             if (viewTarget?.id === id) setViewTarget(res);
+        }
+    };
+
+    const handleView = async (d: DecisionInterface) => {
+        setViewTarget(d);
+        const fresh = await getDecisionHandler(d.id);
+        if (fresh) {
+            patchDecisionLocal(fresh);
+            setViewTarget(fresh);
         }
     };
 
@@ -221,7 +231,7 @@ const DecisionsViewInner = () => {
                             <Card
                                 key={decision.id}
                                 className="cursor-pointer hover:border-primary/40 transition-colors"
-                                onClick={() => setViewTarget(decision)}
+                                onClick={() => handleView(decision)}
                             >
                                 <CardContent className={compact ? "p-3" : "p-5"}>
                                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-4 mb-3">
@@ -320,6 +330,7 @@ const DecisionsViewInner = () => {
                                         {t(viewTarget.status.charAt(0).toUpperCase() + viewTarget.status.slice(1))}
                                     </Badge>
                                     {viewTarget.category && <Badge variant="outline">{t(categoryLabels[viewTarget.category])}</Badge>}
+                                    {isLoadingDetail && <span className="text-xs text-text-muted">{t("Refreshing...")}</span>}
                                 </div>
 
                                 {isPM && viewTarget.status === DecisionStatus.Pending && (
