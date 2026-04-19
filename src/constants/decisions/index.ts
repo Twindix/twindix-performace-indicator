@@ -5,5 +5,11 @@ export const decisionsConstants = {
         createFailed: "Failed to create decision.",
         updateFailed: "Failed to update decision.",
         deleteFailed: "Failed to delete decision.",
+        genericError: "Something went wrong.",
+    },
+    messages: {
+        createSuccess: "Decision created successfully.",
+        updateSuccess: "Decision updated successfully.",
+        deleteSuccess: "Decision deleted successfully.",
     },
 };
