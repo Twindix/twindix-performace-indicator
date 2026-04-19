@@ -4,7 +4,7 @@ import { Bell, Check, CheckCheck, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
 import { AlertsSkeleton } from "@/components/skeletons";
-import { AlertsProvider, useAlerts } from "@/contexts";
+import { useAlerts } from "@/contexts";
 import { t, useAcknowledgeAlert, useAuth, useCreateAlert, useDeleteAlert, useDoneAlert, usePageLoader, useUpdateAlert } from "@/hooks";
 import type { AlertInterface, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
@@ -16,18 +16,9 @@ import {
 } from "@/ui";
 import { formatDateTime, getStorageItem, storageKeys } from "@/utils";
 
-export const AlertsView = () => {
-    const { activeSprintId } = useSprintStore();
-    return (
-        <AlertsProvider sprintId={activeSprintId}>
-            <AlertsViewInner />
-        </AlertsProvider>
-    );
-};
-
 const emptyForm = { title: "", body: "", target: "everyone", mentioned_user_ids: [] as string[] };
 
-const AlertsViewInner = () => {
+export const AlertsView = () => {
     const pageLoading = usePageLoader();
     const { user } = useAuth();
     const { activeSprintId } = useSprintStore();

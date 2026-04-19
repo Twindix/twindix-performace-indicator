@@ -2,7 +2,7 @@ import { Bell, Flag, LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/atoms";
-import { AlertsProvider, RedFlagsProvider, useAlerts, useRedFlags, useSprints } from "@/contexts";
+import { useAlerts, useRedFlags, useSprints } from "@/contexts";
 import { routesData } from "@/data";
 import { useAuth, useTheme, t, useSettings, usePresence, type PresenceStatus } from "@/hooks";
 import { useSprintStore } from "@/store";
@@ -33,17 +33,6 @@ const presenceConfig: Record<PresenceStatus, { label: string; dot: string }> = {
 };
 
 export const Topbar = () => {
-    const { activeSprintId } = useSprintStore();
-    return (
-        <RedFlagsProvider sprintId={activeSprintId}>
-            <AlertsProvider sprintId={activeSprintId}>
-                <TopbarInner />
-            </AlertsProvider>
-        </RedFlagsProvider>
-    );
-};
-
-const TopbarInner = () => {
     const { user, onLogout } = useAuth();
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings] = useSettings();
