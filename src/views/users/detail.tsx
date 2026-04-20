@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { AlertTriangle, ArrowLeft, Bell, Flag, ListChecks, MessageCircle, MessageSquare, TrendingUp } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -6,10 +5,8 @@ import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/atoms
 import { AnimatedNumber, Header } from "@/components/shared";
 import { t } from "@/hooks";
 import { useUsersAnalytics, useUsersDetail } from "@/hooks/users";
-import { Avatar, AvatarFallback, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
+import { Avatar, AvatarFallback } from "@/ui";
 import { cn } from "@/utils";
-import { getStorageItem, storageKeys } from "@/utils";
-import type { SprintInterface } from "@/interfaces";
 
 const Bar = ({ value, max, color = "bg-primary" }: { value: number; max: number; color?: string }) => (
     <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
@@ -36,12 +33,9 @@ const AnalyticsSkeleton = () => (
 export const UserDetailView = () => {
     const { userId } = useParams<{ userId: string }>();
     const navigate = useNavigate();
-    const [sprintFilter, setSprintFilter] = useState<string | undefined>(undefined);
 
     const { user, isLoading: userLoading, error: userError } = useUsersDetail(userId);
-    const { analytics, isLoading: analyticsLoading, error: analyticsError } = useUsersAnalytics(userId, sprintFilter);
-
-    const sprints = getStorageItem<SprintInterface[]>(storageKeys.sprints) ?? [];
+    const { analytics, isLoading: analyticsLoading, error: analyticsError } = useUsersAnalytics(userId);
 
     if (userLoading) {
         return (
@@ -81,19 +75,6 @@ export const UserDetailView = () => {
             <Header
                 title={user.full_name}
                 description={`${user.role_label ?? user.role_tier} · ${user.team.name}`}
-                actions={
-                    <Select value={sprintFilter ?? "all"} onValueChange={(v) => setSprintFilter(v === "all" ? undefined : v)}>
-                        <SelectTrigger className="w-[180px] h-9 text-sm">
-                            <SelectValue placeholder={t("All Sprints")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">{t("All Sprints")}</SelectItem>
-                            {sprints.map((s) => (
-                                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                }
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -115,7 +96,6 @@ export const UserDetailView = () => {
                         </CardContent>
                     </Card>
 
-                    {/* Quick Stats sidebar card */}
                     <Card>
                         <CardHeader><CardTitle className="text-sm">{t("Quick Stats")}</CardTitle></CardHeader>
                         <CardContent className="flex flex-col gap-4">
@@ -123,9 +103,9 @@ export const UserDetailView = () => {
                                 Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />)
                             ) : a ? (
                                 [
-                                    { icon: ListChecks,    label: t("Tasks assigned"),  value: a.tasks.total,             barValue: a.tasks.done,                   barMax: a.tasks.total,    sub: `${a.tasks.done} ${t("done")}`,                        color: "bg-success" },
-                                    { icon: MessageSquare, label: t("Comm. response"),  value: a.communication.response_rate, barValue: a.communication.response_rate, barMax: 100,           sub: `${a.communication.avg_response_time_hours}h ${t("avg")}`, color: a.communication.response_rate >= 80 ? "bg-success" : a.communication.response_rate >= 50 ? "bg-warning" : "bg-error" },
-                                    { icon: TrendingUp,    label: t("Blocker resolve"), value: a.blockers.resolve_rate,   barValue: a.blockers.resolve_rate,          barMax: 100,              sub: `${a.blockers.resolved}/${a.blockers.owned}`,           color: a.blockers.resolve_rate >= 70 ? "bg-success" : "bg-warning" },
+                                    { icon: ListChecks,    label: t("Tasks assigned"),  value: a.quick_stats.tasks_assigned,       barValue: a.quick_stats.tasks_done,           barMax: a.quick_stats.tasks_assigned,    sub: `${a.quick_stats.tasks_done} ${t("done")}`,                                color: "bg-success" },
+                                    { icon: MessageSquare, label: t("Comm. response"),  value: a.quick_stats.comm_response_rate,   barValue: a.quick_stats.comm_response_rate,   barMax: 100,                             sub: `${a.quick_stats.comm_avg_response_hours}h ${t("avg")}`,                   color: a.quick_stats.comm_response_rate >= 80 ? "bg-success" : a.quick_stats.comm_response_rate >= 50 ? "bg-warning" : "bg-error" },
+                                    { icon: TrendingUp,    label: t("Blocker resolve"), value: a.quick_stats.blocker_resolve_rate, barValue: a.quick_stats.blocker_resolve_rate, barMax: 100,                             sub: `${a.quick_stats.blockers_resolved}/${a.quick_stats.blockers_owned}`,       color: a.quick_stats.blocker_resolve_rate >= 70 ? "bg-success" : "bg-warning" },
                                 ].map(({ icon: Icon, label, value, barValue, barMax, sub, color }) => (
                                     <div key={label} className="flex items-center gap-3">
                                         <Icon className="h-4 w-4 text-primary shrink-0" />
@@ -146,7 +126,7 @@ export const UserDetailView = () => {
                     </Card>
                 </div>
 
-                {/* Center analytics */}
+                {/* Main analytics */}
                 <div className="lg:col-span-3 flex flex-col gap-6">
                     {analyticsLoading ? (
                         <AnalyticsSkeleton />
@@ -162,18 +142,19 @@ export const UserDetailView = () => {
                         <>
                             {/* KPI row */}
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                <Card><CardContent className="p-4"><Stat label={t("Delivery Rate")} value={a.tasks.delivery_rate} suffix="%" color={a.tasks.delivery_rate >= 70 ? "text-success" : "text-warning"} /></CardContent></Card>
-                                <Card><CardContent className="p-4"><Stat label={t("Points Done")} value={a.tasks.done_points} suffix={`/${a.tasks.total_points}`} /></CardContent></Card>
-                                <Card><CardContent className="p-4"><Stat label={t("Avg Response")} value={a.communication.avg_response_time_hours} suffix="h" color={a.communication.avg_response_time_hours <= 4 ? "text-success" : "text-warning"} /></CardContent></Card>
+                                <Card><CardContent className="p-4"><Stat label={t("Delivery Rate")} value={a.top_stats.delivery_rate} suffix="%" color={a.top_stats.delivery_rate >= 70 ? "text-success" : "text-warning"} /></CardContent></Card>
+                                <Card><CardContent className="p-4"><Stat label={t("Points Done")} value={a.top_stats.points_done.done} suffix={`/${a.top_stats.points_done.total}`} /></CardContent></Card>
+                                <Card><CardContent className="p-4"><Stat label={t("Avg Response")} value={a.top_stats.avg_response_hours} suffix="h" color={a.top_stats.avg_response_hours <= 4 ? "text-success" : "text-warning"} /></CardContent></Card>
                             </div>
 
                             {/* Tasks by phase */}
                             <Card>
                                 <CardHeader><CardTitle className="text-base flex items-center gap-2"><ListChecks className="h-4 w-4" />{t("Tasks by Phase")}</CardTitle></CardHeader>
                                 <CardContent className="flex flex-col gap-3">
-                                    {a.tasks.by_phase.map(({ phase, count }) => {
+                                    {(["backlog", "ready", "in_progress", "review", "qa", "done"] as const).map((phase) => {
+                                        const count = a.tasks_by_phase[phase];
                                         const label = phase === "in_progress" ? "In Progress" : phase.charAt(0).toUpperCase() + phase.slice(1);
-                                        const maxCount = Math.max(...a.tasks.by_phase.map((p) => p.count), 1);
+                                        const maxCount = Math.max(...Object.values(a.tasks_by_phase), 1);
                                         return (
                                             <div key={phase}>
                                                 <div className="flex justify-between text-xs mb-1">
@@ -187,34 +168,58 @@ export const UserDetailView = () => {
                                 </CardContent>
                             </Card>
 
+                            {/* Assigned tasks */}
+                            {a.assigned_tasks.length > 0 && (
+                                <Card>
+                                    <CardHeader><CardTitle className="text-base flex items-center gap-2"><ListChecks className="h-4 w-4" />{t("Assigned Tasks")}</CardTitle></CardHeader>
+                                    <CardContent className="flex flex-col gap-2">
+                                        {a.assigned_tasks.map((task) => (
+                                            <div key={task.id} className="flex items-center justify-between gap-3 rounded-lg bg-muted p-2.5">
+                                                <p className="text-xs text-text-secondary truncate flex-1">{task.title}</p>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <span className="text-xs text-text-muted">{task.story_points}pts</span>
+                                                    {task.is_blocked && <Badge variant="error" className="text-[10px]">{t("Blocked")}</Badge>}
+                                                    <Badge variant={task.status === "done" ? "success" : task.status === "in_progress" ? "warning" : "secondary"} className="text-[10px]">
+                                                        {t(task.status === "in_progress" ? "In Progress" : task.status.charAt(0).toUpperCase() + task.status.slice(1))}
+                                                    </Badge>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </CardContent>
+                                </Card>
+                            )}
+
                             {/* Communication */}
                             <Card>
                                 <CardHeader><CardTitle className="text-base flex items-center gap-2"><MessageSquare className="h-4 w-4" />{t("Communication Performance")}</CardTitle></CardHeader>
                                 <CardContent>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                                        <Stat label={t("Questions Asked")} value={a.communication.asked} />
-                                        <Stat label={t("Questions Received")} value={a.communication.received} />
-                                        <Stat label={t("Answered")} value={a.communication.answered} color="text-success" />
-                                        <Stat label={t("Response Rate")} value={a.communication.response_rate} suffix="%" color={a.communication.response_rate >= 80 ? "text-success" : "text-warning"} />
+                                        <Stat label={t("Asked")} value={a.communication_performance.questions_asked} />
+                                        <Stat label={t("Received")} value={a.communication_performance.questions_received} />
+                                        <Stat label={t("Answered")} value={a.communication_performance.answered} color="text-success" />
+                                        <Stat label={t("Response Rate")} value={a.communication_performance.response_rate} suffix="%" color={a.communication_performance.response_rate >= 80 ? "text-success" : "text-warning"} />
                                     </div>
-                                    {a.communication.answered > 0 && (
+                                    {a.communication_performance.answered > 0 && (
                                         <div>
                                             <p className="text-xs text-text-muted mb-2">{t("Response time distribution")}</p>
                                             <div className="flex flex-col gap-2">
-                                                {[
-                                                    { label: "< 1h",  count: a.communication.response_time_distribution.under_1h },
-                                                    { label: "1–4h",  count: a.communication.response_time_distribution.one_to_4h },
-                                                    { label: "4–24h", count: a.communication.response_time_distribution.four_to_24h },
-                                                    { label: "> 24h", count: a.communication.response_time_distribution.over_24h },
-                                                ].map(({ label, count }) => (
-                                                    <div key={label}>
-                                                        <div className="flex justify-between text-xs mb-1">
-                                                            <span className="text-text-secondary">{label}</span>
-                                                            <span className="font-semibold">{count}</span>
+                                                {([
+                                                    { label: "< 1h",  key: "under_1h" },
+                                                    { label: "1–4h",  key: "1_to_4h" },
+                                                    { label: "4–24h", key: "4_to_24h" },
+                                                    { label: "> 24h", key: "over_24h" },
+                                                ] as const).map(({ label, key }) => {
+                                                    const count = a.communication_performance.response_time_distribution[key];
+                                                    return (
+                                                        <div key={key}>
+                                                            <div className="flex justify-between text-xs mb-1">
+                                                                <span className="text-text-secondary">{label}</span>
+                                                                <span className="font-semibold">{count}</span>
+                                                            </div>
+                                                            <Bar value={count} max={a.communication_performance.answered} color={key === "under_1h" ? "bg-success" : key === "over_24h" ? "bg-error" : "bg-warning"} />
                                                         </div>
-                                                        <Bar value={count} max={a.communication.answered} color={label === "< 1h" ? "bg-success" : label === "> 24h" ? "bg-error" : "bg-warning"} />
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     )}
@@ -225,23 +230,12 @@ export const UserDetailView = () => {
                             <Card>
                                 <CardHeader><CardTitle className="text-base flex items-center gap-2"><TrendingUp className="h-4 w-4" />{t("Blocker Activity")}</CardTitle></CardHeader>
                                 <CardContent>
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                                        <Stat label={t("Reported")} value={a.blockers.reported} />
-                                        <Stat label={t("Owned")} value={a.blockers.owned} />
-                                        <Stat label={t("Resolved")} value={a.blockers.resolved} color="text-success" />
-                                        <Stat label={t("Resolve Rate")} value={a.blockers.resolve_rate} suffix="%" color={a.blockers.resolve_rate >= 70 ? "text-success" : "text-warning"} />
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                        <Stat label={t("Reported")} value={a.blocker_activity.reported} />
+                                        <Stat label={t("Owned")} value={a.blocker_activity.owned} />
+                                        <Stat label={t("Resolved")} value={a.blocker_activity.resolved} color="text-success" />
+                                        <Stat label={t("Resolve Rate")} value={a.blocker_activity.resolve_rate} suffix="%" color={a.blocker_activity.resolve_rate >= 70 ? "text-success" : "text-warning"} />
                                     </div>
-                                    {a.blockers.list.map((b) => (
-                                        <div key={b.id} className="flex items-center justify-between gap-3 rounded-lg bg-muted p-2.5 mb-2">
-                                            <p className="text-xs text-text-secondary truncate flex-1">{b.title}</p>
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <span className="text-xs text-text-muted">{b.duration_days}d</span>
-                                                <Badge variant={b.status === "resolved" ? "success" : b.status === "escalated" ? "error" : "warning"} className="text-[10px]">
-                                                    {t(b.status.charAt(0).toUpperCase() + b.status.slice(1))}
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                    ))}
                                 </CardContent>
                             </Card>
 
@@ -250,12 +244,12 @@ export const UserDetailView = () => {
                                 <CardHeader><CardTitle className="text-base flex items-center gap-2"><Bell className="h-4 w-4" />{t("Alerts Engagement")}</CardTitle></CardHeader>
                                 <CardContent>
                                     <div className="grid grid-cols-3 gap-4 mb-4">
-                                        <Stat label={t("Received")} value={a.alerts.received} />
-                                        <Stat label={t("Acknowledged")} value={a.alerts.acknowledged} color="text-success" />
-                                        <Stat label={t("Ack Rate")} value={a.alerts.ack_rate} suffix="%" color={a.alerts.ack_rate >= 80 ? "text-success" : a.alerts.ack_rate >= 50 ? "text-warning" : "text-error"} />
+                                        <Stat label={t("Received")} value={a.alerts_engagement.received} />
+                                        <Stat label={t("Acknowledged")} value={a.alerts_engagement.acknowledged} color="text-success" />
+                                        <Stat label={t("Ack Rate")} value={a.alerts_engagement.ack_rate} suffix="%" color={a.alerts_engagement.ack_rate >= 80 ? "text-success" : a.alerts_engagement.ack_rate >= 50 ? "text-warning" : "text-error"} />
                                     </div>
-                                    {a.alerts.received > 0
-                                        ? <><p className="text-xs text-text-muted mb-1.5">{t("Acknowledgement rate")}</p><Bar value={a.alerts.ack_rate} max={100} color={a.alerts.ack_rate >= 80 ? "bg-success" : a.alerts.ack_rate >= 50 ? "bg-warning" : "bg-error"} /></>
+                                    {a.alerts_engagement.received > 0
+                                        ? <><p className="text-xs text-text-muted mb-1.5">{t("Acknowledgement rate")}</p><Bar value={a.alerts_engagement.ack_rate} max={100} color={a.alerts_engagement.ack_rate >= 80 ? "bg-success" : a.alerts_engagement.ack_rate >= 50 ? "bg-warning" : "bg-error"} /></>
                                         : <p className="text-xs text-text-muted">{t("No alerts received")}</p>
                                     }
                                 </CardContent>
@@ -266,10 +260,10 @@ export const UserDetailView = () => {
                                 <CardHeader><CardTitle className="text-base flex items-center gap-2"><Flag className="h-4 w-4 text-error" />{t("Red Flags")}</CardTitle></CardHeader>
                                 <CardContent>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <Stat label={t("Raised by user")} value={a.red_flags.raised} color={a.red_flags.raised > 0 ? "text-error" : "text-text-dark"} />
+                                        <Stat label={t("Raised by user")} value={a.red_flags.raised_by_user} color={a.red_flags.raised_by_user > 0 ? "text-error" : "text-text-dark"} />
                                         <Stat label={t("Total in sprint")} value={a.red_flags.total_in_sprint} />
                                     </div>
-                                    {a.red_flags.raised === 0 && <p className="text-xs text-text-muted mt-3">{t("No red flags raised by this user")}</p>}
+                                    {a.red_flags.raised_by_user === 0 && <p className="text-xs text-text-muted mt-3">{t("No red flags raised by this user")}</p>}
                                 </CardContent>
                             </Card>
 
@@ -278,16 +272,16 @@ export const UserDetailView = () => {
                                 <CardHeader><CardTitle className="text-base flex items-center gap-2"><MessageCircle className="h-4 w-4" />{t("Comments Activity")}</CardTitle></CardHeader>
                                 <CardContent>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                                        <Stat label={t("Written")} value={a.comments.written} />
-                                        <Stat label={t("Mentioned in")} value={a.comments.mentioned} />
-                                        <Stat label={t("Answered")} value={a.comments.answered} color="text-success" />
-                                        <Stat label={t("Answer Rate")} value={a.comments.answer_rate} suffix="%" color={a.comments.answer_rate >= 80 ? "text-success" : a.comments.answer_rate >= 50 ? "text-warning" : "text-error"} />
+                                        <Stat label={t("Written")} value={a.comments_activity.written} />
+                                        <Stat label={t("Mentioned in")} value={a.comments_activity.mentioned_in} />
+                                        <Stat label={t("Answered")} value={a.comments_activity.answered} color="text-success" />
+                                        <Stat label={t("Answer Rate")} value={a.comments_activity.answer_rate} suffix="%" color={a.comments_activity.answer_rate >= 80 ? "text-success" : a.comments_activity.answer_rate >= 50 ? "text-warning" : "text-error"} />
                                     </div>
-                                    {a.comments.mentioned > 0 && (
+                                    {a.comments_activity.mentioned_in > 0 && (
                                         <><p className="text-xs text-text-muted mb-1.5">{t("Mention response rate")}</p>
-                                        <Bar value={a.comments.answer_rate} max={100} color={a.comments.answer_rate >= 80 ? "bg-success" : a.comments.answer_rate >= 50 ? "bg-warning" : "bg-error"} /></>
+                                        <Bar value={a.comments_activity.answer_rate} max={100} color={a.comments_activity.answer_rate >= 80 ? "bg-success" : a.comments_activity.answer_rate >= 50 ? "bg-warning" : "bg-error"} /></>
                                     )}
-                                    {a.comments.written === 0 && a.comments.mentioned === 0 && (
+                                    {a.comments_activity.written === 0 && a.comments_activity.mentioned_in === 0 && (
                                         <p className="text-xs text-text-muted">{t("No comment activity")}</p>
                                     )}
                                 </CardContent>

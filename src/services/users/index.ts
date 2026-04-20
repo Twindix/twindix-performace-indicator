@@ -36,7 +36,7 @@ export const usersService = {
 
     analyticsHandler: async (id: string, sprintId?: string): Promise<UserAnalyticsInterface> => {
         const params = sprintId ? { sprint_id: sprintId } : undefined;
-        const { data } = await apiClient.get<{ data: UserAnalyticsInterface }>(apisData.users.analytics(id), { params });
-        return data.data;
+        const { data } = await apiClient.get<UserAnalyticsInterface>(apisData.users.analytics(id), { params });
+        return data;
     },
 };
