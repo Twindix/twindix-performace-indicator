@@ -61,7 +61,7 @@ const DecisionsViewInner = () => {
     const [error, setError] = useState("");
     const [viewTarget, setViewTarget] = useState<DecisionInterface | null>(null);
 
-    const isPM = user ? PM_ROLES.includes(user.role as UserRole) : false;
+    const isPM = user ? PM_ROLES.includes(user.role_tier as UserRole) : false;
 
     const filteredDecisions = decisions.filter((d) => {
         if (statusFilter !== "all" && d.status !== statusFilter) return false;
@@ -253,9 +253,9 @@ const DecisionsViewInner = () => {
                                         {owner && (
                                             <div className="flex items-center gap-1.5">
                                                 <Avatar className="h-5 w-5">
-                                                    <AvatarFallback className="text-[8px]">{owner.avatar}</AvatarFallback>
+                                                    <AvatarFallback className="text-[8px]">{owner.avatar_initials}</AvatarFallback>
                                                 </Avatar>
-                                                <span>{owner.name}</span>
+                                                <span>{owner.full_name}</span>
                                             </div>
                                         )}
                                         {(decision.participants ?? []).length > 0 && (
@@ -266,7 +266,7 @@ const DecisionsViewInner = () => {
                                                         const p = getMember(pId);
                                                         return (
                                                             <Avatar key={pId} className="h-5 w-5 border-2 border-card">
-                                                                <AvatarFallback className="text-[7px]">{p?.avatar ?? "?"}</AvatarFallback>
+                                                                <AvatarFallback className="text-[7px]">{p?.avatar_initials ?? "?"}</AvatarFallback>
                                                             </Avatar>
                                                         );
                                                     })}
@@ -368,9 +368,9 @@ const DecisionsViewInner = () => {
                                                 <h4 className="text-sm font-semibold text-text-dark mb-1">{t("Owner")}</h4>
                                                 <div className="flex items-center gap-2">
                                                     <Avatar className="h-6 w-6">
-                                                        <AvatarFallback className="text-[9px]">{owner.avatar}</AvatarFallback>
+                                                        <AvatarFallback className="text-[9px]">{owner.avatar_initials}</AvatarFallback>
                                                     </Avatar>
-                                                    <span className="text-sm text-text-secondary">{owner.name}</span>
+                                                    <span className="text-sm text-text-secondary">{owner.full_name}</span>
                                                 </div>
                                             </div>
                                         )}
@@ -383,9 +383,9 @@ const DecisionsViewInner = () => {
                                                         return (
                                                             <div key={pId} className="flex items-center gap-1.5">
                                                                 <Avatar className="h-5 w-5">
-                                                                    <AvatarFallback className="text-[8px]">{p?.avatar ?? "?"}</AvatarFallback>
+                                                                    <AvatarFallback className="text-[8px]">{p?.avatar_initials ?? "?"}</AvatarFallback>
                                                                 </Avatar>
-                                                                <span className="text-xs text-text-secondary">{p?.name}</span>
+                                                                <span className="text-xs text-text-secondary">{p?.full_name}</span>
                                                             </div>
                                                         );
                                                     })}

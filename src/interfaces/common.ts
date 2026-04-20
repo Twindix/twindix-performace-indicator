@@ -1,4 +1,4 @@
-import type { UserRole } from "@/enums";
+
 
 export interface ApiSuccessResponse<T> {
     data: T;
@@ -8,12 +8,13 @@ export interface ApiSuccessResponse<T> {
 
 export interface UserInterface {
     id: string;
-    name: string;
+    full_name: string;
     email: string;
-    role: UserRole;
-    avatar: string;
-    team: string;
-    status?: string;
+    role_tier: string;
+    role_label?: string;
+    avatar_initials: string;
+    team?: string | { id: string; name: string };
+    account_status?: string;
 }
 
 export interface ThemeContextInterface {

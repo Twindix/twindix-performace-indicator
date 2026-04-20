@@ -133,8 +133,8 @@ export const AlertsView = () => {
                     <div className="flex items-center gap-3 flex-wrap text-xs text-text-muted mt-2">
                         {creator && (
                             <div className="flex items-center gap-1.5">
-                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{creator.avatar}</AvatarFallback></Avatar>
-                                <span>{creator.name}</span>
+                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{creator.avatar_initials}</AvatarFallback></Avatar>
+                                <span>{creator.full_name}</span>
                             </div>
                         )}
                         {mentioned.length > 0 && (
@@ -233,7 +233,7 @@ export const AlertsView = () => {
                                                             : prev.mentioned_user_ids.filter((i) => i !== m.id),
                                                     }));
                                                 }} />
-                                                <span className="text-xs">{m.name}</span>
+                                                <span className="text-xs">{m.full_name}</span>
                                             </label>
                                         );
                                     })}

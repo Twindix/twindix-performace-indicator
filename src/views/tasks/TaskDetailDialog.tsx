@@ -154,8 +154,8 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                                         const assignee = allMembers.find((m) => m.id === id);
                                         return assignee ? (
                                             <div key={id} className="flex items-center gap-1">
-                                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{assignee.avatar}</AvatarFallback></Avatar>
-                                                <span className="text-sm font-medium text-text-dark">{assignee.name}</span>
+                                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{assignee.avatar_initials}</AvatarFallback></Avatar>
+                                                <span className="text-sm font-medium text-text-dark">{assignee.full_name}</span>
                                             </div>
                                         ) : null;
                                     })

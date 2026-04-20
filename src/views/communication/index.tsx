@@ -207,9 +207,9 @@ export const CommunicationView = () => {
                                                 {/* Asked by */}
                                                 <div className="flex items-center gap-2">
                                                     <Avatar className="h-6 w-6">
-                                                        <AvatarFallback className="text-[8px]">{askedBy?.avatar}</AvatarFallback>
+                                                        <AvatarFallback className="text-[8px]">{askedBy?.avatar_initials}</AvatarFallback>
                                                     </Avatar>
-                                                    <span className="text-xs text-text-secondary">{askedBy?.name ?? "Unknown"}</span>
+                                                    <span className="text-xs text-text-secondary">{askedBy?.full_name ?? "Unknown"}</span>
                                                 </div>
 
                                                 <span className="text-xs text-text-muted">-&gt;</span>
@@ -217,9 +217,9 @@ export const CommunicationView = () => {
                                                 {/* Asked to */}
                                                 <div className="flex items-center gap-2">
                                                     <Avatar className="h-6 w-6">
-                                                        <AvatarFallback className="text-[8px]">{askedTo?.avatar}</AvatarFallback>
+                                                        <AvatarFallback className="text-[8px]">{askedTo?.avatar_initials}</AvatarFallback>
                                                     </Avatar>
-                                                    <span className="text-xs text-text-secondary">{askedTo?.name ?? "Unknown"}</span>
+                                                    <span className="text-xs text-text-secondary">{askedTo?.full_name ?? "Unknown"}</span>
                                                 </div>
 
                                                 <Badge variant={channel.variant}>

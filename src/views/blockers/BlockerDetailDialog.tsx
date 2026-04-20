@@ -147,8 +147,8 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
                         <div>
                             <p className="text-xs text-text-muted">{t("Reported by")}</p>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{reporter?.avatar ?? "?"}</AvatarFallback></Avatar>
-                                <span className="text-sm font-medium text-text-dark">{reporter?.name ?? t("Unknown")}</span>
+                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{reporter?.avatar_initials ?? "?"}</AvatarFallback></Avatar>
+                                <span className="text-sm font-medium text-text-dark">{reporter?.full_name ?? t("Unknown")}</span>
                             </div>
                         </div>
                     </div>
@@ -157,8 +157,8 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit }: Pro
                         <div>
                             <p className="text-xs text-text-muted">{t("Owned by")}</p>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{owner?.avatar ?? "?"}</AvatarFallback></Avatar>
-                                <span className="text-sm font-medium text-text-dark">{owner?.name ?? t("Unassigned")}</span>
+                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{owner?.avatar_initials ?? "?"}</AvatarFallback></Avatar>
+                                <span className="text-sm font-medium text-text-dark">{owner?.full_name ?? t("Unassigned")}</span>
                             </div>
                         </div>
                     </div>

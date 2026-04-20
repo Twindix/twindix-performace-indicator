@@ -8,19 +8,6 @@ import { t, useGetUser } from "@/hooks";
 import type { UserInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
 
-const ROLE_LABELS: Record<string, string> = {
-    ceo: "CEO", cto: "CTO",
-    senior_frontend_engineer: "Sr. Frontend Engineer",
-    frontend_engineer: "Frontend Engineer",
-    senior_backend_engineer: "Sr. Backend Engineer",
-    ai_engineer: "AI Engineer",
-    quality_control: "Quality Control",
-    project_manager: "Project Manager",
-    hr_manager: "HR Manager",
-    data_analyst: "Data Analyst",
-    uiux_designer: "UI/UX Designer",
-};
-
 export const UserDetailView = () => {
     const { userId } = useParams<{ userId: string }>();
     const navigate = useNavigate();
@@ -30,7 +17,8 @@ export const UserDetailView = () => {
     useEffect(() => {
         if (!userId) return;
         getHandler(userId).then((res) => { if (res) setUser(res); });
-    }, [userId, getHandler]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userId]);
 
     if (!user && !isLoading) {
         return (
@@ -53,20 +41,20 @@ export const UserDetailView = () => {
                 </Button>
             </div>
 
-            <Header title={user.name} description={t("User details")} />
+            <Header title={user.full_name} description={t("User details")} />
 
             <Card>
                 <CardContent className="p-6">
                     <div className="flex items-start gap-4">
                         <Avatar className="h-16 w-16 shrink-0">
-                            <AvatarFallback className="text-xl font-semibold">{user.avatar}</AvatarFallback>
+                            <AvatarFallback className="text-xl font-semibold">{user.avatar_initials}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                            <h2 className="text-xl font-semibold text-text-dark">{user.name}</h2>
+                            <h2 className="text-xl font-semibold text-text-dark">{user.full_name}</h2>
                             <div className="flex items-center gap-2 flex-wrap mt-2">
-                                <Badge variant="outline" className="gap-1"><Shield className="h-3 w-3" />{ROLE_LABELS[user.role] ?? user.role}</Badge>
-                                <Badge variant="secondary" className="gap-1"><Users className="h-3 w-3" />{user.team}</Badge>
-                                {user.status === "inactive" && <Badge variant="error">{t("Inactive")}</Badge>}
+                                <Badge variant="outline" className="gap-1"><Shield className="h-3 w-3" />{user.role_label ?? user.role_tier}</Badge>
+                                <Badge variant="secondary" className="gap-1"><Users className="h-3 w-3" />{typeof user.team === "object" ? user.team.name : user.team}</Badge>
+                                {user.account_status === "inactive" && <Badge variant="error">{t("Inactive")}</Badge>}
                             </div>
                             <div className="flex items-center gap-2 mt-3 text-sm text-text-muted">
                                 <Mail className="h-4 w-4" />

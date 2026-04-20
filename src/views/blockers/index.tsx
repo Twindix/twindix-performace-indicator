@@ -222,17 +222,17 @@ const BlockerViewInner = () => {
                                             {/* Reporter */}
                                             <div className="flex items-center gap-1.5">
                                                 <Avatar className="h-5 w-5">
-                                                    <AvatarFallback className="text-[8px]">{reporter?.avatar}</AvatarFallback>
+                                                    <AvatarFallback className="text-[8px]">{reporter?.avatar_initials}</AvatarFallback>
                                                 </Avatar>
-                                                <span>{t("Reported by")} <span className="font-medium text-text-secondary">{reporter?.name ?? t("Unknown")}</span></span>
+                                                <span>{t("Reported by")} <span className="font-medium text-text-secondary">{reporter?.full_name ?? t("Unknown")}</span></span>
                                             </div>
 
                                             {/* Owner */}
                                             <div className="flex items-center gap-1.5">
                                                 <Avatar className="h-5 w-5">
-                                                    <AvatarFallback className="text-[8px]">{owner?.avatar}</AvatarFallback>
+                                                    <AvatarFallback className="text-[8px]">{owner?.avatar_initials}</AvatarFallback>
                                                 </Avatar>
-                                                <span>{t("Owned by")} <span className="font-medium text-text-secondary">{owner?.name ?? t("Unassigned")}</span></span>
+                                                <span>{t("Owned by")} <span className="font-medium text-text-secondary">{owner?.full_name ?? t("Unassigned")}</span></span>
                                             </div>
 
                                             {/* Duration */}

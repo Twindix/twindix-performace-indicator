@@ -33,9 +33,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const onLogin = useCallback(async (email: string, password: string): Promise<void> => {
         const response = await authService.loginHandler(email, password);
-        setCookieHandler(commonData.token.tokenKey, response.data.token);
+        setCookieHandler(commonData.token.tokenKey, response.token);
         resetAuthState();
-        setUser(response.data.user);
+        setUser(response.user);
     }, []);
 
     const onLogout = useCallback(async (): Promise<void> => {

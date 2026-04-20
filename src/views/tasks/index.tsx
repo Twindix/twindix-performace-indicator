@@ -279,7 +279,7 @@ const handleUpdateRequirements = useCallback((taskId: string, requirements: Task
                                     <SelectItem value="all">{t("All Assignees")}</SelectItem>
                                     {sprintAssigneeIds.map((id) => {
                                         const m = members.find((mem) => mem.id === id);
-                                        return <SelectItem key={id} value={id}>{m?.name ?? id}</SelectItem>;
+                                        return <SelectItem key={id} value={id}>{m?.full_name ?? id}</SelectItem>;
                                     })}
                                 </SelectContent>
                             </Select>

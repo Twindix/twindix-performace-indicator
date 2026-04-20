@@ -166,7 +166,7 @@ export const BlockerFormDialog = ({ open, onOpenChange, sprintId, initial }: Pro
                             <SelectTrigger><SelectValue placeholder={t("Select owner")} /></SelectTrigger>
                             <SelectContent>
                                 {members.map((m) => (
-                                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                                    <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>

@@ -165,9 +165,9 @@ export const RedFlagsView = () => {
                                                     {creator && (
                                                         <div className="flex items-center gap-1.5">
                                                             <Avatar className="h-5 w-5">
-                                                                <AvatarFallback className="text-[8px]">{creator.avatar}</AvatarFallback>
+                                                                <AvatarFallback className="text-[8px]">{creator.avatar_initials}</AvatarFallback>
                                                             </Avatar>
-                                                            <span>{creator.name}</span>
+                                                            <span>{creator.full_name}</span>
                                                         </div>
                                                     )}
                                                     <span>{formatDateTime(flag.createdAt)}</span>
@@ -234,8 +234,8 @@ export const RedFlagsView = () => {
                                         <p className="text-xs font-medium text-text-muted mb-1.5">{t("Raised by")}</p>
                                         {creator && (
                                             <div className="flex items-center gap-2">
-                                                <Avatar className="h-6 w-6"><AvatarFallback className="text-[9px]">{creator.avatar}</AvatarFallback></Avatar>
-                                                <span className="text-sm text-text-secondary">{creator.name}</span>
+                                                <Avatar className="h-6 w-6"><AvatarFallback className="text-[9px]">{creator.avatar_initials}</AvatarFallback></Avatar>
+                                                <span className="text-sm text-text-secondary">{creator.full_name}</span>
                                             </div>
                                         )}
                                     </div>
