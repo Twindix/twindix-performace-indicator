@@ -55,12 +55,3 @@ export interface CommentsListFiltersInterface {
     per_page?: number;
 }
 
-export interface CommentsContextInterface {
-    comments: CommentInterface[];
-    analytics: CommentsAnalyticsInterface | null;
-    isLoading: boolean;
-    refetch: (filters?: CommentsListFiltersInterface) => Promise<void>;
-    refetchAnalytics: () => Promise<void>;
-    patchCommentLocal: (comment: CommentInterface) => void;
-    removeCommentLocal: (id: string) => void;
-}

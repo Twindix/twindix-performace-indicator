@@ -1,17 +1,19 @@
-import { UserRole } from "@/enums";
 import type { UserInterface } from "@/interfaces";
 
+const now = new Date().toISOString();
+const defaultSettings = { dark_mode: false, compact_view: false, language: "en", date_format: "MMM D, YYYY" };
+
 export const seedTeamMembers: UserInterface[] = [
-    { id: "usr-001", name: "Mohamed Elhawary", email: "admin@twindix.com", role: UserRole.SeniorFrontendEngineer, avatar: "ME", team: "Frontend" },
-    { id: "usr-002", name: "Basel Sherif", email: "basel@twindix.com", role: UserRole.FrontendEngineer, avatar: "BS", team: "Frontend" },
-    { id: "usr-003", name: "Ahmed Heikal", email: "heikal@twindix.com", role: UserRole.SeniorBackendEngineer, avatar: "AH", team: "Backend" },
-    { id: "usr-004", name: "Ahmed Bashier", email: "bashier@twindix.com", role: UserRole.SeniorBackendEngineer, avatar: "AB", team: "Backend" },
-    { id: "usr-005", name: "Hazem Hassanien", email: "hazem@twindix.com", role: UserRole.CTO, avatar: "HH", team: "Leadership" },
-    { id: "usr-006", name: "Mohamed Ismail", email: "ismail@twindix.com", role: UserRole.CEO, avatar: "MI", team: "Leadership" },
-    { id: "usr-007", name: "Sarah Elseadawy", email: "sarah@twindix.com", role: UserRole.HRManager, avatar: "SE", team: "HR" },
-    { id: "usr-008", name: "Karim Sayed", email: "karim@twindix.com", role: UserRole.ProjectManager, avatar: "KS", team: "Product" },
-    { id: "usr-009", name: "Rashad Abdallah", email: "rashad@twindix.com", role: UserRole.QualityControl, avatar: "RA", team: "QA" },
-    { id: "usr-010", name: "Ahmed Eldairy", email: "eldairy@twindix.com", role: UserRole.AIEngineer, avatar: "AE", team: "AI" },
-    { id: "usr-011", name: "Walaa Sherif", email: "walaa@twindix.com", role: UserRole.DataAnalyst, avatar: "WS", team: "Data" },
-    { id: "usr-012", name: "Mohamed Ahmed", email: "moahmed@twindix.com", role: UserRole.UIUXDesigner, avatar: "MA", team: "Design" },
+    { id: "usr-001", full_name: "Mohamed Elhawary", email: "admin@twindix.com", role_label: "Senior Frontend Engineer", role_tier: "senior", avatar_initials: "ME", team: { id: "team-fe", name: "Frontend" }, account_status: "active", presence_status: "active", last_seen_at: now, settings: defaultSettings, created_at: now },
+    { id: "usr-002", full_name: "Basel Sherif", email: "basel@twindix.com", role_label: "Frontend Engineer", role_tier: "mid", avatar_initials: "BS", team: { id: "team-fe", name: "Frontend" }, account_status: "active", presence_status: "active", last_seen_at: now, settings: defaultSettings, created_at: now },
+    { id: "usr-003", full_name: "Ahmed Heikal", email: "heikal@twindix.com", role_label: "Senior Backend Engineer", role_tier: "senior", avatar_initials: "AH", team: { id: "team-be", name: "Backend" }, account_status: "active", presence_status: "active", last_seen_at: now, settings: defaultSettings, created_at: now },
+    { id: "usr-004", full_name: "Ahmed Bashier", email: "bashier@twindix.com", role_label: "Senior Backend Engineer", role_tier: "senior", avatar_initials: "AB", team: { id: "team-be", name: "Backend" }, account_status: "active", presence_status: "active", last_seen_at: now, settings: defaultSettings, created_at: now },
+    { id: "usr-005", full_name: "Hazem Hassanien", email: "hazem@twindix.com", role_label: "CTO", role_tier: "executive", avatar_initials: "HH", team: { id: "team-lead", name: "Leadership" }, account_status: "active", presence_status: "active", last_seen_at: now, settings: defaultSettings, created_at: now },
+    { id: "usr-006", full_name: "Mohamed Ismail", email: "ismail@twindix.com", role_label: "CEO", role_tier: "executive", avatar_initials: "MI", team: { id: "team-lead", name: "Leadership" }, account_status: "active", presence_status: "active", last_seen_at: now, settings: defaultSettings, created_at: now },
+    { id: "usr-007", full_name: "Sarah Elseadawy", email: "sarah@twindix.com", role_label: "HR Manager", role_tier: "manager", avatar_initials: "SE", team: { id: "team-hr", name: "HR" }, account_status: "active", presence_status: "active", last_seen_at: now, settings: defaultSettings, created_at: now },
+    { id: "usr-008", full_name: "Karim Sayed", email: "karim@twindix.com", role_label: "Project Manager", role_tier: "manager", avatar_initials: "KS", team: { id: "team-prod", name: "Product" }, account_status: "active", presence_status: "active", last_seen_at: now, settings: defaultSettings, created_at: now },
+    { id: "usr-009", full_name: "Rashad Abdallah", email: "rashad@twindix.com", role_label: "Quality Control", role_tier: "mid", avatar_initials: "RA", team: { id: "team-qa", name: "QA" }, account_status: "active", presence_status: "active", last_seen_at: now, settings: defaultSettings, created_at: now },
+    { id: "usr-010", full_name: "Ahmed Eldairy", email: "eldairy@twindix.com", role_label: "AI Engineer", role_tier: "mid", avatar_initials: "AE", team: { id: "team-ai", name: "AI" }, account_status: "active", presence_status: "active", last_seen_at: now, settings: defaultSettings, created_at: now },
+    { id: "usr-011", full_name: "Walaa Sherif", email: "walaa@twindix.com", role_label: "Data Analyst", role_tier: "mid", avatar_initials: "WS", team: { id: "team-data", name: "Data" }, account_status: "active", presence_status: "active", last_seen_at: now, settings: defaultSettings, created_at: now },
+    { id: "usr-012", full_name: "Mohamed Ahmed", email: "moahmed@twindix.com", role_label: "UI/UX Designer", role_tier: "mid", avatar_initials: "MA", team: { id: "team-design", name: "Design" }, account_status: "active", presence_status: "active", last_seen_at: now, settings: defaultSettings, created_at: now },
 ];

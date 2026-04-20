@@ -1,34 +1,41 @@
 import { Paperclip, Trash2 } from "lucide-react";
-
-import { useTasks } from "@/contexts";
-import { t, useTaskAttachments } from "@/hooks";
-import type { TaskInterface } from "@/interfaces";
+import { t } from "@/hooks";
+import type { TaskInterface, TaskAttachmentInterface } from "@/interfaces";
 
 interface Props {
     task: TaskInterface;
+    onUpdateAttachments?: (taskId: string, attachments: TaskAttachmentInterface[]) => void;
 }
 
 const formatSize = (bytes: number) =>
     bytes < 1024 ? `${bytes} B` : bytes < 1048576 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
 
-export const TaskAttachments = ({ task }: Props) => {
-    const { patchTaskLocal } = useTasks();
-    const { uploadHandler, deleteHandler } = useTaskAttachments();
+export const TaskAttachments = ({ task, onUpdateAttachments }: Props) => {
     const attachments = task.attachments ?? [];
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files ?? []);
+        if (!files.length || !onUpdateAttachments) return;
+        files.forEach((file) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const att: TaskAttachmentInterface = {
+                    id: `att-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    dataUrl: reader.result as string,
+                    uploadedAt: new Date().toISOString(),
+                };
+                onUpdateAttachments(task.id, [...(task.attachments ?? []), att]);
+            };
+            reader.readAsDataURL(file);
+        });
         e.target.value = "";
-        for (const file of files) {
-            const res = await uploadHandler(task.id, file);
-            if (res) patchTaskLocal(task.id, { attachments: res.attachments });
-        }
     };
 
-    const handleDelete = async (attachmentId: string) => {
-        const ok = await deleteHandler(task.id, attachmentId);
-        if (ok) patchTaskLocal(task.id, { attachments: attachments.filter((a) => a.id !== attachmentId) });
-    };
+    const remove = (id: string) =>
+        onUpdateAttachments?.(task.id, attachments.filter((a) => a.id !== id));
 
     return (
         <div className="mt-4 pb-4 border-b border-border">
@@ -68,7 +75,7 @@ export const TaskAttachments = ({ task }: Props) => {
                                 <a href={att.dataUrl} download={att.name} className="text-xs font-medium text-text-dark hover:text-primary truncate block transition-colors">{att.name}</a>
                                 <p className="text-[10px] text-text-muted">{formatSize(att.size)}</p>
                             </div>
-                            <button onClick={() => handleDelete(att.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                            <button onClick={() => remove(att.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
                                 <Trash2 className="h-3.5 w-3.5" />
                             </button>
                         </div>

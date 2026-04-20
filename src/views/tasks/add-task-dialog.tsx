@@ -4,11 +4,10 @@ import { toast } from "sonner";
 import { ValidationError } from "yup";
 
 import { Button, Input, Label, Textarea } from "@/atoms";
-import { TaskPriority, TaskStatus } from "@/enums";
+import { TaskPriority, TaskPhase, TaskStatus } from "@/enums";
+import type { TaskInterface } from "@/interfaces";
 import type { AddTaskDialogProps, AddTaskFormState } from "@/interfaces";
-import { useTasks } from "@/contexts";
-import { t, useCreateRequirement, useCreateTask } from "@/hooks";
-import { useSprintStore } from "@/store";
+import { t } from "@/hooks";
 import {
     Dialog,
     DialogContent,
@@ -58,12 +57,9 @@ const INITIAL_FORM_STATE: AddTaskFormState = {
 /*  Add Task Dialog                                                            */
 /* -------------------------------------------------------------------------- */
 
-export const AddTaskDialog = ({ open, onOpenChange, members }: AddTaskDialogProps) => {
-    const { activeSprintId } = useSprintStore();
-    const { addTaskLocal, patchTaskLocal } = useTasks();
-    const { createHandler: createTaskHandler, isLoading: isSubmitting } = useCreateTask();
-    const { createHandler: createRequirementHandler } = useCreateRequirement();
+export const AddTaskDialog = ({ open, onOpenChange, members, sprintId, onAddTask }: AddTaskDialogProps) => {
     const [formState, setFormState] = useState<AddTaskFormState>(INITIAL_FORM_STATE);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [requirementInput, setRequirementInput] = useState("");
     const requirementInputRef = useRef<HTMLInputElement>(null);
 
@@ -117,6 +113,8 @@ export const AddTaskDialog = ({ open, onOpenChange, members }: AddTaskDialogProp
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
     };
 
+    const generateTaskId = () => `tsk-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -129,30 +127,48 @@ export const AddTaskDialog = ({ open, onOpenChange, members }: AddTaskDialogProp
             }
         }
 
-        if (!activeSprintId) return;
-        const created = await createTaskHandler(activeSprintId, {
-            title: formState.title.trim(),
-            description: formState.description.trim(),
-            assigneeIds: formState.assigneeIds,
-            priority: formState.priority,
-            status: formState.status,
-            tags: [],
-        });
-        if (created) {
-            addTaskLocal(created);
+        setIsSubmitting(true);
 
-            if (formState.requirements.length > 0) {
-                const requirements = [];
-                for (const req of formState.requirements) {
-                    const reqRes = await createRequirementHandler(created.id, { label: req.label });
-                    if (reqRes) requirements.push({ id: reqRes.id, label: reqRes.label, met: reqRes.met });
-                }
-                if (requirements.length > 0) patchTaskLocal(created.id, { requirements });
-            }
+        try {
+            const now = new Date().toISOString().split("T")[0];
+            const newTask: TaskInterface = {
+                id: generateTaskId(),
+                title: formState.title.trim(),
+                description: formState.description.trim(),
+                assigneeIds: formState.assigneeIds,
+                phase: TaskPhase.Backlog,
+                priority: formState.priority,
+                storyPoints: Math.ceil(formState.estimatedHours / 4),
+                sprintId,
+                readinessScore: 0,
+                readinessChecklist: {
+                    acceptanceCriteriaDefined: false,
+                    businessRulesClear: false,
+                    edgeCasesIdentified: false,
+                    dependenciesMapped: false,
+                    designAvailable: false,
+                    apiContractReady: false,
+                    estimationDone: true,
+                },
+                hasBlocker: false,
+                createdAt: now,
+                updatedAt: now,
+                tags: [],
+                workType: "Frontend",
+                status: formState.status,
+                requirements: formState.requirements.map((r) => ({ ...r, met: false })),
+            };
 
+            onAddTask(newTask);
+            toast.success(t("Task created successfully"));
             handleOpenChange(false);
+        } catch (error) {
+            toast.error(t("Failed to create task"));
+            console.error(error);
+        } finally {
+            setIsSubmitting(false);
         }
-    }, [formState, activeSprintId, createTaskHandler, createRequirementHandler, addTaskLocal, patchTaskLocal, handleOpenChange]);
+    }, [formState, sprintId, onAddTask, handleOpenChange]);
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>

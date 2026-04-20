@@ -4,31 +4,21 @@ import { AtSign, MessageCircle, CheckCircle2, Clock, User, Plus, Pencil, Trash2,
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { CommentsLogSkeleton } from "@/components/skeletons";
-import { CommentsProvider, useComments } from "@/contexts";
-import { t, useAuth, useSettings, usePageLoader, useCreateComment, useUpdateComment, useDeleteComment, useRespondComment } from "@/hooks";
+import { t, useAuth, useCommentsList, useSettings, usePageLoader, useCreateComment, useUpdateComment, useDeleteComment, useRespondComment } from "@/hooks";
 import type { CommentInterface, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 import { cn, formatDate, formatDateTime, getStorageItem, storageKeys } from "@/utils";
 
-export const CommentsLogView = () => {
-    const { activeSprintId } = useSprintStore();
-    return (
-        <CommentsProvider sprintId={activeSprintId}>
-            <CommentsLogViewInner />
-        </CommentsProvider>
-    );
-};
-
 const emptyForm = { body: "", task_title: "", mentioned_user_ids: [] as string[] };
 
-const CommentsLogViewInner = () => {
+export const CommentsLogView = () => {
     const pageLoading = usePageLoader();
     const [settings] = useSettings();
     const { user } = useAuth();
     const { activeSprintId } = useSprintStore();
     const compact = settings.compactView;
-    const { comments, analytics, isLoading: isFetching, patchCommentLocal, removeCommentLocal, refetchAnalytics } = useComments();
+    const { comments, analytics, isLoading: isFetching, patchCommentLocal, removeCommentLocal, refetchAnalytics } = useCommentsList(activeSprintId);
     const { createHandler: createCommentHandler, isLoading: isCreating } = useCreateComment();
     const { updateHandler: updateCommentHandler, isLoading: isUpdating } = useUpdateComment();
     const { deleteHandler: deleteCommentHandler } = useDeleteComment();
@@ -179,7 +169,7 @@ const CommentsLogViewInner = () => {
                                                         : prev.mentioned_user_ids.filter((i) => i !== m.id),
                                                 }));
                                             }} />
-                                            <span className="text-xs">{m.name}</span>
+                                            <span className="text-xs">{m.full_name}</span>
                                         </label>
                                     );
                                 })}
@@ -269,7 +259,7 @@ const CommentsLogViewInner = () => {
                             <SelectContent>
                                 <SelectItem value="all">{t("All Mentions")}</SelectItem>
                                 {members.map((m) => (
-                                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                                    <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -367,9 +357,9 @@ const CommentsLogViewInner = () => {
                                         <div className="flex items-center gap-1.5">
                                             <User className="h-3.5 w-3.5 text-text-muted" />
                                             <Avatar className="h-5 w-5">
-                                                <AvatarFallback className="text-[8px]">{author?.avatar}</AvatarFallback>
+                                                <AvatarFallback className="text-[8px]">{author?.avatar_initials}</AvatarFallback>
                                             </Avatar>
-                                            <span className="text-xs text-text-secondary">{author?.name ?? "Unknown"}</span>
+                                            <span className="text-xs text-text-secondary">{author?.full_name ?? "Unknown"}</span>
                                         </div>
 
                                         {/* Mention */}
@@ -379,9 +369,9 @@ const CommentsLogViewInner = () => {
                                                 <div className="flex items-center gap-1.5">
                                                     <AtSign className="h-3.5 w-3.5 text-primary" />
                                                     <Avatar className="h-5 w-5">
-                                                        <AvatarFallback className="text-[8px]">{mentioned.avatar}</AvatarFallback>
+                                                        <AvatarFallback className="text-[8px]">{mentioned.avatar_initials}</AvatarFallback>
                                                     </Avatar>
-                                                    <span className="text-xs text-primary font-medium">{mentioned.name}</span>
+                                                    <span className="text-xs text-primary font-medium">{mentioned.full_name}</span>
                                                 </div>
                                             </>
                                         )}
@@ -399,7 +389,7 @@ const CommentsLogViewInner = () => {
                                                 <span className="text-xs text-success font-medium">{t("Responded")}</span>
                                                 {responder && (
                                                     <span className="text-xs text-text-muted">
-                                                        {t("by")} {responder.name} · {formatDate(comment.responseAt!)}
+                                                        {t("by")} {responder.full_name} · {formatDate(comment.responseAt!)}
                                                     </span>
                                                 )}
                                             </div>
@@ -448,8 +438,8 @@ const CommentsLogViewInner = () => {
                                     <div>
                                         <p className="text-xs font-medium text-text-muted mb-1.5">{t("Written by")}</p>
                                         <div className="flex items-center gap-2">
-                                            <Avatar className="h-6 w-6"><AvatarFallback className="text-[9px]">{author?.avatar}</AvatarFallback></Avatar>
-                                            <span className="text-sm text-text-secondary">{author?.name ?? t("Unknown")}</span>
+                                            <Avatar className="h-6 w-6"><AvatarFallback className="text-[9px]">{author?.avatar_initials}</AvatarFallback></Avatar>
+                                            <span className="text-sm text-text-secondary">{author?.full_name ?? t("Unknown")}</span>
                                         </div>
                                     </div>
                                     {mentioned && (
@@ -457,8 +447,8 @@ const CommentsLogViewInner = () => {
                                             <p className="text-xs font-medium text-text-muted mb-1.5">{t("Mentioned")}</p>
                                             <div className="flex items-center gap-2">
                                                 <AtSign className="h-4 w-4 text-primary" />
-                                                <Avatar className="h-6 w-6"><AvatarFallback className="text-[9px]">{mentioned.avatar}</AvatarFallback></Avatar>
-                                                <span className="text-sm text-primary font-medium">{mentioned.name}</span>
+                                                <Avatar className="h-6 w-6"><AvatarFallback className="text-[9px]">{mentioned.avatar_initials}</AvatarFallback></Avatar>
+                                                <span className="text-sm text-primary font-medium">{mentioned.full_name}</span>
                                             </div>
                                         </div>
                                     )}
@@ -478,7 +468,7 @@ const CommentsLogViewInner = () => {
                                                     <CheckCircle2 className="h-3.5 w-3.5" />
                                                     <span className="text-xs font-medium">{t("Responded")}</span>
                                                 </div>
-                                                {responder && <span className="text-xs text-text-muted">{t("by")} {responder.name}</span>}
+                                                {responder && <span className="text-xs text-text-muted">{t("by")} {responder.full_name}</span>}
                                                 {viewTarget.responseAt && <span className="text-xs text-text-muted">{formatDate(viewTarget.responseAt)}</span>}
                                             </div>
                                         ) : (

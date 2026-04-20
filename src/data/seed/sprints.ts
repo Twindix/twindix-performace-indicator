@@ -1,7 +1,8 @@
 import { SprintStatus } from "@/enums";
-import type { SprintInterface } from "@/interfaces";
 
-export const seedSprints: SprintInterface[] = [
+type SprintSeed = { id: string; name: string; startDate: string; endDate: string; status: SprintStatus; healthScore: number; goals: string[] };
+
+export const seedSprints: SprintSeed[] = [
     {
         id: "spr-012",
         name: "Sprint 12",
