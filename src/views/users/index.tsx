@@ -4,85 +4,82 @@ import { useNavigate } from "react-router-dom";
 
 import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
-import { UserRole } from "@/enums";
 import { t } from "@/hooks";
+import { useUsersCreate, useUsersDelete, useUsersList, useUsersUpdate } from "@/hooks/users";
 import type { UserInterface } from "@/interfaces";
+import type { CreateUserPayloadInterface } from "@/interfaces/users";
 import {
     Avatar, AvatarFallback,
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/ui";
-import { getStorageItem, setStorageItem, storageKeys } from "@/utils";
 
-const ROLE_LABELS: Record<UserRole, string> = {
-    [UserRole.CEO]: "CEO",
-    [UserRole.CTO]: "CTO",
-    [UserRole.SeniorFrontendEngineer]: "Sr. Frontend Engineer",
-    [UserRole.FrontendEngineer]: "Frontend Engineer",
-    [UserRole.SeniorBackendEngineer]: "Sr. Backend Engineer",
-    [UserRole.AIEngineer]: "AI Engineer",
-    [UserRole.QualityControl]: "Quality Control",
-    [UserRole.ProjectManager]: "Project Manager",
-    [UserRole.HRManager]: "HR Manager",
-    [UserRole.DataAnalyst]: "Data Analyst",
-    [UserRole.UIUXDesigner]: "UI/UX Designer",
-};
+const ROLE_TIER_OPTIONS = ["admin", "manager", "member"];
 
-const TEAM_OPTIONS = ["Frontend", "Backend", "Leadership", "HR", "Product", "QA", "AI", "Data", "Design"];
+const TEAM_OPTIONS = [
+    { id: "019daa15-922d-72f7-b32c-c46395d79800", name: "Frontend" },
+    { id: "019daa15-9232-710b-8c3b-2212825a815f", name: "Backend" },
+    { id: "019daa15-9233-7310-b216-3b70cca353dc", name: "Leadership" },
+    { id: "019daa15-9234-735e-af84-363a86c94b51", name: "HR" },
+    { id: "019daa15-9236-7098-9d16-338df3251d74", name: "Product" },
+    { id: "019daa15-9237-739d-8578-e91a39547032", name: "QA" },
+    { id: "019daa15-923c-7055-909e-8ee7bfbf3411", name: "AI" },
+    { id: "019daa15-923c-7055-909e-8ee7bff44e7a", name: "Data" },
+    { id: "019daa15-923d-7058-a8a7-d25ccbfcae9d", name: "Design" },
+];
 
-const emptyForm = { name: "", email: "", role: UserRole.FrontendEngineer, team: "Frontend", avatar: "" };
+const emptyForm = { full_name: "", email: "", password: "", role_tier: "member", team_id: TEAM_OPTIONS[0].id };
 
 export const UsersView = () => {
     const navigate = useNavigate();
-    const [members, setMembers] = useState<UserInterface[]>(() => getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? []);
+    const { users, isLoading, refetch } = useUsersList();
+    const { create, isLoading: creating } = useUsersCreate();
+    const { update } = useUsersUpdate();
+    const { remove } = useUsersDelete();
+
     const [addOpen, setAddOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<UserInterface | null>(null);
     const [deactivateTarget, setDeactivateTarget] = useState<UserInterface | null>(null);
-    const [form, setForm] = useState(emptyForm);
-    const [errors, setErrors] = useState<Partial<typeof emptyForm>>({});
-
-    const save = (next: UserInterface[]) => {
-        setStorageItem(storageKeys.teamMembers, next);
-        setMembers(next);
-    };
+    const [form, setForm] = useState<CreateUserPayloadInterface>(emptyForm);
+    const [errors, setErrors] = useState<Partial<Record<keyof CreateUserPayloadInterface, string>>>({});
 
     const validate = () => {
-        const e: Partial<typeof emptyForm> = {};
-        if (!form.name.trim()) e.name = t("Required");
+        const e: Partial<Record<keyof CreateUserPayloadInterface, string>> = {};
+        if (!form.full_name.trim()) e.full_name = t("Required");
         if (!form.email.trim()) e.email = t("Required");
-        if (!form.team.trim()) e.team = t("Required");
+        if (!form.password.trim()) e.password = t("Required");
         setErrors(e);
         return Object.keys(e).length === 0;
     };
 
-    const handleAdd = () => {
+    const handleAdd = async () => {
         if (!validate()) return;
-        const initials = form.avatar.trim() || form.name.trim().split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
-        const newUser: UserInterface = {
-            id: `usr-${Date.now()}`,
-            name: form.name.trim(),
-            email: form.email.trim(),
-            role: form.role,
-            team: form.team.trim(),
-            avatar: initials,
-        };
-        save([...members, newUser]);
-        setAddOpen(false);
-        setForm(emptyForm);
+        const newUser = await create(form);
+        if (newUser) {
+            setAddOpen(false);
+            setForm(emptyForm);
+            refetch();
+        }
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!deleteTarget) return;
-        save(members.filter((m) => m.id !== deleteTarget.id));
-        setDeleteTarget(null);
+        const ok = await remove(deleteTarget.id);
+        if (ok) {
+            setDeleteTarget(null);
+            refetch();
+        }
     };
 
-    const handleToggleActive = () => {
+    const handleToggleActive = async () => {
         if (!deactivateTarget) return;
-        const isActive = deactivateTarget.status !== "inactive";
-        save(members.map((m) => m.id === deactivateTarget.id ? { ...m, status: isActive ? "inactive" : "active" } : m));
-        setDeactivateTarget(null);
+        const isActive = deactivateTarget.account_status !== "inactive";
+        const updated = await update(deactivateTarget.id, { account_status: isActive ? "inactive" : "active" });
+        if (updated) {
+            setDeactivateTarget(null);
+            refetch();
+        }
     };
 
     return (
@@ -96,25 +93,31 @@ export const UsersView = () => {
                 </Button>
             </div>
 
-            {members.length === 0 ? (
-                <EmptyState icon={UserCog} title={t("No Users")} description={t("Add team members to get started")} />
+            {isLoading ? (
+                <div className="flex flex-col gap-3">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <Card key={i}><CardContent className="p-4"><div className="h-10 bg-muted animate-pulse rounded-lg" /></CardContent></Card>
+                    ))}
+                </div>
+            ) : users.length === 0 ? (
+                <EmptyState icon={UserCog} title={t("No Users")} description={t("No team members found")} />
             ) : (
                 <div className="flex flex-col gap-3">
-                    {members.map((member) => {
-                        const isInactive = member.status === "inactive";
+                    {users.map((member) => {
+                        const isInactive = member.account_status === "inactive";
                         return (
                             <Card key={member.id} className={`hover:shadow-md transition-shadow ${isInactive ? "opacity-60" : ""}`}>
                                 <CardContent className="p-4">
                                     <div className="flex items-center gap-4">
                                         <Avatar className="h-10 w-10 shrink-0">
-                                            <AvatarFallback className="text-sm font-semibold">{member.avatar}</AvatarFallback>
+                                            <AvatarFallback className="text-sm font-semibold">{member.avatar_initials}</AvatarFallback>
                                         </Avatar>
 
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <p className="text-sm font-semibold text-text-dark">{member.name}</p>
-                                                <Badge variant="outline" className="text-xs">{ROLE_LABELS[member.role] ?? member.role}</Badge>
-                                                <Badge variant="secondary" className="text-xs">{member.team}</Badge>
+                                                <p className="text-sm font-semibold text-text-dark">{member.full_name}</p>
+                                                {member.role_label && <Badge variant="outline" className="text-xs">{member.role_label}</Badge>}
+                                                <Badge variant="secondary" className="text-xs">{member.team.name}</Badge>
                                                 {isInactive && <Badge variant="error" className="text-xs">{t("Inactive")}</Badge>}
                                             </div>
                                             <p className="text-xs text-text-muted mt-0.5">{member.email}</p>
@@ -177,8 +180,8 @@ export const UsersView = () => {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1.5">
                                 <Label htmlFor="u-name">{t("Full Name")}</Label>
-                                <Input id="u-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="John Doe" className={errors.name ? "border-error" : ""} />
-                                {errors.name && <p className="text-xs text-error">{errors.name}</p>}
+                                <Input id="u-name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} placeholder="John Doe" className={errors.full_name ? "border-error" : ""} />
+                                {errors.full_name && <p className="text-xs text-error">{errors.full_name}</p>}
                             </div>
                             <div className="flex flex-col gap-1.5">
                                 <Label htmlFor="u-email">{t("Email")}</Label>
@@ -187,37 +190,40 @@ export const UsersView = () => {
                             </div>
                         </div>
 
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="u-password">{t("Password")}</Label>
+                            <Input id="u-password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••••" className={errors.password ? "border-error" : ""} />
+                            {errors.password && <p className="text-xs text-error">{errors.password}</p>}
+                        </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1.5">
-                                <Label>{t("Role")}</Label>
-                                <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as UserRole })}>
+                                <Label>{t("Role Tier")}</Label>
+                                <Select value={form.role_tier} onValueChange={(v) => setForm({ ...form, role_tier: v })}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        {Object.entries(ROLE_LABELS).map(([val, label]) => (
-                                            <SelectItem key={val} value={val}>{label}</SelectItem>
+                                        {ROLE_TIER_OPTIONS.map((tier) => (
+                                            <SelectItem key={tier} value={tier}>{tier.charAt(0).toUpperCase() + tier.slice(1)}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="flex flex-col gap-1.5">
                                 <Label>{t("Team")}</Label>
-                                <Select value={form.team} onValueChange={(v) => setForm({ ...form, team: v })}>
+                                <Select value={form.team_id} onValueChange={(v) => setForm({ ...form, team_id: v })}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        {TEAM_OPTIONS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                                        {TEAM_OPTIONS.map((team) => (
+                                            <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
                         </div>
-
-                        <div className="flex flex-col gap-1.5">
-                            <Label htmlFor="u-avatar">{t("Avatar Initials")} <span className="text-text-muted text-xs">({t("optional, auto-generated if empty")})</span></Label>
-                            <Input id="u-avatar" value={form.avatar} onChange={(e) => setForm({ ...form, avatar: e.target.value.toUpperCase().slice(0, 2) })} placeholder="JD" maxLength={2} className="w-24" />
-                        </div>
                     </div>
                     <div className="flex justify-end gap-2 mt-2">
                         <DialogClose asChild><Button variant="outline">{t("Cancel")}</Button></DialogClose>
-                        <Button onClick={handleAdd}>{t("Add Member")}</Button>
+                        <Button onClick={handleAdd} disabled={creating}>{creating ? t("Adding...") : t("Add Member")}</Button>
                     </div>
                 </DialogContent>
             </Dialog>
@@ -226,24 +232,24 @@ export const UsersView = () => {
             <Dialog open={!!deactivateTarget} onOpenChange={(o) => !o && setDeactivateTarget(null)}>
                 <DialogContent className="max-w-sm">
                     <DialogHeader>
-                        <DialogTitle className={deactivateTarget?.status === "inactive" ? "text-success" : "text-warning"}>
-                            {deactivateTarget?.status === "inactive" ? t("Activate User") : t("Deactivate User")}
+                        <DialogTitle className={deactivateTarget?.account_status === "inactive" ? "text-success" : "text-warning"}>
+                            {deactivateTarget?.account_status === "inactive" ? t("Activate User") : t("Deactivate User")}
                         </DialogTitle>
                     </DialogHeader>
                     <p className="text-sm text-text-secondary py-2">
-                        {deactivateTarget?.status === "inactive"
-                            ? <>{t("Activate")} <span className="font-semibold text-text-dark">{deactivateTarget?.name}</span>? {t("They will regain access to the platform.")}</>
-                            : <>{t("Deactivate")} <span className="font-semibold text-text-dark">{deactivateTarget?.name}</span>? {t("They will lose access until reactivated.")}</>
+                        {deactivateTarget?.account_status === "inactive"
+                            ? <>{t("Activate")} <span className="font-semibold text-text-dark">{deactivateTarget?.full_name}</span>? {t("They will regain access to the platform.")}</>
+                            : <>{t("Deactivate")} <span className="font-semibold text-text-dark">{deactivateTarget?.full_name}</span>? {t("They will lose access until reactivated.")}</>
                         }
                     </p>
                     <div className="flex justify-end gap-2">
                         <Button variant="outline" onClick={() => setDeactivateTarget(null)}>{t("Cancel")}</Button>
                         <Button
-                            variant={deactivateTarget?.status === "inactive" ? "default" : "outline"}
-                            className={deactivateTarget?.status !== "inactive" ? "border-warning text-warning hover:bg-warning-light" : ""}
+                            variant={deactivateTarget?.account_status === "inactive" ? "default" : "outline"}
+                            className={deactivateTarget?.account_status !== "inactive" ? "border-warning text-warning hover:bg-warning-light" : ""}
                             onClick={handleToggleActive}
                         >
-                            {deactivateTarget?.status === "inactive" ? t("Activate") : t("Deactivate")}
+                            {deactivateTarget?.account_status === "inactive" ? t("Activate") : t("Deactivate")}
                         </Button>
                     </div>
                 </DialogContent>
@@ -254,7 +260,7 @@ export const UsersView = () => {
                 <DialogContent className="max-w-sm">
                     <DialogHeader><DialogTitle className="text-error">{t("Remove User")}</DialogTitle></DialogHeader>
                     <p className="text-sm text-text-secondary py-2">
-                        {t("Are you sure you want to remove")} <span className="font-semibold text-text-dark">{deleteTarget?.name}</span>? {t("This cannot be undone.")}
+                        {t("Are you sure you want to remove")} <span className="font-semibold text-text-dark">{deleteTarget?.full_name}</span>? {t("This cannot be undone.")}
                     </p>
                     <div className="flex justify-end gap-2">
                         <Button variant="outline" onClick={() => setDeleteTarget(null)}>{t("Cancel")}</Button>
