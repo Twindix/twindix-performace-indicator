@@ -1,5 +1,5 @@
 import { apisData } from "@/data";
-import type { BlockerDetailResponseInterface, BlockersAnalyticsResponseInterface, BlockersListFiltersInterface, BlockersListResponseInterface, CreateBlockerPayloadInterface, UpdateBlockerPayloadInterface } from "@/interfaces";
+import type { BlockerDetailResponseInterface, BlockersAnalyticsInterface, BlockersListFiltersInterface, BlockersListResponseInterface, CreateBlockerPayloadInterface, UpdateBlockerPayloadInterface } from "@/interfaces";
 import { apiClient } from "@/lib/axios";
 
 export const blockersService = {
@@ -8,8 +8,8 @@ export const blockersService = {
         return data;
     },
 
-    analyticsHandler: async (sprintId: string): Promise<BlockersAnalyticsResponseInterface> => {
-        const { data } = await apiClient.get<BlockersAnalyticsResponseInterface>(apisData.blockers.analytics(sprintId));
+    analyticsHandler: async (sprintId: string): Promise<BlockersAnalyticsInterface> => {
+        const { data } = await apiClient.get<BlockersAnalyticsInterface>(apisData.blockers.analytics(sprintId));
         return data;
     },
 
@@ -26,6 +26,10 @@ export const blockersService = {
     updateHandler: async (id: string, payload: UpdateBlockerPayloadInterface): Promise<BlockerDetailResponseInterface> => {
         const { data } = await apiClient.put<BlockerDetailResponseInterface>(apisData.blockers.update(id), payload);
         return data;
+    },
+
+    deleteHandler: async (id: string): Promise<void> => {
+        await apiClient.delete(apisData.blockers.delete(id));
     },
 
     resolveHandler: async (id: string): Promise<BlockerDetailResponseInterface> => {

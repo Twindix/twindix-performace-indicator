@@ -2,22 +2,21 @@ import { useEffect, useState } from "react";
 import { Plus, ShieldAlert } from "lucide-react";
 
 import { Button, Input, Label, Textarea } from "@/atoms";
-import { useBlockers } from "@/contexts";
-import { BlockerImpact, BlockerType } from "@/enums";
+import { BlockerType } from "@/enums";
 import { t, useCreateBlocker, useUpdateBlocker } from "@/hooks";
-import type { BlockerInterface, TaskInterface, UserInterface } from "@/interfaces";
-import { tasksService } from "@/services";
+import type { BlockerInterface, UserInterface } from "@/interfaces";
 import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/ui";
-import { getStorageItem, storageKeys } from "@/utils";
 
 interface Props {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     sprintId: string | null | undefined;
     initial?: BlockerInterface | null;
+    users: UserInterface[];
+    onSaved: (blocker: BlockerInterface) => void;
 }
 
 const TYPE_OPTIONS = [
@@ -30,14 +29,13 @@ const TYPE_OPTIONS = [
 ];
 
 const SEVERITY_OPTIONS = [
-    { value: BlockerImpact.Critical, label: "Critical" },
-    { value: BlockerImpact.High, label: "High" },
-    { value: BlockerImpact.Medium, label: "Medium" },
-    { value: BlockerImpact.Low, label: "Low" },
+    { value: "critical", label: "Critical" },
+    { value: "high", label: "High" },
+    { value: "medium", label: "Medium" },
+    { value: "low", label: "Low" },
 ];
 
-export const BlockerFormDialog = ({ open, onOpenChange, sprintId, initial }: Props) => {
-    const { patchBlockerLocal, refetchAnalytics } = useBlockers();
+export const BlockerFormDialog = ({ open, onOpenChange, sprintId, initial, users, onSaved }: Props) => {
     const { createHandler: createBlockerHandler, isLoading: isCreating } = useCreateBlocker();
     const { updateHandler: updateBlockerHandler, isLoading: isUpdating } = useUpdateBlocker();
     const isSubmitting = isCreating || isUpdating;
@@ -45,41 +43,24 @@ export const BlockerFormDialog = ({ open, onOpenChange, sprintId, initial }: Pro
 
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-    const [severity, setSeverity] = useState<string>(BlockerImpact.Medium);
-    const [type, setType] = useState<BlockerType>(BlockerType.Technical);
+    const [severity, setSeverity] = useState<string>("medium");
+    const [type, setType] = useState<string>(BlockerType.Technical);
     const [ownedBy, setOwnedBy] = useState<string>("");
-    const [taskIds, setTaskIds] = useState<string[]>([]);
-
-    const [members, setMembers] = useState<UserInterface[]>([]);
-    const [tasks, setTasks] = useState<TaskInterface[]>([]);
-
-    useEffect(() => {
-        setMembers(getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? []);
-    }, []);
-
-    useEffect(() => {
-        if (!open || !sprintId) return;
-        tasksService.listHandler(sprintId)
-            .then((res) => setTasks(res.data))
-            .catch(() => setTasks([]));
-    }, [open, sprintId]);
 
     useEffect(() => {
         if (!open) return;
         if (initial) {
             setTitle(initial.title);
             setDescription(initial.description ?? "");
-            setSeverity(initial.severity ?? initial.impact);
+            setSeverity(initial.severity);
             setType(initial.type);
-            setOwnedBy(initial.ownerId);
-            setTaskIds(initial.taskIds ?? []);
+            setOwnedBy(initial.owner?.id ?? "");
         } else {
             setTitle("");
             setDescription("");
-            setSeverity(BlockerImpact.Medium);
+            setSeverity("medium");
             setType(BlockerType.Technical);
             setOwnedBy("");
-            setTaskIds([]);
         }
     }, [open, initial]);
 
@@ -104,12 +85,10 @@ export const BlockerFormDialog = ({ open, onOpenChange, sprintId, initial }: Pro
                 severity,
                 type,
                 owned_by: ownedBy,
-                task_ids: taskIds.length ? taskIds : undefined,
             });
         }
         if (result) {
-            patchBlockerLocal(result);
-            refetchAnalytics();
+            onSaved(result);
             onOpenChange(false);
         }
     };
@@ -138,7 +117,7 @@ export const BlockerFormDialog = ({ open, onOpenChange, sprintId, initial }: Pro
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
                             <Label>{t("Type")} <span className="text-error">*</span></Label>
-                            <Select value={type} onValueChange={(v) => setType(v as BlockerType)}>
+                            <Select value={type} onValueChange={setType}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     {TYPE_OPTIONS.map((o) => (
@@ -165,38 +144,12 @@ export const BlockerFormDialog = ({ open, onOpenChange, sprintId, initial }: Pro
                         <Select value={ownedBy} onValueChange={setOwnedBy}>
                             <SelectTrigger><SelectValue placeholder={t("Select owner")} /></SelectTrigger>
                             <SelectContent>
-                                {members.map((m) => (
-                                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                                {users.map((u) => (
+                                    <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                     </div>
-
-                    {!isEdit && tasks.length > 0 && (
-                        <div className="space-y-2">
-                            <Label>{t("Linked Tasks")}</Label>
-                            <div className="max-h-40 overflow-y-auto border border-border rounded-lg p-2 space-y-1">
-                                {tasks.map((tk) => {
-                                    const checked = taskIds.includes(tk.id);
-                                    return (
-                                        <label key={tk.id} className="flex items-center gap-2 cursor-pointer rounded px-2 py-1 hover:bg-muted">
-                                            <input
-                                                type="checkbox"
-                                                checked={checked}
-                                                onChange={(e) => {
-                                                    setTaskIds((prev) => e.target.checked ? [...prev, tk.id] : prev.filter((i) => i !== tk.id));
-                                                }}
-                                            />
-                                            <span className="text-xs text-text-dark truncate">{tk.title}</span>
-                                        </label>
-                                    );
-                                })}
-                            </div>
-                            {taskIds.length > 0 && (
-                                <p className="text-[10px] text-text-muted">{taskIds.length} {t("tasks selected")}</p>
-                            )}
-                        </div>
-                    )}
                 </div>
 
                 <div className="flex justify-end gap-2 mt-4">

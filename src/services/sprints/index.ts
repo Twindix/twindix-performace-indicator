@@ -1,10 +1,10 @@
 import { apisData } from "@/data";
-import type { CreateSprintPayloadInterface, SprintDetailResponseInterface, SprintListResponseInterface, SprintSummaryResponseInterface, UpdateSprintPayloadInterface } from "@/interfaces";
+import type { CreateSprintPayloadInterface, SprintDetailResponseInterface, SprintSummaryInterface, SprintsListResponseInterface, UpdateSprintPayloadInterface } from "@/interfaces";
 import { apiClient } from "@/lib/axios";
 
 export const sprintsService = {
-    listHandler: async (): Promise<SprintListResponseInterface> => {
-        const { data } = await apiClient.get<SprintListResponseInterface>(apisData.sprints.list);
+    listHandler: async (): Promise<SprintsListResponseInterface> => {
+        const { data } = await apiClient.get<SprintsListResponseInterface>(apisData.sprints.list);
         return data;
     },
 
@@ -13,8 +13,8 @@ export const sprintsService = {
         return data;
     },
 
-    summaryHandler: async (id: string): Promise<SprintSummaryResponseInterface> => {
-        const { data } = await apiClient.get<SprintSummaryResponseInterface>(apisData.sprints.summary(id));
+    summaryHandler: async (id: string): Promise<SprintSummaryInterface> => {
+        const { data } = await apiClient.get<SprintSummaryInterface>(apisData.sprints.summary(id));
         return data;
     },
 

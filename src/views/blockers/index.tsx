@@ -4,17 +4,16 @@ import { AlertTriangle, Calendar, Clock, Filter, GitBranch, Layers, MessageSquar
 import { Badge, Button, Card, CardContent } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { BlockersSkeleton } from "@/components/skeletons";
-import { BlockersProvider, useBlockers } from "@/contexts";
-import { BlockerImpact, BlockerStatus, BlockerType } from "@/enums";
-import { t, useSettings, usePageLoader } from "@/hooks";
-import type { BlockerInterface, UserInterface } from "@/interfaces";
+import { BlockerType } from "@/enums";
+import { t, useBlockersList, useSettings, usePageLoader, useUsersList } from "@/hooks";
+import type { BlockerInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
-import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
+import { cn, formatDate } from "@/utils";
 import { BlockerDetailDialog } from "./BlockerDetailDialog";
 import { BlockerFormDialog } from "./BlockerFormDialog";
 
-const blockerTypeConfig: Record<BlockerType, { labelKey: string; icon: typeof AlertTriangle; color: string }> = {
+const blockerTypeConfig: Record<string, { labelKey: string; icon: typeof AlertTriangle; color: string }> = {
     [BlockerType.Requirements]: { labelKey: "Requirements", icon: AlertTriangle, color: "bg-friction-requirements text-friction-requirements" },
     [BlockerType.ApiDependency]: { labelKey: "API Dependency", icon: GitBranch, color: "bg-friction-dependencies text-friction-dependencies" },
     [BlockerType.Design]: { labelKey: "Design", icon: PenTool, color: "bg-primary-lighter text-primary-medium" },
@@ -23,52 +22,45 @@ const blockerTypeConfig: Record<BlockerType, { labelKey: string; icon: typeof Al
     [BlockerType.Technical]: { labelKey: "Technical", icon: Shield, color: "bg-friction-team text-friction-team" },
 };
 
-const blockerStatusConfig: Record<BlockerStatus, { labelKey: string; variant: "error" | "success" | "warning" }> = {
-    [BlockerStatus.Active]: { labelKey: "Active", variant: "error" },
-    [BlockerStatus.Resolved]: { labelKey: "Resolved", variant: "success" },
-    [BlockerStatus.Escalated]: { labelKey: "Escalated", variant: "warning" },
+const statusVariant = (status: string | null): "error" | "success" | "warning" | "secondary" => {
+    if (status === "resolved") return "success";
+    if (status === "escalated") return "warning";
+    if (status === "active") return "error";
+    return "secondary";
 };
 
-const impactConfig: Record<BlockerImpact, { labelKey: string; variant: "error" | "warning" | "secondary" | "outline" }> = {
-    [BlockerImpact.Critical]: { labelKey: "Critical", variant: "error" },
-    [BlockerImpact.High]: { labelKey: "High", variant: "warning" },
-    [BlockerImpact.Medium]: { labelKey: "Medium", variant: "secondary" },
-    [BlockerImpact.Low]: { labelKey: "Low", variant: "outline" },
+const severityVariant: Record<string, "error" | "warning" | "secondary" | "outline"> = {
+    critical: "error",
+    high: "warning",
+    medium: "secondary",
+    low: "outline",
 };
 
 export const BlockerView = () => {
-    const { activeSprintId } = useSprintStore();
-    return (
-        <BlockersProvider sprintId={activeSprintId}>
-            <BlockerViewInner />
-        </BlockersProvider>
-    );
-};
-
-const BlockerViewInner = () => {
     const pageLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
     const { activeSprintId } = useSprintStore();
-    const { blockers, analytics, isLoading: isFetching } = useBlockers();
+
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [typeFilter, setTypeFilter] = useState<string>("all");
+    const [severityFilter, setSeverityFilter] = useState<string>("all");
+    const [ownerFilter, setOwnerFilter] = useState<string>("all");
+    const [reporterFilter, setReporterFilter] = useState<string>("all");
+
+    const { blockers, analytics, isLoading: isFetching, patchBlockerLocal, removeBlockerLocal, refetchAnalytics } = useBlockersList(activeSprintId, {
+        status: statusFilter === "all" ? undefined : statusFilter,
+        type: typeFilter === "all" ? undefined : typeFilter,
+        severity: severityFilter === "all" ? undefined : severityFilter,
+        owner: ownerFilter === "all" ? undefined : ownerFilter,
+        reporter: reporterFilter === "all" ? undefined : reporterFilter,
+    });
+    const { users } = useUsersList();
 
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<BlockerInterface | null>(null);
     const [detailTarget, setDetailTarget] = useState<BlockerInterface | null>(null);
     const [detailOpen, setDetailOpen] = useState(false);
-
-    const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
-
-    const filteredBlockers = useMemo(() => {
-        let result = blockers;
-        if (statusFilter !== "all") result = result.filter((b) => b.status === statusFilter);
-        if (typeFilter !== "all") result = result.filter((b) => b.type === typeFilter);
-        return result;
-    }, [blockers, statusFilter, typeFilter]);
-
-    const getMember = (id: string) => members.find((m) => m.id === id);
 
     const stats = useMemo(() => {
         if (analytics) {
@@ -76,12 +68,13 @@ const BlockerViewInner = () => {
                 total: analytics.total,
                 active: analytics.active,
                 resolved: analytics.resolved,
-                avgDuration: Math.round(analytics.avg_duration ?? 0),
+                avgDuration: Math.round(analytics.avg_duration_days ?? 0),
             };
         }
-        const active = blockers.filter((b) => b.status === BlockerStatus.Active || b.status === BlockerStatus.Escalated).length;
-        const resolved = blockers.filter((b) => b.status === BlockerStatus.Resolved).length;
-        const avgDuration = blockers.length > 0 ? Math.round(blockers.reduce((sum, b) => sum + b.durationDays, 0) / blockers.length) : 0;
+        const active = blockers.filter((b) => b.status === "active" || b.status === "escalated").length;
+        const resolved = blockers.filter((b) => b.status === "resolved").length;
+        const durations = blockers.map((b) => Number(b.duration_days ?? 0));
+        const avgDuration = durations.length ? Math.round(durations.reduce((s, v) => s + v, 0) / durations.length) : 0;
         return { total: blockers.length, active, resolved, avgDuration };
     }, [analytics, blockers]);
 
@@ -93,35 +86,10 @@ const BlockerViewInner = () => {
                 title={t("Blocker Tracker")}
                 description={t("Track and manage blockers affecting sprint delivery")}
                 actions={
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Filter className="h-4 w-4 text-text-muted hidden sm:block" />
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-[130px] sm:w-[150px] h-9 text-xs sm:text-sm">
-                                <SelectValue placeholder={t("Status")} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">{t("All Statuses")}</SelectItem>
-                                <SelectItem value={BlockerStatus.Active}>{t("Active")}</SelectItem>
-                                <SelectItem value={BlockerStatus.Resolved}>{t("Resolved")}</SelectItem>
-                                <SelectItem value={BlockerStatus.Escalated}>{t("Escalated")}</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select value={typeFilter} onValueChange={setTypeFilter}>
-                            <SelectTrigger className="w-[130px] sm:w-[170px] h-9 text-xs sm:text-sm">
-                                <SelectValue placeholder={t("Type")} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">{t("All Types")}</SelectItem>
-                                {Object.values(BlockerType).map((bt) => (
-                                    <SelectItem key={bt} value={bt}>{t(blockerTypeConfig[bt].labelKey)}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Button size="sm" className="gap-1.5" onClick={() => setAddOpen(true)}>
-                            <Plus className="h-4 w-4" />
-                            {t("Add Blocker")}
-                        </Button>
-                    </div>
+                    <Button size="sm" className="gap-1.5" onClick={() => setAddOpen(true)}>
+                        <Plus className="h-4 w-4" />
+                        {t("Add Blocker")}
+                    </Button>
                 }
             />
 
@@ -153,24 +121,82 @@ const BlockerViewInner = () => {
                 </Card>
             </div>
 
+            {/* Filters */}
+            <Card className={compact ? "mb-3" : "mb-6"}>
+                <CardContent className="p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Filter className="h-4 w-4 text-text-muted hidden sm:block" />
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue placeholder={t("Status")} /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">{t("All Statuses")}</SelectItem>
+                                <SelectItem value="active">{t("Active")}</SelectItem>
+                                <SelectItem value="resolved">{t("Resolved")}</SelectItem>
+                                <SelectItem value="escalated">{t("Escalated")}</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select value={typeFilter} onValueChange={setTypeFilter}>
+                            <SelectTrigger className="w-[160px] h-9 text-xs"><SelectValue placeholder={t("Type")} /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">{t("All Types")}</SelectItem>
+                                {Object.values(BlockerType).map((bt) => (
+                                    <SelectItem key={bt} value={bt}>{t(blockerTypeConfig[bt]?.labelKey ?? bt)}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Select value={severityFilter} onValueChange={setSeverityFilter}>
+                            <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue placeholder={t("Severity")} /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">{t("All Severities")}</SelectItem>
+                                <SelectItem value="critical">{t("Critical")}</SelectItem>
+                                <SelectItem value="high">{t("High")}</SelectItem>
+                                <SelectItem value="medium">{t("Medium")}</SelectItem>
+                                <SelectItem value="low">{t("Low")}</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select value={ownerFilter} onValueChange={setOwnerFilter}>
+                            <SelectTrigger className="w-[160px] h-9 text-xs"><SelectValue placeholder={t("Owner")} /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">{t("All Owners")}</SelectItem>
+                                {users.map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <Select value={reporterFilter} onValueChange={setReporterFilter}>
+                            <SelectTrigger className="w-[160px] h-9 text-xs"><SelectValue placeholder={t("Reporter")} /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">{t("All Reporters")}</SelectItem>
+                                {users.map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        {(statusFilter !== "all" || typeFilter !== "all" || severityFilter !== "all" || ownerFilter !== "all" || reporterFilter !== "all") && (
+                            <button
+                                onClick={() => { setStatusFilter("all"); setTypeFilter("all"); setSeverityFilter("all"); setOwnerFilter("all"); setReporterFilter("all"); }}
+                                className="text-xs text-text-muted hover:text-text-dark underline"
+                            >
+                                {t("Clear filters")}
+                            </button>
+                        )}
+                        <span className="ms-auto text-xs text-text-muted">{blockers.length} {t("blockers")}</span>
+                    </div>
+                </CardContent>
+            </Card>
+
             <div>
-                {/* Blocker List */}
                 <div className={cn("flex flex-col", compact ? "gap-2" : "gap-4")}>
                     <h2 className="text-lg font-semibold text-text-dark">
                         {t("Blockers")}
-                        <Badge className="ms-2" variant="secondary">{filteredBlockers.length}</Badge>
+                        <Badge className="ms-2" variant="secondary">{blockers.length}</Badge>
                     </h2>
 
-                    {filteredBlockers.length === 0 ? (
+                    {blockers.length === 0 ? (
                         <EmptyState icon={ShieldAlert} title={t("No blockers found")} description={t("No blockers match the current filters")} />
                     ) : (
-                        filteredBlockers.map((blocker) => {
-                            const typeInfo = blockerTypeConfig[blocker.type];
-                            const statusInfo = blockerStatusConfig[blocker.status];
-                            const impactInfo = impactConfig[blocker.impact];
-                            const reporter = getMember(blocker.reporterId);
-                            const owner = getMember(blocker.ownerId);
+                        blockers.map((blocker) => {
+                            const typeInfo = blockerTypeConfig[blocker.type] ?? { labelKey: blocker.type, icon: AlertTriangle, color: "bg-muted text-text-muted" };
                             const TypeIcon = typeInfo.icon;
+                            const sevVariant = severityVariant[blocker.severity] ?? "secondary";
+                            const reporter = blocker.reporter;
+                            const owner = blocker.owner;
 
                             return (
                                 <Card
@@ -179,7 +205,6 @@ const BlockerViewInner = () => {
                                     onClick={() => { setDetailTarget(blocker); setDetailOpen(true); }}
                                 >
                                     <CardContent className={compact ? "p-3" : "p-5"}>
-                                        {/* Header: title + badges */}
                                         <div className="flex items-start justify-between gap-3 mb-3">
                                             <div className="flex items-start gap-3 min-w-0">
                                                 <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", typeInfo.color.split(" ")[0])}>
@@ -187,49 +212,47 @@ const BlockerViewInner = () => {
                                                 </div>
                                                 <div className="min-w-0">
                                                     <h3 className="text-sm font-semibold text-text-dark truncate">{blocker.title}</h3>
-                                                    <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{blocker.description}</p>
+                                                    {blocker.description && (
+                                                        <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{blocker.description}</p>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-1.5 shrink-0">
-                                                <Badge variant={statusInfo.variant}>{t(statusInfo.labelKey)}</Badge>
-                                                <Badge variant={impactInfo.variant}>{t(impactInfo.labelKey)}</Badge>
+                                                {blocker.status && <Badge variant={statusVariant(blocker.status)}>{t(blocker.status.charAt(0).toUpperCase() + blocker.status.slice(1))}</Badge>}
+                                                <Badge variant={sevVariant}>{t(blocker.severity.charAt(0).toUpperCase() + blocker.severity.slice(1))}</Badge>
                                             </div>
                                         </div>
 
-                                        {/* Meta row */}
                                         <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-text-muted">
-                                            {/* Reporter */}
-                                            <div className="flex items-center gap-1.5">
-                                                <Avatar className="h-5 w-5">
-                                                    <AvatarFallback className="text-[8px]">{reporter?.avatar}</AvatarFallback>
-                                                </Avatar>
-                                                <span>{t("Reported by")} <span className="font-medium text-text-secondary">{reporter?.name ?? t("Unknown")}</span></span>
-                                            </div>
-
-                                            {/* Owner */}
-                                            <div className="flex items-center gap-1.5">
-                                                <Avatar className="h-5 w-5">
-                                                    <AvatarFallback className="text-[8px]">{owner?.avatar}</AvatarFallback>
-                                                </Avatar>
-                                                <span>{t("Owned by")} <span className="font-medium text-text-secondary">{owner?.name ?? t("Unassigned")}</span></span>
-                                            </div>
-
-                                            {/* Duration */}
-                                            <div className="flex items-center gap-1">
-                                                <Clock className="h-3 w-3" />
-                                                <span>{blocker.durationDays} {t("days")}</span>
-                                            </div>
-
-                                            {/* Created */}
+                                            {reporter && (
+                                                <div className="flex items-center gap-1.5">
+                                                    <Avatar className="h-5 w-5">
+                                                        <AvatarFallback className="text-[8px]">{reporter.avatar_initials}</AvatarFallback>
+                                                    </Avatar>
+                                                    <span>{t("Reported by")} <span className="font-medium text-text-secondary">{reporter.full_name}</span></span>
+                                                </div>
+                                            )}
+                                            {owner && (
+                                                <div className="flex items-center gap-1.5">
+                                                    <Avatar className="h-5 w-5">
+                                                        <AvatarFallback className="text-[8px]">{owner.avatar_initials}</AvatarFallback>
+                                                    </Avatar>
+                                                    <span>{t("Owned by")} <span className="font-medium text-text-secondary">{owner.full_name}</span></span>
+                                                </div>
+                                            )}
+                                            {blocker.duration_days !== null && (
+                                                <div className="flex items-center gap-1">
+                                                    <Clock className="h-3 w-3" />
+                                                    <span>{blocker.duration_days} {t("days")}</span>
+                                                </div>
+                                            )}
                                             <div className="flex items-center gap-1">
                                                 <Calendar className="h-3 w-3" />
-                                                <span>{formatDate(blocker.createdAt)}</span>
+                                                <span>{formatDate(blocker.created_at)}</span>
                                             </div>
-
-                                            {/* Affected tasks */}
                                             <div className="flex items-center gap-1">
                                                 <Layers className="h-3 w-3" />
-                                                <span>{blocker.taskIds.length} {t("tasks affected")}</span>
+                                                <span>{blocker.tasks.length} {t("tasks affected")}</span>
                                             </div>
                                         </div>
                                     </CardContent>
@@ -238,7 +261,6 @@ const BlockerViewInner = () => {
                         })
                     )}
                 </div>
-
             </div>
 
             <BlockerFormDialog
@@ -248,6 +270,8 @@ const BlockerViewInner = () => {
                 }}
                 sprintId={activeSprintId}
                 initial={editTarget}
+                users={users}
+                onSaved={(b) => { patchBlockerLocal(b); refetchAnalytics(); }}
             />
 
             <BlockerDetailDialog
@@ -255,6 +279,9 @@ const BlockerViewInner = () => {
                 open={detailOpen}
                 onOpenChange={setDetailOpen}
                 onEdit={(b) => { setDetailOpen(false); setEditTarget(b); }}
+                onPatch={patchBlockerLocal}
+                onRemove={removeBlockerLocal}
+                refetchAnalytics={refetchAnalytics}
             />
         </div>
     );

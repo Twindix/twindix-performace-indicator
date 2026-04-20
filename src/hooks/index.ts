@@ -1,13 +1,5 @@
-export { useAuth, useTheme, useLocalStorage, useSettings, t, defaultSettings, saveSettings, type AppSettings, useCountUp, useOnlineStatus, usePageLoader, usePresence, type PresenceStatus } from "./shared";
-export * from "./users";
-export * from "./teams";
+export { useAuth, usePresence, type PresenceStatus } from "./auth";
+export { useTheme, useLocalStorage, useSettings, t, defaultSettings, saveSettings, type AppSettings, useCountUp, useOnlineStatus, usePageLoader } from "./shared";
 export * from "./sprints";
-export * from "./tasks";
-export * from "./time-logs";
-export * from "./requirements";
 export * from "./blockers";
-export * from "./alerts";
-export * from "./red-flags";
-export * from "./decisions";
-export * from "./comments";
-export * from "./dashboard";
+export * from "./users";

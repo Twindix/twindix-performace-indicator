@@ -3,7 +3,6 @@ import { storageKeys, getStorageItem, setStorageItem } from "@/utils";
 import { seedTeamMembers } from "./team-members";
 import { seedSprints } from "./sprints";
 import { seedTasks } from "./tasks";
-import { seedBlockers } from "./blockers";
 import { seedDecisions } from "./decisions";
 import { seedCommunications } from "./communications";
 import { seedMetrics } from "./metrics";
@@ -23,7 +22,6 @@ export const initializeSeedData = () => {
     setStorageItem(storageKeys.teamMembers, seedTeamMembers);
     setStorageItem(storageKeys.sprints, seedSprints);
     setStorageItem(storageKeys.tasks, seedTasks);
-    setStorageItem(storageKeys.blockers, seedBlockers);
     setStorageItem(storageKeys.decisions, seedDecisions);
     setStorageItem(storageKeys.communications, seedCommunications);
     setStorageItem(storageKeys.metrics, seedMetrics);
@@ -39,7 +37,6 @@ export const initializeSeedData = () => {
 export { seedTeamMembers } from "./team-members";
 export { seedSprints } from "./sprints";
 export { seedTasks } from "./tasks";
-export { seedBlockers } from "./blockers";
 export { seedDecisions } from "./decisions";
 export { seedCommunications } from "./communications";
 export { seedMetrics } from "./metrics";
