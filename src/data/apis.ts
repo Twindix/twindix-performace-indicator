@@ -15,20 +15,44 @@ export const apisData = {
         activate: (id: string) => `/sprints/${id}/activate`,
         summary: (id: string) => `/sprints/${id}/summary`,
     },
-<<<<<<< HEAD
-    decisions: {
-        list: (sprintId: string) => `/sprints/${sprintId}/decisions`,
-        analytics: (sprintId: string) => `/sprints/${sprintId}/decisions/analytics`,
-        create: (sprintId: string) => `/sprints/${sprintId}/decisions`,
-        detail: (id: string) => `/decisions/${id}`,
-        update: (id: string) => `/decisions/${id}`,
-        delete: (id: string) => `/decisions/${id}`,
-=======
-    dashboard: {
-        full: (sprintId: string) => `/sprints/${sprintId}/dashboard`,
-        healthScore: (sprintId: string) => `/sprints/${sprintId}/dashboard/health-score`,
-        metrics: (sprintId: string) => `/sprints/${sprintId}/dashboard/metrics`,
->>>>>>> feat/integrate-dashboard
+    tasks: {
+        kanban: (sprintId: string) => `/sprints/${sprintId}/tasks/kanban`,
+        pipeline: (sprintId: string) => `/sprints/${sprintId}/tasks/pipeline`,
+        stats: (sprintId: string) => `/sprints/${sprintId}/tasks/stats`,
+        list: (sprintId: string) => `/sprints/${sprintId}/tasks`,
+        create: (sprintId: string) => `/sprints/${sprintId}/tasks`,
+        detail: (taskId: string) => `/tasks/${taskId}`,
+        update: (taskId: string) => `/tasks/${taskId}`,
+        updateStatus: (taskId: string) => `/tasks/${taskId}/status`,
+        delete: (taskId: string) => `/tasks/${taskId}`,
+        addTags: (taskId: string) => `/tasks/${taskId}/tags`,
+        removeTag: (taskId: string, tag: string) => `/tasks/${taskId}/tags/${tag}`,
+        addAttachment: (taskId: string) => `/tasks/${taskId}/attachments`,
+        removeAttachment: (taskId: string, attachmentId: string) => `/tasks/${taskId}/attachments/${attachmentId}`,
+        transitionCriteria: (taskId: string) => `/tasks/${taskId}/transition-criteria`,
+    },
+    requirements: {
+        list: (taskId: string) => `/tasks/${taskId}/requirements`,
+        create: (taskId: string) => `/tasks/${taskId}/requirements`,
+        update: (id: string) => `/requirements/${id}`,
+        toggle: (id: string) => `/requirements/${id}/toggle`,
+        delete: (id: string) => `/requirements/${id}`,
+    },
+    timeLogs: {
+        sprintList: (sprintId: string) => `/sprints/${sprintId}/time-logs`,
+        taskList: (taskId: string) => `/tasks/${taskId}/time-logs`,
+        summary: (sprintId: string) => `/sprints/${sprintId}/time-logs/summary`,
+        create: (taskId: string) => `/tasks/${taskId}/time-logs`,
+        update: (id: string) => `/time-logs/${id}`,
+        delete: (id: string) => `/time-logs/${id}`,
+    },
+    users: {
+        list: "/users",
+    },
+    comments: {
+        taskList: (taskId: string) => `/tasks/${taskId}/comments`,
+        create: "/comments",
+        delete: (id: string) => `/comments/${id}`,
     },
     baseUrl: import.meta.env.VITE_API_URL as string,
 };

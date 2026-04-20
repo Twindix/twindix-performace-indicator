@@ -1,41 +1,35 @@
 import { Paperclip, Trash2 } from "lucide-react";
-import { t } from "@/hooks";
-import type { TaskInterface, TaskAttachmentInterface } from "@/interfaces";
+
+// import { useTasks } from "@/contexts";
+import { t, useTaskAttachments } from "@/hooks";
+import type { TaskInterface } from "@/interfaces";
 
 interface Props {
     task: TaskInterface;
-    onUpdateAttachments?: (taskId: string, attachments: TaskAttachmentInterface[]) => void;
+    patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
 }
 
 const formatSize = (bytes: number) =>
     bytes < 1024 ? `${bytes} B` : bytes < 1048576 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
 
-export const TaskAttachments = ({ task, onUpdateAttachments }: Props) => {
+export const TaskAttachments = ({ task, patchTaskLocal }: Props) => {
+    // const { patchTaskLocal } = useTasks();
+    const { uploadHandler, deleteHandler } = useTaskAttachments();
     const attachments = task.attachments ?? [];
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files ?? []);
-        if (!files.length || !onUpdateAttachments) return;
-        files.forEach((file) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const att: TaskAttachmentInterface = {
-                    id: `att-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-                    name: file.name,
-                    size: file.size,
-                    type: file.type,
-                    dataUrl: reader.result as string,
-                    uploadedAt: new Date().toISOString(),
-                };
-                onUpdateAttachments(task.id, [...(task.attachments ?? []), att]);
-            };
-            reader.readAsDataURL(file);
-        });
         e.target.value = "";
+        for (const file of files) {
+            const res = await uploadHandler(task.id, file);
+            if (res) patchTaskLocal(task.id, { attachments: [...(task.attachments ?? []), res] });
+        }
     };
 
-    const remove = (id: string) =>
-        onUpdateAttachments?.(task.id, attachments.filter((a) => a.id !== id));
+    const handleDelete = async (attachmentId: string) => {
+        const ok = await deleteHandler(task.id, attachmentId);
+        if (ok) patchTaskLocal(task.id, { attachments: attachments.filter((a) => a.id !== attachmentId) });
+    };
 
     return (
         <div className="mt-4 pb-4 border-b border-border">
@@ -64,18 +58,18 @@ export const TaskAttachments = ({ task, onUpdateAttachments }: Props) => {
                 <div className="flex flex-col gap-2">
                     {attachments.map((att) => (
                         <div key={att.id} className="flex items-center gap-3 rounded-lg bg-muted p-2.5 group">
-                            {att.type.startsWith("image/") ? (
-                                <img src={att.dataUrl} alt={att.name} className="h-10 w-10 rounded object-cover shrink-0" />
+                            {att.type?.startsWith("image/") ? (
+                                <img src={att.url ?? att.dataUrl} alt={att.name} className="h-10 w-10 rounded object-cover shrink-0" />
                             ) : (
                                 <div className="h-10 w-10 rounded bg-primary-lighter flex items-center justify-center shrink-0">
                                     <Paperclip className="h-4 w-4 text-primary" />
                                 </div>
                             )}
                             <div className="flex-1 min-w-0">
-                                <a href={att.dataUrl} download={att.name} className="text-xs font-medium text-text-dark hover:text-primary truncate block transition-colors">{att.name}</a>
+                                <a href={att.url ?? att.dataUrl} download={att.name} className="text-xs font-medium text-text-dark hover:text-primary truncate block transition-colors">{att.name}</a>
                                 <p className="text-[10px] text-text-muted">{formatSize(att.size)}</p>
                             </div>
-                            <button onClick={() => remove(att.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                            <button onClick={() => handleDelete(att.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
                                 <Trash2 className="h-3.5 w-3.5" />
                             </button>
                         </div>

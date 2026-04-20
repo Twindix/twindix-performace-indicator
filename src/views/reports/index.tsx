@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { AlertTriangle, ArrowRight, Clock, FileText, GitBranch, Lightbulb, MessageSquare, Shield, TrendingDown, TrendingUp, Users } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/atoms";
@@ -6,12 +6,10 @@ import { AnimatedNumber, Header, MetricCard, ScoreGauge, StatusBadge } from "@/c
 import { ReportsSkeleton } from "@/components/skeletons";
 import { BlockerStatus, MetricStatus, TaskPhase } from "@/enums";
 import { t, useSettings, usePageLoader } from "@/hooks";
-import type { BlockerInterface, SprintMetricsInterface, TaskInterface } from "@/interfaces";
-import { useSprints } from "@/contexts";
-import { blockersService, tasksService } from "@/services";
+import type { BlockerInterface, SprintInterface, SprintMetricsInterface, TaskInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
-import { cn, td, formatDate } from "@/utils";
+import { cn, td, formatDate, getStorageItem, storageKeys } from "@/utils";
 
 const getScoreStatus = (score: number): MetricStatus => {
     if (score >= 80) return MetricStatus.Healthy;
@@ -124,22 +122,17 @@ export const ReportsView = () => {
     const isRTL = settings.language === "ar";
     const { activeSprintId } = useSprintStore();
 
-    const { sprints } = useSprints();
+    const sprints = getStorageItem<SprintInterface[]>(storageKeys.sprints) ?? [];
     const sprint = sprints.find((s) => s.id === activeSprintId);
-    const [sprintMetrics] = useState<SprintMetricsInterface | undefined>(undefined);
-    const [tasks, setTasks] = useState<TaskInterface[]>([]);
-    const [blockers, setBlockers] = useState<BlockerInterface[]>([]);
-
-    useEffect(() => {
-        if (!activeSprintId) return;
-        tasksService.listHandler(activeSprintId).then((r) => setTasks(r.data)).catch(() => {});
-        blockersService.listHandler(activeSprintId).then((r) => setBlockers(r.data)).catch(() => {});
-    }, [activeSprintId]);
+    const allMetrics = getStorageItem<SprintMetricsInterface[]>(storageKeys.metrics) ?? [];
+    const sprintMetrics = allMetrics.find((m) => m.sprintId === activeSprintId);
+    const tasks = (getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? []).filter((t) => t.sprintId === activeSprintId);
+    const blockers = (getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? []).filter((b) => b.sprintId === activeSprintId);
 
     const taskStats = useMemo(() => {
         const total = tasks.length;
         const completed = tasks.filter((t) => t.phase === TaskPhase.Done).length;
-        const blocked = tasks.filter((t) => t.is_blocked).length;
+        const blocked = tasks.filter((t) => t.hasBlocker).length;
         const completionPct = total > 0 ? Math.round((completed / total) * 100) : 0;
         return { total, completed, blocked, completionPct };
     }, [tasks]);
@@ -209,7 +202,7 @@ export const ReportsView = () => {
                             <h2 className="text-xl sm:text-3xl font-bold text-text-dark">{sprint?.name ?? t("Current Sprint")}</h2>
                             {sprint && (
                                 <p className="text-base text-text-secondary mt-2">
-                                    {formatDate(sprint.start_date)} - {formatDate(sprint.end_date)}
+                                    {formatDate(sprint.startDate ?? "")} - {formatDate(sprint.endDate ?? "")}
                                 </p>
                             )}
                         </div>
