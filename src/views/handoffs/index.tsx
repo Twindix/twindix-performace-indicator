@@ -6,8 +6,7 @@ import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { HandoffsSkeleton } from "@/components/skeletons";
 import { t, useSettings, usePageLoader } from "@/hooks";
 import type { CriterionInterface, HandoffInterface } from "@/interfaces";
-import { useSprintStore } from "@/store";
-import { cn, td, getStorageItem, storageKeys } from "@/utils";
+import { cn, td } from "@/utils";
 
 const PIPELINE_PHASE_KEYS = ["Product", "Design", "Development", "Code Review", "QA", "Done"];
 
@@ -53,9 +52,7 @@ const CriteriaList = ({ title, criteria }: { title: string; criteria: CriterionI
 export const HandoffsView = () => {
     const isLoading = usePageLoader();
     useSettings();
-    const { activeSprintId } = useSprintStore();
-    const allHandoffs = getStorageItem<HandoffInterface[]>(storageKeys.handoffs) ?? [];
-    const handoffs = allHandoffs.filter((h) => h.sprintId === activeSprintId);
+    const handoffs: HandoffInterface[] = [];
 
     const stats = useMemo(() => {
         const total = handoffs.length;

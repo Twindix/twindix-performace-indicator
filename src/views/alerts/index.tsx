@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell, Check, CheckCheck, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
@@ -7,6 +7,7 @@ import { AlertsSkeleton } from "@/components/skeletons";
 import { useAlerts } from "@/contexts";
 import { t, useAcknowledgeAlert, useAuth, useCreateAlert, useDeleteAlert, useDoneAlert, usePageLoader, useUpdateAlert } from "@/hooks";
 import type { AlertInterface, UserInterface } from "@/interfaces";
+import { usersService } from "@/services";
 import { useSprintStore } from "@/store";
 import {
     Avatar, AvatarFallback,
@@ -14,7 +15,7 @@ import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
     Tabs, TabsContent, TabsList, TabsTrigger,
 } from "@/ui";
-import { formatDateTime, getStorageItem, storageKeys } from "@/utils";
+import { formatDateTime } from "@/utils";
 
 const emptyForm = { title: "", body: "", target: "everyone", mentioned_user_ids: [] as string[] };
 
@@ -29,7 +30,11 @@ export const AlertsView = () => {
     const { acknowledgeHandler: ackAlertHandler } = useAcknowledgeAlert();
     const { doneHandler: doneAlertHandler } = useDoneAlert();
 
-    const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
+    const [members, setMembers] = useState<UserInterface[]>([]);
+
+    useEffect(() => {
+        usersService.listHandler().then((res) => setMembers(res.data)).catch(() => {});
+    }, []);
 
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<AlertInterface | null>(null);

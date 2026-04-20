@@ -6,9 +6,8 @@ import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { WorkloadSkeleton } from "@/components/skeletons";
 import { t, useSettings, usePageLoader } from "@/hooks";
 import type { TeamMemberWorkloadInterface, UserInterface } from "@/interfaces";
-import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback } from "@/ui";
-import { cn, getStorageItem, storageKeys } from "@/utils";
+import { cn } from "@/utils";
 
 const getUtilizationColor = (util: number): string => {
     if (util > 100) return "bg-error";
@@ -26,11 +25,8 @@ export const WorkloadView = () => {
     const isLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
-    const { activeSprintId } = useSprintStore();
-    const allWorkload = getStorageItem<TeamMemberWorkloadInterface[]>(storageKeys.workload) ?? [];
-    const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
-
-    const sprintWorkload = allWorkload.filter((w) => w.sprintId === activeSprintId);
+    const sprintWorkload: TeamMemberWorkloadInterface[] = [];
+    const members: UserInterface[] = [];
 
     const getMember = (id: string) => members.find((m) => m.id === id);
 

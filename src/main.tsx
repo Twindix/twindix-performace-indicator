@@ -5,9 +5,6 @@ import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
 
 import { App } from "./app";
-import { initializeSeedData } from "./data/seed";
-
-initializeSeedData();
 
 registerSW({
     onNeedRefresh() {

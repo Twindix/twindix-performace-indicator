@@ -6,10 +6,11 @@ import { Header, MetricCard, ScoreGauge, StatusBadge } from "@/components/shared
 import { AnalyticsSkeleton } from "@/components/skeletons";
 import { MetricStatus } from "@/enums";
 import { t, useSettings, usePageLoader } from "@/hooks";
-import type { SprintInterface, SprintMetricsInterface } from "@/interfaces";
+import type { SprintMetricsInterface } from "@/interfaces";
+import { useSprints } from "@/contexts";
 import { useSprintStore } from "@/store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
-import { cn, td, getStorageItem, storageKeys } from "@/utils";
+import { cn, td } from "@/utils";
 
 const frictionAreaConfig = [
     { key: "poorRequirements" as const, labelKey: "Poor Requirements", icon: AlertTriangle, color: "bg-friction-requirements" },
@@ -20,11 +21,12 @@ const frictionAreaConfig = [
     { key: "teamCulture" as const, labelKey: "Team & Culture", icon: Users, color: "bg-friction-team" },
 ];
 
-const sprintColors: Record<string, { bar: string; text: string; label: string }> = {
-    "spr-012": { bar: "bg-primary-lighter", text: "text-primary-medium", label: "Sprint 12" },
-    "spr-013": { bar: "bg-warning-light", text: "text-warning", label: "Sprint 13" },
-    "spr-014": { bar: "bg-success-light", text: "text-success", label: "Sprint 14" },
-};
+const SPRINT_COLOR_POOL = [
+    { bar: "bg-primary-lighter", text: "text-primary-medium" },
+    { bar: "bg-warning-light",   text: "text-warning" },
+    { bar: "bg-success-light",   text: "text-success" },
+    { bar: "bg-error-light",     text: "text-error" },
+];
 
 const getScoreStatus = (score: number): MetricStatus => {
     if (score >= 80) return MetricStatus.Healthy;
@@ -43,10 +45,10 @@ export const AnalyticsView = () => {
     const [settings] = useSettings();
     const isRTL = settings.language === "ar";
     const { activeSprintId } = useSprintStore();
-    const allMetrics = getStorageItem<SprintMetricsInterface[]>(storageKeys.metrics) ?? [];
-    const sprints = getStorageItem<SprintInterface[]>(storageKeys.sprints) ?? [];
+    const { sprints } = useSprints();
+    const allMetrics: SprintMetricsInterface[] = [];
 
-    const orderedSprintIds = ["spr-012", "spr-013", "spr-014"];
+    const orderedSprintIds = sprints.map((s) => s.id);
 
     const sprintMetricsMap = useMemo(() => {
         const map: Record<string, SprintMetricsInterface> = {};
@@ -170,10 +172,10 @@ export const AnalyticsView = () => {
 
                     {/* Legend */}
                     <div className="flex items-center gap-4 mb-6">
-                        {orderedSprintIds.map((id) => (
+                        {orderedSprintIds.map((id, i) => (
                             <div key={id} className="flex items-center gap-2">
-                                <div className={cn("h-3 w-3 rounded-sm", sprintColors[id]?.bar ?? "bg-muted")} />
-                                <span className="text-xs text-text-secondary">{sprintColors[id]?.label ?? id}</span>
+                                <div className={cn("h-3 w-3 rounded-sm", SPRINT_COLOR_POOL[i % SPRINT_COLOR_POOL.length].bar)} />
+                                <span className="text-xs text-text-secondary">{sprints.find((s) => s.id === id)?.name ?? id}</span>
                             </div>
                         ))}
                     </div>
@@ -195,19 +197,20 @@ export const AnalyticsView = () => {
                                             <span className="text-xs text-text-muted">{td(values[0].unit)}</span>
                                         </div>
                                         <div className="flex flex-col gap-2">
-                                            {values.map(({ sprintId, value }) => {
-                                                const config = sprintColors[sprintId];
+                                            {values.map(({ sprintId, value }, i) => {
+                                                const color = SPRINT_COLOR_POOL[i % SPRINT_COLOR_POOL.length];
+                                                const sprintName = sprints.find((s) => s.id === sprintId)?.name ?? sprintId;
                                                 const widthPercent = maxVal > 0 ? (value / maxVal) * 100 : 0;
                                                 return (
                                                     <div key={sprintId} className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
-                                                        <span className="text-xs text-text-muted w-16 shrink-0">{config?.label ?? sprintId}</span>
+                                                        <span className="text-xs text-text-muted w-16 shrink-0">{sprintName}</span>
                                                         <div className="flex-1 h-5 rounded bg-muted overflow-hidden">
                                                             <div
-                                                                className={cn("h-full rounded transition-all duration-500 progress-animated", config?.bar ?? "bg-primary")}
+                                                                className={cn("h-full rounded transition-all duration-500 progress-animated", color.bar)}
                                                                 style={{ width: `${Math.max(widthPercent, 2)}%` }}
                                                             />
                                                         </div>
-                                                        <span className={cn("text-xs font-bold w-12", isRTL ? "text-left" : "text-right", config?.text ?? "text-text-dark")}>
+                                                        <span className={cn("text-xs font-bold w-12", isRTL ? "text-left" : "text-right", color.text)}>
                                                             {value}
                                                         </span>
                                                     </div>

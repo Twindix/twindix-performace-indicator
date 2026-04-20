@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BookOpen, Calendar, Check, Filter, Plus, Users, X } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
@@ -8,13 +8,14 @@ import { DecisionsProvider, useDecisions } from "@/contexts";
 import { DecisionCategory, DecisionStatus, UserRole } from "@/enums";
 import { t, useAuth, useCreateDecision, useDeleteDecision, useGetDecision, usePageLoader, useSettings, useUpdateDecision } from "@/hooks";
 import type { DecisionInterface, UserInterface } from "@/interfaces";
+import { usersService } from "@/services";
 import { useSprintStore } from "@/store";
 import {
     Avatar, AvatarFallback,
     Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle,
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/ui";
-import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
+import { cn, formatDate } from "@/utils";
 
 const statusVariant: Record<DecisionStatus, "success" | "warning" | "error"> = {
     [DecisionStatus.Approved]: "success",
@@ -52,7 +53,11 @@ const DecisionsViewInner = () => {
     const { deleteHandler: deleteDecisionHandler } = useDeleteDecision();
     const { getHandler: getDecisionHandler, isLoading: isLoadingDetail } = useGetDecision();
 
-    const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
+    const [members, setMembers] = useState<UserInterface[]>([]);
+
+    useEffect(() => {
+        usersService.listHandler().then((res) => setMembers(res.data)).catch(() => {});
+    }, []);
 
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [categoryFilter, setCategoryFilter] = useState<string>("all");

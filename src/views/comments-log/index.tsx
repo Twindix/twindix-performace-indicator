@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AtSign, MessageCircle, CheckCircle2, Clock, User, Plus, Pencil, Trash2, Reply } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
@@ -7,9 +7,10 @@ import { CommentsLogSkeleton } from "@/components/skeletons";
 import { CommentsProvider, useComments } from "@/contexts";
 import { t, useAuth, useSettings, usePageLoader, useCreateComment, useUpdateComment, useDeleteComment, useRespondComment } from "@/hooks";
 import type { CommentInterface, UserInterface } from "@/interfaces";
+import { usersService } from "@/services";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
-import { cn, formatDate, formatDateTime, getStorageItem, storageKeys } from "@/utils";
+import { cn, formatDate, formatDateTime } from "@/utils";
 
 export const CommentsLogView = () => {
     const { activeSprintId } = useSprintStore();
@@ -33,7 +34,11 @@ const CommentsLogViewInner = () => {
     const { updateHandler: updateCommentHandler, isLoading: isUpdating } = useUpdateComment();
     const { deleteHandler: deleteCommentHandler } = useDeleteComment();
     const { respondHandler: respondCommentHandler } = useRespondComment();
-    const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
+    const [members, setMembers] = useState<UserInterface[]>([]);
+
+    useEffect(() => {
+        usersService.listHandler().then((res) => setMembers(res.data)).catch(() => {});
+    }, []);
 
     // Filters
     const [mentionFilter, setMentionFilter] = useState<string>("all");

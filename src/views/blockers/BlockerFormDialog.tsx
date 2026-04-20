@@ -11,7 +11,7 @@ import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/ui";
-import { getStorageItem, storageKeys } from "@/utils";
+import { usersService } from "@/services";
 
 interface Props {
     open: boolean;
@@ -54,7 +54,7 @@ export const BlockerFormDialog = ({ open, onOpenChange, sprintId, initial }: Pro
     const [tasks, setTasks] = useState<TaskInterface[]>([]);
 
     useEffect(() => {
-        setMembers(getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? []);
+        usersService.listHandler().then((res) => setMembers(res.data)).catch(() => {});
     }, []);
 
     useEffect(() => {

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ArrowRight, Clock, FileText, GitBranch, Lightbulb, MessageSquare, Shield, TrendingDown, TrendingUp, Users } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/atoms";
@@ -6,10 +6,12 @@ import { AnimatedNumber, Header, MetricCard, ScoreGauge, StatusBadge } from "@/c
 import { ReportsSkeleton } from "@/components/skeletons";
 import { BlockerStatus, MetricStatus, TaskPhase } from "@/enums";
 import { t, useSettings, usePageLoader } from "@/hooks";
-import type { BlockerInterface, SprintInterface, SprintMetricsInterface, TaskInterface } from "@/interfaces";
+import type { BlockerInterface, SprintMetricsInterface, TaskInterface } from "@/interfaces";
+import { useSprints } from "@/contexts";
+import { blockersService, tasksService } from "@/services";
 import { useSprintStore } from "@/store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
-import { cn, td, formatDate, getStorageItem, storageKeys } from "@/utils";
+import { cn, td, formatDate } from "@/utils";
 
 const getScoreStatus = (score: number): MetricStatus => {
     if (score >= 80) return MetricStatus.Healthy;
@@ -122,12 +124,17 @@ export const ReportsView = () => {
     const isRTL = settings.language === "ar";
     const { activeSprintId } = useSprintStore();
 
-    const sprints = getStorageItem<SprintInterface[]>(storageKeys.sprints) ?? [];
+    const { sprints } = useSprints();
     const sprint = sprints.find((s) => s.id === activeSprintId);
-    const allMetrics = getStorageItem<SprintMetricsInterface[]>(storageKeys.metrics) ?? [];
-    const sprintMetrics = allMetrics.find((m) => m.sprintId === activeSprintId);
-    const tasks = (getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? []).filter((t) => t.sprint_id === activeSprintId);
-    const blockers = (getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? []);
+    const [sprintMetrics] = useState<SprintMetricsInterface | undefined>(undefined);
+    const [tasks, setTasks] = useState<TaskInterface[]>([]);
+    const [blockers, setBlockers] = useState<BlockerInterface[]>([]);
+
+    useEffect(() => {
+        if (!activeSprintId) return;
+        tasksService.listHandler(activeSprintId).then((r) => setTasks(r.data)).catch(() => {});
+        blockersService.listHandler(activeSprintId).then((r) => setBlockers(r.data)).catch(() => {});
+    }, [activeSprintId]);
 
     const taskStats = useMemo(() => {
         const total = tasks.length;

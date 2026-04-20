@@ -17,7 +17,8 @@ import type {
     UserInterface,
     BlockerInterface,
 } from "@/interfaces";
-import { t, useCreateTimeLog, useGetTask, useSettings, usePageLoader, useTaskViews, useUpdateTask } from "@/hooks";
+import { t, useAuth, useCreateTimeLog, useGetTask, useSettings, usePageLoader, useTaskViews, useUpdateTask } from "@/hooks";
+import { blockersService, usersService } from "@/services";
 import { useSprintStore } from "@/store";
 import {
     Select,
@@ -26,7 +27,7 @@ import {
     SelectItem,
     SelectValue,
 } from "@/ui";
-import { cn, getStorageItem, storageKeys } from "@/utils";
+import { cn } from "@/utils";
 import {
     COLUMNS,
     COLUMN_COLORS,
@@ -51,6 +52,7 @@ export const TasksView = () => {
 const TasksViewInner = () => {
     const pageLoading = usePageLoader();
     useSettings();
+    const { user } = useAuth();
     const { activeSprintId } = useSprintStore();
     const {
         tasks: allTasks,
@@ -67,8 +69,17 @@ const TasksViewInner = () => {
     const { updateHandler: updateTaskHandler } = useUpdateTask();
     const { createHandler: createTimeLogHandler } = useCreateTimeLog();
 
-    const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
-    const blockers = getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? [];
+    const [members, setMembers] = useState<UserInterface[]>([]);
+    const [blockers, setBlockers] = useState<BlockerInterface[]>([]);
+
+    useEffect(() => {
+        usersService.listHandler().then((r) => setMembers(r.data)).catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        if (!activeSprintId) return;
+        blockersService.listHandler(activeSprintId).then((r) => setBlockers(r.data)).catch(() => {});
+    }, [activeSprintId]);
 
     const [selectedTask, setSelectedTask] = useState<TaskInterface | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -390,7 +401,7 @@ const handleUpdateRequirements = useCallback((taskId: string, requirements: Task
                 task={transitionTask}
                 targetPhase={transitionTarget}
                 transitionResult={transitionResult}
-                isAssignee={(transitionTask?.assignees ?? []).some((a) => a.id === (getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? ""))}
+                isAssignee={(transitionTask?.assignees ?? []).some((a) => a.id === (user?.id ?? ""))}
                 onConfirm={confirmTransition}
             />
 

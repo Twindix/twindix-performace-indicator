@@ -7,14 +7,14 @@ import { OwnershipSkeleton } from "@/components/skeletons";
 import { t, useSettings, usePageLoader } from "@/hooks";
 import type { OwnershipEntryInterface, UserInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
-import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
+import { cn, formatDate } from "@/utils";
 
 export const OwnershipView = () => {
     const isLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
-    const entries = getStorageItem<OwnershipEntryInterface[]>(storageKeys.ownership) ?? [];
-    const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
+    const entries: OwnershipEntryInterface[] = [];
+    const members: UserInterface[] = [];
 
     const getMember = (id: string) => members.find((m) => m.id === id);
 

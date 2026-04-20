@@ -6,9 +6,8 @@ import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { CommunicationSkeleton } from "@/components/skeletons";
 import { t, useSettings, usePageLoader } from "@/hooks";
 import type { CommunicationChannel, CommunicationInterface, UserInterface } from "@/interfaces";
-import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Tabs, TabsList, TabsTrigger, TabsContent } from "@/ui";
-import { cn, getStorageItem, storageKeys } from "@/utils";
+import { cn } from "@/utils";
 
 const channelConfig: Record<CommunicationChannel, { label: string; icon: typeof MessageSquare; variant: "default" | "success" | "warning" | "error" | "secondary" | "outline" }> = {
     slack: { label: "Slack", icon: Hash, variant: "default" },
@@ -48,10 +47,8 @@ export const CommunicationView = () => {
     const [settings] = useSettings();
     const compact = settings.compactView;
     const isRTL = settings.language === "ar";
-    const { activeSprintId } = useSprintStore();
-    const allComms = getStorageItem<CommunicationInterface[]>(storageKeys.communications) ?? [];
-    const comms = allComms.filter((c) => c.sprintId === activeSprintId);
-    const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
+    const comms: CommunicationInterface[] = [];
+    const members: UserInterface[] = [];
 
     const getMember = (id: string) => members.find((m) => m.id === id);
 
