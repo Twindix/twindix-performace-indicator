@@ -6,6 +6,6 @@ interface SprintStore {
 }
 
 export const useSprintStore = create<SprintStore>((set) => ({
-    activeSprintId: "spr-014",
+    activeSprintId: "",
     onSetActiveSprint: (id: string) => set({ activeSprintId: id }),
 }));
