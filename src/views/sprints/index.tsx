@@ -78,11 +78,7 @@ export const SprintsView = () => {
             />
 
             {sprints.length === 0 && !isLoading ? (
-                <EmptyState
-                    icon={Target}
-                    title={t("No sprints yet")}
-                    description={t("Create your first sprint to start planning work.")}
-                />
+                <EmptyState icon={Target} title={t("No sprints yet")} description={t("Create your first sprint to start planning work.")} />
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {sprints.map((s) => (
@@ -103,24 +99,20 @@ export const SprintsView = () => {
                                             {s.status !== "active" && (
                                                 <>
                                                     <DropdownMenuItem onClick={() => handleActivate(s)} className="gap-2 cursor-pointer">
-                                                        <Zap className="h-4 w-4" />
-                                                        {t("Activate")}
+                                                        <Zap className="h-4 w-4" />{t("Activate")}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                 </>
                                             )}
                                             <DropdownMenuItem onClick={() => openEdit(s)} className="gap-2 cursor-pointer">
-                                                <Edit className="h-4 w-4" />
-                                                {t("Edit")}
+                                                <Edit className="h-4 w-4" />{t("Edit")}
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => setDeleteTarget(s)} className="gap-2 text-error focus:text-error cursor-pointer">
-                                                <Trash2 className="h-4 w-4" />
-                                                {t("Delete")}
+                                                <Trash2 className="h-4 w-4" />{t("Delete")}
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
-
                                 <div className="flex items-center gap-2 text-xs text-text-muted">
                                     <Calendar className="h-3.5 w-3.5" />
                                     <span>{s.start_date} → {s.end_date}</span>
@@ -156,10 +148,7 @@ export const SprintsView = () => {
                         <DialogClose asChild>
                             <Button variant="outline" disabled={isSubmitting}>{t("Cancel")}</Button>
                         </DialogClose>
-                        <Button
-                            onClick={editTarget ? handleSubmitEdit : handleSubmitAdd}
-                            disabled={isSubmitting || !form.name.trim() || !form.start_date || !form.end_date}
-                        >
+                        <Button onClick={editTarget ? handleSubmitEdit : handleSubmitAdd} disabled={isSubmitting || !form.name.trim() || !form.start_date || !form.end_date}>
                             {isSubmitting ? t("Saving...") : editTarget ? t("Save Changes") : t("Create Sprint")}
                         </Button>
                     </div>
@@ -168,16 +157,12 @@ export const SprintsView = () => {
 
             <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
                 <DialogContent className="max-w-sm">
-                    <DialogHeader>
-                        <DialogTitle>{t("Delete Sprint")}</DialogTitle>
-                    </DialogHeader>
+                    <DialogHeader><DialogTitle>{t("Delete Sprint")}</DialogTitle></DialogHeader>
                     <p className="text-sm text-text-secondary">
                         {t("Are you sure you want to delete")} <strong className="text-text-dark">{deleteTarget?.name}</strong>? {t("This action cannot be undone.")}
                     </p>
                     <div className="flex justify-end gap-2 mt-4">
-                        <DialogClose asChild>
-                            <Button variant="outline">{t("Cancel")}</Button>
-                        </DialogClose>
+                        <DialogClose asChild><Button variant="outline">{t("Cancel")}</Button></DialogClose>
                         <Button variant="destructive" onClick={handleDelete}>{t("Delete")}</Button>
                     </div>
                 </DialogContent>

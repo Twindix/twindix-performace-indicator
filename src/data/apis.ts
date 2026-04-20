@@ -15,18 +15,13 @@ export const apisData = {
         activate: (id: string) => `/sprints/${id}/activate`,
         summary: (id: string) => `/sprints/${id}/summary`,
     },
-    alerts: {
-        list: (sprintId: string) => `/sprints/${sprintId}/alerts`,
-        count: (sprintId: string) => `/sprints/${sprintId}/alerts/count`,
-        create: (sprintId: string) => `/sprints/${sprintId}/alerts`,
-        detail: (id: string) => `/alerts/${id}`,
-        update: (id: string) => `/alerts/${id}`,
-        delete: (id: string) => `/alerts/${id}`,
-        acknowledge: (id: string) => `/alerts/${id}/acknowledge`,
-        done: (id: string) => `/alerts/${id}/done`,
-    },
-    users: {
-        list: "/users",
+    redFlags: {
+        list: (sprintId: string) => `/sprints/${sprintId}/red-flags`,
+        count: (sprintId: string) => `/sprints/${sprintId}/red-flags/count`,
+        create: (sprintId: string) => `/sprints/${sprintId}/red-flags`,
+        detail: (id: string) => `/red-flags/${id}`,
+        update: (id: string) => `/red-flags/${id}`,
+        delete: (id: string) => `/red-flags/${id}`,
     },
     baseUrl: import.meta.env.VITE_API_URL as string,
 };
