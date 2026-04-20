@@ -23,7 +23,7 @@ export interface BlockerInterface {
     duration_days: string | number | null;
     tasks_affected: string | number | null;
     resolved_at: string | null;
-    tasks: BlockerTaskInterface[];
+    tasks?: BlockerTaskInterface[];
     created_at: string;
 }
 

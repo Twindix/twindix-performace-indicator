@@ -48,7 +48,7 @@ export const BlockerView = () => {
     const [ownerFilter, setOwnerFilter] = useState<string>("all");
     const [reporterFilter, setReporterFilter] = useState<string>("all");
 
-    const { blockers, analytics, isLoading: isFetching, patchBlockerLocal, removeBlockerLocal, refetchAnalytics } = useBlockersList(activeSprintId, {
+    const { blockers, analytics, isLoading: isFetching, patchBlockerLocal, refetchAnalytics } = useBlockersList(activeSprintId, {
         status: statusFilter === "all" ? undefined : statusFilter,
         type: typeFilter === "all" ? undefined : typeFilter,
         severity: severityFilter === "all" ? undefined : severityFilter,
@@ -250,10 +250,12 @@ export const BlockerView = () => {
                                                 <Calendar className="h-3 w-3" />
                                                 <span>{formatDate(blocker.created_at)}</span>
                                             </div>
-                                            <div className="flex items-center gap-1">
-                                                <Layers className="h-3 w-3" />
-                                                <span>{blocker.tasks.length} {t("tasks affected")}</span>
-                                            </div>
+                                            {Number(blocker.tasks_affected ?? 0) > 0 && (
+                                                <div className="flex items-center gap-1">
+                                                    <Layers className="h-3 w-3" />
+                                                    <span>{blocker.tasks_affected} {t("tasks affected")}</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -280,7 +282,6 @@ export const BlockerView = () => {
                 onOpenChange={setDetailOpen}
                 onEdit={(b) => { setDetailOpen(false); setEditTarget(b); }}
                 onPatch={patchBlockerLocal}
-                onRemove={removeBlockerLocal}
                 refetchAnalytics={refetchAnalytics}
             />
         </div>

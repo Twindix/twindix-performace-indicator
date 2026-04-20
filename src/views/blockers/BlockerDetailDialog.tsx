@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { AlertCircle, Calendar, CheckCircle2, Clock, Edit, Layers, ShieldAlert, Trash2, TrendingUp, User } from "lucide-react";
+import { AlertCircle, Calendar, CheckCircle2, Clock, Edit, Layers, ShieldAlert, TrendingUp, User } from "lucide-react";
 
 import { Badge, Button } from "@/atoms";
-import { t, useDeleteBlocker, useEscalateBlocker, useGetBlocker, useResolveBlocker } from "@/hooks";
+import { t, useEscalateBlocker, useGetBlocker, useResolveBlocker } from "@/hooks";
 import type { BlockerInterface } from "@/interfaces";
 import { Avatar, AvatarFallback, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/ui";
 import { cn, formatDate } from "@/utils";
@@ -13,7 +13,6 @@ interface Props {
     onOpenChange: (open: boolean) => void;
     onEdit: (blocker: BlockerInterface) => void;
     onPatch: (blocker: BlockerInterface) => void;
-    onRemove: (id: string) => void;
     refetchAnalytics: () => void;
 }
 
@@ -24,11 +23,10 @@ const statusVariant = (status: string | null): "error" | "success" | "warning" |
     return "secondary";
 };
 
-export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPatch, onRemove, refetchAnalytics }: Props) => {
+export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPatch, refetchAnalytics }: Props) => {
     const { getHandler: getBlockerHandler } = useGetBlocker();
     const { resolveHandler: resolveBlockerHandler, isLoading: isResolving } = useResolveBlocker();
     const { escalateHandler: escalateBlockerHandler, isLoading: isEscalating } = useEscalateBlocker();
-    const { deleteHandler: deleteBlockerHandler, isLoading: isDeleting } = useDeleteBlocker();
     const [current, setCurrent] = useState<BlockerInterface | null>(blocker);
 
     useEffect(() => { setCurrent(blocker); }, [blocker]);
@@ -65,15 +63,6 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPat
             setCurrent(res);
             onPatch(res);
             refetchAnalytics();
-        }
-    };
-
-    const handleDelete = async () => {
-        const ok = await deleteBlockerHandler(current.id);
-        if (ok) {
-            onRemove(current.id);
-            refetchAnalytics();
-            onOpenChange(false);
         }
     };
 
@@ -151,9 +140,9 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPat
                 <div className="mt-4 pb-4 border-b border-border">
                     <p className="text-xs font-semibold text-text-muted uppercase tracking-wide flex items-center gap-1.5 mb-2">
                         <Layers className="h-3.5 w-3.5" />
-                        {t("Linked Tasks")} ({current.tasks.length})
+                        {t("Linked Tasks")} ({current.tasks?.length ?? 0})
                     </p>
-                    {current.tasks.length === 0 ? (
+                    {!current.tasks || current.tasks.length === 0 ? (
                         <p className="text-xs text-text-muted italic">{t("No tasks linked")}</p>
                     ) : (
                         <div className="space-y-1.5">
@@ -191,15 +180,11 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPat
                         </div>
                     )}
                     {isEscalated && (
-                        <Badge variant="warning" className="gap-1">
+                        <Badge variant="warning" className="gap-1 ms-auto">
                             <AlertCircle className="h-3 w-3" />
                             {t("Escalated")}
                         </Badge>
                     )}
-                    <Button variant="outline" onClick={handleDelete} disabled={isDeleting} className="ms-auto gap-1.5 border-error text-error hover:bg-error-light">
-                        <Trash2 className="h-4 w-4" />
-                        {isDeleting ? t("Deleting...") : t("Delete")}
-                    </Button>
                 </div>
             </DialogContent>
         </Dialog>
