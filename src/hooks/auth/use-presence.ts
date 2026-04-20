@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-import { authConstants } from "@/constants/auth";
 import { AUTH_UNAUTHORIZED_EVENT } from "@/lib/axios";
 import { authService } from "@/services";
 
@@ -13,7 +12,7 @@ export const usePresence = (userId: string | undefined) => {
     const updateStatus = (next: PresenceStatus) => {
         if (!userId || stoppedRef.current) return;
         setStatus(next);
-        authService.updateMeHandler({ status: next }).catch(() => null);
+        authService.updateMeHandler({ presence_status: next }).catch(() => null);
     };
 
     useEffect(() => {
@@ -30,14 +29,8 @@ export const usePresence = (userId: string | undefined) => {
             updateStatus("offline");
         };
 
-        const interval = setInterval(() => {
-            if (stoppedRef.current) return;
-            authService.heartbeatHandler().catch(() => null);
-        }, authConstants.heartbeatIntervalMs);
-
         const stop = () => {
             stoppedRef.current = true;
-            clearInterval(interval);
         };
 
         document.addEventListener("visibilitychange", handleVisibilityChange);
