@@ -17,4 +17,5 @@ export const routesData = {
     alerts: "/alerts",
     profile: "/profile",
     settings: "/settings",
+    sprints: "/sprints",
 } as const;
