@@ -15,11 +15,11 @@ import { formatDateTime } from "@/utils";
 
 const emptyForm: CreateRedFlagPayloadInterface = { title: "", description: "", severity: "medium" };
 
-const severityVariant: Record<string, "destructive" | "warning" | "secondary" | "outline"> = {
-    critical: "destructive",
+const severityVariant: Record<string, "error" | "warning" | "secondary" | "outline"> = {
+    critical: "error",
     high: "warning",
     medium: "secondary",
-    low: "outline",
+
 };
 
 export const RedFlagsView = () => {
@@ -133,7 +133,6 @@ export const RedFlagsView = () => {
                             <Select value={form.severity} onValueChange={(v) => setForm({ ...form, severity: v })}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="low">{t("Low")}</SelectItem>
                                     <SelectItem value="medium">{t("Medium")}</SelectItem>
                                     <SelectItem value="high">{t("High")}</SelectItem>
                                     <SelectItem value="critical">{t("Critical")}</SelectItem>
