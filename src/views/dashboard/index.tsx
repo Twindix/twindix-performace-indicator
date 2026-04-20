@@ -1,20 +1,20 @@
 import { AlertTriangle, Bell, Flag, MessageCircle, TrendingUp, Zap, XCircle } from "lucide-react";
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
-import { Header, MetricCard, ScoreGauge, StatusBadge } from "@/components/shared";
+import { Header, ScoreGauge, StatusBadge } from "@/components/shared";
 import { DashboardSkeleton } from "@/components/skeletons";
 import { DashboardProvider, useDashboard } from "@/contexts";
-import { MetricStatus, MetricTrend } from "@/enums";
+import { MetricStatus } from "@/enums";
 import { t, useSettings, useCountUp, usePageLoader } from "@/hooks";
 import { useSprintStore } from "@/store";
 import { cn } from "@/utils";
 
 const frictionAreaConfig = [
-    { key: "alertResponse", labelKey: "Alert Response", icon: Bell, textColor: "text-blue-500" },
-    { key: "redFlagResponse", labelKey: "Red Flag Response", icon: Flag, textColor: "text-error" },
-    { key: "deliveryTime", labelKey: "Time Delivery", icon: Zap, textColor: "text-success" },
-    { key: "commentsResponse", labelKey: "Comments Response", icon: MessageCircle, textColor: "text-purple-500" },
-    { key: "rejectionRate", labelKey: "Not Approval (%)", icon: XCircle, textColor: "text-warning" },
+    { key: "alert_response",    labelKey: "Alert Response",      icon: Bell,           textColor: "text-blue-500" },
+    { key: "red_flag_response", labelKey: "Red Flag Response",   icon: Flag,           textColor: "text-error" },
+    { key: "time_delivery",     labelKey: "Time Delivery",       icon: Zap,            textColor: "text-success" },
+    { key: "comments_response", labelKey: "Comments Response",   icon: MessageCircle,  textColor: "text-purple-500" },
+    { key: "not_approval",      labelKey: "Not Approval (%)",    icon: XCircle,        textColor: "text-warning" },
 ];
 
 const getScoreStatus = (score: number): MetricStatus => {
@@ -37,14 +37,6 @@ export const DashboardView = () => {
     );
 };
 
-type FrictionKey = "alertResponse" | "redFlagResponse" | "deliveryTime" | "commentsResponse" | "rejectionRate";
-
-const readNum = (obj: unknown, key: string): number | undefined => {
-    if (!obj || typeof obj !== "object") return undefined;
-    const v = (obj as Record<string, unknown>)[key];
-    return typeof v === "number" ? v : undefined;
-};
-
 const DashboardViewInner = () => {
     const pageLoading = usePageLoader();
     const [settings] = useSettings();
@@ -55,27 +47,24 @@ const DashboardViewInner = () => {
 
     const overallScore = healthScore?.overall ?? 0;
     const subScores = healthScore?.sub_scores ?? {};
-    const frictionScore = (k: FrictionKey): number => {
-        const raw = subScores[k] ?? subScores[k.replace(/([A-Z])/g, "_$1").toLowerCase()];
+    const frictionScore = (key: string): number => {
+        const raw = subScores[key];
         return typeof raw === "object" && raw !== null ? (raw as { score: number }).score : 0;
     };
 
-    const totalTasks = healthScore?.summary?.total_tasks ?? 0;
-    const completedTasks = healthScore?.summary?.completed_tasks ?? 0;
-    const activeBlockersCount = healthScore?.summary?.active_blockers ?? 0;
+    // summary is at dashboard root, not inside health_score
+    const totalTasks = dashboard?.summary?.total_tasks ?? 0;
+    const completedTasks = dashboard?.summary?.completed_tasks ?? 0;
+    const activeBlockersCount = dashboard?.summary?.active_blockers ?? 0;
 
-    const rawBlockers = Array.isArray(dashboard?.active_blockers) ? dashboard!.active_blockers : [];
-    const activeBlockers = rawBlockers.map((b, i) => {
-        const rec = (b ?? {}) as Record<string, unknown>;
-        return {
-            id: (rec.id as string) ?? `bl-${i}`,
-            title: (rec.title as string) ?? "",
-            durationDays: readNum(b, "duration_days") ?? readNum(b, "durationDays") ?? 0,
-            impact: (rec.impact as string) ?? "medium",
-        };
-    });
-
-    const topMetrics = Array.isArray(dashboard?.top_metrics) ? (dashboard!.top_metrics as Array<Record<string, unknown>>) : [];
+    // active_blockers is inside health_score
+    const rawBlockers = healthScore?.active_blockers ?? [];
+    const activeBlockers = rawBlockers.map((b) => ({
+        id: b.id,
+        title: b.title,
+        durationDays: b.duration_days ?? 0,
+        severity: b.severity ?? "medium",
+    }));
 
     return (
         <div>
@@ -114,7 +103,7 @@ const DashboardViewInner = () => {
                 {/* Friction Areas Grid */}
                 <div className={cn("lg:col-span-2 grid grid-cols-2 stagger-children", compact ? "gap-2" : "gap-3")}>
                     {frictionAreaConfig.map(({ key, labelKey, icon: Icon, textColor }) => {
-                        const score = frictionScore(key as FrictionKey);
+                        const score = frictionScore(key);
                         return (
                             <Card key={key} className="overflow-hidden">
                                 <CardContent className={compact ? "p-3" : "p-4"}>
@@ -136,28 +125,7 @@ const DashboardViewInner = () => {
                 </div>
             </div>
 
-            {/* Performance Metrics Row */}
-            {topMetrics.length > 0 && (
-                <div className={compact ? "mb-3" : "mb-6"}>
-                    <h2 className={cn("font-semibold text-text-dark", compact ? "text-base mb-2" : "text-lg mb-3")}>{t("Performance Metrics")}</h2>
-                    <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 stagger-children", compact ? "gap-2" : "gap-3")}>
-                        {topMetrics.map((m, i) => (
-                            <MetricCard
-                                key={(m.id as string) ?? i}
-                                name={(m.full_name as string) ?? ""}
-                                value={readNum(m, "value") ?? 0}
-                                unit={(m.unit as string) ?? ""}
-                                status={(m.status as MetricStatus) ?? MetricStatus.Healthy}
-                                trend={(m.trend as MetricTrend) ?? MetricTrend.Stable}
-                                trendPercent={readNum(m, "trend_percent") ?? readNum(m, "trendPercent") ?? 0}
-                                description={(m.description as string) ?? ""}
-                            />
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Bottom Section: Active Blockers */}
+            {/* Active Blockers */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base">
@@ -178,7 +146,9 @@ const DashboardViewInner = () => {
                                 <p className="text-sm font-medium text-text-dark truncate">{b.title}</p>
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className="text-xs text-text-muted">{b.durationDays} {t("days")} {t("blocked")}</span>
-                                    <Badge variant={b.impact === "critical" ? "error" : b.impact === "high" ? "warning" : "secondary"}>{t(b.impact.charAt(0).toUpperCase() + b.impact.slice(1))}</Badge>
+                                    <Badge variant={b.severity === "critical" ? "error" : b.severity === "high" ? "warning" : "secondary"}>
+                                        {t(b.severity.charAt(0).toUpperCase() + b.severity.slice(1))}
+                                    </Badge>
                                 </div>
                             </div>
                         </div>
