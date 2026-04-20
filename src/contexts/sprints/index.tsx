@@ -5,6 +5,7 @@ import { sprintsConstants } from "@/constants/sprints";
 import type { SprintInterface, SprintSummaryInterface, SprintsContextInterface } from "@/interfaces";
 import { getErrorMessage } from "@/lib/error";
 import { sprintsService } from "@/services";
+import { useSprintStore } from "@/store";
 
 const SprintsContext = createContext<SprintsContextInterface | null>(null);
 
@@ -12,12 +13,15 @@ export const SprintsProvider = ({ children }: { children: ReactNode }) => {
     const [sprints, setSprints] = useState<SprintInterface[]>([]);
     const [summaries, setSummaries] = useState<Record<string, SprintSummaryInterface | undefined>>({});
     const [isLoading, setIsLoading] = useState(false);
-
     const refetch = useCallback(async (): Promise<void> => {
         setIsLoading(true);
         try {
             const res = await sprintsService.listHandler();
             setSprints(res.data);
+            if (!useSprintStore.getState().activeSprintId) {
+                const active = res.data.find((s) => s.status === "active") ?? res.data[0];
+                if (active) useSprintStore.getState().onSetActiveSprint(active.id);
+            }
             res.data.forEach((s) => {
                 sprintsService.summaryHandler(s.id)
                     .then((r) => setSummaries((prev) => ({ ...prev, [s.id]: r })))
