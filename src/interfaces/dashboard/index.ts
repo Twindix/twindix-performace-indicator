@@ -1,46 +1,40 @@
+export interface DashboardSubScoreInterface {
+    score: number;
+    label: string;
+}
+
+export interface DashboardActiveBlockerInterface {
+    id: string;
+    title: string;
+    severity: string;
+    duration_days: number;
+}
+
+export interface DashboardSummaryInterface {
+    total_tasks: number;
+    active_blockers: number;
+    completed_tasks: number;
+}
+
 export interface HealthScoreInterface {
-    overall_score: number;
-    sub_scores?: Record<string, number>;
+    overall: number;
+    label: string;
+    sub_scores: Record<string, DashboardSubScoreInterface>;
+    summary: DashboardSummaryInterface;
+    active_blockers: DashboardActiveBlockerInterface[];
 }
 
 export interface DashboardMetricsInterface {
-    total_tasks?: number;
-    completed_tasks?: number;
-    blocked_tasks?: number;
-    active_blockers?: number;
-    velocity?: number;
-    cycle_time?: number;
-    [key: string]: unknown;
+    on_time_delivery_rate: number;
+    task_rejection_rate: number;
+    urgent_alert_count: number;
+    stalled_red_flags: number;
+    total_red_flags: number;
+    total_comments: number;
+    responded_comments: number;
 }
 
 export interface DashboardInterface {
     health_score: HealthScoreInterface;
     metrics: DashboardMetricsInterface;
-    active_blockers?: unknown[];
-    [key: string]: unknown;
-}
-
-export interface DashboardResponseInterface {
-    data: DashboardInterface;
-    isSuccess: boolean;
-}
-
-export interface HealthScoreResponseInterface {
-    data: HealthScoreInterface;
-    isSuccess: boolean;
-}
-
-export interface DashboardMetricsResponseInterface {
-    data: DashboardMetricsInterface;
-    isSuccess: boolean;
-}
-
-export interface DashboardContextInterface {
-    dashboard: DashboardInterface | null;
-    healthScore: HealthScoreInterface | null;
-    metrics: DashboardMetricsInterface | null;
-    isLoading: boolean;
-    refetch: () => Promise<void>;
-    refetchHealthScore: () => Promise<void>;
-    refetchMetrics: () => Promise<void>;
 }

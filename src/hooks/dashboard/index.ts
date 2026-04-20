@@ -1,1 +1,1 @@
-export { useGetDashboard } from "./use-get-dashboard";
+export { useDashboard } from "./use-dashboard";

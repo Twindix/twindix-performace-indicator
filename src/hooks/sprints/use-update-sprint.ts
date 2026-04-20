@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import { sprintsConstants } from "@/constants";
@@ -9,8 +9,7 @@ import { sprintsService } from "@/services";
 export const useUpdateSprint = () => {
     const [isLoading, setIsLoading] = useState(false);
 
-    const updateHandler = async (id: string, payload: UpdateSprintPayloadInterface): Promise<SprintInterface | null> => {
-        if (!navigator.onLine) throw new Error(sprintsConstants.errors.genericError);
+    const updateHandler = useCallback(async (id: string, payload: UpdateSprintPayloadInterface): Promise<SprintInterface | null> => {
         setIsLoading(true);
         try {
             const res = await sprintsService.updateHandler(id, payload);
@@ -22,7 +21,7 @@ export const useUpdateSprint = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     return { updateHandler, isLoading };
 };
