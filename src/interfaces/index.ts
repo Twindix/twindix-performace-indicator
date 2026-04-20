@@ -1,6 +1,5 @@
-export type { UserInterface, UserTeamInterface, UserSettingsInterface, ThemeContextInterface, ApiSuccessResponse, SprintInterface } from "./common";
+export type { UserInterface, UserTeamInterface, UserSettingsInterface, ThemeContextInterface, ApiSuccessResponse } from "./common";
 export type { LoginResponseInterface, RefreshResponseInterface, MeResponseInterface } from "./auth";
-export type { SprintInterface, SprintsListResponseInterface, SprintDetailResponseInterface, SprintSummaryInterface, CreateSprintPayloadInterface, UpdateSprintPayloadInterface } from "./sprints";
 export type { TaskInterface, ReadinessChecklistInterface, TaskAttachmentInterface, TaskCommentInterface, TaskTimeLogInterface, RequirementInterface } from "./tasks";
 export type { BlockerInterface } from "./blockers";
 export type { DecisionInterface } from "./decisions";
@@ -13,4 +12,4 @@ export type { CommentInterface } from "./comments";
 export type { RedFlagInterface, RedFlagSeverity } from "./red-flags";
 export type { AlertInterface } from "./alerts";
 export type { AttachmentInterface, AddTaskFormState, AddTaskDialogProps, RequirementDraftInterface } from "./tasks-dialog";
-export type { UsersListResponseInterface, UserDetailResponseInterface, CreateUserPayloadInterface, UpdateUserPayloadInterface, UserAnalyticsInterface, UserAnalyticsAssignedTaskInterface } from "./users";
+export type { TeamInterface, TeamsListResponseInterface, TeamDetailResponseInterface, CreateTeamPayloadInterface } from "./teams";

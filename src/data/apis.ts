@@ -6,13 +6,9 @@ export const apisData = {
         me: "/auth/me",
         heartbeat: "/auth/heartbeat",
     },
-    users: {
-        list: "/users",
-        detail: (id: string) => `/users/${id}`,
-        create: "/users",
-        update: (id: string) => `/users/${id}`,
-        delete: (id: string) => `/users/${id}`,
-        analytics: (id: string) => `/users/${id}/analytics`,
+    teams: {
+        list: "/teams",
+        create: "/teams",
     },
     baseUrl: import.meta.env.VITE_API_URL as string,
 };
