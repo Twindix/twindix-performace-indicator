@@ -15,6 +15,7 @@ export const apisData = {
         activate: (id: string) => `/sprints/${id}/activate`,
         summary: (id: string) => `/sprints/${id}/summary`,
     },
+<<<<<<< HEAD
     decisions: {
         list: (sprintId: string) => `/sprints/${sprintId}/decisions`,
         analytics: (sprintId: string) => `/sprints/${sprintId}/decisions/analytics`,
@@ -22,6 +23,12 @@ export const apisData = {
         detail: (id: string) => `/decisions/${id}`,
         update: (id: string) => `/decisions/${id}`,
         delete: (id: string) => `/decisions/${id}`,
+=======
+    dashboard: {
+        full: (sprintId: string) => `/sprints/${sprintId}/dashboard`,
+        healthScore: (sprintId: string) => `/sprints/${sprintId}/dashboard/health-score`,
+        metrics: (sprintId: string) => `/sprints/${sprintId}/dashboard/metrics`,
+>>>>>>> feat/integrate-dashboard
     },
     baseUrl: import.meta.env.VITE_API_URL as string,
 };
