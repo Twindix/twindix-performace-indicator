@@ -16,6 +16,7 @@ export const useDoneAlert = () => {
             toast.success(alertsConstants.messages.doneSuccess);
             return res.data;
         } catch (err) {
+            console.error(err);
             toast.error(getErrorMessage(err, alertsConstants.errors.doneFailed));
             return null;
         } finally {

@@ -17,6 +17,7 @@ export const useAlertsList = (sprintId: string) => {
             const res = await alertsService.listHandler(sprintId);
             setAlerts(res.data);
         } catch (err) {
+            console.error(err);
             toast.error(getErrorMessage(err, alertsConstants.errors.fetchFailed));
         } finally {
             setIsLoading(false);

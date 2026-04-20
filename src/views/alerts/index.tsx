@@ -166,7 +166,7 @@ export const AlertsView = () => {
     const pendingAlerts = alerts.filter((a) => a.status !== "done");
     const doneAlerts = alerts.filter((a) => a.status === "done");
 
-    const renderCard = (alert: AlertInterface) => (
+    const renderCard = (alert: AlertInterface, showActions = true) => (
         <Card key={alert.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3 mb-2">
@@ -202,14 +202,16 @@ export const AlertsView = () => {
                     <span className="text-xs text-text-muted">
                         {t("Acknowledged")}: {alert.acknowledgment_count}/{alert.total_targets}
                     </span>
-                    <div className="flex gap-1.5 ml-auto">
-                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleAcknowledge(alert.id)}>
-                            <Check className="h-3 w-3" /> {t("Acknowledge")}
-                        </Button>
-                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleDone(alert.id)}>
-                            <CheckCheck className="h-3 w-3" /> {t("Done")}
-                        </Button>
-                    </div>
+                    {showActions && (
+                        <div className="flex gap-1.5 ml-auto">
+                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleAcknowledge(alert.id)}>
+                                <Check className="h-3 w-3" /> {t("Acknowledge")}
+                            </Button>
+                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleDone(alert.id)}>
+                                <CheckCheck className="h-3 w-3" /> {t("Done")}
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </CardContent>
         </Card>
@@ -246,7 +248,7 @@ export const AlertsView = () => {
                     {doneAlerts.length === 0 ? (
                         <EmptyState icon={CheckCheck} title={t("No done alerts")} description="" />
                     ) : (
-                        <div className="flex flex-col gap-3">{doneAlerts.map(renderCard)}</div>
+                        <div className="flex flex-col gap-3">{doneAlerts.map((a) => renderCard(a, false))}</div>
                     )}
                 </TabsContent>
             </Tabs>

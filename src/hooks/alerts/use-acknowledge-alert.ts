@@ -16,6 +16,7 @@ export const useAcknowledgeAlert = () => {
             toast.success(alertsConstants.messages.acknowledgeSuccess);
             return res.data;
         } catch (err) {
+            console.error(err);
             toast.error(getErrorMessage(err, alertsConstants.errors.acknowledgeFailed));
             return null;
         } finally {

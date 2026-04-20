@@ -15,6 +15,7 @@ export const useDeleteAlert = () => {
             toast.success(alertsConstants.messages.deleteSuccess);
             return true;
         } catch (err) {
+            console.error(err);
             toast.error(getErrorMessage(err, alertsConstants.errors.deleteFailed));
             return false;
         } finally {
