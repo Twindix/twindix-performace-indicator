@@ -6,14 +6,13 @@ export const apisData = {
         me: "/auth/me",
         heartbeat: "/auth/heartbeat",
     },
-    sprints: {
-        list: "/sprints",
-        create: "/sprints",
-        detail: (id: string) => `/sprints/${id}`,
-        update: (id: string) => `/sprints/${id}`,
-        delete: (id: string) => `/sprints/${id}`,
-        activate: (id: string) => `/sprints/${id}/activate`,
-        summary: (id: string) => `/sprints/${id}/summary`,
+    users: {
+        list: "/users",
+        detail: (id: string) => `/users/${id}`,
+        create: "/users",
+        update: (id: string) => `/users/${id}`,
+        delete: (id: string) => `/users/${id}`,
+        analytics: (id: string) => `/users/${id}/analytics`,
     },
     baseUrl: import.meta.env.VITE_API_URL as string,
 };

@@ -1,2 +1,2 @@
 export { authService } from "./auth/index";
-export { sprintsService } from "./sprints";
+export { usersService } from "./users";
