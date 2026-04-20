@@ -16,3 +16,4 @@ export { UserDetailView } from "./users/detail";
 export { CommentsLogView } from "./comments-log";
 export { RedFlagsView } from "./red-flags";
 export { AlertsView } from "./alerts";
+export { SprintsView } from "./sprints";
