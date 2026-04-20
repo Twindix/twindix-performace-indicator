@@ -1,28 +1,35 @@
+export interface CommentUserInterface {
+    id: string;
+    full_name: string;
+    avatar_initials: string;
+}
+
 export interface CommentInterface {
     id: string;
-    taskId: string;
-    taskTitle: string;
-    authorId: string;
-    mentionedId?: string;
-    mentioned_user_ids?: string[];
-    content: string;
-    body?: string;
-    createdAt: string;
-    hasResponse: boolean;
-    responseAt?: string;
-    responderId?: string;
-    response_status?: string;
-    sprintId: string;
+    task_id: string | null;
+    task_title: string | null;
+    body: string;
+    author: CommentUserInterface;
+    response_status: string | null;
+    responded_at: string | null;
+    mentions: CommentUserInterface[];
+    created_at: string;
+}
+
+export interface CommentsMetaInterface {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
 }
 
 export interface CommentsListResponseInterface {
     data: CommentInterface[];
-    isSuccess: boolean;
+    meta: CommentsMetaInterface;
 }
 
 export interface CommentDetailResponseInterface {
     data: CommentInterface;
-    isSuccess: boolean;
 }
 
 export interface CommentsAnalyticsInterface {
@@ -34,7 +41,6 @@ export interface CommentsAnalyticsInterface {
 
 export interface CommentsAnalyticsResponseInterface {
     data: CommentsAnalyticsInterface;
-    isSuccess: boolean;
 }
 
 export interface CreateCommentPayloadInterface {
@@ -54,4 +60,3 @@ export interface CommentsListFiltersInterface {
     mention?: string;
     per_page?: number;
 }
-

@@ -6,6 +6,9 @@ export const apisData = {
         me: "/auth/me",
         heartbeat: "/auth/heartbeat",
     },
+    users: {
+        list: "/users",
+    },
     sprints: {
         list: "/sprints",
         create: "/sprints",

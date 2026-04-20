@@ -2,11 +2,19 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { commentsConstants } from "@/constants";
-import type { CommentInterface, CommentsAnalyticsInterface, CommentsListFiltersInterface } from "@/interfaces";
+import type { CommentInterface, CommentsAnalyticsInterface } from "@/interfaces";
 import { getErrorMessage } from "@/lib/error";
 import { commentsService } from "@/services";
 
-export const useCommentsList = (sprintId: string, filters?: CommentsListFiltersInterface) => {
+interface UseCommentsListOptions {
+    status?: string;
+    mention?: string;
+    per_page?: number;
+}
+
+export const useCommentsList = (sprintId: string, options: UseCommentsListOptions = {}) => {
+    const { status, mention, per_page } = options;
+
     const [comments, setComments] = useState<CommentInterface[]>([]);
     const [analytics, setAnalytics] = useState<CommentsAnalyticsInterface | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -15,14 +23,14 @@ export const useCommentsList = (sprintId: string, filters?: CommentsListFiltersI
         if (!sprintId) { setComments([]); setIsLoading(false); return; }
         setIsLoading(true);
         try {
-            const res = await commentsService.listHandler(sprintId, filters);
+            const res = await commentsService.listHandler(sprintId, { status, mention, per_page });
             setComments(res.data);
         } catch (err) {
             toast.error(getErrorMessage(err, commentsConstants.errors.fetchFailed));
         } finally {
             setIsLoading(false);
         }
-    }, [sprintId, filters]);
+    }, [sprintId, status, mention, per_page]);
 
     const refetchAnalytics = useCallback(async () => {
         if (!sprintId) { setAnalytics(null); return; }
@@ -36,8 +44,11 @@ export const useCommentsList = (sprintId: string, filters?: CommentsListFiltersI
 
     useEffect(() => {
         refetch();
+    }, [refetch]);
+
+    useEffect(() => {
         refetchAnalytics();
-    }, [refetch, refetchAnalytics]);
+    }, [refetchAnalytics]);
 
     const patchCommentLocal = useCallback((comment: CommentInterface) => {
         setComments((prev) => {
