@@ -73,8 +73,21 @@ export const UserDetailView = () => {
             </div>
 
             <Header
-                title={user.full_name}
-                description={`${user.role_label ?? user.role_tier} · ${user.team.name}`}
+                title={user.name ?? ""}
+                description={`${ROLE_LABELS[user.role ?? ""] ?? user.role} · ${typeof user.team === "string" ? user.team : user.team?.name}`}
+                actions={
+                    <Select value={sprintFilter} onValueChange={setSprintFilter}>
+                        <SelectTrigger className="w-[180px] h-9 text-sm">
+                            <SelectValue placeholder={t("All Sprints")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">{t("All Sprints")}</SelectItem>
+                            {sprints.map((s) => (
+                                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                }
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -90,8 +103,8 @@ export const UserDetailView = () => {
                                 <p className="text-xs text-text-muted mt-0.5">{user.email}</p>
                             </div>
                             <div className="flex flex-wrap justify-center gap-1.5">
-                                {user.role_label && <Badge variant="outline">{user.role_label}</Badge>}
-                                <Badge variant="secondary">{user.team.name}</Badge>
+                                <Badge variant="outline">{ROLE_LABELS[user.role ?? ""] ?? user.role}</Badge>
+                                <Badge variant="secondary">{typeof user.team === "string" ? user.team : user.team?.name}</Badge>
                             </div>
                         </CardContent>
                     </Card>
