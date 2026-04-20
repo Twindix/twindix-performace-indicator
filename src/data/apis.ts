@@ -6,6 +6,9 @@ export const apisData = {
         me: "/auth/me",
         heartbeat: "/auth/heartbeat",
     },
+    users: {
+        list: "/users",
+    },
     sprints: {
         list: "/sprints",
         create: "/sprints",
@@ -15,13 +18,14 @@ export const apisData = {
         activate: (id: string) => `/sprints/${id}/activate`,
         summary: (id: string) => `/sprints/${id}/summary`,
     },
-    redFlags: {
-        list: (sprintId: string) => `/sprints/${sprintId}/red-flags`,
-        count: (sprintId: string) => `/sprints/${sprintId}/red-flags/count`,
-        create: (sprintId: string) => `/sprints/${sprintId}/red-flags`,
-        detail: (id: string) => `/red-flags/${id}`,
-        update: (id: string) => `/red-flags/${id}`,
-        delete: (id: string) => `/red-flags/${id}`,
+    comments: {
+        list: (sprintId: string) => `/sprints/${sprintId}/comments`,
+        analytics: (sprintId: string) => `/sprints/${sprintId}/comments/analytics`,
+        create: (sprintId: string) => `/sprints/${sprintId}/comments`,
+        detail: (id: string) => `/comments/${id}`,
+        update: (id: string) => `/comments/${id}`,
+        delete: (id: string) => `/comments/${id}`,
+        respond: (id: string) => `/comments/${id}/respond`,
     },
     baseUrl: import.meta.env.VITE_API_URL as string,
 };

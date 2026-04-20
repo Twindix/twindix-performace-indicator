@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/atoms";
 import { routesData } from "@/data";
-import { useAuth, useTheme, t, useSettings, usePresence, type PresenceStatus, useSprintsList } from "@/hooks";
+import { useAuth, useSprintsList, useTheme, t, useSettings, usePresence, type PresenceStatus } from "@/hooks";
 import { useSprintStore } from "@/store";
 import { MobileNav } from "./mobile-nav";
 import {
@@ -54,8 +54,8 @@ export const Topbar = () => {
             <div className="flex items-center gap-2 sm:gap-4">
                 <MobileNav />
                 <Select value={activeSprintId} onValueChange={onSetActiveSprint}>
-                    <SelectTrigger className="w-[140px] sm:w-[180px] h-9 text-xs sm:text-sm">
-                        <SelectValue placeholder="Select Sprint" />
+                    <SelectTrigger className="w-[140px] sm:w-[200px] h-9 text-xs sm:text-sm">
+                        <SelectValue placeholder={t("Select Sprint")} />
                     </SelectTrigger>
                     <SelectContent>
                         {sprints.map((s) => (

@@ -1,3 +1,3 @@
-export { authService } from "./auth/index";
+export { authService } from "./auth";
 export { sprintsService } from "./sprints";
-export { redFlagsService } from "./red-flags";
+export { commentsService } from "./comments";

@@ -14,7 +14,7 @@ export const useUsersList = () => {
             const { data } = await apiClient.get<{ data: UserInterface[] }>(apisData.users.list);
             setUsers(data.data);
         } catch {
-            // silent — users list is UI-only helper
+            // silent — users list is a UI helper
         } finally {
             setIsLoading(false);
         }
