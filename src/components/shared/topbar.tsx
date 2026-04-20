@@ -29,7 +29,6 @@ import {
 
 const presenceConfig: Record<PresenceStatus, { label: string; dot: string }> = {
     active:  { label: "Active",  dot: "bg-success" },
-    away:    { label: "Away",    dot: "bg-warning" },
     offline: { label: "Offline", dot: "bg-text-muted" },
 };
 
@@ -155,7 +154,7 @@ export const Topbar = () => {
                         </div>
                         <DropdownMenuSeparator />
 
-                        {(["active", "away", "offline"] as PresenceStatus[]).map((s) => (
+                        {(["active", "offline"] as PresenceStatus[]).map((s) => (
                             <DropdownMenuItem key={s} onClick={() => updateStatus(s)} className="gap-2 cursor-pointer">
                                 <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${presenceConfig[s].dot}`} />
                                 {t(presenceConfig[s].label)}

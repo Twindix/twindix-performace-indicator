@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { AUTH_UNAUTHORIZED_EVENT } from "@/lib/axios";
 import { authService } from "@/services";
 
-export type PresenceStatus = "active" | "away" | "offline";
+export type PresenceStatus = "active" | "offline";
 
 export const usePresence = (userId: string | undefined) => {
     const [status, setStatus] = useState<PresenceStatus>("offline");
@@ -22,7 +22,7 @@ export const usePresence = (userId: string | undefined) => {
         updateStatus("active");
 
         const handleVisibilityChange = () => {
-            updateStatus(document.hidden ? "away" : "active");
+            updateStatus(document.hidden ? "offline" : "active");
         };
 
         const handleBeforeUnload = () => {
