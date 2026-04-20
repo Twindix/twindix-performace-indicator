@@ -6,5 +6,9 @@ export const apisData = {
         me: "/auth/me",
         heartbeat: "/auth/heartbeat",
     },
+    teams: {
+        list: "/teams",
+        create: "/teams",
+    },
     baseUrl: import.meta.env.VITE_API_URL as string,
 };
