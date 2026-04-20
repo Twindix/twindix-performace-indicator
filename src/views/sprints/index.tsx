@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, Edit, MoreHorizontal, Plus, Trash2, Zap } from "lucide-react";
+import { Calendar, Edit, MoreHorizontal, Plus, Target, Trash2, Zap } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
@@ -12,118 +12,118 @@ import {
 
 const emptyForm: CreateSprintPayloadInterface = { name: "", start_date: "", end_date: "" };
 
-const statusVariant = (status: string | null) => {
-    if (status === "active") return "success";
-    if (status === "completed") return "secondary";
-    return "warning";
-};
-
 export const SprintsView = () => {
     const { sprints, isLoading, patchSprintLocal, removeSprintLocal } = useSprintsList();
     const { createHandler, isLoading: isCreating } = useCreateSprint();
     const { updateHandler, isLoading: isUpdating } = useUpdateSprint();
     const { deleteHandler } = useDeleteSprint();
-    const { activateHandler, isLoading: isActivating } = useActivateSprint();
+    const { activateHandler } = useActivateSprint();
 
     const isSubmitting = isCreating || isUpdating;
 
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<SprintInterface | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<SprintInterface | null>(null);
-    const [form, setForm] = useState<CreateSprintPayloadInterface>(emptyForm);
+    const [form, setForm] = useState(emptyForm);
 
     const openAdd = () => { setForm(emptyForm); setAddOpen(true); };
+
     const openEdit = (s: SprintInterface) => {
         setForm({ name: s.name, start_date: s.start_date, end_date: s.end_date });
         setEditTarget(s);
     };
-    const closeDialogs = () => { setAddOpen(false); setEditTarget(null); setDeleteTarget(null); setForm(emptyForm); };
 
-    const handleCreate = async () => {
+    const closeDialogs = () => { setAddOpen(false); setEditTarget(null); setForm(emptyForm); };
+
+    const handleSubmitAdd = async () => {
         if (!form.name.trim() || !form.start_date || !form.end_date) return;
-        const res = await createHandler(form);
-        if (res) { patchSprintLocal(res); closeDialogs(); }
+        const created = await createHandler({ name: form.name.trim(), start_date: form.start_date, end_date: form.end_date });
+        if (created) { patchSprintLocal(created); closeDialogs(); }
     };
 
-    const handleUpdate = async () => {
-        if (!editTarget || !form.name.trim()) return;
-        const res = await updateHandler(editTarget.id, form);
-        if (res) { patchSprintLocal(res); closeDialogs(); }
+    const handleSubmitEdit = async () => {
+        if (!editTarget || !form.name.trim() || !form.start_date || !form.end_date) return;
+        const updated = await updateHandler(editTarget.id, { name: form.name.trim(), start_date: form.start_date, end_date: form.end_date });
+        if (updated) { patchSprintLocal(updated); closeDialogs(); }
     };
 
     const handleDelete = async () => {
         if (!deleteTarget) return;
         const ok = await deleteHandler(deleteTarget.id);
-        if (ok) { removeSprintLocal(deleteTarget.id); closeDialogs(); }
+        if (ok) { removeSprintLocal(deleteTarget.id); setDeleteTarget(null); }
     };
 
     const handleActivate = async (s: SprintInterface) => {
-        const res = await activateHandler(s.id);
-        if (res) patchSprintLocal(res);
+        const updated = await activateHandler(s.id);
+        if (updated) patchSprintLocal(updated);
+    };
+
+    const statusBadge = (status: string | null) => {
+        if (status === "active") return <Badge variant="success">{t("Active")}</Badge>;
+        if (status === "completed") return <Badge variant="outline">{t("Completed")}</Badge>;
+        return <Badge variant="secondary">{t("Planned")}</Badge>;
     };
 
     return (
         <div>
             <Header
                 title={t("Sprints")}
-                description={t("Manage project sprints.")}
+                description={t("Manage sprints and activate the current one.")}
                 actions={
                     <Button size="sm" className="gap-1.5" onClick={openAdd}>
-                        <Plus className="h-4 w-4" />{t("New Sprint")}
+                        <Plus className="h-4 w-4" />
+                        {t("Add Sprint")}
                     </Button>
                 }
             />
 
-            {isLoading ? (
-                <div className="flex flex-col gap-3">
-                    {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-24 bg-muted animate-pulse rounded-xl" />)}
-                </div>
-            ) : sprints.length === 0 ? (
-                <EmptyState icon={Calendar} title={t("No sprints yet")} description={t("Create your first sprint to get started.")} />
+            {sprints.length === 0 && !isLoading ? (
+                <EmptyState
+                    icon={Target}
+                    title={t("No sprints yet")}
+                    description={t("Create your first sprint to start planning work.")}
+                />
             ) : (
-                <div className="flex flex-col gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {sprints.map((s) => (
                         <Card key={s.id} className="hover:shadow-md transition-shadow">
-                            <CardContent className="p-5">
-                                <div className="flex items-center justify-between gap-4">
-                                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-lighter text-primary-medium shrink-0">
-                                            <Calendar className="h-5 w-5" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <h3 className="text-base font-semibold text-text-dark truncate">{s.name}</h3>
-                                                <Badge variant={statusVariant(s.status)}>
-                                                    {s.status ?? t("planned")}
-                                                </Badge>
-                                            </div>
-                                            <p className="text-xs text-text-muted mt-0.5">
-                                                {s.start_date} → {s.end_date}
-                                            </p>
-                                        </div>
+                            <CardContent className="p-5 space-y-3">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-base font-semibold text-text-dark truncate">{s.name}</h3>
+                                        <div className="mt-1">{statusBadge(s.status)}</div>
                                     </div>
-
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                                            <button className="p-1.5 rounded hover:bg-muted text-text-muted hover:text-text-dark cursor-pointer">
                                                 <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
+                                            </button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                             {s.status !== "active" && (
-                                                <DropdownMenuItem onClick={() => handleActivate(s)} disabled={isActivating}>
-                                                    <Zap className="h-4 w-4 mr-2 text-success" />{t("Activate")}
-                                                </DropdownMenuItem>
+                                                <>
+                                                    <DropdownMenuItem onClick={() => handleActivate(s)} className="gap-2 cursor-pointer">
+                                                        <Zap className="h-4 w-4" />
+                                                        {t("Activate")}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
+                                                </>
                                             )}
-                                            <DropdownMenuItem onClick={() => openEdit(s)}>
-                                                <Edit className="h-4 w-4 mr-2" />{t("Edit")}
+                                            <DropdownMenuItem onClick={() => openEdit(s)} className="gap-2 cursor-pointer">
+                                                <Edit className="h-4 w-4" />
+                                                {t("Edit")}
                                             </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem onClick={() => setDeleteTarget(s)} className="text-error">
-                                                <Trash2 className="h-4 w-4 mr-2" />{t("Delete")}
+                                            <DropdownMenuItem onClick={() => setDeleteTarget(s)} className="gap-2 text-error focus:text-error cursor-pointer">
+                                                <Trash2 className="h-4 w-4" />
+                                                {t("Delete")}
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
+                                </div>
+
+                                <div className="flex items-center gap-2 text-xs text-text-muted">
+                                    <Calendar className="h-3.5 w-3.5" />
+                                    <span>{s.start_date} → {s.end_date}</span>
                                 </div>
                             </CardContent>
                         </Card>
@@ -131,73 +131,53 @@ export const SprintsView = () => {
                 </div>
             )}
 
-            {/* Add dialog */}
-            <Dialog open={addOpen} onOpenChange={(open) => !open && closeDialogs()}>
+            <Dialog open={addOpen || !!editTarget} onOpenChange={(open) => { if (!open) closeDialogs(); }}>
                 <DialogContent className="max-w-md">
-                    <DialogHeader><DialogTitle>{t("New Sprint")}</DialogTitle></DialogHeader>
+                    <DialogHeader>
+                        <DialogTitle>{editTarget ? t("Edit Sprint") : t("Add Sprint")}</DialogTitle>
+                    </DialogHeader>
                     <div className="space-y-4 mt-2">
                         <div className="space-y-2">
-                            <Label>{t("Name")} <span className="text-error">*</span></Label>
-                            <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder={t("Sprint 15")} />
+                            <Label htmlFor="name">{t("Name")} <span className="text-error">*</span></Label>
+                            <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("Sprint 12")} />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
-                                <Label>{t("Start Date")} <span className="text-error">*</span></Label>
-                                <Input type="date" value={form.start_date} onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value }))} />
+                                <Label htmlFor="start_date">{t("Start Date")} <span className="text-error">*</span></Label>
+                                <Input id="start_date" type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
                             </div>
                             <div className="space-y-2">
-                                <Label>{t("End Date")} <span className="text-error">*</span></Label>
-                                <Input type="date" value={form.end_date} onChange={(e) => setForm((f) => ({ ...f, end_date: e.target.value }))} />
+                                <Label htmlFor="end_date">{t("End Date")} <span className="text-error">*</span></Label>
+                                <Input id="end_date" type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
                             </div>
                         </div>
                     </div>
                     <div className="flex justify-end gap-2 mt-4">
-                        <DialogClose asChild><Button variant="outline" disabled={isSubmitting}>{t("Cancel")}</Button></DialogClose>
-                        <Button onClick={handleCreate} disabled={isSubmitting || !form.name.trim() || !form.start_date || !form.end_date}>
-                            {isCreating ? t("Creating...") : t("Create Sprint")}
+                        <DialogClose asChild>
+                            <Button variant="outline" disabled={isSubmitting}>{t("Cancel")}</Button>
+                        </DialogClose>
+                        <Button
+                            onClick={editTarget ? handleSubmitEdit : handleSubmitAdd}
+                            disabled={isSubmitting || !form.name.trim() || !form.start_date || !form.end_date}
+                        >
+                            {isSubmitting ? t("Saving...") : editTarget ? t("Save Changes") : t("Create Sprint")}
                         </Button>
                     </div>
                 </DialogContent>
             </Dialog>
 
-            {/* Edit dialog */}
-            <Dialog open={!!editTarget} onOpenChange={(open) => !open && closeDialogs()}>
-                <DialogContent className="max-w-md">
-                    <DialogHeader><DialogTitle>{t("Edit Sprint")}</DialogTitle></DialogHeader>
-                    <div className="space-y-4 mt-2">
-                        <div className="space-y-2">
-                            <Label>{t("Name")} <span className="text-error">*</span></Label>
-                            <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-2">
-                                <Label>{t("Start Date")}</Label>
-                                <Input type="date" value={form.start_date} onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value }))} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>{t("End Date")}</Label>
-                                <Input type="date" value={form.end_date} onChange={(e) => setForm((f) => ({ ...f, end_date: e.target.value }))} />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex justify-end gap-2 mt-4">
-                        <DialogClose asChild><Button variant="outline" disabled={isSubmitting}>{t("Cancel")}</Button></DialogClose>
-                        <Button onClick={handleUpdate} disabled={isSubmitting || !form.name.trim()}>
-                            {isUpdating ? t("Saving...") : t("Save Changes")}
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            {/* Delete confirm dialog */}
-            <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && closeDialogs()}>
+            <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
                 <DialogContent className="max-w-sm">
-                    <DialogHeader><DialogTitle>{t("Delete Sprint")}</DialogTitle></DialogHeader>
-                    <p className="text-sm text-text-muted mt-2">
-                        {t("Are you sure you want to delete")} <span className="font-semibold text-text-dark">{deleteTarget?.name}</span>?
+                    <DialogHeader>
+                        <DialogTitle>{t("Delete Sprint")}</DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-text-secondary">
+                        {t("Are you sure you want to delete")} <strong className="text-text-dark">{deleteTarget?.name}</strong>? {t("This action cannot be undone.")}
                     </p>
                     <div className="flex justify-end gap-2 mt-4">
-                        <DialogClose asChild><Button variant="outline">{t("Cancel")}</Button></DialogClose>
+                        <DialogClose asChild>
+                            <Button variant="outline">{t("Cancel")}</Button>
+                        </DialogClose>
                         <Button variant="destructive" onClick={handleDelete}>{t("Delete")}</Button>
                     </div>
                 </DialogContent>

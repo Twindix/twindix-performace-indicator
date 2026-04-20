@@ -1,6 +1,7 @@
 export const routesData = {
     login: "/login",
     dashboard: "/",
+    sprints: "/sprints",
     tasks: "/tasks",
     blockers: "/blockers",
     decisions: "/decisions",

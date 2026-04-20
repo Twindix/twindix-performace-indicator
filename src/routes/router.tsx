@@ -52,6 +52,7 @@ export const router = createBrowserRouter([
                         errorElement: <RouteError />,
                         children: [
                             { path: routesData.dashboard, element: <DashboardView /> },
+                            { path: routesData.sprints, element: <SprintsView /> },
                             { path: routesData.tasks, element: <TasksView /> },
                             { path: routesData.blockers, element: <BlockerView /> },
                             { path: routesData.decisions, element: <DecisionsView /> },

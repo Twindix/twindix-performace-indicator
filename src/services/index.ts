@@ -1,2 +1,3 @@
 export { authService } from "./auth/index";
-export { teamsService } from "./teams";
+export { sprintsService } from "./sprints";
+export { alertsService } from "./alerts";

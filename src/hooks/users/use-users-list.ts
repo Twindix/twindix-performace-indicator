@@ -1,35 +1,26 @@
 import { useCallback, useEffect, useState } from "react";
 
-import type { UserInterface } from "@/interfaces/common";
-import type { UserListParamsInterface, UserPaginationMetaInterface } from "@/interfaces/users";
-import { usersService } from "@/services/users";
+import { apisData } from "@/data";
+import type { UserInterface } from "@/interfaces";
+import { apiClient } from "@/lib/axios";
 
-interface UsersListState {
-    users: UserInterface[];
-    meta: UserPaginationMetaInterface | null;
-    isLoading: boolean;
-    error: string | null;
-}
+export const useUsersList = () => {
+    const [users, setUsers] = useState<UserInterface[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-export const useUsersList = (params?: UserListParamsInterface) => {
-    const [state, setState] = useState<UsersListState>({
-        users: [],
-        meta: null,
-        isLoading: true,
-        error: null,
-    });
-
-    const fetch = useCallback(async (fetchParams?: UserListParamsInterface) => {
-        setState((prev) => ({ ...prev, isLoading: true, error: null }));
+    const fetch = useCallback(async () => {
+        setIsLoading(true);
         try {
-            const response = await usersService.listHandler(fetchParams ?? params);
-            setState({ users: response.data, meta: response.meta, isLoading: false, error: null });
+            const { data } = await apiClient.get<{ data: UserInterface[] }>(apisData.users.list);
+            setUsers(data.data);
         } catch {
-            setState((prev) => ({ ...prev, isLoading: false, error: "Failed to load users" }));
+            // silent — users list is UI-only helper
+        } finally {
+            setIsLoading(false);
         }
-    }, [params]);
+    }, []);
 
     useEffect(() => { fetch(); }, [fetch]);
 
-    return { ...state, refetch: fetch };
+    return { users, isLoading };
 };
