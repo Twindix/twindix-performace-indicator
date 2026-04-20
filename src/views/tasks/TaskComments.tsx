@@ -27,7 +27,7 @@ export const TaskComments = ({ task, currentUserId, members, onUpdateComments }:
     const getMember = (id: string) => members.find((m) => m.id === id);
 
     const mentionSuggestions = members.filter(
-        (m) => mentionQuery.length > 0 && m.name.toLowerCase().includes(mentionQuery.toLowerCase())
+        (m) => mentionQuery.length > 0 && (m.name ?? m.full_name ?? "").toLowerCase().includes(mentionQuery.toLowerCase())
     );
 
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -178,7 +178,7 @@ export const TaskComments = ({ task, currentUserId, members, onUpdateComments }:
                                 <Avatar className="h-6 w-6 shrink-0"><AvatarFallback className="text-[9px]">{m.avatar}</AvatarFallback></Avatar>
                                 <div>
                                     <p className="text-xs font-medium text-text-dark">{m.name}</p>
-                                    <p className="text-[10px] text-text-muted flex items-center gap-1"><AtSign className="h-2.5 w-2.5" />{m.team}</p>
+                                    <p className="text-[10px] text-text-muted flex items-center gap-1"><AtSign className="h-2.5 w-2.5" />{typeof m.team === "string" ? m.team : m.team?.name}</p>
                                 </div>
                             </button>
                         ))}

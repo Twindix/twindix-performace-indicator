@@ -18,17 +18,33 @@ export interface UserTeamInterface {
 
 export interface UserInterface {
     id: string;
-    full_name: string;
-    email: string;
-    role_label: string;
-    role_tier: string;
-    team: UserTeamInterface;
-    avatar_initials: string;
-    account_status: string;
-    presence_status: string;
-    last_seen_at: string;
-    settings: UserSettingsInterface;
-    created_at: string;
+    full_name?: string;
+    email?: string;
+    role_label?: string;
+    role_tier?: string;
+    team?: UserTeamInterface | string;
+    avatar_initials?: string;
+    account_status?: string;
+    presence_status?: string;
+    last_seen_at?: string;
+    settings?: UserSettingsInterface;
+    created_at?: string;
+    // legacy seed/localStorage aliases
+    name?: string;
+    avatar?: string;
+    role?: string;
+    status?: string;
+}
+
+export interface SprintInterface {
+    id: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+    status: string;
+    healthScore?: number;
+    goals?: string[];
+    [key: string]: unknown;
 }
 
 export interface ThemeContextInterface {

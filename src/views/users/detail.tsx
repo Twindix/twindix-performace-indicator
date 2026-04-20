@@ -125,8 +125,8 @@ export const UserDetailView = () => {
             </div>
 
             <Header
-                title={user.name}
-                description={`${ROLE_LABELS[user.role] ?? user.role} · ${user.team}`}
+                title={user.name ?? ""}
+                description={`${ROLE_LABELS[user.role ?? ""] ?? user.role} · ${typeof user.team === "string" ? user.team : user.team?.name}`}
                 actions={
                     <Select value={sprintFilter} onValueChange={setSprintFilter}>
                         <SelectTrigger className="w-[180px] h-9 text-sm">
@@ -155,8 +155,8 @@ export const UserDetailView = () => {
                                 <p className="text-xs text-text-muted mt-0.5">{user.email}</p>
                             </div>
                             <div className="flex flex-wrap justify-center gap-1.5">
-                                <Badge variant="outline">{ROLE_LABELS[user.role] ?? user.role}</Badge>
-                                <Badge variant="secondary">{user.team}</Badge>
+                                <Badge variant="outline">{ROLE_LABELS[user.role ?? ""] ?? user.role}</Badge>
+                                <Badge variant="secondary">{typeof user.team === "string" ? user.team : user.team?.name}</Badge>
                             </div>
                         </CardContent>
                     </Card>

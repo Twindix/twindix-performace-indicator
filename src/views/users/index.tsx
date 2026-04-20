@@ -64,7 +64,7 @@ export const UsersView = () => {
             name: form.name.trim(),
             email: form.email.trim(),
             role: form.role,
-            team: form.team.trim(),
+            team: form.team.trim() as unknown as UserInterface["team"],
             avatar: initials,
         };
         save([...members, newUser]);
@@ -113,8 +113,8 @@ export const UsersView = () => {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <p className="text-sm font-semibold text-text-dark">{member.name}</p>
-                                                <Badge variant="outline" className="text-xs">{ROLE_LABELS[member.role] ?? member.role}</Badge>
-                                                <Badge variant="secondary" className="text-xs">{member.team}</Badge>
+                                                <Badge variant="outline" className="text-xs">{ROLE_LABELS[member.role as UserRole] ?? member.role}</Badge>
+                                                <Badge variant="secondary" className="text-xs">{typeof member.team === "string" ? member.team : member.team?.name}</Badge>
                                                 {isInactive && <Badge variant="error" className="text-xs">{t("Inactive")}</Badge>}
                                             </div>
                                             <p className="text-xs text-text-muted mt-0.5">{member.email}</p>
