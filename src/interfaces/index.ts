@@ -3,7 +3,7 @@ export type { LoginResponseInterface, RefreshResponseInterface, MeResponseInterf
 export type { SprintInterface, SprintsListResponseInterface, SprintDetailResponseInterface, SprintSummaryInterface, CreateSprintPayloadInterface, UpdateSprintPayloadInterface } from "./sprints";
 export type { TaskInterface, ReadinessChecklistInterface, TaskAttachmentInterface, TaskCommentInterface, TaskTimeLogInterface, RequirementInterface } from "./tasks";
 export type { BlockerInterface } from "./blockers";
-export type { DecisionInterface } from "./decisions";
+export type { DecisionInterface, DecisionCreatorInterface, DecisionsListResponseInterface, DecisionDetailResponseInterface, DecisionsAnalyticsInterface, CreateDecisionPayloadInterface, UpdateDecisionPayloadInterface, DecisionsListFiltersInterface } from "./decisions";
 export type { CommunicationInterface, CommunicationChannel, CommunicationStatus } from "./communications";
 export type { TeamMemberWorkloadInterface } from "./workload";
 export type { MetricInterface, FrictionScoresInterface, SprintMetricsInterface } from "./metrics";

@@ -6,9 +6,6 @@ export const apisData = {
         me: "/auth/me",
         heartbeat: "/auth/heartbeat",
     },
-    users: {
-        list: "/users",
-    },
     sprints: {
         list: "/sprints",
         create: "/sprints",
@@ -18,14 +15,13 @@ export const apisData = {
         activate: (id: string) => `/sprints/${id}/activate`,
         summary: (id: string) => `/sprints/${id}/summary`,
     },
-    comments: {
-        list: (sprintId: string) => `/sprints/${sprintId}/comments`,
-        analytics: (sprintId: string) => `/sprints/${sprintId}/comments/analytics`,
-        create: (sprintId: string) => `/sprints/${sprintId}/comments`,
-        detail: (id: string) => `/comments/${id}`,
-        update: (id: string) => `/comments/${id}`,
-        delete: (id: string) => `/comments/${id}`,
-        respond: (id: string) => `/comments/${id}/respond`,
+    decisions: {
+        list: (sprintId: string) => `/sprints/${sprintId}/decisions`,
+        analytics: (sprintId: string) => `/sprints/${sprintId}/decisions/analytics`,
+        create: (sprintId: string) => `/sprints/${sprintId}/decisions`,
+        detail: (id: string) => `/decisions/${id}`,
+        update: (id: string) => `/decisions/${id}`,
+        delete: (id: string) => `/decisions/${id}`,
     },
     baseUrl: import.meta.env.VITE_API_URL as string,
 };
