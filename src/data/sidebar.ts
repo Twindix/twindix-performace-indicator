@@ -2,6 +2,7 @@ import {
     AlertTriangle,
     Bell,
     BookOpen,
+    CalendarDays,
     Flag,
     LayoutDashboard,
     ListChecks,
@@ -32,10 +33,4 @@ export const sidebarItems: SidebarItemInterface[] = [
     { label: "Alerts", path: routesData.alerts, icon: Bell },
     { label: "Decisions", path: routesData.decisions, icon: BookOpen },
     { label: "Settings", path: routesData.settings, icon: Settings },
-    // { label: "Communication", path: routesData.communication, icon: MessageSquare, disabled: true },
-    // { label: "Workload", path: routesData.workload, icon: Users, disabled: true },
-    // { label: "Reports", path: routesData.reports, icon: BarChart3, disabled: true },
-    // { label: "Analytics", path: routesData.analytics, icon: TrendingUp, disabled: true },
-    // { label: "Ownership", path: routesData.ownership, icon: Shield, disabled: true },
-    // { label: "Handoffs", path: routesData.handoffs, icon: GitBranch, disabled: true },
 ];
