@@ -25,5 +25,8 @@ export const apisData = {
         acknowledge: (id: string) => `/alerts/${id}/acknowledge`,
         done: (id: string) => `/alerts/${id}/done`,
     },
+    users: {
+        list: "/users",
+    },
     baseUrl: import.meta.env.VITE_API_URL as string,
 };

@@ -1,20 +1,108 @@
 import { useState } from "react";
-import { Bell, Check, CheckCheck, Pencil, Plus, Trash2 } from "lucide-react";
+import { Bell, Check, CheckCheck, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
-import { t, useAcknowledgeAlert, useAlertsList, useCreateAlert, useDeleteAlert, useDoneAlert, useUpdateAlert } from "@/hooks";
-import type { AlertInterface, CreateAlertPayloadInterface } from "@/interfaces";
+import { t, useAcknowledgeAlert, useAlertsList, useCreateAlert, useDeleteAlert, useDoneAlert, useUpdateAlert, useUsersList } from "@/hooks";
+import type { AlertInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import {
     Avatar, AvatarFallback,
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
-    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
     Tabs, TabsContent, TabsList, TabsTrigger,
 } from "@/ui";
 import { formatDateTime } from "@/utils";
 
-const emptyForm: CreateAlertPayloadInterface = { title: "", body: "", target: "all" };
+interface AlertFormState {
+    title: string;
+    body: string;
+    mentioned_user_ids: string[];
+}
+
+const emptyForm: AlertFormState = { title: "", body: "", mentioned_user_ids: [] };
+
+const UserMultiSelect = ({
+    users,
+    selected,
+    onChange,
+}: {
+    users: { id: string; full_name: string; avatar_initials: string }[];
+    selected: string[];
+    onChange: (ids: string[]) => void;
+}) => {
+    const [search, setSearch] = useState("");
+
+    const filtered = users.filter((u) =>
+        u.full_name.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const toggle = (id: string) => {
+        onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
+    };
+
+    const selectedUsers = users.filter((u) => selected.includes(u.id));
+
+    return (
+        <div className="space-y-2">
+            {/* Selected chips */}
+            {selectedUsers.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                    {selectedUsers.map((u) => (
+                        <span
+                            key={u.id}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium"
+                        >
+                            <span>{u.full_name}</span>
+                            <button
+                                type="button"
+                                onClick={() => toggle(u.id)}
+                                className="hover:text-error transition-colors cursor-pointer"
+                            >
+                                <X className="h-3 w-3" />
+                            </button>
+                        </span>
+                    ))}
+                </div>
+            )}
+
+            {/* Search input */}
+            <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted" />
+                <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder={t("Search users...")}
+                    className="pl-8 h-8 text-xs"
+                />
+            </div>
+
+            {/* User list */}
+            <div className="max-h-44 overflow-y-auto border border-border rounded-lg divide-y divide-border">
+                {filtered.length === 0 ? (
+                    <p className="text-xs text-text-muted p-3 text-center">{t("No users found")}</p>
+                ) : (
+                    filtered.map((u) => {
+                        const isSelected = selected.includes(u.id);
+                        return (
+                            <button
+                                key={u.id}
+                                type="button"
+                                onClick={() => toggle(u.id)}
+                                className={`w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-muted transition-colors cursor-pointer ${isSelected ? "bg-primary/5" : ""}`}
+                            >
+                                <Avatar className="h-6 w-6 shrink-0">
+                                    <AvatarFallback className="text-[9px]">{u.avatar_initials}</AvatarFallback>
+                                </Avatar>
+                                <span className="text-xs flex-1 text-text-dark">{u.full_name}</span>
+                                {isSelected && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+                            </button>
+                        );
+                    })
+                )}
+            </div>
+        </div>
+    );
+};
 
 export const AlertsView = () => {
     const { activeSprintId } = useSprintStore();
@@ -24,6 +112,7 @@ export const AlertsView = () => {
     const { deleteHandler } = useDeleteAlert();
     const { acknowledgeHandler } = useAcknowledgeAlert();
     const { doneHandler } = useDoneAlert();
+    const { users } = useUsersList();
 
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<AlertInterface | null>(null);
@@ -31,19 +120,30 @@ export const AlertsView = () => {
     const [form, setForm] = useState(emptyForm);
 
     const openEdit = (a: AlertInterface) => {
-        setForm({ title: a.title, body: a.body, target: a.target });
+        setForm({
+            title: a.title,
+            body: a.body,
+            mentioned_user_ids: a.mentioned_users.map((u) => u.id),
+        });
         setEditTarget(a);
     };
 
+    const buildPayload = (f: AlertFormState) => ({
+        title: f.title.trim(),
+        body: f.body.trim() || undefined,
+        target: f.mentioned_user_ids.length > 0 ? "specific_users" : "all",
+        mentioned_user_ids: f.mentioned_user_ids.length > 0 ? f.mentioned_user_ids : undefined,
+    });
+
     const handleAdd = async () => {
         if (!form.title.trim() || !activeSprintId) return;
-        const res = await createHandler(activeSprintId, { ...form, title: form.title.trim(), body: form.body?.trim() || undefined });
+        const res = await createHandler(activeSprintId, buildPayload(form));
         if (res) { patchAlertLocal(res); setAddOpen(false); setForm(emptyForm); }
     };
 
     const handleEdit = async () => {
         if (!editTarget) return;
-        const res = await updateHandler(editTarget.id, { ...form, title: form.title.trim(), body: form.body?.trim() || undefined });
+        const res = await updateHandler(editTarget.id, buildPayload(form));
         if (res) { patchAlertLocal(res); setEditTarget(null); }
     };
 
@@ -151,6 +251,7 @@ export const AlertsView = () => {
                 </TabsContent>
             </Tabs>
 
+            {/* Add / Edit dialog */}
             <Dialog open={addOpen || !!editTarget} onOpenChange={(open) => { if (!open) { setAddOpen(false); setEditTarget(null); setForm(emptyForm); } }}>
                 <DialogContent className="max-w-lg">
                     <DialogHeader>
@@ -163,17 +264,20 @@ export const AlertsView = () => {
                         </div>
                         <div className="space-y-2">
                             <Label>{t("Body")}</Label>
-                            <Textarea rows={3} value={form.body ?? ""} onChange={(e) => setForm({ ...form, body: e.target.value })} />
+                            <Textarea rows={3} value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} />
                         </div>
-                        <div className="space-y-2">
-                            <Label>{t("Target")}</Label>
-                            <Select value={form.target} onValueChange={(v) => setForm({ ...form, target: v })}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">{t("All")}</SelectItem>
-                                    <SelectItem value="specific_users">{t("Specific Users")}</SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <div className="space-y-1.5">
+                            <Label>
+                                {t("Mention Users")}
+                                <span className="ms-2 text-[10px] text-text-muted font-normal">
+                                    {form.mentioned_user_ids.length === 0 ? t("(sends to all)") : `(${form.mentioned_user_ids.length} ${t("selected")})`}
+                                </span>
+                            </Label>
+                            <UserMultiSelect
+                                users={users}
+                                selected={form.mentioned_user_ids}
+                                onChange={(ids) => setForm({ ...form, mentioned_user_ids: ids })}
+                            />
                         </div>
                     </div>
                     <div className="flex justify-end gap-2 mt-4">
@@ -185,6 +289,7 @@ export const AlertsView = () => {
                 </DialogContent>
             </Dialog>
 
+            {/* Delete confirm */}
             <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
                 <DialogContent className="max-w-sm">
                     <DialogHeader><DialogTitle>{t("Delete Alert")}</DialogTitle></DialogHeader>
