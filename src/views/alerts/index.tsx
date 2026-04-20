@@ -166,7 +166,7 @@ export const AlertsView = () => {
     const pendingAlerts = alerts.filter((a) => a.status !== "done");
     const doneAlerts = alerts.filter((a) => a.status === "done");
 
-    const renderCard = (alert: AlertInterface, showActions = true) => (
+    const renderCard = (alert: AlertInterface) => (
         <Card key={alert.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3 mb-2">
@@ -191,27 +191,35 @@ export const AlertsView = () => {
                         </Avatar>
                         <span>{alert.creator.full_name}</span>
                     </div>
-                    {alert.mentioned_users.length > 0 && (
-                        <span>{alert.mentioned_users.length} {t("mentioned")}</span>
-                    )}
                     <Badge variant="outline" className="text-[10px]">{alert.target}</Badge>
                     <span className="ml-auto">{formatDateTime(alert.created_at)}</span>
                 </div>
+
+                {alert.mentioned_users.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                        {alert.mentioned_users.map((u) => (
+                            <span key={u.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted text-xs text-text-dark">
+                                <Avatar className="h-4 w-4">
+                                    <AvatarFallback className="text-[8px]">{u.avatar_initials}</AvatarFallback>
+                                </Avatar>
+                                {u.full_name}
+                            </span>
+                        ))}
+                    </div>
+                )}
 
                 <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
                     <span className="text-xs text-text-muted">
                         {t("Acknowledged")}: {alert.acknowledgment_count}/{alert.total_targets}
                     </span>
-                    {showActions && (
-                        <div className="flex gap-1.5 ml-auto">
-                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleAcknowledge(alert.id)}>
-                                <Check className="h-3 w-3" /> {t("Acknowledge")}
-                            </Button>
-                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleDone(alert.id)}>
-                                <CheckCheck className="h-3 w-3" /> {t("Done")}
-                            </Button>
-                        </div>
-                    )}
+                    <div className="flex gap-1.5 ml-auto">
+                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleAcknowledge(alert.id)}>
+                            <Check className="h-3 w-3" /> {t("Acknowledge")}
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleDone(alert.id)}>
+                            <CheckCheck className="h-3 w-3" /> {t("Done")}
+                        </Button>
+                    </div>
                 </div>
             </CardContent>
         </Card>
@@ -248,7 +256,7 @@ export const AlertsView = () => {
                     {doneAlerts.length === 0 ? (
                         <EmptyState icon={CheckCheck} title={t("No done alerts")} description="" />
                     ) : (
-                        <div className="flex flex-col gap-3">{doneAlerts.map((a) => renderCard(a, false))}</div>
+                        <div className="flex flex-col gap-3">{doneAlerts.map(renderCard)}</div>
                     )}
                 </TabsContent>
             </Tabs>
