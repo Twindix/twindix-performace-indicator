@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { requirementsConstants } from "@/constants";
+import { requirementsConstants } from "@/constants/requirements";
 import { getErrorMessage } from "@/lib/error";
 import { requirementsService } from "@/services";
 
@@ -9,7 +9,6 @@ export const useDeleteRequirement = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const deleteHandler = async (id: string): Promise<boolean> => {
-        if (!navigator.onLine) throw new Error(requirementsConstants.errors.genericError);
         setIsLoading(true);
         try {
             await requirementsService.deleteHandler(id);

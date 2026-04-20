@@ -1,23 +1,31 @@
-import type { SprintStatus } from "@/enums";
-
 export interface SprintInterface {
     id: string;
     name: string;
-    startDate: string;
-    endDate: string;
-    status: SprintStatus;
-    healthScore: number;
-    goals: string[];
+    status: string | null;
+    start_date: string;
+    end_date: string;
+    created_at: string;
+    // Additional properties expected by the code
+    startDate?: string; // Alias for start_date
+    endDate?: string; // Alias for end_date
+    goals?: string[];
+    healthScore?: number;
 }
 
-export interface SprintListResponseInterface {
+export interface SprintMetaInterface {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+}
+
+export interface SprintsListResponseInterface {
     data: SprintInterface[];
-    isSuccess: boolean;
+    meta: SprintMetaInterface;
 }
 
 export interface SprintDetailResponseInterface {
     data: SprintInterface;
-    isSuccess: boolean;
 }
 
 export interface SprintSummaryInterface {
@@ -28,28 +36,14 @@ export interface SprintSummaryInterface {
     blocked_count: number;
 }
 
-export interface SprintSummaryResponseInterface {
-    data: SprintSummaryInterface;
-    isSuccess: boolean;
-}
-
 export interface CreateSprintPayloadInterface {
     name: string;
-    startDate: string;
-    endDate: string;
-    goals?: string[];
+    start_date: string;
+    end_date: string;
 }
 
-export interface UpdateSprintPayloadInterface extends Partial<CreateSprintPayloadInterface> {
-    status?: SprintStatus;
-}
-
-export interface SprintsContextInterface {
-    sprints: SprintInterface[];
-    summaries: Record<string, SprintSummaryInterface | undefined>;
-    isLoading: boolean;
-    refetch: () => Promise<void>;
-    setSummary: (id: string, summary: SprintSummaryInterface) => void;
-    patchSprintLocal: (sprint: SprintInterface) => void;
-    removeSprintLocal: (id: string) => void;
+export interface UpdateSprintPayloadInterface {
+    name?: string;
+    start_date?: string;
+    end_date?: string;
 }

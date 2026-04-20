@@ -10,6 +10,7 @@ export const requirementsConstants = {
     messages: {
         createSuccess: "Requirement added.",
         updateSuccess: "Requirement updated.",
+        toggleSuccess: "Requirement toggled.",
         deleteSuccess: "Requirement deleted.",
     },
 };

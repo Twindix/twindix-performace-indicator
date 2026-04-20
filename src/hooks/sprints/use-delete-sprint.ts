@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import { sprintsConstants } from "@/constants";
@@ -8,8 +8,7 @@ import { sprintsService } from "@/services";
 export const useDeleteSprint = () => {
     const [isLoading, setIsLoading] = useState(false);
 
-    const deleteHandler = async (id: string): Promise<boolean> => {
-        if (!navigator.onLine) throw new Error(sprintsConstants.errors.genericError);
+    const deleteHandler = useCallback(async (id: string): Promise<boolean> => {
         setIsLoading(true);
         try {
             await sprintsService.deleteHandler(id);
@@ -21,7 +20,7 @@ export const useDeleteSprint = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     return { deleteHandler, isLoading };
 };

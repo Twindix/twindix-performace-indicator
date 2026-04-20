@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
-import { timeLogsConstants } from "@/constants";
+import { timeLogsConstants } from "@/constants/time-logs";
 import type { TimeLogInterface, TimeLogsSummaryInterface } from "@/interfaces";
 import { getErrorMessage } from "@/lib/error";
 import { timeLogsService } from "@/services";
@@ -9,11 +9,10 @@ import { timeLogsService } from "@/services";
 export const useGetTimeLog = () => {
     const [isLoading, setIsLoading] = useState(false);
 
-    const getByTaskHandler = async (taskId: string): Promise<TimeLogInterface[] | null> => {
-        if (!navigator.onLine) throw new Error(timeLogsConstants.errors.genericError);
+    const getByTaskHandler = useCallback(async (taskId: string): Promise<TimeLogInterface[] | null> => {
         setIsLoading(true);
         try {
-            const res = await timeLogsService.taskListHandler(taskId);
+            const res = await timeLogsService.getByTaskHandler(taskId);
             return res.data;
         } catch (err) {
             toast.error(getErrorMessage(err, timeLogsConstants.errors.fetchFailed));
@@ -21,13 +20,12 @@ export const useGetTimeLog = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
-    const getBySprintHandler = async (sprintId: string): Promise<TimeLogInterface[] | null> => {
-        if (!navigator.onLine) throw new Error(timeLogsConstants.errors.genericError);
+    const getBySprintHandler = useCallback(async (sprintId: string): Promise<TimeLogInterface[] | null> => {
         setIsLoading(true);
         try {
-            const res = await timeLogsService.sprintListHandler(sprintId);
+            const res = await timeLogsService.getBySprintHandler(sprintId);
             return res.data;
         } catch (err) {
             toast.error(getErrorMessage(err, timeLogsConstants.errors.fetchFailed));
@@ -35,21 +33,20 @@ export const useGetTimeLog = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
-    const getSummaryHandler = async (sprintId: string): Promise<TimeLogsSummaryInterface | null> => {
-        if (!navigator.onLine) throw new Error(timeLogsConstants.errors.genericError);
+    const getSummaryHandler = useCallback(async (sprintId: string): Promise<TimeLogsSummaryInterface | null> => {
         setIsLoading(true);
         try {
-            const res = await timeLogsService.sprintSummaryHandler(sprintId);
+            const res = await timeLogsService.getSummaryHandler(sprintId);
             return res.data;
         } catch (err) {
-            toast.error(getErrorMessage(err, timeLogsConstants.errors.summaryFailed));
+            toast.error(getErrorMessage(err, timeLogsConstants.errors.fetchFailed));
             return null;
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     return { getByTaskHandler, getBySprintHandler, getSummaryHandler, isLoading };
 };

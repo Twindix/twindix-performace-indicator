@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { sprintsConstants } from "@/constants";
@@ -6,22 +6,24 @@ import type { SprintSummaryInterface } from "@/interfaces";
 import { getErrorMessage } from "@/lib/error";
 import { sprintsService } from "@/services";
 
-export const useSprintSummary = () => {
+export const useSprintSummary = (id: string | undefined) => {
+    const [summary, setSummary] = useState<SprintSummaryInterface | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    const getHandler = async (id: string): Promise<SprintSummaryInterface | null> => {
-        if (!navigator.onLine) throw new Error(sprintsConstants.errors.genericError);
+    const fetch = useCallback(async () => {
+        if (!id) return;
         setIsLoading(true);
         try {
             const res = await sprintsService.summaryHandler(id);
-            return res.data;
+            setSummary(res);
         } catch (err) {
             toast.error(getErrorMessage(err, sprintsConstants.errors.summaryFailed));
-            return null;
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [id]);
 
-    return { getHandler, isLoading };
+    useEffect(() => { fetch(); }, [fetch]);
+
+    return { summary, isLoading, refetch: fetch };
 };

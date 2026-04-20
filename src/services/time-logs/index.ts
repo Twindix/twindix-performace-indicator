@@ -1,6 +1,18 @@
 import { apisData } from "@/data";
-import type { CreateTimeLogPayloadInterface, TimeLogDetailResponseInterface, TimeLogsListResponseInterface, TimeLogsSummaryResponseInterface, UpdateTimeLogPayloadInterface } from "@/interfaces";
+import type { CreateTimeLogPayloadInterface, TimeLogInterface, TimeLogsSummaryInterface, UpdateTimeLogPayloadInterface } from "@/interfaces";
 import { apiClient } from "@/lib/axios";
+
+interface TimeLogsMetaInterface {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+}
+
+export interface TimeLogsListResponseInterface {
+    data: TimeLogInterface[];
+    meta?: TimeLogsMetaInterface;
+}
 
 export const timeLogsService = {
     sprintListHandler: async (sprintId: string): Promise<TimeLogsListResponseInterface> => {
@@ -8,23 +20,33 @@ export const timeLogsService = {
         return data;
     },
 
-    sprintSummaryHandler: async (sprintId: string): Promise<TimeLogsSummaryResponseInterface> => {
-        const { data } = await apiClient.get<TimeLogsSummaryResponseInterface>(apisData.timeLogs.sprintSummary(sprintId));
+    taskListHandler: async (taskId: string): Promise<{ data: TimeLogInterface[] }> => {
+        const { data } = await apiClient.get<{ data: TimeLogInterface[] }>(apisData.timeLogs.taskList(taskId));
         return data;
     },
 
-    taskListHandler: async (taskId: string): Promise<TimeLogsListResponseInterface> => {
-        const { data } = await apiClient.get<TimeLogsListResponseInterface>(apisData.timeLogs.taskList(taskId));
+    getByTaskHandler: async (taskId: string): Promise<{ data: TimeLogInterface[] }> => {
+        const { data } = await apiClient.get<{ data: TimeLogInterface[] }>(apisData.timeLogs.taskList(taskId));
         return data;
     },
 
-    createHandler: async (taskId: string, payload: CreateTimeLogPayloadInterface): Promise<TimeLogDetailResponseInterface> => {
-        const { data } = await apiClient.post<TimeLogDetailResponseInterface>(apisData.timeLogs.create(taskId), payload);
+    getBySprintHandler: async (sprintId: string): Promise<{ data: TimeLogInterface[] }> => {
+        const { data } = await apiClient.get<{ data: TimeLogInterface[] }>(apisData.timeLogs.sprintList(sprintId));
         return data;
     },
 
-    updateHandler: async (id: string, payload: UpdateTimeLogPayloadInterface): Promise<TimeLogDetailResponseInterface> => {
-        const { data } = await apiClient.put<TimeLogDetailResponseInterface>(apisData.timeLogs.update(id), payload);
+    getSummaryHandler: async (sprintId: string): Promise<{ data: TimeLogsSummaryInterface }> => {
+        const { data } = await apiClient.get<{ data: TimeLogsSummaryInterface }>(apisData.timeLogs.summary(sprintId));
+        return data;
+    },
+
+    createHandler: async (taskId: string, payload: CreateTimeLogPayloadInterface): Promise<{ data: TimeLogInterface }> => {
+        const { data } = await apiClient.post<{ data: TimeLogInterface }>(apisData.timeLogs.create(taskId), payload);
+        return data;
+    },
+
+    updateHandler: async (taskId: string, payload: UpdateTimeLogPayloadInterface): Promise<{ data: TimeLogInterface }> => {
+        const { data } = await apiClient.put<{ data: TimeLogInterface }>(apisData.timeLogs.update(taskId), payload);
         return data;
     },
 

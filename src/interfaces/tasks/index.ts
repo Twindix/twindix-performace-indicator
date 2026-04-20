@@ -1,10 +1,110 @@
-import type { TaskPhase, TaskPriority, TaskStatus } from "@/enums";
-import type { UserInterface } from "@/interfaces/common";
+export interface TaskUserInterface {
+    id: string;
+    full_name: string;
+    avatar_initials: string;
+}
+
+export interface TaskTagInterface {
+    id: string;
+    tag: string;
+}
+
+// Allow tags to be either strings or TaskTagInterface objects for flexibility
+export type TaskTag = string | TaskTagInterface;
+
+export interface TaskCommentInterface {
+    id: string;
+    content: string;
+    author: TaskUserInterface;
+    created_at: string;
+    reactions?: Record<string, string[]>;
+}
+
+export interface TaskPhaseNavigationInterface {
+    previous: string | null;
+    current: string | null;
+    next: string | null;
+}
+
+export interface TaskInterface {
+    id: string;
+    task_number?: string;
+    title: string;
+    description: string | null;
+    priority: string;
+    status?: string | null;
+    tracking_status?: string | null;
+    type?: string | null;
+    story_points?: number | null;
+    estimated_hours?: number | null;
+    stages_completed?: string | null;
+    stages_total?: string | null;
+    rework_count?: string | null;
+    is_blocked?: boolean | null;
+    is_overdue?: boolean | null;
+    created_at?: string;
+    assignee?: TaskUserInterface | null;
+    tags: TaskTag[];
+    requirements?: RequirementInterface[];
+    attachments?: TaskAttachmentInterface[];
+    phase_navigation?: TaskPhaseNavigationInterface;
+    // Additional properties expected by the code
+    phase?: string;
+    hasBlocker?: boolean;
+    assigneeIds?: string[];
+    storyPoints?: number;
+    createdAt?: string;
+    updatedAt?: string;
+    comments?: TaskCommentInterface[];
+    timeLogs?: TimeLogInterface[];
+    readinessScore?: number;
+    sprintId?: string;
+    blockerId?: string;
+    workType?: string;
+    readinessChecklist?: Record<string, boolean>;
+}
+
+export interface TaskAttachmentInterface {
+    id: string;
+    name: string;
+    size: number;
+    type: string;
+    url: string;
+    uploaded_at?: string;
+    uploadedAt?: string; // Alternative property name expected by the code
+    dataUrl?: string; // Expected by the code
+}
 
 export interface RequirementInterface {
     id: string;
-    label: string;
-    met: boolean;
+    content: string;
+    is_done: boolean | null;
+    completed_at: string | null;
+    completed_by?: TaskUserInterface;
+    sort_order: string | null;
+    // Additional properties expected by the code
+    label?: string;
+    met?: boolean;
+}
+
+export interface TimeLogInterface {
+    id: string;
+    task_id: string;
+    user: TaskUserInterface;
+    hours: number;
+    description: string | null;
+    logged_date: string;
+    created_at: string;
+    // Additional properties expected by the code
+    user_id?: string;
+    date?: string;
+}
+
+export interface TimeLogsSummaryInterface {
+    total_hours: number;
+    total_logs: number;
+    average_hours_per_day: number;
+    total_entries?: number; // Additional property expected by the code
 }
 
 export interface ReadinessChecklistInterface {
@@ -17,158 +117,88 @@ export interface ReadinessChecklistInterface {
     estimationDone: boolean;
 }
 
-export interface TaskAttachmentInterface {
-    id: string;
-    name: string;
-    size: number;
-    type: string;
-    dataUrl: string;
-    uploadedAt: string;
+export interface TaskStatsInterface {
+    total_tasks: number;
+    story_points: { used: number; total: number };
+    blocked_count: number;
 }
 
-export interface TaskCommentInterface {
-    id: string;
-    authorId: string;
-    content: string;
-    mentionedId?: string;
-    createdAt: string;
-    updatedAt?: string;
-    reactions?: Record<string, string[]>;
+export interface TransitionCriteriaItemInterface {
+    label: string;
+    passed: boolean;
 }
 
-export interface TaskTimeLogInterface {
-    id: string;
-    userId: string;
-    phase: TaskPhase;
-    hours: number;
-    description: string;
-    createdAt: string;
+export interface TransitionCriteriaResponseInterface {
+    task: { id: string; title: string; priority: string; story_points: number | null };
+    transition: { from: string | null; to: string; direction: "forward" | "backward" };
+    criteria: TransitionCriteriaItemInterface[];
+    all_passed: boolean;
 }
 
-export interface TaskInterface {
-    id: string;
-    title: string;
-    description: string;
-    assigneeIds: string[];
-    phase: TaskPhase;
-    priority: TaskPriority;
-    storyPoints: number;
-    sprintId: string;
-    readinessScore: number;
-    readinessChecklist: ReadinessChecklistInterface;
-    hasBlocker: boolean;
-    blockerId?: string;
-    createdAt: string;
-    updatedAt: string;
-    tags: string[];
-    type?: "feature" | "bug";
-    status?: TaskStatus;
-    requirements?: RequirementInterface[];
-    attachments?: TaskAttachmentInterface[];
-    comments?: TaskCommentInterface[];
-    timeLogs?: TaskTimeLogInterface[];
-    workType: "Design" | "Frontend" | "Backend" | "QA" | "Done";
-}
+export type KanbanBoardInterface = Record<string, TaskInterface[]>;
+export type PipelineBoardInterface = Record<string, TaskInterface[]>;
 
-export interface TaskKanbanResponseInterface {
-    data: Record<string, TaskInterface[]>;
-    isSuccess: boolean;
-}
-
-export interface TaskPipelineResponseInterface {
-    data: TaskInterface[];
-    isSuccess: boolean;
-}
-
-export interface TaskPipelineCountsResponseInterface {
-    data: Record<string, number>;
-    isSuccess: boolean;
-}
-
-export interface TaskStatsResponseInterface {
-    data: TaskStatsInterface;
-    isSuccess: boolean;
+export interface TaskListMetaInterface {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
 }
 
 export interface TaskListResponseInterface {
     data: TaskInterface[];
-    isSuccess: boolean;
+    meta: TaskListMetaInterface;
 }
 
 export interface TaskDetailResponseInterface {
     data: TaskInterface;
-    isSuccess: boolean;
 }
 
 export interface CreateTaskPayloadInterface {
     title: string;
     description?: string;
-    assigneeIds?: string[];
-    priority?: TaskPriority;
-    status?: TaskStatus;
-    tags?: string[];
+    assigned_to: string;
+    priority?: string;
+    status?: string;
+    story_points?: number;
+    estimated_hours: number;
+    assigneeIds?: string[]; // Additional property expected by the code
+    tags?: TaskTag[]; // Additional property expected by the code
 }
 
-export interface UpdateTaskPayloadInterface extends Partial<CreateTaskPayloadInterface> {
-    phase?: TaskPhase;
-    storyPoints?: number;
+export interface UpdateTaskPayloadInterface {
+    title?: string;
+    description?: string;
+    assigned_to?: string;
+    priority?: string;
+    story_points?: number;
+    estimated_hours?: number;
+    phase?: string; // Additional property expected by the code
 }
 
 export interface UpdateTaskStatusPayloadInterface {
-    status: TaskStatus;
+    status: string;
 }
 
-export interface RequirementDraftInterface {
-    id: string;
-    label: string;
+export interface CreateRequirementPayloadInterface {
+    content?: string;
+    label?: string; // Additional property expected by the code
 }
 
-export interface AttachmentInterface {
-    id: string;
-    name: string;
-    size: number;
-    type: string;
+export interface UpdateRequirementPayloadInterface {
+    content?: string;
+    label?: string; // Additional property expected by the code
 }
 
-export interface AddTaskFormState {
-    title: string;
-    description: string;
-    assigneeIds: string[];
-    priority: TaskPriority;
-    status: TaskStatus;
-    estimatedHours: number;
-    attachments: AttachmentInterface[];
-    initialComment: string;
-    requirements: RequirementDraftInterface[];
+export interface CreateTimeLogPayloadInterface {
+    hours: number;
+    logged_date?: string;
+    description?: string;
+    date?: string; // Additional property expected by the code
 }
 
-export interface AddTaskDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    members: UserInterface[];
-}
-
-export interface TaskStatsInterface {
-    total: number;
-    completed: number;
-    in_progress: number;
-    blocked: number;
-}
-
-export interface TasksContextInterface {
-    tasks: TaskInterface[];
-    kanban: Record<string, TaskInterface[]>;
-    pipeline: TaskInterface[];
-    pipelineCounts: Record<string, number>;
-    stats: TaskStatsInterface | null;
-    isLoading: boolean;
-    refetchKanban: () => Promise<void>;
-    refetchPipeline: () => Promise<void>;
-    refetchPipelineCounts: () => Promise<void>;
-    refetchStats: () => Promise<void>;
-    patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
-    addTaskLocal: (task: TaskInterface) => void;
-    removeTaskLocal: (id: string) => void;
-    setKanbanLocal: (data: Record<string, TaskInterface[]>) => void;
-    setPipelineLocal: (data: TaskInterface[]) => void;
+export interface UpdateTimeLogPayloadInterface {
+    hours?: number;
+    logged_date?: string;
+    description?: string;
 }

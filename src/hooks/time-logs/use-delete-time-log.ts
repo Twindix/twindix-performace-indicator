@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { timeLogsConstants } from "@/constants";
+import { timeLogsConstants } from "@/constants/time-logs";
 import { getErrorMessage } from "@/lib/error";
 import { timeLogsService } from "@/services";
 
@@ -9,7 +9,6 @@ export const useDeleteTimeLog = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const deleteHandler = async (id: string): Promise<boolean> => {
-        if (!navigator.onLine) throw new Error(timeLogsConstants.errors.genericError);
         setIsLoading(true);
         try {
             await timeLogsService.deleteHandler(id);

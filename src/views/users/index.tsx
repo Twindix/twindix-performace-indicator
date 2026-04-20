@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { ArrowRight, Edit, MoreHorizontal, Plus, PowerOff, Trash2, UserCog, Zap } from "lucide-react";
+import { ArrowRight, MoreHorizontal, Plus, PowerOff, Trash2, UserCog, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
-import { UsersProvider, useUsers } from "@/contexts";
 import { UserRole } from "@/enums";
-import { t, useCreateUser, useDeleteUser, useUpdateUser } from "@/hooks";
+import { t } from "@/hooks";
 import type { UserInterface } from "@/interfaces";
 import {
     Avatar, AvatarFallback,
@@ -14,6 +13,7 @@ import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/ui";
+import { getStorageItem, setStorageItem, storageKeys } from "@/utils";
 
 const ROLE_LABELS: Record<UserRole, string> = {
     [UserRole.CEO]: "CEO",
@@ -31,92 +31,67 @@ const ROLE_LABELS: Record<UserRole, string> = {
 
 const TEAM_OPTIONS = ["Frontend", "Backend", "Leadership", "HR", "Product", "QA", "AI", "Data", "Design"];
 
-const emptyForm = { name: "", email: "", password: "", role: UserRole.FrontendEngineer, team: "Frontend", avatar: "" };
+const emptyForm = { name: "", email: "", role: UserRole.FrontendEngineer, team: "Frontend", avatar: "" };
 
-export const UsersView = () => (
-    <UsersProvider>
-        <UsersViewInner />
-    </UsersProvider>
-);
-
-const UsersViewInner = () => {
+export const UsersView = () => {
     const navigate = useNavigate();
-    const { users, isLoading, patchUserLocal, removeUserLocal } = useUsers();
-    const { createHandler: createUserHandler, isLoading: isCreating } = useCreateUser();
-    const { updateHandler: updateUserHandler, isLoading: isUpdating } = useUpdateUser();
-    const { deleteHandler: deleteUserHandler } = useDeleteUser();
-
+    const [members, setMembers] = useState<UserInterface[]>(() => getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? []);
     const [addOpen, setAddOpen] = useState(false);
-    const [editTarget, setEditTarget] = useState<UserInterface | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<UserInterface | null>(null);
+    const [deactivateTarget, setDeactivateTarget] = useState<UserInterface | null>(null);
     const [form, setForm] = useState(emptyForm);
     const [errors, setErrors] = useState<Partial<typeof emptyForm>>({});
 
-    const validate = (requirePassword: boolean) => {
+    const save = (next: UserInterface[]) => {
+        setStorageItem(storageKeys.teamMembers, next);
+        setMembers(next);
+    };
+
+    const validate = () => {
         const e: Partial<typeof emptyForm> = {};
         if (!form.name.trim()) e.name = t("Required");
         if (!form.email.trim()) e.email = t("Required");
         if (!form.team.trim()) e.team = t("Required");
-        if (requirePassword && !form.password.trim()) e.password = t("Required");
         setErrors(e);
         return Object.keys(e).length === 0;
     };
 
-    const openAdd = () => { setForm(emptyForm); setErrors({}); setAddOpen(true); };
-
-    const openEdit = (user: UserInterface) => {
-        setForm({
-            name: user.name,
-            email: user.email,
-            password: "",
-            role: user.role,
-            team: user.team,
-            avatar: user.avatar ?? "",
-        });
-        setErrors({});
-        setEditTarget(user);
-    };
-
-    const handleAdd = async () => {
-        if (!validate(true)) return;
-        const created = await createUserHandler({
+    const handleAdd = () => {
+        if (!validate()) return;
+        const initials = form.avatar.trim() || form.name.trim().split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+        const newUser: UserInterface = {
+            id: `usr-${Date.now()}`,
+            name: form.name.trim(),
             full_name: form.name.trim(),
             email: form.email.trim(),
-            password: form.password,
-            role_tier: form.role,
-            role_label: ROLE_LABELS[form.role] ?? form.role,
-            team_id: form.team,
-        });
-        if (created) {
-            patchUserLocal(created);
-            setAddOpen(false);
-            setForm(emptyForm);
-        }
+            role: form.role,
+            role_label: form.role,
+            role_tier: "standard",
+            team: { id: form.team.trim(), name: form.team.trim() },
+            avatar: initials,
+            avatar_initials: initials,
+            account_status: "active",
+            presence_status: "online",
+            last_seen_at: new Date().toISOString(),
+            settings: { dark_mode: false, compact_view: false, language: "en", date_format: "DD/MM/YYYY" },
+            created_at: new Date().toISOString(),
+        };
+        save([...members, newUser]);
+        setAddOpen(false);
+        setForm(emptyForm);
     };
 
-    const handleEdit = async () => {
-        if (!editTarget) return;
-        if (!validate(false)) return;
-        const updated = await updateUserHandler(editTarget.id, {
-            full_name: form.name.trim(),
-            email: form.email.trim(),
-            role_tier: form.role,
-            role_label: ROLE_LABELS[form.role] ?? form.role,
-            team_id: form.team,
-        });
-        if (updated) {
-            patchUserLocal(updated);
-            setEditTarget(null);
-        }
-    };
-
-    const handleDelete = async () => {
+    const handleDelete = () => {
         if (!deleteTarget) return;
-        const ok = await deleteUserHandler(deleteTarget.id);
-        if (ok) {
-            removeUserLocal(deleteTarget.id);
-            setDeleteTarget(null);
-        }
+        save(members.filter((m) => m.id !== deleteTarget.id));
+        setDeleteTarget(null);
+    };
+
+    const handleToggleActive = () => {
+        if (!deactivateTarget) return;
+        const isActive = deactivateTarget.account_status !== "inactive";
+        save(members.map((m) => m.id === deactivateTarget.id ? { ...m, account_status: isActive ? "inactive" : "active" } : m));
+        setDeactivateTarget(null);
     };
 
     return (
@@ -124,18 +99,18 @@ const UsersViewInner = () => {
             <Header title={t("User Management")} description={t("Manage team members and view individual performance analytics")} />
 
             <div className="flex justify-end mb-6">
-                <Button onClick={openAdd} className="gap-2">
+                <Button onClick={() => { setForm(emptyForm); setErrors({}); setAddOpen(true); }} className="gap-2">
                     <Plus className="h-4 w-4" />
                     {t("Add User")}
                 </Button>
             </div>
 
-            {isLoading ? null : users.length === 0 ? (
+            {members.length === 0 ? (
                 <EmptyState icon={UserCog} title={t("No Users")} description={t("Add team members to get started")} />
             ) : (
                 <div className="flex flex-col gap-3">
-                    {users.map((member) => {
-                        const isInactive = member.status === "inactive";
+                    {members.map((member) => {
+                        const isInactive = member.account_status === "inactive";
                         return (
                             <Card key={member.id} className={`hover:shadow-md transition-shadow ${isInactive ? "opacity-60" : ""}`}>
                                 <CardContent className="p-4">
@@ -147,8 +122,8 @@ const UsersViewInner = () => {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <p className="text-sm font-semibold text-text-dark">{member.name}</p>
-                                                <Badge variant="outline" className="text-xs">{ROLE_LABELS[member.role] ?? member.role}</Badge>
-                                                <Badge variant="secondary" className="text-xs">{member.team}</Badge>
+                                                <Badge variant="outline" className="text-xs">{ROLE_LABELS[member.role as UserRole ?? member.role_label as UserRole] ?? member.role_label}</Badge>
+                                                <Badge variant="secondary" className="text-xs">{member.team?.name ?? "No Team"}</Badge>
                                                 {isInactive && <Badge variant="error" className="text-xs">{t("Inactive")}</Badge>}
                                             </div>
                                             <p className="text-xs text-text-muted mt-0.5">{member.email}</p>
@@ -162,18 +137,13 @@ const UsersViewInner = () => {
                                                     </button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="w-44">
-                                                    <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => openEdit(member)}>
-                                                        <Edit className="h-4 w-4" />
-                                                        {t("Edit")}
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
                                                     <DropdownMenuItem
-                                                        className="gap-2 text-error focus:text-error cursor-pointer"
-                                                        onClick={() => setDeleteTarget(member)}
+                                                        className="gap-2 cursor-pointer"
+                                                        onClick={() => setDeactivateTarget(member)}
                                                     >
                                                         {isInactive
-                                                            ? <><Zap className="h-4 w-4" />{t("Activate")}</>
-                                                            : <><PowerOff className="h-4 w-4" />{t("Deactivate")}</>
+                                                            ? <><Zap className="h-4 w-4 text-success" />{t("Activate")}</>
+                                                            : <><PowerOff className="h-4 w-4 text-warning" />{t("Deactivate")}</>
                                                         }
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
@@ -203,36 +173,28 @@ const UsersViewInner = () => {
                 </div>
             )}
 
-            {/* Add / Edit Dialog */}
-            <Dialog open={addOpen || !!editTarget} onOpenChange={(open) => { if (!open) { setAddOpen(false); setEditTarget(null); } }}>
+            {/* Add Dialog */}
+            <Dialog open={addOpen} onOpenChange={setAddOpen}>
                 <DialogContent className="max-w-lg">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <UserCog className="h-5 w-5 text-primary" />
-                            {editTarget ? t("Edit Team Member") : t("Add Team Member")}
+                            {t("Add Team Member")}
                         </DialogTitle>
                     </DialogHeader>
                     <div className="flex flex-col gap-4 py-2">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1.5">
-                                <Label htmlFor="u-name">{t("Full Name")} <span className="text-error">*</span></Label>
+                                <Label htmlFor="u-name">{t("Full Name")}</Label>
                                 <Input id="u-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="John Doe" className={errors.name ? "border-error" : ""} />
                                 {errors.name && <p className="text-xs text-error">{errors.name}</p>}
                             </div>
                             <div className="flex flex-col gap-1.5">
-                                <Label htmlFor="u-email">{t("Email")} <span className="text-error">*</span></Label>
+                                <Label htmlFor="u-email">{t("Email")}</Label>
                                 <Input id="u-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="john@company.com" className={errors.email ? "border-error" : ""} />
                                 {errors.email && <p className="text-xs text-error">{errors.email}</p>}
                             </div>
                         </div>
-
-                        {!editTarget && (
-                            <div className="flex flex-col gap-1.5">
-                                <Label htmlFor="u-password">{t("Password")} <span className="text-error">*</span></Label>
-                                <Input id="u-password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className={errors.password ? "border-error" : ""} />
-                                {errors.password && <p className="text-xs text-error">{errors.password}</p>}
-                            </div>
-                        )}
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1.5">
@@ -251,31 +213,61 @@ const UsersViewInner = () => {
                                 <Select value={form.team} onValueChange={(v) => setForm({ ...form, team: v })}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        {TEAM_OPTIONS.map((tm) => <SelectItem key={tm} value={tm}>{tm}</SelectItem>)}
+                                        {TEAM_OPTIONS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
                         </div>
+
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="u-avatar">{t("Avatar Initials")} <span className="text-text-muted text-xs">({t("optional, auto-generated if empty")})</span></Label>
+                            <Input id="u-avatar" value={form.avatar} onChange={(e) => setForm({ ...form, avatar: e.target.value.toUpperCase().slice(0, 2) })} placeholder="JD" maxLength={2} className="w-24" />
+                        </div>
                     </div>
                     <div className="flex justify-end gap-2 mt-2">
                         <DialogClose asChild><Button variant="outline">{t("Cancel")}</Button></DialogClose>
-                        <Button onClick={editTarget ? handleEdit : handleAdd} disabled={isCreating || isUpdating}>
-                            {(isCreating || isUpdating) ? t("Saving...") : editTarget ? t("Save Changes") : t("Add Member")}
+                        <Button onClick={handleAdd}>{t("Add Member")}</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Deactivate / Activate Confirm */}
+            <Dialog open={!!deactivateTarget} onOpenChange={(o) => !o && setDeactivateTarget(null)}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle className={deactivateTarget?.account_status === "inactive" ? "text-success" : "text-warning"}>
+                            {deactivateTarget?.account_status === "inactive" ? t("Activate User") : t("Deactivate User")}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-text-secondary py-2">
+                        {deactivateTarget?.account_status === "inactive"
+                            ? <>{t("Activate")} <span className="font-semibold text-text-dark">{deactivateTarget?.name}</span>? {t("They will regain access to the platform.")}</>
+                            : <>{t("Deactivate")} <span className="font-semibold text-text-dark">{deactivateTarget?.name}</span>? {t("They will lose access until reactivated.")}</>
+                        }
+                    </p>
+                    <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setDeactivateTarget(null)}>{t("Cancel")}</Button>
+                        <Button
+                            variant={deactivateTarget?.account_status === "inactive" ? "default" : "outline"}
+                            className={deactivateTarget?.account_status !== "inactive" ? "border-warning text-warning hover:bg-warning-light" : ""}
+                            onClick={handleToggleActive}
+                        >
+                            {deactivateTarget?.account_status === "inactive" ? t("Activate") : t("Deactivate")}
                         </Button>
                     </div>
                 </DialogContent>
             </Dialog>
 
-            {/* Delete/Deactivate Confirm */}
+            {/* Delete Confirm */}
             <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
                 <DialogContent className="max-w-sm">
-                    <DialogHeader><DialogTitle className="text-error">{t("Deactivate User")}</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle className="text-error">{t("Remove User")}</DialogTitle></DialogHeader>
                     <p className="text-sm text-text-secondary py-2">
-                        {t("Are you sure you want to deactivate")} <span className="font-semibold text-text-dark">{deleteTarget?.name}</span>? {t("They will lose access.")}
+                        {t("Are you sure you want to remove")} <span className="font-semibold text-text-dark">{deleteTarget?.name}</span>? {t("This cannot be undone.")}
                     </p>
                     <div className="flex justify-end gap-2">
                         <Button variant="outline" onClick={() => setDeleteTarget(null)}>{t("Cancel")}</Button>
-                        <Button variant="destructive" onClick={handleDelete}>{t("Deactivate")}</Button>
+                        <Button variant="destructive" onClick={handleDelete}>{t("Remove")}</Button>
                     </div>
                 </DialogContent>
             </Dialog>

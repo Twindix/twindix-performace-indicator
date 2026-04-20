@@ -1,19 +1,18 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
-import { requirementsConstants } from "@/constants";
-import type { RequirementItemInterface } from "@/interfaces";
+import { requirementsConstants } from "@/constants/requirements";
+import type { RequirementInterface } from "@/interfaces";
 import { getErrorMessage } from "@/lib/error";
 import { requirementsService } from "@/services";
 
 export const useGetRequirement = () => {
     const [isLoading, setIsLoading] = useState(false);
 
-    const getAllHandler = async (taskId: string): Promise<RequirementItemInterface[] | null> => {
-        if (!navigator.onLine) throw new Error(requirementsConstants.errors.genericError);
+    const getAllHandler = useCallback(async (taskId: string): Promise<RequirementInterface[] | null> => {
         setIsLoading(true);
         try {
-            const res = await requirementsService.listHandler(taskId);
+            const res = await requirementsService.getAllHandler(taskId);
             return res.data;
         } catch (err) {
             toast.error(getErrorMessage(err, requirementsConstants.errors.fetchFailed));
@@ -21,7 +20,7 @@ export const useGetRequirement = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     return { getAllHandler, isLoading };
 };

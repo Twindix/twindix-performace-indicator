@@ -1,30 +1,26 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Check, Clock, Pencil, Trash2, X } from "lucide-react";
 
 import { Button, Input } from "@/atoms";
-import { useTasks } from "@/contexts";
-import { UserRole } from "@/enums";
 import { t, useCreateTimeLog, useDeleteTimeLog, useGetTimeLog, useUpdateTimeLog } from "@/hooks";
 import type { TaskInterface, TimeLogInterface, UserInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
-import { getStorageItem, storageKeys } from "@/utils";
+import { useAuthStore } from "@/store";
 
 interface Props {
     task: TaskInterface;
     members: UserInterface[];
+    patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
 }
 
-export const TaskTimeLogs = ({ task, members }: Props) => {
-    const { patchTaskLocal } = useTasks();
+export const TaskTimeLogs = ({ task, members, patchTaskLocal }: Props) => {
     const { getByTaskHandler } = useGetTimeLog();
     const { createHandler: createTimeLogHandler, isLoading: isCreating } = useCreateTimeLog();
     const { updateHandler: updateTimeLogHandler } = useUpdateTimeLog();
     const { deleteHandler: deleteTimeLogHandler } = useDeleteTimeLog();
 
-    const currentUserId = getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "";
-    const authUser = members.find((m) => m.id === currentUserId);
-    const isAssignee = (task.assigneeIds ?? []).includes(currentUserId);
-    const isManager = authUser?.role === UserRole.CEO || authUser?.role === UserRole.CTO || authUser?.role === UserRole.ProjectManager;
+    const { user: authUser } = useAuthStore();
+    const currentUserId = authUser?.id ?? "";
 
     const [logs, setLogs] = useState<TimeLogInterface[]>([]);
     const [logHours, setLogHours] = useState("");
@@ -33,22 +29,21 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
     const [editHours, setEditHours] = useState("");
     const [editNote, setEditNote] = useState("");
 
-    useEffect(() => {
-        if (!isAssignee && !isManager) return;
-        getByTaskHandler(task.id).then((res) => { if (res) setLogs(res); });
-    }, [task.id, isAssignee, isManager, getByTaskHandler]);
+    const fetchLogs = useCallback(async () => {
+        const res = await getByTaskHandler(task.id);
+        if (res) setLogs(res);
+    }, [task.id, getByTaskHandler]);
 
-    if (!isAssignee && !isManager) return null;
+    useEffect(() => { fetchLogs(); }, [fetchLogs]);
 
-    const totalHours = logs.reduce((sum, l) => sum + l.hours, 0);
-    const getMember = (id: string) => members.find((m) => m.id === id);
+    const getMember = (userId: string) => members.find((m) => m.id === userId);
 
     const submitLog = async () => {
         const h = parseFloat(logHours);
         if (isNaN(h) || h <= 0) return;
         const res = await createTimeLogHandler(task.id, {
             hours: h,
-            date: new Date().toISOString().split("T")[0],
+            logged_date: new Date().toISOString().split("T")[0],
             description: logNote.trim() || undefined,
         });
         if (res) {
@@ -58,12 +53,6 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
             setLogHours("");
             setLogNote("");
         }
-    };
-
-    const startEdit = (log: TimeLogInterface) => {
-        setEditingId(log.id);
-        setEditHours(String(log.hours));
-        setEditNote(log.description ?? "");
     };
 
     const saveEdit = async (id: string) => {
@@ -90,6 +79,8 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
         }
     };
 
+    const totalHours = logs.reduce((sum, l) => sum + l.hours, 0);
+
     return (
         <div className="mt-4 pb-4 border-b border-border">
             <div className="flex items-center justify-between mb-3">
@@ -102,7 +93,7 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
                 </p>
                 {totalHours > 0 && (
                     <span className="text-xs font-semibold text-text-dark bg-muted px-2 py-1 rounded-lg">
-                        {t("Total")}: {totalHours} {t("h")}
+                        {t("Total")}: {totalHours}h
                     </span>
                 )}
             </div>
@@ -110,18 +101,18 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
             {logs.length > 0 && (
                 <div className="flex flex-col gap-2 mb-3">
                     {logs.map((log) => {
-                        const author = getMember(log.user_id);
-                        const isOwner = log.user_id === currentUserId;
+                        const author = getMember(log.user?.id ?? "");
+                        const isOwner = log.user?.id === currentUserId;
                         const isEditing = editingId === log.id;
                         return (
                             <div key={log.id} className="flex gap-2.5 items-start p-2.5 rounded-lg bg-muted group">
                                 <Avatar className="h-6 w-6 shrink-0 mt-0.5">
-                                    <AvatarFallback className="text-[8px]">{author?.avatar ?? "?"}</AvatarFallback>
+                                    <AvatarFallback className="text-[8px]">{log.user?.avatar_initials ?? author?.avatar_initials ?? "?"}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between gap-2">
-                                        <span className="text-xs font-medium text-text-dark">{author?.name ?? t("Unknown")}</span>
-                                        <span className="text-[10px] text-text-muted">{log.date}</span>
+                                        <span className="text-xs font-medium text-text-dark">{log.user?.full_name ?? author?.full_name ?? t("Unknown")}</span>
+                                        <span className="text-[10px] text-text-muted">{log.logged_date}</span>
                                     </div>
                                     {isEditing ? (
                                         <div className="flex items-center gap-2 mt-1">
@@ -134,10 +125,10 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
                                         <div className="flex items-center justify-between gap-2 mt-0.5">
                                             <p className="text-xs text-text-secondary truncate">{log.description || <span className="italic opacity-50">{t("No note")}</span>}</p>
                                             <div className="flex items-center gap-2 shrink-0">
-                                                <span className="text-xs font-bold text-primary bg-primary-lighter/30 px-1.5 py-0.5 rounded">{log.hours} {t("h")}</span>
+                                                <span className="text-xs font-bold text-primary bg-primary-lighter/30 px-1.5 py-0.5 rounded">{log.hours}h</span>
                                                 {isOwner && (
                                                     <>
-                                                        <button onClick={() => startEdit(log)} className="p-1 rounded text-text-muted hover:text-primary hover:bg-primary-lighter opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                                                        <button onClick={() => { setEditingId(log.id); setEditHours(String(log.hours)); setEditNote(log.description ?? ""); }} className="p-1 rounded text-text-muted hover:text-primary hover:bg-primary-lighter opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
                                                             <Pencil className="h-3 w-3" />
                                                         </button>
                                                         <button onClick={() => deleteLog(log.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
@@ -155,13 +146,15 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
                 </div>
             )}
 
-            {isAssignee && (
-                <div className="flex gap-2 items-center bg-surface border border-border rounded-xl p-2">
-                    <Input type="number" min="0.5" step="0.5" placeholder={t("Hrs")} value={logHours} onChange={(e) => setLogHours(e.target.value)} className="w-20 h-8 text-sm bg-muted" />
-                    <Input placeholder={t("What did you work on? (optional)")} value={logNote} onChange={(e) => setLogNote(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submitLog(); }} className="flex-1 h-8 text-sm bg-muted" />
-                    <Button size="sm" onClick={submitLog} disabled={isCreating || !logHours || parseFloat(logHours) <= 0} className="h-8 shrink-0">{isCreating ? t("...") : t("Log")}</Button>
-                </div>
+            {logs.length === 0 && (
+                <p className="text-xs text-text-muted italic mb-3">{t("No time logs yet")}</p>
             )}
+
+                    <div className="flex gap-2 items-center bg-surface border border-border rounded-xl p-2">
+                <Input type="number" min="0.5" step="0.5" placeholder={t("Hrs")} value={logHours} onChange={(e) => setLogHours(e.target.value)} className="w-20 h-8 text-sm bg-muted" />
+                <Input placeholder={t("What did you work on? (optional)")} value={logNote} onChange={(e) => setLogNote(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submitLog(); }} className="flex-1 h-8 text-sm bg-muted" />
+                <Button size="sm" onClick={submitLog} disabled={isCreating || !logHours || parseFloat(logHours) <= 0} className="h-8 shrink-0">{isCreating ? t("...") : t("Log")}</Button>
+            </div>
         </div>
     );
 };

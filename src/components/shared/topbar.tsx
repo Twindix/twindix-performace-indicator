@@ -1,10 +1,10 @@
+import { useEffect } from "react";
 import { Bell, Flag, LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/atoms";
-import { useAlerts, useRedFlags, useSprints } from "@/contexts";
 import { routesData } from "@/data";
-import { useAuth, useTheme, t, useSettings, usePresence, type PresenceStatus } from "@/hooks";
+import { useAuth, useTheme, t, useSettings, usePresence, type PresenceStatus, useSprintsList } from "@/hooks";
 import { useSprintStore } from "@/store";
 import { MobileNav } from "./mobile-nav";
 import {
@@ -28,7 +28,7 @@ import {
 
 const presenceConfig: Record<PresenceStatus, { label: string; dot: string }> = {
     active:  { label: "Active",  dot: "bg-success" },
-    away:    { label: "Away",    dot: "bg-warning" },
+    // away:    { label: "Away",    dot: "bg-warning" },
     offline: { label: "Offline", dot: "bg-text-muted" },
 };
 
@@ -37,11 +37,22 @@ export const Topbar = () => {
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings] = useSettings();
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
-    const { count: redFlagCount } = useRedFlags();
-    const { count: pendingAlertCount } = useAlerts();
-    const { sprints } = useSprints();
+    const { count: redFlagCount } = { count: 0 }; // Placeholder for useRedFlags();
+    const { count: pendingAlertCount } = { count: 0 }; // Placeholder for useAlerts();
+    const { sprints, isLoading: isLoadingSprints } = useSprintsList();
     const navigate = useNavigate();
     const { status, updateStatus } = usePresence(user?.id);
+
+    // Auto-select active sprint on load if currently empty or missing
+    useEffect(() => {
+        if (isLoadingSprints || sprints.length === 0) return;
+
+        const currentExists = sprints.some(s => s.id === activeSprintId);
+        if (!activeSprintId || !currentExists) {
+            const activeSprint = sprints.find(s => s.status === 'active') || sprints[0];
+            if (activeSprint) onSetActiveSprint(activeSprint.id);
+        }
+    }, [sprints, isLoadingSprints, activeSprintId, onSetActiveSprint]);
 
     const isArabic = settings.language === "ar";
 
@@ -49,9 +60,9 @@ export const Topbar = () => {
         <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between border-b border-border bg-surface/80 backdrop-blur-sm px-3 sm:px-6">
             <div className="flex items-center gap-2 sm:gap-4">
                 <MobileNav />
-                <Select value={activeSprintId} onValueChange={onSetActiveSprint}>
+                <Select value={activeSprintId} onValueChange={onSetActiveSprint} disabled={isLoadingSprints}>
                     <SelectTrigger className="w-[140px] sm:w-[180px] h-9 text-xs sm:text-sm">
-                        <SelectValue placeholder="Select Sprint" />
+                        <SelectValue placeholder={isLoadingSprints ? t("Loading...") : t("Select Sprint")} />
                     </SelectTrigger>
                     <SelectContent>
                         {sprints.map((s) => (
@@ -144,7 +155,7 @@ export const Topbar = () => {
                         </div>
                         <DropdownMenuSeparator />
 
-                        {(["active", "away", "offline"] as PresenceStatus[]).map((s) => (
+                        {(["active", "offline"] as PresenceStatus[]).map((s) => (
                             <DropdownMenuItem key={s} onClick={() => updateStatus(s)} className="gap-2 cursor-pointer">
                                 <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${presenceConfig[s].dot}`} />
                                 {t(presenceConfig[s].label)}

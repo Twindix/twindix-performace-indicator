@@ -1,29 +1,26 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
-import { tasksConstants } from "@/constants";
-import type { TaskStatus } from "@/enums";
-import type { TaskInterface } from "@/interfaces";
+import { tasksConstants } from "@/constants/tasks";
 import { getErrorMessage } from "@/lib/error";
 import { tasksService } from "@/services";
 
 export const useUpdateTaskStatus = () => {
     const [isLoading, setIsLoading] = useState(false);
 
-    const updateStatusHandler = async (id: string, status: TaskStatus): Promise<TaskInterface | null> => {
-        if (!navigator.onLine) throw new Error(tasksConstants.errors.genericError);
+    const updateStatusHandler = useCallback(async (id: string, status: string): Promise<boolean> => {
         setIsLoading(true);
         try {
-            const res = await tasksService.updateStatusHandler(id, { status });
-            toast.success(tasksConstants.messages.statusUpdateSuccess);
-            return res.data;
+            await tasksService.updateStatusHandler(id, { status });
+            toast.success(tasksConstants.messages.updateSuccess);
+            return true;
         } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.statusUpdateFailed));
-            return null;
+            toast.error(getErrorMessage(err, tasksConstants.errors.updateFailed));
+            return false;
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     return { updateStatusHandler, isLoading };
 };

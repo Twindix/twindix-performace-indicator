@@ -1,43 +1,40 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
-import { tasksConstants } from "@/constants";
-import type { TaskInterface } from "@/interfaces";
+import { tasksConstants } from "@/constants/tasks";
 import { getErrorMessage } from "@/lib/error";
 import { tasksService } from "@/services";
 
 export const useTaskTags = () => {
     const [isLoading, setIsLoading] = useState(false);
 
-    const addHandler = async (taskId: string, tags: string[]): Promise<TaskInterface | null> => {
-        if (!navigator.onLine) throw new Error(tasksConstants.errors.genericError);
+    const addHandler = useCallback(async (taskId: string, tag: string): Promise<boolean> => {
         setIsLoading(true);
         try {
-            const res = await tasksService.addTagsHandler(taskId, tags);
+            await tasksService.addTagsHandler(taskId, [tag]);
             toast.success(tasksConstants.messages.tagAddSuccess);
-            return res.data;
+            return true;
         } catch (err) {
             toast.error(getErrorMessage(err, tasksConstants.errors.tagAddFailed));
-            return null;
+            return false;
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
-    const removeHandler = async (taskId: string, tag: string): Promise<TaskInterface | null> => {
-        if (!navigator.onLine) throw new Error(tasksConstants.errors.genericError);
+    const removeHandler = useCallback(async (taskId: string, tag: string): Promise<boolean> => {
         setIsLoading(true);
         try {
-            const res = await tasksService.removeTagHandler(taskId, tag);
+            await tasksService.removeTagHandler(taskId, tag);
             toast.success(tasksConstants.messages.tagRemoveSuccess);
-            return res.data;
+            return true;
         } catch (err) {
             toast.error(getErrorMessage(err, tasksConstants.errors.tagRemoveFailed));
-            return null;
+            return false;
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     return { addHandler, removeHandler, isLoading };
 };

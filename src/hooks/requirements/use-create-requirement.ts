@@ -1,16 +1,15 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { requirementsConstants } from "@/constants";
-import type { CreateRequirementPayloadInterface, RequirementItemInterface } from "@/interfaces";
+import { requirementsConstants } from "@/constants/requirements";
+import type { CreateRequirementPayloadInterface, RequirementInterface } from "@/interfaces";
 import { getErrorMessage } from "@/lib/error";
 import { requirementsService } from "@/services";
 
 export const useCreateRequirement = () => {
     const [isLoading, setIsLoading] = useState(false);
 
-    const createHandler = async (taskId: string, payload: CreateRequirementPayloadInterface): Promise<RequirementItemInterface | null> => {
-        if (!navigator.onLine) throw new Error(requirementsConstants.errors.genericError);
+    const createHandler = async (taskId: string, payload: CreateRequirementPayloadInterface): Promise<RequirementInterface | null> => {
         setIsLoading(true);
         try {
             const res = await requirementsService.createHandler(taskId, payload);

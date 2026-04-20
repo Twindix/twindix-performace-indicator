@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import { tasksConstants } from "@/constants";
@@ -9,8 +9,7 @@ import { tasksService } from "@/services";
 export const useCreateTask = () => {
     const [isLoading, setIsLoading] = useState(false);
 
-    const createHandler = async (sprintId: string, payload: CreateTaskPayloadInterface): Promise<TaskInterface | null> => {
-        if (!navigator.onLine) throw new Error(tasksConstants.errors.genericError);
+    const createHandler = useCallback(async (sprintId: string, payload: CreateTaskPayloadInterface): Promise<TaskInterface | null> => {
         setIsLoading(true);
         try {
             const res = await tasksService.createHandler(sprintId, payload);
@@ -22,7 +21,7 @@ export const useCreateTask = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     return { createHandler, isLoading };
 };
