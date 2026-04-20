@@ -1,25 +1,29 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
-import { authConstants } from "@/constants/auth";
-import { AUTH_UNAUTHORIZED_EVENT } from "@/lib/axios";
-import { authService } from "@/services";
+import { getStorageItem, setStorageItem } from "@/utils";
+
+const PRESENCE_KEY = "twindix_perf_presence";
 
 export type PresenceStatus = "active" | "away" | "offline";
 
 export const usePresence = (userId: string | undefined) => {
-    const [status, setStatus] = useState<PresenceStatus>("offline");
-    const stoppedRef = useRef(false);
+    const [status, setStatus] = useState<PresenceStatus>(() => {
+        if (!userId) return "offline";
+        const stored = getStorageItem<Record<string, PresenceStatus>>(PRESENCE_KEY) ?? {};
+        return stored[userId] ?? "offline";
+    });
 
     const updateStatus = (next: PresenceStatus) => {
-        if (!userId || stoppedRef.current) return;
+        if (!userId) return;
+        const stored = getStorageItem<Record<string, PresenceStatus>>(PRESENCE_KEY) ?? {};
+        stored[userId] = next;
+        setStorageItem(PRESENCE_KEY, stored);
         setStatus(next);
-        authService.updateMeHandler({ status: next }).catch(() => null);
     };
 
     useEffect(() => {
         if (!userId) return;
-        stoppedRef.current = false;
-
+        // Mark active on mount
         updateStatus("active");
 
         const handleVisibilityChange = () => {
@@ -30,25 +34,13 @@ export const usePresence = (userId: string | undefined) => {
             updateStatus("offline");
         };
 
-        const interval = setInterval(() => {
-            if (stoppedRef.current) return;
-            authService.heartbeatHandler().catch(() => null);
-        }, authConstants.heartbeatIntervalMs);
-
-        const stop = () => {
-            stoppedRef.current = true;
-            clearInterval(interval);
-        };
-
         document.addEventListener("visibilitychange", handleVisibilityChange);
         window.addEventListener("beforeunload", handleBeforeUnload);
-        window.addEventListener(AUTH_UNAUTHORIZED_EVENT, stop);
 
         return () => {
-            stop();
             document.removeEventListener("visibilitychange", handleVisibilityChange);
             window.removeEventListener("beforeunload", handleBeforeUnload);
-            window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, stop);
+            updateStatus("offline");
         };
     }, [userId]);
 

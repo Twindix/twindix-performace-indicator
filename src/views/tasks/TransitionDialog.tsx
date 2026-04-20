@@ -3,7 +3,7 @@ import { ShieldCheck, Lock, CheckCircle2, AlertCircle, Clock } from "lucide-reac
 import { Badge, Button, Input } from "@/atoms";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
 import { cn } from "@/utils";
-import { t, useTaskViews } from "@/hooks";
+import { t } from "@/hooks";
 import type { TaskInterface } from "@/interfaces";
 import type { TaskPhase } from "@/enums";
 import {
@@ -33,18 +33,12 @@ export const TransitionDialog = ({
     onConfirm,
     isAssignee = false,
 }: TransitionDialogProps) => {
-    const { transitionCriteriaHandler } = useTaskViews();
     const [hours, setHours] = useState("");
     const [note, setNote] = useState("");
 
     useEffect(() => {
         if (open) { setHours(""); setNote(""); }
     }, [open]);
-
-    useEffect(() => {
-        if (!open || !task) return;
-        transitionCriteriaHandler(task.id);
-    }, [open, task?.id, transitionCriteriaHandler]);
 
     if (!task || !targetPhase || !transitionResult) return null;
 

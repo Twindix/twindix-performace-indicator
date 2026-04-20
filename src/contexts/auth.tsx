@@ -4,9 +4,8 @@ import type { AuthContextInterface } from "@/interfaces";
 
 export const AuthContext = createContext<AuthContextInterface>({
     isAuthenticated: false,
-    isLoading: true,
     user: null,
-    onLogin: async () => {},
-    onLogout: async () => {},
+    onLogin: () => false,
+    onLogout: () => {},
     onUpdateUser: () => {},
 });
