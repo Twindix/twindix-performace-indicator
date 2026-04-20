@@ -13,7 +13,6 @@ import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/ui";
-import { getStorageItem, setStorageItem, storageKeys } from "@/utils";
 
 const ROLE_LABELS: Record<UserRole, string> = {
     [UserRole.CEO]: "CEO",
@@ -35,7 +34,7 @@ const emptyForm = { name: "", email: "", role: UserRole.FrontendEngineer, team: 
 
 export const UsersView = () => {
     const navigate = useNavigate();
-    const [members, setMembers] = useState<UserInterface[]>(() => getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? []);
+    const [members, setMembers] = useState<UserInterface[]>([]);
     const [addOpen, setAddOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<UserInterface | null>(null);
     const [deactivateTarget, setDeactivateTarget] = useState<UserInterface | null>(null);
@@ -43,7 +42,6 @@ export const UsersView = () => {
     const [errors, setErrors] = useState<Partial<typeof emptyForm>>({});
 
     const save = (next: UserInterface[]) => {
-        setStorageItem(storageKeys.teamMembers, next);
         setMembers(next);
     };
 

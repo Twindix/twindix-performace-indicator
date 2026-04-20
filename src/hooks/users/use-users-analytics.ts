@@ -23,7 +23,7 @@ export const useUsersAnalytics = (id: string | undefined, sprintId?: string) => 
         }
         setState((prev) => ({ ...prev, isLoading: true, error: null }));
         usersService
-            .analyticsHandler(id, sprintId)
+            .analyticsHandler(id)
             .then((analytics) => setState({ analytics, isLoading: false, error: null }))
             .catch(() => setState({ analytics: null, isLoading: false, error: "Analytics unavailable" }));
     }, [id, sprintId]);

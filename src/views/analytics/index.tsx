@@ -7,7 +7,7 @@ import { AnalyticsSkeleton } from "@/components/skeletons";
 import { MetricStatus } from "@/enums";
 import { t, useSettings, usePageLoader } from "@/hooks";
 import type { SprintMetricsInterface } from "@/interfaces";
-import { useSprints } from "@/contexts";
+import { useSprintsList } from "@/hooks";
 import { useSprintStore } from "@/store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
 import { cn, td } from "@/utils";
@@ -45,7 +45,7 @@ export const AnalyticsView = () => {
     const [settings] = useSettings();
     const isRTL = settings.language === "ar";
     const { activeSprintId } = useSprintStore();
-    const { sprints } = useSprints();
+    const { sprints } = useSprintsList();
     const allMetrics: SprintMetricsInterface[] = [];
 
     const orderedSprintIds = sprints.map((s) => s.id);

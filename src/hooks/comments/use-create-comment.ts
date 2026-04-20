@@ -15,7 +15,7 @@ export const useCreateComment = () => {
         try {
             const res = await commentsService.createHandler(sprintId, payload);
             toast.success(commentsConstants.messages.createSuccess);
-            return res.data;
+            return res;
         } catch (err) {
             toast.error(getErrorMessage(err, commentsConstants.errors.createFailed));
             return null;

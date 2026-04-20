@@ -1,5 +1,8 @@
 import { TaskPhase, TaskPriority, TaskStatus } from "@/enums";
-import type { TaskAttachmentInterface, TaskInterface } from "@/interfaces";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TaskAttachmentInterface = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TaskInterface = any;
 
 /*
 Team reference:

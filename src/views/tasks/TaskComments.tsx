@@ -31,8 +31,8 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
         if (!commentText.trim() || isSending) return;
         setIsSending(true);
         try {
-            const created = await commentsService.createHandler({ task_id: task.id, content: commentText.trim() });
-            const next = [...comments, created];
+            const created = await commentsService.createHandler(task.id, { body: commentText.trim() });
+            const next = [...comments, created as unknown as TaskCommentInterface];
             setComments(next);
             onUpdateComments?.(task.id, next);
             setCommentText("");

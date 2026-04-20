@@ -36,7 +36,7 @@ export const useCommentsList = (sprintId: string, options: UseCommentsListOption
         if (!sprintId) { setAnalytics(null); return; }
         try {
             const res = await commentsService.analyticsHandler(sprintId);
-            setAnalytics(res.data);
+            setAnalytics(res);
         } catch (err) {
             toast.error(getErrorMessage(err, commentsConstants.errors.analyticsFailed));
         }
