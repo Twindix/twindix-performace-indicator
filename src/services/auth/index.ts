@@ -1,5 +1,5 @@
 import { apisData } from "@/data";
-import type { LoginResponseInterface, MeResponseInterface, UserInterface } from "@/interfaces";
+import type { LoginResponseInterface, MeResponseInterface, RefreshResponseInterface, UserInterface } from "@/interfaces";
 import { apiClient } from "@/lib/axios";
 
 export const authService = {
@@ -15,8 +15,8 @@ export const authService = {
         await apiClient.post(apisData.auth.logout);
     },
 
-    refreshHandler: async (): Promise<LoginResponseInterface> => {
-        const { data } = await apiClient.post<LoginResponseInterface>(apisData.auth.refresh);
+    refreshHandler: async (): Promise<RefreshResponseInterface> => {
+        const { data } = await apiClient.post<RefreshResponseInterface>(apisData.auth.refresh);
         return data;
     },
 
@@ -25,12 +25,12 @@ export const authService = {
         return data.data;
     },
 
-    updateMeHandler: async (updates: Partial<Pick<UserInterface, "full_name" | "account_status">>): Promise<UserInterface> => {
+    updateMeHandler: async (updates: Partial<Pick<UserInterface, "full_name" | "presence_status" | "settings">>): Promise<UserInterface> => {
         const { data } = await apiClient.put<MeResponseInterface>(apisData.auth.me, updates);
         return data.data;
     },
 
     heartbeatHandler: async (): Promise<void> => {
-        await apiClient.patch(apisData.auth.heartbeat);
+        await apiClient.patch(apisData.auth.heartbeat).catch(() => {});
     },
 };

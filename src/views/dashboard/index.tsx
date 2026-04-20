@@ -1,20 +1,20 @@
 import { AlertTriangle, Bell, Flag, MessageCircle, TrendingUp, Zap, XCircle } from "lucide-react";
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
-import { Header, ScoreGauge, StatusBadge } from "@/components/shared";
+import { Header, MetricCard, ScoreGauge, StatusBadge } from "@/components/shared";
 import { DashboardSkeleton } from "@/components/skeletons";
-import { DashboardProvider, useDashboard } from "@/contexts";
-import { MetricStatus } from "@/enums";
+import { BlockerStatus, MetricStatus } from "@/enums";
 import { t, useSettings, useCountUp, usePageLoader } from "@/hooks";
+import type { BlockerInterface, SprintMetricsInterface, TaskInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
-import { cn } from "@/utils";
+import { cn, getStorageItem, storageKeys } from "@/utils";
 
 const frictionAreaConfig = [
-    { key: "alert_response",    labelKey: "Alert Response",      icon: Bell,           textColor: "text-blue-500" },
-    { key: "red_flag_response", labelKey: "Red Flag Response",   icon: Flag,           textColor: "text-error" },
-    { key: "time_delivery",     labelKey: "Time Delivery",       icon: Zap,            textColor: "text-success" },
-    { key: "comments_response", labelKey: "Comments Response",   icon: MessageCircle,  textColor: "text-purple-500" },
-    { key: "not_approval",      labelKey: "Not Approval (%)",    icon: XCircle,        textColor: "text-warning" },
+    { key: "alertResponse" as const, labelKey: "Alert Response", icon: Bell, color: "bg-blue-500/10", textColor: "text-blue-500" },
+    { key: "redFlagResponse" as const, labelKey: "Red Flag Response", icon: Flag, color: "bg-error/10", textColor: "text-error" },
+    { key: "deliveryTime" as const, labelKey: "Time Delivery", icon: Zap, color: "bg-success/10", textColor: "text-success" },
+    { key: "commentsResponse" as const, labelKey: "Comments Response", icon: MessageCircle, color: "bg-purple-500/10", textColor: "text-purple-500" },
+    { key: "rejectionRate" as const, labelKey: "Not Approval (%)", icon: XCircle, color: "bg-warning/10", textColor: "text-warning" },
 ];
 
 const getScoreStatus = (score: number): MetricStatus => {
@@ -29,42 +29,18 @@ const AnimNum = ({ value, className }: { value: number; className?: string }) =>
 };
 
 export const DashboardView = () => {
-    const { activeSprintId } = useSprintStore();
-    return (
-        <DashboardProvider sprintId={activeSprintId}>
-            <DashboardViewInner />
-        </DashboardProvider>
-    );
-};
-
-const DashboardViewInner = () => {
-    const pageLoading = usePageLoader();
+    const isLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
-    const { dashboard, healthScore, isLoading: isFetching } = useDashboard();
+    const { activeSprintId } = useSprintStore();
+    const allMetrics = getStorageItem<SprintMetricsInterface[]>(storageKeys.metrics) ?? [];
+    const sprintMetrics = allMetrics.find((m) => m.sprintId === activeSprintId);
+    const tasks = (getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? []).filter((t) => t.sprintId === activeSprintId);
+    const blockers = (getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? []).filter((b) => b.sprintId === activeSprintId);
+    const activeBlockers = blockers.filter((b) => b.status === BlockerStatus.Active || b.status === BlockerStatus.Escalated);
+    const topMetrics = sprintMetrics?.metrics.slice(0, 8) ?? [];
 
-    if (pageLoading || isFetching) return <DashboardSkeleton />;
-
-    const overallScore = healthScore?.overall ?? 0;
-    const subScores = healthScore?.sub_scores ?? {};
-    const frictionScore = (key: string): number => {
-        const raw = subScores[key];
-        return typeof raw === "object" && raw !== null ? (raw as { score: number }).score : 0;
-    };
-
-    // summary is at dashboard root, not inside health_score
-    const totalTasks = dashboard?.summary?.total_tasks ?? 0;
-    const completedTasks = dashboard?.summary?.completed_tasks ?? 0;
-    const activeBlockersCount = dashboard?.summary?.active_blockers ?? 0;
-
-    // active_blockers is inside health_score
-    const rawBlockers = healthScore?.active_blockers ?? [];
-    const activeBlockers = rawBlockers.map((b) => ({
-        id: b.id,
-        title: b.title,
-        durationDays: b.duration_days ?? 0,
-        severity: b.severity ?? "medium",
-    }));
+    if (isLoading) return <DashboardSkeleton />;
 
     return (
         <div>
@@ -81,19 +57,19 @@ const DashboardViewInner = () => {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center gap-4">
-                        <ScoreGauge score={overallScore} size="lg" label={t("Health")} />
-                        <StatusBadge status={getScoreStatus(overallScore)} />
+                        <ScoreGauge score={sprintMetrics?.healthScore ?? 0} size="lg" label={t("Health")} />
+                        <StatusBadge status={getScoreStatus(sprintMetrics?.healthScore ?? 0)} />
                         <div className="w-full grid grid-cols-3 gap-2 mt-2">
                             <div className="text-center">
-                                <p className="text-2xl font-bold text-text-dark"><AnimNum value={totalTasks} /></p>
+                                <p className="text-2xl font-bold text-text-dark"><AnimNum value={tasks.length} /></p>
                                 <p className="text-xs text-text-muted">{t("Total Tasks")}</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-2xl font-bold text-error"><AnimNum value={activeBlockersCount} /></p>
+                                <p className="text-2xl font-bold text-error"><AnimNum value={activeBlockers.length} /></p>
                                 <p className="text-xs text-text-muted">{t("Active Blockers")}</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-2xl font-bold text-text-dark"><AnimNum value={completedTasks} /></p>
+                                <p className="text-2xl font-bold text-text-dark"><AnimNum value={tasks.filter((tk) => tk.phase === "done").length} /></p>
                                 <p className="text-xs text-text-muted">{t("Completed")}</p>
                             </div>
                         </div>
@@ -103,7 +79,7 @@ const DashboardViewInner = () => {
                 {/* Friction Areas Grid */}
                 <div className={cn("lg:col-span-2 grid grid-cols-2 stagger-children", compact ? "gap-2" : "gap-3")}>
                     {frictionAreaConfig.map(({ key, labelKey, icon: Icon, textColor }) => {
-                        const score = frictionScore(key);
+                        const score = sprintMetrics?.frictionScores[key] ?? 0;
                         return (
                             <Card key={key} className="overflow-hidden">
                                 <CardContent className={compact ? "p-3" : "p-4"}>
@@ -125,7 +101,17 @@ const DashboardViewInner = () => {
                 </div>
             </div>
 
-            {/* Active Blockers */}
+            {/* Performance Metrics Row */}
+            <div className={compact ? "mb-3" : "mb-6"}>
+                <h2 className={cn("font-semibold text-text-dark", compact ? "text-base mb-2" : "text-lg mb-3")}>{t("Performance Metrics")}</h2>
+                <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 stagger-children", compact ? "gap-2" : "gap-3")}>
+                    {topMetrics.map((m) => (
+                        <MetricCard key={m.id} name={m.name} value={m.value} unit={m.unit} status={m.status} trend={m.trend} trendPercent={m.trendPercent} description={m.description} />
+                    ))}
+                </div>
+            </div>
+
+            {/* Bottom Section: Active Blockers */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base">
@@ -146,9 +132,7 @@ const DashboardViewInner = () => {
                                 <p className="text-sm font-medium text-text-dark truncate">{b.title}</p>
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className="text-xs text-text-muted">{b.durationDays} {t("days")} {t("blocked")}</span>
-                                    <Badge variant={b.severity === "critical" ? "error" : b.severity === "high" ? "warning" : "secondary"}>
-                                        {t(b.severity.charAt(0).toUpperCase() + b.severity.slice(1))}
-                                    </Badge>
+                                    <Badge variant={b.impact === "critical" ? "error" : b.impact === "high" ? "warning" : "secondary"}>{t(b.impact.charAt(0).toUpperCase() + b.impact.slice(1))}</Badge>
                                 </div>
                             </div>
                         </div>

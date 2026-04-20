@@ -1,9 +1,9 @@
-import type { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
+import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 import axios from "axios";
 
 import { apisData, commonData } from "@/data";
 
-import { deleteCookieHandler, getCookieHandler, setCookieHandler } from "./cookies";
+import { deleteCookieHandler, getCookieHandler } from "./cookies";
 import { ApiError } from "./error";
 
 export const apiClient = axios.create({
@@ -27,11 +27,8 @@ apiClient.interceptors.request.use(
     (error: AxiosError) => Promise.reject(error),
 );
 
-type RetryableConfig = AxiosRequestConfig & { _retry?: boolean };
-
 export const AUTH_UNAUTHORIZED_EVENT = "auth:unauthorized";
 
-let refreshPromise: Promise<string | null> | null = null;
 let unauthorized = false;
 
 const dispatchUnauthorized = () => {
@@ -43,52 +40,16 @@ const dispatchUnauthorized = () => {
 
 export const resetAuthState = () => {
     unauthorized = false;
-    refreshPromise = null;
-};
-
-const refreshToken = async (): Promise<string | null> => {
-    if (unauthorized) return null;
-    if (refreshPromise) return refreshPromise;
-    refreshPromise = axios
-        .post<{ token: string }>(`${apisData.baseUrl}${apisData.auth.refresh}`, {}, {
-            headers: { "Accept": "application/json" },
-            withCredentials: true,
-        })
-        .then((res) => {
-            const token = res.data?.token ?? null;
-            if (token) setCookieHandler(commonData.token.tokenKey, token);
-            return token;
-        })
-        .catch(() => null)
-        .finally(() => { refreshPromise = null; });
-    return refreshPromise;
 };
 
 apiClient.interceptors.response.use(
     (response) => response,
-    async (error: AxiosError) => {
-        const { message, response: { data, status } = {}, config } = error;
-        const original = config as RetryableConfig | undefined;
+    (error: AxiosError) => {
+        const { message, response: { data, status } = {} } = error;
 
-        if (status === 401 && original && !original._retry && !original.url?.includes(apisData.auth.refresh)) {
-            if (unauthorized) {
-                return Promise.reject(new ApiError(401, "Unauthorized", data));
-            }
-            const hadToken = !!getCookieHandler(commonData.token.tokenKey);
-            if (!hadToken) {
-                dispatchUnauthorized();
-                return Promise.reject(new ApiError(401, "Unauthorized", data));
-            }
-            original._retry = true;
-            const newToken = await refreshToken();
-            if (newToken) {
-                original.headers = {
-                    ...original.headers,
-                    [commonData.token.authorizationHeader]: `${commonData.token.bearerPrefix}${newToken}`,
-                };
-                return apiClient(original);
-            }
+        if (status === 401) {
             dispatchUnauthorized();
+            return Promise.reject(new ApiError(401, "Unauthorized", data));
         }
 
         const errorMessage =

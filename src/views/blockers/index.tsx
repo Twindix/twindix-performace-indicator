@@ -1,18 +1,15 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Calendar, Clock, Filter, GitBranch, Layers, MessageSquare, PenTool, Plus, Shield, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Calendar, Clock, Filter, GitBranch, Layers, MessageSquare, PenTool, Shield, ShieldAlert, Users } from "lucide-react";
 
-import { Badge, Button, Card, CardContent } from "@/atoms";
+import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { BlockersSkeleton } from "@/components/skeletons";
-import { BlockersProvider, useBlockers } from "@/contexts";
-import { BlockerStatus, BlockerType } from "@/enums";
+import { BlockerImpact, BlockerStatus, BlockerType } from "@/enums";
 import { t, useSettings, usePageLoader } from "@/hooks";
-import type { BlockerInterface } from "@/interfaces";
+import type { BlockerInterface, UserInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
-import { cn, formatDate } from "@/utils";
-import { BlockerDetailDialog } from "./BlockerDetailDialog";
-import { BlockerFormDialog } from "./BlockerFormDialog";
+import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
 
 const blockerTypeConfig: Record<BlockerType, { labelKey: string; icon: typeof AlertTriangle; color: string }> = {
     [BlockerType.Requirements]: { labelKey: "Requirements", icon: AlertTriangle, color: "bg-friction-requirements text-friction-requirements" },
@@ -29,59 +26,59 @@ const blockerStatusConfig: Record<BlockerStatus, { labelKey: string; variant: "e
     [BlockerStatus.Escalated]: { labelKey: "Escalated", variant: "warning" },
 };
 
-const severityConfig: Record<string, { labelKey: string; variant: "error" | "warning" | "secondary" | "outline" }> = {
-    critical: { labelKey: "Critical", variant: "error" },
-    high: { labelKey: "High", variant: "warning" },
-    medium: { labelKey: "Medium", variant: "secondary" },
-    low: { labelKey: "Low", variant: "outline" },
+const impactConfig: Record<BlockerImpact, { labelKey: string; variant: "error" | "warning" | "secondary" | "outline" }> = {
+    [BlockerImpact.Critical]: { labelKey: "Critical", variant: "error" },
+    [BlockerImpact.High]: { labelKey: "High", variant: "warning" },
+    [BlockerImpact.Medium]: { labelKey: "Medium", variant: "secondary" },
+    [BlockerImpact.Low]: { labelKey: "Low", variant: "outline" },
+};
+
+const barColors: Record<BlockerType, string> = {
+    [BlockerType.Requirements]: "bg-friction-requirements",
+    [BlockerType.ApiDependency]: "bg-friction-dependencies",
+    [BlockerType.Design]: "bg-primary",
+    [BlockerType.QAHandoff]: "bg-friction-process",
+    [BlockerType.Communication]: "bg-friction-communication",
+    [BlockerType.Technical]: "bg-friction-team",
 };
 
 export const BlockerView = () => {
-    const { activeSprintId } = useSprintStore();
-    return (
-        <BlockersProvider sprintId={activeSprintId}>
-            <BlockerViewInner />
-        </BlockersProvider>
-    );
-};
-
-const BlockerViewInner = () => {
-    const pageLoading = usePageLoader();
+    const isLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
     const { activeSprintId } = useSprintStore();
-    const { blockers, analytics, isLoading: isFetching } = useBlockers();
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [typeFilter, setTypeFilter] = useState<string>("all");
 
-    const [addOpen, setAddOpen] = useState(false);
-    const [editTarget, setEditTarget] = useState<BlockerInterface | null>(null);
-    const [detailTarget, setDetailTarget] = useState<BlockerInterface | null>(null);
-    const [detailOpen, setDetailOpen] = useState(false);
+    const allBlockers = getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? [];
+    const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
+    const sprintBlockers = allBlockers.filter((b) => b.sprintId === activeSprintId);
 
     const filteredBlockers = useMemo(() => {
-        let result = blockers;
+        let result = sprintBlockers;
         if (statusFilter !== "all") result = result.filter((b) => b.status === statusFilter);
         if (typeFilter !== "all") result = result.filter((b) => b.type === typeFilter);
         return result;
-    }, [blockers, statusFilter, typeFilter]);
+    }, [sprintBlockers, statusFilter, typeFilter]);
+
+    const getMember = (id: string) => members.find((m) => m.id === id);
 
     const stats = useMemo(() => {
-        if (analytics) {
-            return {
-                total: analytics.total,
-                active: analytics.active,
-                resolved: analytics.resolved,
-                avgDuration: Math.round(analytics.avg_duration_days ?? 0),
-            };
-        }
-        const active = blockers.filter((b) => b.status === BlockerStatus.Active || b.status === BlockerStatus.Escalated).length;
-        const resolved = blockers.filter((b) => b.status === BlockerStatus.Resolved).length;
-        const avgDuration = blockers.length > 0 ? Math.round(blockers.reduce((sum, b) => sum + (b.duration_days ?? 0), 0) / blockers.length) : 0;
-        return { total: blockers.length, active, resolved, avgDuration };
-    }, [analytics, blockers]);
+        const active = sprintBlockers.filter((b) => b.status === BlockerStatus.Active || b.status === BlockerStatus.Escalated).length;
+        const resolved = sprintBlockers.filter((b) => b.status === BlockerStatus.Resolved).length;
+        const avgDuration = sprintBlockers.length > 0 ? Math.round(sprintBlockers.reduce((sum, b) => sum + b.durationDays, 0) / sprintBlockers.length) : 0;
+        return { total: sprintBlockers.length, active, resolved, avgDuration };
+    }, [sprintBlockers]);
 
-    if (pageLoading || isFetching) return <BlockersSkeleton />;
+    const impactByType = useMemo(() => {
+        const counts: Record<string, number> = {};
+        for (const bt of Object.values(BlockerType)) counts[bt] = 0;
+        for (const b of sprintBlockers) counts[b.type]++;
+        const max = Math.max(...Object.values(counts), 1);
+        return { counts, max };
+    }, [sprintBlockers]);
+
+    if (isLoading) return <BlockersSkeleton />;
 
     return (
         <div>
@@ -113,10 +110,6 @@ const BlockerViewInner = () => {
                                 ))}
                             </SelectContent>
                         </Select>
-                        <Button size="sm" className="gap-1.5" onClick={() => setAddOpen(true)}>
-                            <Plus className="h-4 w-4" />
-                            {t("Add Blocker")}
-                        </Button>
                     </div>
                 }
             />
@@ -149,9 +142,9 @@ const BlockerViewInner = () => {
                 </Card>
             </div>
 
-            <div>
+            <div className={cn("grid grid-cols-1 lg:grid-cols-3", compact ? "gap-3" : "gap-6")}>
                 {/* Blocker List */}
-                <div className={cn("flex flex-col", compact ? "gap-2" : "gap-4")}>
+                <div className={cn("lg:col-span-2 flex flex-col", compact ? "gap-2" : "gap-4")}>
                     <h2 className="text-lg font-semibold text-text-dark">
                         {t("Blockers")}
                         <Badge className="ms-2" variant="secondary">{filteredBlockers.length}</Badge>
@@ -163,15 +156,13 @@ const BlockerViewInner = () => {
                         filteredBlockers.map((blocker) => {
                             const typeInfo = blockerTypeConfig[blocker.type];
                             const statusInfo = blockerStatusConfig[blocker.status];
-                            const severityInfo = severityConfig[blocker.severity?.toLowerCase() ?? ""] ?? { labelKey: blocker.severity ?? "", variant: "outline" as const };
+                            const impactInfo = impactConfig[blocker.impact];
+                            const reporter = getMember(blocker.reporterId);
+                            const owner = getMember(blocker.ownerId);
                             const TypeIcon = typeInfo.icon;
 
                             return (
-                                <Card
-                                    key={blocker.id}
-                                    className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-                                    onClick={() => { setDetailTarget(blocker); setDetailOpen(true); }}
-                                >
+                                <Card key={blocker.id} className="overflow-hidden">
                                     <CardContent className={compact ? "p-3" : "p-5"}>
                                         {/* Header: title + badges */}
                                         <div className="flex items-start justify-between gap-3 mb-3">
@@ -186,7 +177,7 @@ const BlockerViewInner = () => {
                                             </div>
                                             <div className="flex items-center gap-1.5 shrink-0">
                                                 <Badge variant={statusInfo.variant}>{t(statusInfo.labelKey)}</Badge>
-                                                <Badge variant={severityInfo.variant}>{t(severityInfo.labelKey)}</Badge>
+                                                <Badge variant={impactInfo.variant}>{t(impactInfo.labelKey)}</Badge>
                                             </div>
                                         </div>
 
@@ -195,35 +186,35 @@ const BlockerViewInner = () => {
                                             {/* Reporter */}
                                             <div className="flex items-center gap-1.5">
                                                 <Avatar className="h-5 w-5">
-                                                    <AvatarFallback className="text-[8px]">{blocker.reporter?.avatar_initials}</AvatarFallback>
+                                                    <AvatarFallback className="text-[8px]">{reporter?.avatar}</AvatarFallback>
                                                 </Avatar>
-                                                <span>{t("Reported by")} <span className="font-medium text-text-secondary">{blocker.reporter?.full_name ?? t("Unknown")}</span></span>
+                                                <span>{t("Reported by")} <span className="font-medium text-text-secondary">{reporter?.name ?? t("Unknown")}</span></span>
                                             </div>
 
                                             {/* Owner */}
                                             <div className="flex items-center gap-1.5">
                                                 <Avatar className="h-5 w-5">
-                                                    <AvatarFallback className="text-[8px]">{blocker.owner?.avatar_initials}</AvatarFallback>
+                                                    <AvatarFallback className="text-[8px]">{owner?.avatar}</AvatarFallback>
                                                 </Avatar>
-                                                <span>{t("Owned by")} <span className="font-medium text-text-secondary">{blocker.owner?.full_name ?? t("Unassigned")}</span></span>
+                                                <span>{t("Owned by")} <span className="font-medium text-text-secondary">{owner?.name ?? t("Unassigned")}</span></span>
                                             </div>
 
                                             {/* Duration */}
                                             <div className="flex items-center gap-1">
                                                 <Clock className="h-3 w-3" />
-                                                <span>{blocker.duration_days ?? 0} {t("days")}</span>
+                                                <span>{blocker.durationDays} {t("days")}</span>
                                             </div>
 
                                             {/* Created */}
                                             <div className="flex items-center gap-1">
                                                 <Calendar className="h-3 w-3" />
-                                                <span>{formatDate(blocker.created_at)}</span>
+                                                <span>{formatDate(blocker.createdAt)}</span>
                                             </div>
 
                                             {/* Affected tasks */}
                                             <div className="flex items-center gap-1">
                                                 <Layers className="h-3 w-3" />
-                                                <span>{(blocker.tasks ?? []).length} {t("tasks affected")}</span>
+                                                <span>{blocker.taskIds.length} {t("tasks affected")}</span>
                                             </div>
                                         </div>
                                     </CardContent>
@@ -233,23 +224,44 @@ const BlockerViewInner = () => {
                     )}
                 </div>
 
+                {/* Impact by Type Bar Chart */}
+                <div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-base">
+                                <Users className="h-4 w-4 text-primary" />
+                                {t("Blocker Impact by Type")}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-col gap-4">
+                            {Object.values(BlockerType).map((type) => {
+                                const count = impactByType.counts[type];
+                                const widthPercent = impactByType.max > 0 ? (count / impactByType.max) * 100 : 0;
+                                const config = blockerTypeConfig[type];
+                                const TypeIcon = config.icon;
+
+                                return (
+                                    <div key={type}>
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <div className="flex items-center gap-2">
+                                                <TypeIcon className={cn("h-3.5 w-3.5", config.color.split(" ")[1])} />
+                                                <span className="text-xs font-medium text-text-secondary">{t(config.labelKey)}</span>
+                                            </div>
+                                            <span className="text-xs font-bold text-text-dark">{count}</span>
+                                        </div>
+                                        <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                                            <div
+                                                className={cn("h-full rounded-full transition-all duration-500 progress-animated", barColors[type])}
+                                                style={{ width: `${widthPercent}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
-
-            <BlockerFormDialog
-                open={addOpen || !!editTarget}
-                onOpenChange={(open) => {
-                    if (!open) { setAddOpen(false); setEditTarget(null); }
-                }}
-                sprintId={activeSprintId}
-                initial={editTarget}
-            />
-
-            <BlockerDetailDialog
-                blocker={detailTarget}
-                open={detailOpen}
-                onOpenChange={setDetailOpen}
-                onEdit={(b) => { setDetailOpen(false); setEditTarget(b); }}
-            />
         </div>
     );
 };

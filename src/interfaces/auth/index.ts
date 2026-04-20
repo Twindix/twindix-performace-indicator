@@ -5,16 +5,11 @@ export interface LoginResponseInterface {
     user: UserInterface;
 }
 
-export interface MeResponseInterface {
-    data: UserInterface;
-    isSuccess: boolean;
+export interface RefreshResponseInterface {
+    token: string;
 }
 
-export interface AuthContextInterface {
-    isAuthenticated: boolean;
-    isLoading: boolean;
-    user: UserInterface | null;
-    onLogin: (email: string, password: string) => Promise<void>;
-    onLogout: () => Promise<void>;
-    onUpdateUser: (updates: Partial<UserInterface>) => void;
+export interface MeResponseInterface {
+    data: UserInterface;
+    isSuccess?: boolean;
 }

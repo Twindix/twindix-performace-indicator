@@ -1,6 +1,6 @@
 import { Circle, AlertCircle, Clock } from "lucide-react";
 import { Badge } from "@/atoms";
-import { TaskPhase, TaskPriority } from "@/enums";
+import { TaskPriority } from "@/enums";
 import type { TaskInterface, UserInterface } from "@/interfaces";
 import { t } from "@/hooks";
 import { cn } from "@/utils";
@@ -17,6 +17,7 @@ const WORK_TYPES = ["Design", "Frontend", "Backend", "QA", "Done"] as const;
 
 export const PipelineView = ({
     tasks,
+    members,
     setSelectedTask,
     setDialogOpen,
 }: PipelineViewProps) => {
@@ -28,7 +29,7 @@ export const PipelineView = ({
 
     for (const task of tasks) {
         // Fallback to "Frontend" if undefined for legacy data handling
-        const type = task.work_type || "Frontend";
+        const type = task.workType || "Frontend";
         if (tasksByWorkType.has(type)) {
             tasksByWorkType.get(type)!.push(task);
         } else {
@@ -71,9 +72,9 @@ export const PipelineView = ({
                         {/* Task List */}
                         <div className="flex-1 p-3 overflow-y-auto space-y-3 bg-muted/20">
                             {columnTasks.map((task) => {
-                                const assignees = task.assignees ?? [];
-                                const assignee = assignees[0];
-                                const progressIndex = PHASE_INDEX[task.phase ?? TaskPhase.Backlog];
+                                const assignees = (task.assigneeIds ?? []).map(id => members.find((m) => m.id === id)).filter(Boolean);
+                                const assignee = assignees[0]; // Use first assignee for display
+                                const progressIndex = PHASE_INDEX[task.phase];
                                 const maxStages = 5; // Backlog is 0, Done is 5
 
                                 // Mock data for realism in this view based on screenshot
@@ -104,9 +105,9 @@ export const PipelineView = ({
                                         </h4>
 
                                         <div className="flex items-center gap-1.5 mb-5 flex-wrap">
-                                            <Badge variant={PRIORITY_VARIANT[task.priority ?? "medium"]} className="text-[9px] px-2 shadow-none font-bold bg-opacity-20 text-opacity-100 rounded">
+                                            <Badge variant={PRIORITY_VARIANT[task.priority]} className="text-[9px] px-2 shadow-none font-bold bg-opacity-20 text-opacity-100 rounded">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-current mr-1 inline-block opacity-80" />
-                                                {t(task.priority ?? "medium")}
+                                                {t(task.priority)}
                                             </Badge>
 
                                             {reworks > 0 && (
@@ -128,7 +129,7 @@ export const PipelineView = ({
                                             {assignee ? (
                                                 <div className="flex items-center gap-2">
                                                     <span className="w-6 h-6 rounded-full bg-primary-lighter text-primary text-[10px] flex items-center justify-center font-bold">
-                                                        {assignee.avatar_initials}
+                                                        {(assignee.full_name ?? assignee.name ?? "").split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()}
                                                     </span>
                                                     <span className="text-[10px] text-text-secondary font-medium">
                                                         {progressIndex}/{maxStages} stages
