@@ -24,7 +24,7 @@ export const TaskTimeLogs = ({ task, members }: Props) => {
     const currentUserId = getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "";
     const authUser = members.find((m) => m.id === currentUserId);
     const isAssignee = (task.assignees ?? []).some((a) => a.id === currentUserId);
-    const isManager = authUser?.role === UserRole.CEO || authUser?.role === UserRole.CTO || authUser?.role === UserRole.ProjectManager;
+    const isManager = authUser?.role_tier === UserRole.CEO || authUser?.role_tier === UserRole.CTO || authUser?.role_tier === UserRole.ProjectManager;
 
     const [logs, setLogs] = useState<TimeLogInterface[]>([]);
     const [logHours, setLogHours] = useState("");

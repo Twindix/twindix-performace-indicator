@@ -291,7 +291,7 @@ export const AddTaskDialog = ({ open, onOpenChange, members }: AddTaskDialogProp
                                                             {member.avatar_initials}
                                                         </span>
                                                         <span>{member.full_name}</span>
-                                                        <span className="text-xs text-text-muted">({member.role})</span>
+                                                        <span className="text-xs text-text-muted">({member.role_tier})</span>
                                                     </div>
                                                 </SelectItem>
                                             ))}

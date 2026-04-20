@@ -66,7 +66,7 @@ const DecisionsViewInner = () => {
     const [error, setError] = useState("");
     const [viewTarget, setViewTarget] = useState<DecisionInterface | null>(null);
 
-    const isPM = user ? PM_ROLES.includes(user.role as UserRole) : false;
+    const isPM = user ? PM_ROLES.includes(user.role_tier as UserRole) : false;
 
     const filteredDecisions = decisions.filter((d) => {
         if (statusFilter !== "all" && d.status !== statusFilter) return false;

@@ -31,7 +31,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
 
 const TEAM_OPTIONS = ["Frontend", "Backend", "Leadership", "HR", "Product", "QA", "AI", "Data", "Design"];
 
-const emptyForm = { name: "", email: "", password: "", role: UserRole.FrontendEngineer, team: "Frontend", avatar: "" };
+const emptyForm = { name: "", email: "", password: "", role: UserRole.FrontendEngineer, team: "Frontend" };
 
 export const UsersView = () => (
     <UsersProvider>
@@ -69,9 +69,8 @@ const UsersViewInner = () => {
             name: user.full_name,
             email: user.email,
             password: "",
-            role: user.role,
-            team: user.team ?? "Frontend",
-            avatar: user.avatar_initials ?? "",
+            role: (user.role_tier ?? UserRole.FrontendEngineer) as UserRole,
+            team: (typeof user.team === "object" ? user.team.name : user.team) || "Frontend",
         });
         setErrors({});
         setEditTarget(user);
@@ -135,7 +134,7 @@ const UsersViewInner = () => {
             ) : (
                 <div className="flex flex-col gap-3">
                     {users.map((member) => {
-                        const isInactive = member.status === "inactive";
+                        const isInactive = member.account_status === "inactive";
                         return (
                             <Card key={member.id} className={`hover:shadow-md transition-shadow ${isInactive ? "opacity-60" : ""}`}>
                                 <CardContent className="p-4">
@@ -147,8 +146,8 @@ const UsersViewInner = () => {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <p className="text-sm font-semibold text-text-dark">{member.full_name}</p>
-                                                <Badge variant="outline" className="text-xs">{ROLE_LABELS[member.role] ?? member.role}</Badge>
-                                                <Badge variant="secondary" className="text-xs">{member.team}</Badge>
+                                                <Badge variant="outline" className="text-xs">{member.role_label ?? ROLE_LABELS[member.role_tier as UserRole] ?? member.role_tier}</Badge>
+                                                <Badge variant="secondary" className="text-xs">{typeof member.team === "object" ? member.team.name : member.team}</Badge>
                                                 {isInactive && <Badge variant="error" className="text-xs">{t("Inactive")}</Badge>}
                                             </div>
                                             <p className="text-xs text-text-muted mt-0.5">{member.email}</p>

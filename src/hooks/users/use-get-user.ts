@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import { usersConstants } from "@/constants";
@@ -9,7 +9,7 @@ import { usersService } from "@/services";
 export const useGetUser = () => {
     const [isLoading, setIsLoading] = useState(false);
 
-    const getHandler = async (id: string): Promise<UserInterface | null> => {
+    const getHandler = useCallback(async (id: string): Promise<UserInterface | null> => {
         if (!navigator.onLine) throw new Error(usersConstants.errors.genericError);
         setIsLoading(true);
         try {
@@ -21,9 +21,9 @@ export const useGetUser = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
-    const getAllHandler = async (filters?: UsersListFiltersInterface): Promise<UserInterface[] | null> => {
+    const getAllHandler = useCallback(async (filters?: UsersListFiltersInterface): Promise<UserInterface[] | null> => {
         if (!navigator.onLine) throw new Error(usersConstants.errors.genericError);
         setIsLoading(true);
         try {
@@ -35,7 +35,7 @@ export const useGetUser = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     return { getHandler, getAllHandler, isLoading };
 };

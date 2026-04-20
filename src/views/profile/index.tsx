@@ -74,8 +74,8 @@ export const ProfileView = () => {
                             </button>
                         </div>
                     )}
-                    <p className="text-sm text-primary font-medium mt-1">{roleLabels[user.role] ?? user.role}</p>
-                    <Badge variant="default" className="mt-2">{user.team} {t("Team")}</Badge>
+                    <p className="text-sm text-primary font-medium mt-1">{user.role_label ?? roleLabels[user.role_tier] ?? user.role_tier}</p>
+                    <Badge variant="default" className="mt-2">{typeof user.team === "object" ? user.team.name : user.team} {t("Team")}</Badge>
 
                     <div className="w-full mt-6 space-y-3">
                         <div className="flex items-center gap-3 text-sm text-text-secondary">
@@ -84,15 +84,15 @@ export const ProfileView = () => {
                         </div>
                         <div className="flex items-center gap-3 text-sm text-text-secondary">
                             <Briefcase className="h-4 w-4 text-text-muted" />
-                            <span>{roleLabels[user.role] ?? user.role}</span>
+                            <span>{user.role_label ?? roleLabels[user.role_tier] ?? user.role_tier}</span>
                         </div>
                         <div className="flex items-center gap-3 text-sm text-text-secondary">
                             <Users className="h-4 w-4 text-text-muted" />
-                            <span>{user.team} {t("Team")}</span>
+                            <span>{typeof user.team === "object" ? user.team.name : user.team} {t("Team")}</span>
                         </div>
                         <div className="flex items-center gap-3 text-sm text-text-secondary">
                             <Shield className="h-4 w-4 text-text-muted" />
-                            <span>{user.status === "inactive" ? t("Inactive") : t("Active Member")}</span>
+                            <span>{user.account_status === "inactive" ? t("Inactive") : t("Active Member")}</span>
                         </div>
                     </div>
                 </CardContent>

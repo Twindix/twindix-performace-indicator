@@ -64,9 +64,9 @@ export const UserDetailView = () => {
                         <div className="flex-1">
                             <h2 className="text-xl font-semibold text-text-dark">{user.full_name}</h2>
                             <div className="flex items-center gap-2 flex-wrap mt-2">
-                                <Badge variant="outline" className="gap-1"><Shield className="h-3 w-3" />{ROLE_LABELS[user.role] ?? user.role}</Badge>
-                                <Badge variant="secondary" className="gap-1"><Users className="h-3 w-3" />{user.team}</Badge>
-                                {user.status === "inactive" && <Badge variant="error">{t("Inactive")}</Badge>}
+                                <Badge variant="outline" className="gap-1"><Shield className="h-3 w-3" />{user.role_label ?? ROLE_LABELS[user.role_tier] ?? user.role_tier}</Badge>
+                                <Badge variant="secondary" className="gap-1"><Users className="h-3 w-3" />{typeof user.team === "object" ? user.team.name : user.team}</Badge>
+                                {user.account_status === "inactive" && <Badge variant="error">{t("Inactive")}</Badge>}
                             </div>
                             <div className="flex items-center gap-2 mt-3 text-sm text-text-muted">
                                 <Mail className="h-4 w-4" />

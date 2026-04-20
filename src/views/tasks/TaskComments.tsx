@@ -178,7 +178,7 @@ export const TaskComments = ({ task, currentUserId, members, onUpdateComments }:
                                 <Avatar className="h-6 w-6 shrink-0"><AvatarFallback className="text-[9px]">{m.avatar_initials}</AvatarFallback></Avatar>
                                 <div>
                                     <p className="text-xs font-medium text-text-dark">{m.full_name}</p>
-                                    <p className="text-[10px] text-text-muted flex items-center gap-1"><AtSign className="h-2.5 w-2.5" />{m.team}</p>
+                                    <p className="text-[10px] text-text-muted flex items-center gap-1"><AtSign className="h-2.5 w-2.5" />{typeof m.team === "object" ? m.team.name : (m.team ?? "")}</p>
                                 </div>
                             </button>
                         ))}

@@ -117,7 +117,7 @@ export const WorkloadView = () => {
                                         </Avatar>
                                         <div className="min-w-0 flex-1">
                                             <p className="text-sm font-semibold text-text-dark truncate">{member?.full_name ?? "Unknown"}</p>
-                                            <p className="text-xs text-text-muted truncate">{member?.role?.replace(/_/g, " ")}</p>
+                                            <p className="text-xs text-text-muted truncate">{member?.role_tier?.replace(/_/g, " ")}</p>
                                         </div>
                                         {isOverloaded && (
                                             <Badge variant="error" className="shrink-0 md:hidden">

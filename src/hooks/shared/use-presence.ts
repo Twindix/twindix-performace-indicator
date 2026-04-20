@@ -13,7 +13,7 @@ export const usePresence = (userId: string | undefined) => {
     const updateStatus = (next: PresenceStatus) => {
         if (!userId || stoppedRef.current) return;
         setStatus(next);
-        authService.updateMeHandler({ status: next }).catch(() => null);
+        authService.updateMeHandler({ account_status: next }).catch(() => null);
     };
 
     useEffect(() => {
