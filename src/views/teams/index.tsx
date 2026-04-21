@@ -3,13 +3,13 @@ import { Plus, Users } from "lucide-react";
 
 import { Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
-import { t, useCreateTeam, useTeamsList } from "@/hooks";
+import { t, useCreateTeam, useGetTeams } from "@/hooks";
 import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
 } from "@/ui";
 
 export const TeamsView = () => {
-    const { teams, isLoading, patchTeamLocal } = useTeamsList();
+    const { teams, isLoading, patchTeamLocal } = useGetTeams();
     const { createHandler, isLoading: isSubmitting } = useCreateTeam();
     const [addOpen, setAddOpen] = useState(false);
     const [name, setName] = useState("");

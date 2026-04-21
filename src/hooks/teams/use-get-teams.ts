@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { teamsConstants } from "@/constants";
@@ -7,21 +7,33 @@ import { getErrorMessage } from "@/lib/error";
 import { teamsService } from "@/services";
 
 export const useGetTeams = () => {
-    const [isLoading, setIsLoading] = useState(false);
+    const [teams, setTeams] = useState<TeamInterface[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const getAllHandler = async (): Promise<TeamInterface[] | null> => {
-        if (!navigator.onLine) throw new Error(teamsConstants.errors.genericError);
+    const fetch = useCallback(async () => {
+        if (!navigator.onLine) {
+            toast.error(teamsConstants.errors.genericError);
+            return;
+        }
         setIsLoading(true);
         try {
             const res = await teamsService.listHandler();
-            return res.data;
+            setTeams(res.data);
         } catch (err) {
             toast.error(getErrorMessage(err, teamsConstants.errors.fetchFailed));
-            return null;
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
-    return { getAllHandler, isLoading };
+    useEffect(() => { fetch(); }, [fetch]);
+
+    const patchTeamLocal = useCallback((team: TeamInterface) => {
+        setTeams((prev) => {
+            const exists = prev.some((t) => t.id === team.id);
+            return exists ? prev.map((t) => t.id === team.id ? team : t) : [...prev, team];
+        });
+    }, []);
+
+    return { teams, isLoading, refetch: fetch, patchTeamLocal };
 };
