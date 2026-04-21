@@ -89,7 +89,7 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
                                             </button>
                                         )}
                                     </div>
-                                    <p className="text-sm text-text-secondary bg-muted rounded-lg px-3 py-2">{c.content}</p>
+                                    <p className="text-sm text-text-secondary bg-muted rounded-lg px-3 py-2">{c.body}</p>
                                 </div>
                             </div>
                         );

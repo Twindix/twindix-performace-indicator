@@ -5,7 +5,22 @@ import { TaskPriority } from "@/enums";
 import type { PipelineBoardInterface, TaskInterface, UserInterface } from "@/interfaces";
 import { t } from "@/hooks";
 import { cn } from "@/utils";
-import { PHASE_INDEX, PRIORITY_VARIANT } from "./constants";
+
+const PRIORITY_VARIANT: Record<string, "error" | "warning" | "default" | "secondary"> = {
+    critical: "error",
+    high: "warning",
+    medium: "default",
+    low: "secondary",
+};
+
+const COLUMN_COLOR_CLASS: Record<string, string> = {
+    backlog: "text-slate-400",
+    ready: "text-primary",
+    in_progress: "text-warning",
+    review: "text-purple-500",
+    qa: "text-pink-500",
+    done: "text-success",
+};
 
 export interface PipelineViewProps {
     pipeline: PipelineBoardInterface;
@@ -95,26 +110,6 @@ export const PipelineView = ({
                                 </div>
                             </div>
                         ))}
-                                        <div className="flex items-center justify-between mt-auto">
-                                            {assignee ? (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-6 h-6 rounded-full bg-primary-lighter text-primary text-[10px] flex items-center justify-center font-bold">
-                                                        {(assignee.full_name ?? assignee.name ?? "").split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()}
-                                                    </span>
-                                                    <span className="text-[10px] text-text-secondary font-medium">
-                                                        {progressIndex}/{maxStages} stages
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                <span className="text-[10px] text-text-secondary font-medium">
-                                                    {progressIndex}/{maxStages} stages
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
                     </div>
                 </div>
             ))}

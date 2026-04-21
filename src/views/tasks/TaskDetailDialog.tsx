@@ -6,14 +6,38 @@ import { BlockerStatus, TaskPriority, TaskPhase } from "@/enums";
 import { t, useCreateRequirement, useDeleteRequirement, useDeleteTask, useGetRequirement, useTaskTags, useToggleRequirement, useUpdateRequirement } from "@/hooks";
 import type { TaskInterface, UserInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
 import { Avatar, AvatarFallback, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
-import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
-import { TaskStatus } from "@/enums";
-import type { TaskAttachmentInterface, TaskCommentInterface, TaskTimeLogInterface } from "@/interfaces";
-import { PHASE_INDEX, COLUMNS, COLUMN_COLORS, PRIORITY_VARIANT, capitalize, phaseLabel } from "./constants";
+import { cn, formatDate } from "@/utils";
+import { useAuthStore } from "@/store";
 import { TaskAttachments } from "./TaskAttachments";
 import { TaskTimeLogs } from "./TaskTimeLogs";
 import { TaskComments } from "./TaskComments";
 
+const COLUMNS = [
+    { status: "backlog", label: "Backlog" },
+    { status: "ready", label: "Ready" },
+    { status: "in_progress", label: "In Progress" },
+    { status: "review", label: "Review" },
+    { status: "qa", label: "QA" },
+    { status: "done", label: "Done" },
+] as const;
+
+const COLUMN_COLORS: Record<string, string> = {
+    backlog: "bg-text-muted",
+    ready: "bg-primary",
+    in_progress: "bg-warning",
+    review: "bg-[#8b5cf6]",
+    qa: "bg-[#ec4899]",
+    done: "bg-success",
+};
+
+const PRIORITY_VARIANT: Record<string, "error" | "warning" | "default" | "secondary"> = {
+    critical: "error",
+    high: "warning",
+    medium: "default",
+    low: "secondary",
+};
+
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const statusLabel = (status: string) => status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 export interface TaskDetailDialogProps {
