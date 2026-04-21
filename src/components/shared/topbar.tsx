@@ -1,6 +1,5 @@
-import { Bell, LogOut, Moon, Settings, Sun, User } from "lucide-react";
-import { useEffect } from "react";
-import { Bell, Flag, LogOut, Moon, Settings, Sun, User } from "lucide-react";
+import { LogOut, Moon, Pencil, Settings, Sun, User } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button, Input, Label } from "@/atoms";
@@ -84,24 +83,6 @@ export const Topbar = () => {
             setEditOpen(false);
         }
     };
-    const { count: redFlagCount } = { count: 0 }; // Placeholder for useRedFlags();
-    const { count: pendingAlertCount } = { count: 0 }; // Placeholder for useAlerts();
-    const { sprints, isLoading: isLoadingSprints } = useSprintsList();
-    const navigate = useNavigate();
-    const { status, updateStatus } = usePresence(user?.id);
-
-    // Auto-select active sprint on load if currently empty or missing
-    useEffect(() => {
-        if (isLoadingSprints || sprints.length === 0) return;
-
-        const currentExists = sprints.some(s => s.id === activeSprintId);
-        if (!activeSprintId || !currentExists) {
-            const activeSprint = sprints.find(s => s.status === 'active') || sprints[0];
-            if (activeSprint) onSetActiveSprint(activeSprint.id);
-        }
-    }, [sprints, isLoadingSprints, activeSprintId, onSetActiveSprint]);
-
-    const isArabic = settings.language === "ar";
 
     return (
         <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between border-b border-border bg-surface/80 backdrop-blur-sm px-3 sm:px-6">
@@ -147,7 +128,6 @@ export const Topbar = () => {
 
             <div className="flex items-center gap-2">
                 <TooltipProvider delayDuration={300}>
-                    {/* Theme toggle */}
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" onClick={onToggleTheme} className="h-9 w-9">

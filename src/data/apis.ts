@@ -18,6 +18,11 @@ export const apisData = {
         activate: (id: string) => `/sprints/${id}/activate`,
         summary: (id: string) => `/sprints/${id}/summary`,
     },
+    dashboard: {
+        full: (sprintId: string) => `/sprints/${sprintId}/dashboard`,
+        healthScore: (sprintId: string) => `/sprints/${sprintId}/dashboard/health-score`,
+        metrics: (sprintId: string) => `/sprints/${sprintId}/dashboard/metrics`,
+    },
     alerts: {
         list: (sprintId: string) => `/sprints/${sprintId}/alerts`,
         count: (sprintId: string) => `/sprints/${sprintId}/alerts/count`,
@@ -27,6 +32,7 @@ export const apisData = {
         delete: (id: string) => `/alerts/${id}`,
         acknowledge: (id: string) => `/alerts/${id}/acknowledge`,
         done: (id: string) => `/alerts/${id}/done`,
+    },
     blockers: {
         list: (sprintId: string) => `/sprints/${sprintId}/blockers`,
         analytics: (sprintId: string) => `/sprints/${sprintId}/blockers/analytics`,
@@ -37,6 +43,7 @@ export const apisData = {
         escalate: (id: string) => `/blockers/${id}/escalate`,
         linkTasks: (id: string) => `/blockers/${id}/tasks`,
         unlinkTask: (id: string, taskId: string) => `/blockers/${id}/tasks/${taskId}`,
+    },
     decisions: {
         list: (sprintId: string) => `/sprints/${sprintId}/decisions`,
         analytics: (sprintId: string) => `/sprints/${sprintId}/decisions/analytics`,
@@ -44,6 +51,7 @@ export const apisData = {
         detail: (id: string) => `/decisions/${id}`,
         update: (id: string) => `/decisions/${id}`,
         delete: (id: string) => `/decisions/${id}`,
+    },
     comments: {
         list: (sprintId: string) => `/sprints/${sprintId}/comments`,
         analytics: (sprintId: string) => `/sprints/${sprintId}/comments/analytics`,
@@ -52,6 +60,9 @@ export const apisData = {
         update: (id: string) => `/comments/${id}`,
         delete: (id: string) => `/comments/${id}`,
         respond: (id: string) => `/comments/${id}/respond`,
+        taskList: (taskId: string) => `/tasks/${taskId}/comments`,
+        taskCreate: (taskId: string) => `/tasks/${taskId}/comments`,
+    },
     tasks: {
         kanban: (sprintId: string) => `/sprints/${sprintId}/tasks/kanban`,
         pipeline: (sprintId: string) => `/sprints/${sprintId}/tasks/pipeline`,
@@ -82,15 +93,6 @@ export const apisData = {
         create: (taskId: string) => `/tasks/${taskId}/time-logs`,
         update: (id: string) => `/time-logs/${id}`,
         delete: (id: string) => `/time-logs/${id}`,
-    },
-    users: {
-        list: "/users",
-    },
-    comments: {
-        taskList: (taskId: string) => `/tasks/${taskId}/comments`,
-        create: (taskId: string) => `/tasks/${taskId}/comments`,
-        update: (id: string) => `/comments/${id}`,
-        delete: (id: string) => `/comments/${id}`,
     },
     baseUrl: import.meta.env.VITE_API_URL as string,
 };
