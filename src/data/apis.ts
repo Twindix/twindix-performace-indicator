@@ -14,5 +14,8 @@ export const apisData = {
         delete: (id: string) => `/users/${id}`,
         analytics: (id: string) => `/users/${id}/analytics`,
     },
+    teams: {
+        list: "/teams",
+    },
     baseUrl: import.meta.env.VITE_API_URL as string,
 };

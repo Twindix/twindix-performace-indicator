@@ -23,8 +23,10 @@ export interface CreateUserPayloadInterface {
     full_name: string;
     email: string;
     password: string;
+    role_label: string;
     role_tier: string;
     team_id: string;
+    avatar_initials?: string;
 }
 
 export interface UpdateUserPayloadInterface {
