@@ -114,7 +114,7 @@ export const DecisionsView = () => {
         if (res) {
             patchDecisionLocal(res);
             refetchAnalytics();
-            if (viewTarget?.id === id) setViewTarget(res);
+            setViewTarget(null);
         }
     };
 
