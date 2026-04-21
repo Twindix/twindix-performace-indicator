@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { Plus, X, Clock, User, AlertCircle, FileText, ListChecks, Tag, Paperclip } from "lucide-react";
+import { Plus, X, Clock, User, AlertCircle, FileText, ListChecks, Tag, Paperclip, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button, Input, Label, Textarea } from "@/atoms";
@@ -46,6 +46,9 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
     const [formState, setFormState] = useState<AddTaskFormState>(INITIAL_FORM_STATE);
     const [requirementInput, setRequirementInput] = useState("");
     const [tagInput, setTagInput] = useState("");
+    const [deadline, setDeadline] = useState("");
+    const [taskType, setTaskType] = useState<"stand_alone" | "compound">("stand_alone");
+    const [compoundRule, setCompoundRule] = useState<"none" | "start_after_other" | "notify_on_done">("none");
     const requirementInputRef = useRef<HTMLInputElement>(null);
     const tagInputRef = useRef<HTMLInputElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -55,7 +58,14 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
         setFormState((prev) => ({ ...prev, [field]: value }));
 
     const handleOpenChange = useCallback((newOpen: boolean) => {
-        if (!newOpen) { setFormState(INITIAL_FORM_STATE); setRequirementInput(""); setTagInput(""); }
+        if (!newOpen) {
+            setFormState(INITIAL_FORM_STATE);
+            setRequirementInput("");
+            setTagInput("");
+            setDeadline("");
+            setTaskType("stand_alone");
+            setCompoundRule("none");
+        }
         onOpenChange(newOpen);
     }, [onOpenChange]);
 
@@ -326,6 +336,62 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                             />
                         </div>
                     </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="deadline" className="flex items-center gap-2">
+                                <CalendarClock className="h-4 w-4 text-text-muted" />
+                                {t("Dead Time")}
+                            </Label>
+                            <Input
+                                id="deadline"
+                                type="datetime-local"
+                                value={deadline}
+                                onChange={(e) => setDeadline(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="taskType" className="flex items-center gap-2">
+                                <ListChecks className="h-4 w-4 text-text-muted" />
+                                {t("Task Type")}
+                            </Label>
+                            <Select value={taskType} onValueChange={(v) => setTaskType(v as "stand_alone" | "compound")}>
+                                <SelectTrigger id="taskType" className="w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="stand_alone">{t("Stand-alone")}</SelectItem>
+                                    <SelectItem value="compound">{t("Compound")}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    {taskType === "compound" && (
+                        <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted/50 p-3">
+                            <label className="flex items-center gap-2 text-sm text-text-dark cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="compoundRule"
+                                    className="h-4 w-4 accent-primary cursor-pointer"
+                                    checked={compoundRule === "start_after_other"}
+                                    onChange={() => setCompoundRule("start_after_other")}
+                                />
+                                {t("Start only if other task done")}
+                            </label>
+                            <label className="flex items-center gap-2 text-sm text-text-dark cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="compoundRule"
+                                    className="h-4 w-4 accent-primary cursor-pointer"
+                                    checked={compoundRule === "notify_on_done"}
+                                    onChange={() => setCompoundRule("notify_on_done")}
+                                />
+                                {t("Notify others when done")}
+                            </label>
+                        </div>
+                    )}
 
                     <div className="flex justify-end gap-3 pt-4 border-t border-border">
                         <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting}>

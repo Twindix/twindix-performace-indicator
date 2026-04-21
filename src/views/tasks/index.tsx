@@ -284,11 +284,19 @@ const TasksViewInner = () => {
                 blocker={undefined}
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
-                onMoveRequest={() => {}}
+                onMoveRequest={async (task, targetPhase) => {
+                    const updated = await updateStatusHandler(task.id, targetPhase);
+                    if (updated && typeof updated === "object") {
+                        patchTaskLocal(updated as TaskInterface);
+                        setSelectedTask(updated as TaskInterface);
+                        toast.success(`${t("Task moved to")} ${targetPhase.replace(/_/g, " ")}`);
+                    }
+                }}
                 onUpdateRequirements={() => {}}
                 patchTaskLocal={(id, updates) => {
                     const existing = tasks.find((t) => t.id === id);
                     if (existing) patchTaskLocal({ ...existing, ...updates });
+                    setSelectedTask((prev) => (prev && prev.id === id ? { ...prev, ...updates } : prev));
                 }}
                 removeTaskLocal={removeTaskLocal}
             />
