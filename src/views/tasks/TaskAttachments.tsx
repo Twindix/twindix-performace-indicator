@@ -21,8 +21,8 @@ export const TaskAttachments = ({ task, patchTaskLocal }: Props) => {
         const files = Array.from(e.target.files ?? []);
         e.target.value = "";
         for (const file of files) {
-            const res = await uploadHandler(task.id, file);
-            if (res) patchTaskLocal(task.id, { attachments: [...(task.attachments ?? []), res] });
+            const attachments = await uploadHandler(task.id, file);
+            if (attachments) patchTaskLocal(task.id, { attachments });
         }
     };
 

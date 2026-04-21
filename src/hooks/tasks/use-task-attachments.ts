@@ -9,12 +9,14 @@ import { tasksService } from "@/services";
 export const useTaskAttachments = () => {
     const [isLoading, setIsLoading] = useState(false);
 
-    const uploadHandler = useCallback(async (taskId: string, file: File): Promise<TaskAttachmentInterface | null> => {
+    const uploadHandler = useCallback(async (taskId: string, file: File): Promise<TaskAttachmentInterface[] | null> => {
         setIsLoading(true);
         try {
             const res = await tasksService.addAttachmentHandler(taskId, file);
+            const task = (res as unknown as { data?: { attachments?: TaskAttachmentInterface[] } }).data
+                ?? (res as unknown as { attachments?: TaskAttachmentInterface[] });
             toast.success(tasksConstants.messages.attachmentUploadSuccess);
-            return res.data.attachments?.[0] || null; // Return the new attachment from the response
+            return task?.attachments ?? [];
         } catch (err) {
             toast.error(getErrorMessage(err, tasksConstants.errors.attachmentUploadFailed));
             return null;
