@@ -62,10 +62,19 @@ export const UsersView = () => {
         const newUser: UserInterface = {
             id: `usr-${Date.now()}`,
             name: form.name.trim(),
+            full_name: form.name.trim(),
             email: form.email.trim(),
             role: form.role,
-            team: form.team.trim(),
+            role_label: form.role,
+            role_tier: "standard",
+            team: { id: form.team.trim(), name: form.team.trim() },
             avatar: initials,
+            avatar_initials: initials,
+            account_status: "active",
+            presence_status: "online",
+            last_seen_at: new Date().toISOString(),
+            settings: { dark_mode: false, compact_view: false, language: "en", date_format: "DD/MM/YYYY" },
+            created_at: new Date().toISOString(),
         };
         save([...members, newUser]);
         setAddOpen(false);
@@ -80,8 +89,8 @@ export const UsersView = () => {
 
     const handleToggleActive = () => {
         if (!deactivateTarget) return;
-        const isActive = deactivateTarget.status !== "inactive";
-        save(members.map((m) => m.id === deactivateTarget.id ? { ...m, status: isActive ? "inactive" : "active" } : m));
+        const isActive = deactivateTarget.account_status !== "inactive";
+        save(members.map((m) => m.id === deactivateTarget.id ? { ...m, account_status: isActive ? "inactive" : "active" } : m));
         setDeactivateTarget(null);
     };
 
@@ -101,7 +110,7 @@ export const UsersView = () => {
             ) : (
                 <div className="flex flex-col gap-3">
                     {members.map((member) => {
-                        const isInactive = member.status === "inactive";
+                        const isInactive = member.account_status === "inactive";
                         return (
                             <Card key={member.id} className={`hover:shadow-md transition-shadow ${isInactive ? "opacity-60" : ""}`}>
                                 <CardContent className="p-4">
@@ -113,8 +122,8 @@ export const UsersView = () => {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <p className="text-sm font-semibold text-text-dark">{member.name}</p>
-                                                <Badge variant="outline" className="text-xs">{ROLE_LABELS[member.role] ?? member.role}</Badge>
-                                                <Badge variant="secondary" className="text-xs">{member.team}</Badge>
+                                                <Badge variant="outline" className="text-xs">{ROLE_LABELS[member.role as UserRole ?? member.role_label as UserRole] ?? member.role_label}</Badge>
+                                                <Badge variant="secondary" className="text-xs">{member.team?.name ?? "No Team"}</Badge>
                                                 {isInactive && <Badge variant="error" className="text-xs">{t("Inactive")}</Badge>}
                                             </div>
                                             <p className="text-xs text-text-muted mt-0.5">{member.email}</p>
@@ -226,12 +235,12 @@ export const UsersView = () => {
             <Dialog open={!!deactivateTarget} onOpenChange={(o) => !o && setDeactivateTarget(null)}>
                 <DialogContent className="max-w-sm">
                     <DialogHeader>
-                        <DialogTitle className={deactivateTarget?.status === "inactive" ? "text-success" : "text-warning"}>
-                            {deactivateTarget?.status === "inactive" ? t("Activate User") : t("Deactivate User")}
+                        <DialogTitle className={deactivateTarget?.account_status === "inactive" ? "text-success" : "text-warning"}>
+                            {deactivateTarget?.account_status === "inactive" ? t("Activate User") : t("Deactivate User")}
                         </DialogTitle>
                     </DialogHeader>
                     <p className="text-sm text-text-secondary py-2">
-                        {deactivateTarget?.status === "inactive"
+                        {deactivateTarget?.account_status === "inactive"
                             ? <>{t("Activate")} <span className="font-semibold text-text-dark">{deactivateTarget?.name}</span>? {t("They will regain access to the platform.")}</>
                             : <>{t("Deactivate")} <span className="font-semibold text-text-dark">{deactivateTarget?.name}</span>? {t("They will lose access until reactivated.")}</>
                         }
@@ -239,11 +248,11 @@ export const UsersView = () => {
                     <div className="flex justify-end gap-2">
                         <Button variant="outline" onClick={() => setDeactivateTarget(null)}>{t("Cancel")}</Button>
                         <Button
-                            variant={deactivateTarget?.status === "inactive" ? "default" : "outline"}
-                            className={deactivateTarget?.status !== "inactive" ? "border-warning text-warning hover:bg-warning-light" : ""}
+                            variant={deactivateTarget?.account_status === "inactive" ? "default" : "outline"}
+                            className={deactivateTarget?.account_status !== "inactive" ? "border-warning text-warning hover:bg-warning-light" : ""}
                             onClick={handleToggleActive}
                         >
-                            {deactivateTarget?.status === "inactive" ? t("Activate") : t("Deactivate")}
+                            {deactivateTarget?.account_status === "inactive" ? t("Activate") : t("Deactivate")}
                         </Button>
                     </div>
                 </DialogContent>

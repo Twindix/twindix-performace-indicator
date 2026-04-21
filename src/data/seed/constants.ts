@@ -82,8 +82,8 @@ type TransitionRule = (task: TaskInterface, blocker: BlockerInterface | undefine
 // One entry per valid forward transition — replaces the if/else chain in index.tsx
 const TRANSITION_RULES: Partial<Record<string, TransitionRule>> = {
     [`${TaskPhase.Backlog}->${TaskPhase.Ready}`]: (task) => {
-        const criteria = READINESS_LABELS.map(({ key, label }) => ({ label, met: task.readinessChecklist[key] }));
-        const ok = task.readinessScore >= READINESS_THRESHOLD;
+        const criteria = READINESS_LABELS.map(({ key, label }) => ({ label, met: task.readinessChecklist?.[key] ?? false }));
+        const ok = (task.readinessScore ?? 0) >= READINESS_THRESHOLD;
         criteria.push({ label: `Readiness score ≥ ${READINESS_THRESHOLD}% (currently ${task.readinessScore}%)`, met: ok });
         return {
             allowed: ok,
@@ -149,7 +149,7 @@ const TRANSITION_RULES: Partial<Record<string, TransitionRule>> = {
 };
 
 export const checkTransition = (task: TaskInterface, toPhase: TaskPhase, blockers: BlockerInterface[]): TransitionResult => {
-    const fromIndex = PHASE_INDEX[task.phase];
+    const fromIndex = PHASE_INDEX[task.phase as TaskPhase ?? TaskPhase.Backlog];
     const toIndex = PHASE_INDEX[toPhase];
 
     if (toIndex < fromIndex)

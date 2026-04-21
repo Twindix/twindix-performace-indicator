@@ -25,14 +25,37 @@ export interface TaskAttachmentInterface {
     uploadedAt: string;
 }
 
+export interface TaskCommentAuthorInterface {
+    id: string;
+    full_name: string;
+    avatar_initials: string;
+}
+
 export interface TaskCommentInterface {
     id: string;
-    authorId: string;
-    content: string;
-    mentionedId?: string;
-    createdAt: string;
-    updatedAt?: string;
-    reactions?: Record<string, string[]>; // emoji -> userIds[]
+    body: string;
+    author: TaskCommentAuthorInterface;
+    mentioned_users: { id: string; full_name: string }[];
+    response_status: string;
+    responded_by: TaskCommentAuthorInterface | null;
+    responded_at: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CommentListResponseInterface {
+    data: TaskCommentInterface[];
+    count: number;
+}
+
+export interface CreateCommentPayloadInterface {
+    body: string;
+    mentioned_user_ids?: string[];
+}
+
+export interface UpdateCommentPayloadInterface {
+    body: string;
+    mentioned_user_ids?: string[];
 }
 
 export interface TaskTimeLogInterface {
