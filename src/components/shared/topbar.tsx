@@ -3,14 +3,20 @@ import { useEffect } from "react";
 import { Bell, Flag, LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import { Button } from "@/atoms";
+import { Button, Input, Label } from "@/atoms";
 import { routesData } from "@/data";
-import { useAuth, useSprintsList, useTheme, t, useSettings, usePresence, type PresenceStatus } from "@/hooks";
+import { useAuth, useSprintsList, useTheme, t, useSettings, usePresence, useUpdateSprint, type PresenceStatus } from "@/hooks";
+import type { SprintInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { MobileNav } from "./mobile-nav";
 import {
     Avatar,
     AvatarFallback,
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -38,9 +44,13 @@ export const Topbar = () => {
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings] = useSettings();
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
-    const { sprints } = useSprintsList();
+    const { sprints, refetch: refetchSprints } = useSprintsList();
+    const { updateHandler: updateSprintHandler, isLoading: isSaving } = useUpdateSprint();
     const navigate = useNavigate();
     const { status, updateStatus } = usePresence(user?.id);
+
+    const [editOpen, setEditOpen] = useState(false);
+    const [form, setForm] = useState({ name: "", start_date: "", end_date: "" });
 
     useEffect(() => {
         if (sprints.length === 0) return;
@@ -49,6 +59,31 @@ export const Topbar = () => {
         if (active) onSetActiveSprint(active.id);
     }, [sprints, activeSprintId, onSetActiveSprint]);
 
+    const isArabic = settings.language === "ar";
+    const activeSprint: SprintInterface | undefined = sprints.find((s) => s.id === activeSprintId);
+
+    const openEdit = () => {
+        if (!activeSprint) return;
+        setForm({
+            name: activeSprint.name,
+            start_date: activeSprint.start_date,
+            end_date: activeSprint.end_date,
+        });
+        setEditOpen(true);
+    };
+
+    const handleSave = async () => {
+        if (!activeSprint || !form.name.trim()) return;
+        const res = await updateSprintHandler(activeSprint.id, {
+            name: form.name.trim(),
+            start_date: form.start_date,
+            end_date: form.end_date,
+        });
+        if (res) {
+            await refetchSprints();
+            setEditOpen(false);
+        }
+    };
     const { count: redFlagCount } = { count: 0 }; // Placeholder for useRedFlags();
     const { count: pendingAlertCount } = { count: 0 }; // Placeholder for useAlerts();
     const { sprints, isLoading: isLoadingSprints } = useSprintsList();
@@ -72,23 +107,42 @@ export const Topbar = () => {
         <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between border-b border-border bg-surface/80 backdrop-blur-sm px-3 sm:px-6">
             <div className="flex items-center gap-2 sm:gap-4">
                 <MobileNav />
-                <Select value={activeSprintId} onValueChange={onSetActiveSprint} disabled={isLoadingSprints}>
-                    <SelectTrigger className="w-[140px] sm:w-[180px] h-9 text-xs sm:text-sm">
-                        <SelectValue placeholder={isLoadingSprints ? t("Loading...") : t("Select Sprint")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {sprints.map((s) => (
-                            <SelectItem key={s.id} value={s.id}>
-                                <span className="flex items-center gap-1.5">
-                                    {s.status === "active" && (
-                                        <span className="h-2 w-2 rounded-full bg-success shrink-0" />
-                                    )}
-                                    {s.name}
-                                </span>
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                <div className="flex items-center gap-1.5">
+                    <Select value={activeSprintId} onValueChange={onSetActiveSprint}>
+                        <SelectTrigger className="w-[140px] sm:w-[200px] h-9 text-xs sm:text-sm">
+                            <SelectValue placeholder={t("Select Sprint")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {sprints.map((s) => (
+                                <SelectItem key={s.id} value={s.id}>
+                                    <span className="flex items-center gap-1.5">
+                                        {s.status === "active" && (
+                                            <span className="h-2 w-2 rounded-full bg-success shrink-0" />
+                                        )}
+                                        {s.name}
+                                    </span>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <TooltipProvider delayDuration={300}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={openEdit}
+                                    disabled={!activeSprint}
+                                    className="h-9 w-9"
+                                    aria-label={t("Edit sprint")}
+                                >
+                                    <Pencil className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t("Edit sprint")}</TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
             </div>
 
             <div className="flex items-center gap-2">
@@ -104,7 +158,6 @@ export const Topbar = () => {
                     </Tooltip>
                 </TooltipProvider>
 
-                {/* Avatar dropdown */}
                 <DropdownMenu dir={isArabic ? "rtl" : "ltr"}>
                     <DropdownMenuTrigger asChild>
                         <button className="flex items-center gap-2 rounded-full p-1 pe-3 hover:bg-accent transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -157,6 +210,54 @@ export const Topbar = () => {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
+
+            {/* Edit Sprint Dialog */}
+            <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>{t("Edit Sprint")}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-3">
+                        <div className="space-y-2">
+                            <Label htmlFor="sp-name">{t("Name")} <span className="text-error">*</span></Label>
+                            <Input
+                                id="sp-name"
+                                value={form.name}
+                                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                                placeholder={t("Sprint name")}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <Label htmlFor="sp-start">{t("Start Date")}</Label>
+                                <Input
+                                    id="sp-start"
+                                    type="date"
+                                    value={form.start_date}
+                                    onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="sp-end">{t("End Date")}</Label>
+                                <Input
+                                    id="sp-end"
+                                    type="date"
+                                    value={form.end_date}
+                                    onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-2 mt-4">
+                        <DialogClose asChild>
+                            <Button variant="outline" disabled={isSaving}>{t("Cancel")}</Button>
+                        </DialogClose>
+                        <Button onClick={handleSave} disabled={isSaving || !form.name.trim()}>
+                            {isSaving ? t("Saving...") : t("Save Changes")}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </header>
     );
 };

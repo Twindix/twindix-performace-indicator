@@ -12,6 +12,13 @@ export const useUsersList = () => {
     const [users, setUsers] = useState<UserInterface[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    const fetch = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const { data } = await apiClient.get<{ data: UserInterface[] }>(apisData.users.list);
+            setUsers(data.data);
+        } catch {
+            // silent — users list is a UI helper
     const refetch = useCallback(async () => {
         setIsLoading(true);
         try {
@@ -24,6 +31,9 @@ export const useUsersList = () => {
         }
     }, []);
 
+    useEffect(() => { fetch(); }, [fetch]);
+
+    return { users, isLoading };
     useEffect(() => { refetch(); }, [refetch]);
 
     return { users, isLoading, refetch };
