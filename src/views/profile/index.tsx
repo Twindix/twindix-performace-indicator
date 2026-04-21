@@ -53,24 +53,24 @@ export const ProfileView = () => {
                                     onChange={(e) => setEditedName(e.target.value)}
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter") handleSaveName();
-                                        if (e.key === "Escape") { setEditedName(user.full_name); setIsEditingName(false); }
+                                        if (e.key === "Escape") { setEditedName(user.full_name ?? ""); setIsEditingName(false); }
                                     }}
                                     className="text-xl font-bold text-center h-9"
                                 />
                                 <Button size="sm" onClick={handleSaveName} disabled={!editedName.trim() || isSaving}>{t("Save")}</Button>
-                                <Button size="sm" variant="outline" onClick={() => { setEditedName(user.full_name); setIsEditingName(false); }}>{t("Cancel")}</Button>
+                                <Button size="sm" variant="outline" onClick={() => { setEditedName(user.full_name ?? ""); setIsEditingName(false); }}>{t("Cancel")}</Button>
                             </div>
                         ) : (
                             <div className="flex items-center gap-2">
                                 <h2 className="text-xl font-bold text-text-dark">{user.full_name}</h2>
-                                <button onClick={() => { setEditedName(user.full_name); setIsEditingName(true); }} className="text-text-muted hover:text-text-dark transition-colors cursor-pointer" aria-label="Edit name">
+                                <button onClick={() => { setEditedName(user.full_name ?? ""); setIsEditingName(true); }} className="text-text-muted hover:text-text-dark transition-colors cursor-pointer" aria-label="Edit name">
                                     <Pencil className="h-4 w-4" />
                                 </button>
                             </div>
                         )}
 
                         <p className="text-sm text-primary font-medium mt-1">{user.role_label}</p>
-                        <Badge variant="default" className="mt-2">{user.team.name} {t("Team")}</Badge>
+                        <Badge variant="default" className="mt-2">{((user.team as any)?.name ?? "")} {t("Team")}</Badge>
 
                         <div className="w-full mt-6 space-y-3">
                             <div className="flex items-center gap-3 text-sm text-text-secondary">
@@ -83,11 +83,11 @@ export const ProfileView = () => {
                             </div>
                             <div className="flex items-center gap-3 text-sm text-text-secondary">
                                 <Users className="h-4 w-4 text-text-muted" />
-                                <span>{user.team.name} {t("Team")}</span>
+                                <span>{((user.team as any)?.name ?? "")} {t("Team")}</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm text-text-secondary">
                                 <Calendar className="h-4 w-4 text-text-muted" />
-                                <span>{t("Joined")} {new Date(user.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>
+                                <span>{t("Joined")} {user.created_at ? new Date(user.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : ""}</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm text-text-secondary">
                                 <Shield className="h-4 w-4 text-text-muted" />

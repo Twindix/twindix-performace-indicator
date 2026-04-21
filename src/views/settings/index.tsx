@@ -2,6 +2,7 @@ import { Calendar, Globe, Info, Minimize2, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
 
 import { Card, CardContent } from "@/atoms";
+import type { UserSettingsInterface } from "@/interfaces";
 import { Header } from "@/components/shared";
 import { SettingsSkeleton } from "@/components/skeletons";
 import { useAuth, useTheme, t, usePageLoader, type AppSettings } from "@/hooks";
@@ -16,7 +17,7 @@ export const SettingsView = () => {
 
     const updateSetting = async (patch: Partial<NonNullable<typeof user>["settings"]>) => {
         if (!user) return;
-        const updated = { ...user!.settings, ...patch };
+        const updated = { ...(user!.settings ?? {}), ...patch } as UserSettingsInterface;
         try {
             const result = await authService.updateMeHandler({ settings: updated });
             onUpdateUser(result);
@@ -28,7 +29,7 @@ export const SettingsView = () => {
     if (!user) return null;
     if (isLoading) return <SettingsSkeleton />;
 
-    const { compact_view, language, date_format } = user.settings;
+    const { compact_view, language, date_format } = user.settings ?? {};
 
     return (
         <div>

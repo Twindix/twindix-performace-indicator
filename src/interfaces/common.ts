@@ -18,22 +18,32 @@ export interface UserTeamInterface {
 
 export interface UserInterface {
     id: string;
-    full_name: string;
-    email: string;
-    role_label: string;
-    role_tier: string;
-    team: UserTeamInterface;
-    avatar_initials: string;
-    account_status: string;
-    presence_status: string;
-    last_seen_at: string;
-    settings: UserSettingsInterface;
-    created_at: string;
-    // Additional properties expected by the code
-    name?: string; // Alias for full_name
-    avatar?: string; // Alias for avatar_initials
-    role?: string; // Alias for role_label
-    status?: string; // Alias for account_status
+    full_name?: string;
+    email?: string;
+    role_label?: string;
+    role_tier?: string;
+    team?: UserTeamInterface | string;
+    avatar_initials?: string;
+    account_status?: string;
+    presence_status?: string;
+    last_seen_at?: string;
+    settings?: UserSettingsInterface;
+    created_at?: string;
+    name?: string;
+    avatar?: string;
+    role?: string;
+    status?: string;
+}
+
+export interface SprintInterface {
+    id: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+    status: string;
+    healthScore?: number;
+    goals?: string[];
+    [key: string]: unknown;
 }
 
 export interface ThemeContextInterface {

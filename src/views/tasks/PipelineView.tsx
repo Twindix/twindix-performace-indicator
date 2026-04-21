@@ -110,6 +110,26 @@ export const PipelineView = ({
                                 </div>
                             </div>
                         ))}
+                                        <div className="flex items-center justify-between mt-auto">
+                                            {assignee ? (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-6 h-6 rounded-full bg-primary-lighter text-primary text-[10px] flex items-center justify-center font-bold">
+                                                        {(assignee.full_name ?? assignee.name ?? "").split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()}
+                                                    </span>
+                                                    <span className="text-[10px] text-text-secondary font-medium">
+                                                        {progressIndex}/{maxStages} stages
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-[10px] text-text-secondary font-medium">
+                                                    {progressIndex}/{maxStages} stages
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
             ))}
