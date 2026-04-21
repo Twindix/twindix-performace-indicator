@@ -18,6 +18,15 @@ export const apisData = {
         activate: (id: string) => `/sprints/${id}/activate`,
         summary: (id: string) => `/sprints/${id}/summary`,
     },
+    alerts: {
+        list: (sprintId: string) => `/sprints/${sprintId}/alerts`,
+        count: (sprintId: string) => `/sprints/${sprintId}/alerts/count`,
+        create: (sprintId: string) => `/sprints/${sprintId}/alerts`,
+        detail: (id: string) => `/alerts/${id}`,
+        update: (id: string) => `/alerts/${id}`,
+        delete: (id: string) => `/alerts/${id}`,
+        acknowledge: (id: string) => `/alerts/${id}/acknowledge`,
+        done: (id: string) => `/alerts/${id}/done`,
     blockers: {
         list: (sprintId: string) => `/sprints/${sprintId}/blockers`,
         analytics: (sprintId: string) => `/sprints/${sprintId}/blockers/analytics`,

@@ -1,5 +1,6 @@
 export { authService } from "./auth";
 export { sprintsService } from "./sprints";
+export { alertsService } from "./alerts";
 export { redFlagsService } from "./red-flags";
 export { blockersService } from "./blockers";
 export { decisionsService } from "./decisions";

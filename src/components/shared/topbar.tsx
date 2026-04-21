@@ -1,4 +1,4 @@
-import { LogOut, Moon, Settings, Sun, User } from "lucide-react";
+import { Bell, LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { useEffect } from "react";
 import { Bell, Flag, LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";

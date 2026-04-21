@@ -133,6 +133,7 @@ export const SprintsView = () => {
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
+
                                 <div className="flex items-center gap-2 text-xs text-text-muted">
                                     <Calendar className="h-3.5 w-3.5" />
                                     <span>{s.start_date} → {s.end_date}</span>
@@ -196,7 +197,10 @@ export const SprintsView = () => {
                         <DialogClose asChild>
                             <Button variant="outline" disabled={isSubmitting}>{t("Cancel")}</Button>
                         </DialogClose>
-                        <Button onClick={editTarget ? handleSubmitEdit : handleSubmitAdd} disabled={isSubmitting || !form.name.trim() || !form.start_date || !form.end_date}>
+                        <Button
+                            onClick={editTarget ? handleSubmitEdit : handleSubmitAdd}
+                            disabled={isSubmitting || !form.name.trim() || !form.start_date || !form.end_date}
+                        >
                             {isSubmitting ? t("Saving...") : editTarget ? t("Save Changes") : t("Create Sprint")}
                         </Button>
                     </div>
