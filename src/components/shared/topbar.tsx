@@ -1,4 +1,4 @@
-import { LogOut, Moon, Pencil, Settings, Sun, User } from "lucide-react";
+import { FolderKanban, LogOut, Moon, Pencil, Settings, Sun, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -6,7 +6,7 @@ import { Button, Input, Label } from "@/atoms";
 import { routesData } from "@/data";
 import { useAuth, useSprintsList, useTheme, t, useSettings, usePresence, useUpdateSprint, type PresenceStatus } from "@/hooks";
 import type { SprintInterface } from "@/interfaces";
-import { useSprintStore } from "@/store";
+import { useProjectStore, useSprintStore } from "@/store";
 import { MobileNav } from "./mobile-nav";
 import {
     Avatar,
@@ -42,6 +42,7 @@ export const Topbar = () => {
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings] = useSettings();
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
+    const { projects, activeProjectId, onSetActiveProject } = useProjectStore();
     const { sprints, refetch: refetchSprints } = useSprintsList();
     const { updateHandler: updateSprintHandler, isLoading: isSaving } = useUpdateSprint();
     const navigate = useNavigate();
@@ -88,6 +89,21 @@ export const Topbar = () => {
             <div className="flex items-center gap-2 sm:gap-4">
                 <MobileNav />
                 <div className="flex items-center gap-1.5">
+                    <Select value={activeProjectId} onValueChange={onSetActiveProject}>
+                        <SelectTrigger className="w-[130px] sm:w-[180px] h-9 text-xs sm:text-sm">
+                            <SelectValue placeholder={t("Select Project")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {projects.map((p) => (
+                                <SelectItem key={p.id} value={p.id}>
+                                    <span className="flex items-center gap-1.5">
+                                        <FolderKanban className="h-3 w-3 text-primary shrink-0" />
+                                        {p.name}
+                                    </span>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <Select value={activeSprintId} onValueChange={onSetActiveSprint}>
                         <SelectTrigger className="w-[140px] sm:w-[200px] h-9 text-xs sm:text-sm">
                             <SelectValue placeholder={t("Select Sprint")} />

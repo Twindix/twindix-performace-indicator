@@ -3,12 +3,12 @@ import {
     Bell,
     BookOpen,
     Flag,
+    FolderKanban,
     LayoutDashboard,
     ListChecks,
     MessageCircle,
     type LucideIcon,
     Settings,
-    Target,
     UserCog,
     Users,
 } from "lucide-react";
@@ -24,7 +24,7 @@ export interface SidebarItemInterface {
 
 export const sidebarItems: SidebarItemInterface[] = [
     { label: "Dashboard", path: routesData.dashboard, icon: LayoutDashboard },
-    { label: "Sprints", path: routesData.sprints, icon: Target },
+    { label: "Projects", path: routesData.projects, icon: FolderKanban },
     { label: "Tasks", path: routesData.tasks, icon: ListChecks },
     { label: "Blockers", path: routesData.blockers, icon: AlertTriangle },
     { label: "Comments Log", path: routesData.commentsLog, icon: MessageCircle },

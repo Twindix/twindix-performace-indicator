@@ -1,0 +1,1 @@
+export { seedProjects } from "./projects";
