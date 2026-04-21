@@ -1,0 +1,27 @@
+export const tasksConstants = {
+    errors: {
+        fetchFailed: "Failed to load tasks.",
+        createFailed: "Failed to create task.",
+        updateFailed: "Failed to update task.",
+        deleteFailed: "Failed to delete task.",
+        attachmentUploadFailed: "Failed to upload attachment.",
+        attachmentDeleteFailed: "Failed to delete attachment.",
+        tagAddFailed: "Failed to add tag.",
+        tagRemoveFailed: "Failed to remove tag.",
+        commentAddFailed: "Failed to add comment.",
+        commentUpdateFailed: "Failed to update comment.",
+        commentDeleteFailed: "Failed to delete comment.",
+    },
+    messages: {
+        createSuccess: "Task created.",
+        updateSuccess: "Task updated.",
+        deleteSuccess: "Task deleted.",
+        attachmentUploadSuccess: "Attachment uploaded.",
+        attachmentDeleteSuccess: "Attachment deleted.",
+        tagAddSuccess: "Tag added.",
+        tagRemoveSuccess: "Tag removed.",
+        commentAddSuccess: "Comment added.",
+        commentUpdateSuccess: "Comment updated.",
+        commentDeleteSuccess: "Comment deleted.",
+    },
+};

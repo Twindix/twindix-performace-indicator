@@ -3,3 +3,6 @@ export { buttonsConstants } from "./buttons";
 export { authConstants } from "./auth";
 export { sprintsConstants } from "./sprints";
 export { commentsConstants } from "./comments";
+export { tasksConstants } from "./tasks";
+export { requirementsConstants } from "./requirements";
+export { timeLogsConstants } from "./time-logs";

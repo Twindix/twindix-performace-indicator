@@ -4,7 +4,11 @@ import { TaskPriority } from "@/enums";
 export const addTaskSchema = yup.object({
     title: yup.string().trim().required("Title is required"),
     description: yup.string().optional().default(""),
-    assigneeId: yup.string().required("Please select an assignee"),
+    assigneeIds: yup
+        .array()
+        .of(yup.string())
+        .min(1, "Please select at least one assignee")
+        .required("Please select an assignee"),
     priority: yup
         .mixed<TaskPriority>()
         .oneOf(Object.values(TaskPriority))
