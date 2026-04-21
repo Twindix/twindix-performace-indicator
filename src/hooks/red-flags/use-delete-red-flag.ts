@@ -1,22 +1,22 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
-import { sprintsConstants } from "@/constants";
+import { redFlagsConstants } from "@/constants";
 import { getErrorMessage } from "@/lib/error";
-import { sprintsService } from "@/services";
+import { redFlagsService } from "@/services";
 
-export const useDeleteSprint = () => {
+export const useDeleteRedFlag = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const deleteHandler = useCallback(async (id: string): Promise<boolean> => {
         setIsLoading(true);
         try {
-            await sprintsService.deleteHandler(id);
-            toast.success(sprintsConstants.messages.deleteSuccess);
+            await redFlagsService.deleteHandler(id);
+            toast.success(redFlagsConstants.messages.deleteSuccess);
             return true;
         } catch (err) {
             console.error(err);
-            toast.error(getErrorMessage(err, sprintsConstants.errors.deleteFailed));
+            toast.error(getErrorMessage(err, redFlagsConstants.errors.deleteFailed));
             return false;
         } finally {
             setIsLoading(false);

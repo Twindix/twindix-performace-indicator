@@ -45,3 +45,5 @@ export type { CommentInterface, CommentUserInterface, CommentsListResponseInterf
 export type { RedFlagInterface, RedFlagSeverity } from "./red-flags";
 export type { AlertInterface } from "./alerts";
 export type { AttachmentInterface, AddTaskFormState, AddTaskDialogProps, RequirementDraftInterface } from "./tasks-dialog";
+export type { SprintInterface, SprintMetaInterface, SprintsListResponseInterface, SprintDetailResponseInterface, SprintSummaryInterface, CreateSprintPayloadInterface, UpdateSprintPayloadInterface } from "./sprints";
+export type { RedFlagInterface, RedFlagReporterInterface, RedFlagsListResponseInterface, RedFlagDetailResponseInterface, RedFlagsCountInterface, CreateRedFlagPayloadInterface, UpdateRedFlagPayloadInterface } from "./red-flags";
