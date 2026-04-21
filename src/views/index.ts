@@ -14,5 +14,7 @@ export { NotFoundView, ServerErrorView } from "./errors";
 export { UsersView } from "./users/index";
 export { UserDetailView } from "./users/detail";
 export { CommentsLogView } from "./comments-log";
+export { SprintsView } from "./sprints";
 export { RedFlagsView } from "./red-flags";
 export { AlertsView } from "./alerts";
+export { SprintsView } from "./sprints";
