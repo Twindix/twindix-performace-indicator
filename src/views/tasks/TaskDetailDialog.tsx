@@ -1,16 +1,20 @@
-import { Activity, AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Circle, ClipboardList, Layers, ListChecks, Tag, User } from "lucide-react";
-import { Badge, Button } from "@/atoms";
+import { useEffect, useState } from "react";
+import { Activity, AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Circle, ClipboardList, Layers, ListChecks, Pencil, Plus, Tag, Trash2, User, X } from "lucide-react";
+
+import { Badge, Button, Input } from "@/atoms";
+import { BlockerStatus, TaskPriority, TaskPhase } from "@/enums";
+import { t, useCreateRequirement, useDeleteRequirement, useDeleteTask, useGetRequirement, useTaskTags, useToggleRequirement, useUpdateRequirement } from "@/hooks";
+import type { TaskInterface, UserInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
 import { Avatar, AvatarFallback, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
 import { cn, formatDate, getStorageItem, storageKeys } from "@/utils";
-import { t } from "@/hooks";
-import { BlockerStatus } from "@/enums";
-import type { TaskPhase } from "@/enums";
 import { TaskStatus } from "@/enums";
-import type { TaskInterface, TaskAttachmentInterface, TaskCommentInterface, TaskTimeLogInterface, UserInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
+import type { TaskAttachmentInterface, TaskCommentInterface, TaskTimeLogInterface } from "@/interfaces";
 import { PHASE_INDEX, COLUMNS, COLUMN_COLORS, PRIORITY_VARIANT, capitalize, phaseLabel } from "./constants";
 import { TaskAttachments } from "./TaskAttachments";
 import { TaskTimeLogs } from "./TaskTimeLogs";
 import { TaskComments } from "./TaskComments";
+
+const statusLabel = (status: string) => status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 export interface TaskDetailDialogProps {
     task: TaskInterface | null;
@@ -19,42 +23,96 @@ export interface TaskDetailDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onMoveRequest: (task: TaskInterface, targetPhase: TaskPhase) => void;
-    onUpdateComments?: (taskId: string, comments: TaskCommentInterface[]) => void;
-    onUpdateAttachments?: (taskId: string, attachments: TaskAttachmentInterface[]) => void;
-    onUpdateTimeLogs?: (taskId: string, timeLogs: TaskTimeLogInterface[]) => void;
     onUpdateRequirements?: (taskId: string, requirements: RequirementInterface[]) => void;
+    patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
+    removeTaskLocal: (id: string) => void;
 }
 
-export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, onMoveRequest, onUpdateComments, onUpdateAttachments, onUpdateTimeLogs, onUpdateRequirements }: TaskDetailDialogProps) => {
-    const currentUserId = getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "";
-    const allMembers = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? members;
+export const TaskDetailDialog = ({
+    task,
+    members,
+    blocker,
+    open,
+    onOpenChange,
+    onMoveRequest,
+    onUpdateComments,
+    patchTaskLocal,
+    removeTaskLocal,
+}: TaskDetailDialogProps) => {
+    const { deleteHandler: deleteTaskHandler } = useDeleteTask();
+    const { addHandler: addTagHandler, removeHandler: removeTagHandler } = useTaskTags();
+    const { getAllHandler: getRequirementsHandler } = useGetRequirement();
+    const { createHandler: createRequirementHandler } = useCreateRequirement();
+    const { toggleHandler: toggleRequirementHandler } = useToggleRequirement();
+    const { updateHandler: updateRequirementHandler } = useUpdateRequirement();
+    const { deleteHandler: deleteRequirementHandler } = useDeleteRequirement();
+
+    const { user: authUser } = useAuthStore();
+    const currentUserId = authUser?.id ?? "";
+
+    const [editingReqId, setEditingReqId] = useState<string | null>(null);
+    const [editingReqLabel, setEditingReqLabel] = useState("");
+    const [tagInput, setTagInput] = useState("");
+    const [showTagInput, setShowTagInput] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const [reqInput, setReqInput] = useState("");
+    const [showReqInput, setShowReqInput] = useState(false);
+
+    useEffect(() => {
+        if (!open || !task) return;
+        getRequirementsHandler(task.id).then((res) => {
+            if (res) patchTaskLocal(task.id, { requirements: res });
+        });
+    }, [open, task?.id, getRequirementsHandler]);
 
     if (!task) return null;
 
-    const STATUS_LABEL: Record<TaskStatus, string> = {
-        [TaskStatus.OnTrack]: "On Track",
-        [TaskStatus.AtRisk]: "At Risk",
-        [TaskStatus.Delayed]: "Delayed",
-        [TaskStatus.OnHold]: "On Hold",
-    };
-    const STATUS_COLOR: Record<TaskStatus, string> = {
-        [TaskStatus.OnTrack]: "text-green-600",
-        [TaskStatus.AtRisk]: "text-yellow-600",
-        [TaskStatus.Delayed]: "text-orange-600",
-        [TaskStatus.OnHold]: "text-gray-500",
+    const colIndex = COLUMNS.findIndex((c) => c.status === (task.status ?? "backlog"));
+    const effectiveIndex = colIndex === -1 ? 0 : colIndex;
+    const prevCol = effectiveIndex > 0 ? COLUMNS[effectiveIndex - 1] : null;
+    const nextCol = effectiveIndex < COLUMNS.length - 1 ? COLUMNS[effectiveIndex + 1] : null;
+
+    const handleAddTag = async () => {
+        const v = tagInput.trim();
+        if (!v) return;
+        const ok = await addTagHandler(task.id, v);
+        if (ok) patchTaskLocal(task.id, { tags: [...task.tags, v] });
+        setTagInput("");
+        setShowTagInput(false);
     };
 
-    const currentIndex = PHASE_INDEX[task.phase];
-    const prevPhase = currentIndex > 0 ? COLUMNS[currentIndex - 1].phase : null;
-    const nextPhase = currentIndex < COLUMNS.length - 1 ? COLUMNS[currentIndex + 1].phase : null;
+    const handleRemoveTag = async (tagId: string) => {
+        const ok = await removeTagHandler(task.id, tagId);
+        if (ok) patchTaskLocal(task.id, { tags: task.tags.filter((t) => (typeof t === "string" ? t : t.id) !== tagId) });
+    };
+
+    const handleDelete = async () => {
+        const ok = await deleteTaskHandler(task.id);
+        if (ok) {
+            removeTaskLocal(task.id);
+            setConfirmDelete(false);
+            onOpenChange(false);
+        }
+    };
+
+    const requirements = task.requirements ?? [];
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <div className="flex items-center gap-2 mb-1">
-                        <Badge variant={PRIORITY_VARIANT[task.priority]}>{t(capitalize(task.priority))}</Badge>
-                        {task.hasBlocker && <Badge variant="error"><AlertCircle className="h-3 w-3 me-1" />{t("Blocked")}</Badge>}
+                        <Badge variant={PRIORITY_VARIANT[task.priority as TaskPriority] ?? "default"}>{t(capitalize(task.priority))}</Badge>
+                        {task.is_blocked && <Badge variant="error"><AlertCircle className="h-3 w-3 me-1" />{t("Blocked")}</Badge>}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setConfirmDelete(true)}
+                            className="ms-auto text-error hover:text-error hover:bg-error-light gap-1.5 h-7 px-2 me-8"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            {t("Delete")}
+                        </Button>
                     </div>
                     <DialogTitle className="text-xl">{task.title}</DialogTitle>
                     <DialogDescription>{task.description}</DialogDescription>
@@ -62,18 +120,18 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
 
                 {/* Phase navigation */}
                 <div className="flex items-center justify-between gap-3 mt-3 p-3 rounded-xl bg-muted">
-                    {prevPhase
-                        ? <Button variant="secondary" size="sm" onClick={() => { onOpenChange(false); onMoveRequest(task, prevPhase); }} className="gap-1.5">
-                            <ArrowLeft className="h-3.5 w-3.5" />{t(COLUMNS[currentIndex - 1].label)}
+                    {prevCol
+                        ? <Button variant="secondary" size="sm" onClick={() => { onOpenChange(false); onMoveRequest(task, prevCol.status as TaskPhase); }} className="gap-1.5">
+                            <ArrowLeft className="h-3.5 w-3.5" />{t(prevCol.label)}
                           </Button>
                         : <div />}
                     <div className="flex items-center gap-2">
-                        <div className={cn("h-2.5 w-2.5 rounded-full", COLUMN_COLORS[task.phase])} />
-                        <span className="text-sm font-semibold text-text-dark">{t(phaseLabel(task.phase))}</span>
+                        <div className={cn("h-2.5 w-2.5 rounded-full", COLUMN_COLORS[task.status ?? "backlog"] ?? "bg-text-muted")} />
+                        <span className="text-sm font-semibold text-text-dark">{t(statusLabel(task.status ?? "backlog"))}</span>
                     </div>
-                    {nextPhase
-                        ? <Button size="sm" onClick={() => { onOpenChange(false); onMoveRequest(task, nextPhase); }} className="gap-1.5">
-                            {t(COLUMNS[currentIndex + 1].label)}<ArrowRight className="h-3.5 w-3.5" />
+                    {nextCol
+                        ? <Button size="sm" onClick={() => { onOpenChange(false); onMoveRequest(task, nextCol.status as TaskPhase); }} className="gap-1.5">
+                            {t(nextCol.label)}<ArrowRight className="h-3.5 w-3.5" />
                           </Button>
                         : <Badge variant="success" className="px-3 py-1.5">{t("Completed")}</Badge>}
                 </div>
@@ -83,70 +141,101 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                     <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-text-muted" />
                         <div>
-                            <p className="text-xs text-text-muted">{t("Assignees")}</p>
-                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                {(task.assigneeIds ?? []).length > 0 ? (
-                                    (task.assigneeIds ?? []).map((id) => {
-                                        const assignee = allMembers.find((m) => m.id === id);
-                                        return assignee ? (
-                                            <div key={id} className="flex items-center gap-1">
-                                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{assignee.avatar}</AvatarFallback></Avatar>
-                                                <span className="text-sm font-medium text-text-dark">{assignee.name}</span>
-                                            </div>
-                                        ) : null;
-                                    })
-                                ) : (
-                                    <span className="text-sm font-medium text-text-muted">{t("Unassigned")}</span>
-                                )}
-                            </div>
+                            <p className="text-xs text-text-muted">{t("Assignee")}</p>
+                            {task.assignee ? (
+                                <div className="flex items-center gap-1 mt-0.5">
+                                    <Avatar className="h-5 w-5">
+                                        <AvatarFallback className="text-[8px]">{task.assignee.avatar_initials}</AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-sm font-medium text-text-dark">{task.assignee.full_name}</span>
+                                </div>
+                            ) : (
+                                <span className="text-sm font-medium text-text-muted">{t("Unassigned")}</span>
+                            )}
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <Layers className="h-4 w-4 text-text-muted" />
                         <div>
                             <p className="text-xs text-text-muted">{t("Story Points")}</p>
-                            <p className="text-sm font-medium text-text-dark">{task.storyPoints}</p>
+                            <p className="text-sm font-medium text-text-dark">{task.story_points ?? "—"}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <ClipboardList className="h-4 w-4 text-text-muted" />
                         <div>
-                            <p className="text-xs text-text-muted">{t("Phase")}</p>
-                            <p className="text-sm font-medium text-text-dark">{t(phaseLabel(task.phase))}</p>
+                            <p className="text-xs text-text-muted">{t("Task Number")}</p>
+                            <p className="text-sm font-medium text-text-dark">{task.task_number ?? task.id}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <Circle className="h-4 w-4 text-text-muted" />
                         <div>
                             <p className="text-xs text-text-muted">{t("Created")}</p>
-                            <p className="text-sm font-medium text-text-dark">{formatDate(task.createdAt)}</p>
+                            <p className="text-sm font-medium text-text-dark">{formatDate(task.created_at ?? "")}</p>
                         </div>
                     </div>
-                    {task.status && (
+                    <div className="flex items-center gap-2">
+                        <Activity className="h-4 w-4 text-text-muted" />
+                        <div>
+                            <p className="text-xs text-text-muted">{t("Status")}</p>
+                            <span className={cn("text-sm font-semibold", COLUMN_COLORS[task.status ?? "backlog"]?.replace("bg-", "text-"))}>
+                                {t(statusLabel(task.status ?? "backlog"))}
+                            </span>
+                        </div>
+                    </div>
+                    {task.estimated_hours && (
                         <div className="flex items-center gap-2">
-                            <Activity className="h-4 w-4 text-text-muted" />
+                            <Circle className="h-4 w-4 text-text-muted" />
                             <div>
-                                <p className="text-xs text-text-muted">{t("Status")}</p>
-                                <p className={cn("text-sm font-semibold", STATUS_COLOR[task.status])}>
-                                    {t(STATUS_LABEL[task.status])}
-                                </p>
+                                <p className="text-xs text-text-muted">{t("Estimated Hours")}</p>
+                                <p className="text-sm font-medium text-text-dark">{task.estimated_hours}h</p>
                             </div>
                         </div>
                     )}
                 </div>
 
                 {/* Tags */}
-                {task.tags.length > 0 && (
-                    <div className="mt-4 pb-4 border-b border-border">
-                        <p className="text-xs font-medium text-text-muted mb-2 flex items-center gap-1"><Tag className="h-3 w-3" />{t("Tags")}</p>
-                        <div className="flex flex-wrap gap-1.5">
-                            {task.tags.map((tag) => <Badge key={tag} variant="outline">{tag}</Badge>)}
-                        </div>
+                <div className="mt-4 pb-4 border-b border-border">
+                    <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-medium text-text-muted flex items-center gap-1"><Tag className="h-3 w-3" />{t("Tags")}</p>
+                        {!showTagInput && (
+                            <button onClick={() => setShowTagInput(true)} className="text-xs text-primary hover:text-primary-dark font-medium flex items-center gap-1 cursor-pointer">
+                                <Plus className="h-3 w-3" /> {t("Add")}
+                            </button>
+                        )}
                     </div>
-                )}
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                        {task.tags.map((tag) => (
+                            <span key={typeof tag === "string" ? tag : tag.id} className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs">
+                                {typeof tag === "string" ? tag : tag.tag}
+                                <button onClick={() => handleRemoveTag(typeof tag === "string" ? tag : tag.id)} className="text-text-muted hover:text-error cursor-pointer">
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </span>
+                        ))}
+                        {showTagInput && (
+                            <div className="flex items-center gap-1">
+                                <Input
+                                    autoFocus
+                                    value={tagInput}
+                                    onChange={(e) => setTagInput(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddTag(); } }}
+                                    placeholder={t("Tag name")}
+                                    className="h-7 text-xs w-28"
+                                />
+                                <Button size="sm" onClick={handleAddTag} className="h-7 px-2 text-xs">{t("Add")}</Button>
+                                <Button size="sm" variant="ghost" onClick={() => { setShowTagInput(false); setTagInput(""); }} className="h-7 px-2 text-xs">{t("Cancel")}</Button>
+                            </div>
+                        )}
+                        {task.tags.length === 0 && !showTagInput && (
+                            <span className="text-xs text-text-muted italic">{t("No tags")}</span>
+                        )}
+                    </div>
+                </div>
 
                 {/* Blocker */}
-                {task.hasBlocker && blocker && (
+                {task.is_blocked && blocker && (
                     <div className="mt-4 pb-4 border-b border-border rounded-xl bg-error-light p-4">
                         <div className="flex items-center gap-2 mb-2">
                             <AlertCircle className="h-4 w-4 text-error" />
@@ -155,53 +244,142 @@ export const TaskDetailDialog = ({ task, members, blocker, open, onOpenChange, o
                         </div>
                         <p className="text-sm font-medium text-text-dark">{blocker.title}</p>
                         <p className="text-xs text-text-secondary mt-1">{blocker.description}</p>
-                        <div className="flex items-center gap-3 mt-2">
-                            <span className="text-xs text-text-muted">{t("Impact")}: <strong className="text-error">{t(capitalize(blocker.impact))}</strong></span>
-                            <span className="text-xs text-text-muted">{t("Duration")}: <strong>{blocker.durationDays} {t("days")}</strong></span>
-                        </div>
                     </div>
                 )}
 
                 {/* Requirements */}
-                {(task.requirements ?? []).length > 0 && (
-                    <div className="mt-4 pb-4 border-b border-border">
-                        <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                <div className="mt-4 pb-4 border-b border-border">
+                    <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide flex items-center gap-1.5">
                             <ListChecks className="h-3.5 w-3.5" />
                             {t("Requirements")}
+                            {requirements.length > 0 && (
+                                <span className="bg-muted rounded-full px-1.5 py-0.5 text-[10px] font-bold">{requirements.length}</span>
+                            )}
                         </p>
-                        <div className="space-y-2">
-                            {(task.requirements ?? []).map((req) => (
-                                <button
-                                    key={req.id}
-                                    type="button"
-                                    onClick={() => {
-                                        if (!onUpdateRequirements) return;
-                                        const updated = (task.requirements ?? []).map((r) =>
-                                            r.id === req.id ? { ...r, met: !r.met } : r,
-                                        );
-                                        onUpdateRequirements(task.id, updated);
-                                    }}
-                                    className={cn(
-                                        "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-start transition-opacity",
-                                        req.met ? "bg-success-light/50" : "bg-error-light/50",
-                                        onUpdateRequirements ? "cursor-pointer hover:opacity-80" : "cursor-default",
-                                    )}
-                                >
-                                    {req.met
-                                        ? <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                                        : <AlertCircle className="h-4 w-4 text-error shrink-0" />}
-                                    <span className={cn("text-sm", req.met ? "text-text-dark" : "text-error font-medium")}>
-                                        {req.label}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
+                        {!showReqInput && (
+                            <button onClick={() => setShowReqInput(true)} className="text-xs text-primary hover:text-primary-dark font-medium flex items-center gap-1 cursor-pointer">
+                                <Plus className="h-3 w-3" /> {t("Add")}
+                            </button>
+                        )}
                     </div>
-                )}
+                    <div className="space-y-2">
+                        {requirements.map((req) => (
+                            <div key={req.id} className={cn("flex items-center gap-3 rounded-lg px-3 py-2 group", req.is_done ? "bg-success-light/50" : "bg-muted")}>
+                                {editingReqId === req.id ? (
+                                    <>
+                                        {req.is_done
+                                            ? <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                                            : <AlertCircle className="h-4 w-4 text-text-muted shrink-0" />}
+                                        <Input
+                                            autoFocus
+                                            value={editingReqLabel}
+                                            onChange={(e) => setEditingReqLabel(e.target.value)}
+                                            onKeyDown={async (e) => {
+                                                if (e.key === "Enter") {
+                                                    const v = editingReqLabel.trim();
+                                                    if (!v) return;
+                                                    const res = await updateRequirementHandler(req.id, { content: v });
+                                                    if (res) {
+                                                        patchTaskLocal(task.id, { requirements: requirements.map((r) => r.id === req.id ? { ...r, content: res.content } : r) });
+                                                        setEditingReqId(null);
+                                                    }
+                                                } else if (e.key === "Escape") {
+                                                    setEditingReqId(null);
+                                                }
+                                            }}
+                                            className="h-7 text-sm flex-1"
+                                        />
+                                        <Button size="sm" variant="ghost" onClick={() => setEditingReqId(null)} className="h-7 px-2 text-xs">{t("Cancel")}</Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                const res = await toggleRequirementHandler(req.id);
+                                                if (res) {
+                                                    patchTaskLocal(task.id, { requirements: requirements.map((r) => r.id === req.id ? { ...r, is_done: res.is_done } : r) });
+                                                }
+                                            }}
+                                            className="flex items-center gap-3 flex-1 text-start cursor-pointer hover:opacity-80"
+                                        >
+                                            {req.is_done
+                                                ? <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                                                : <AlertCircle className="h-4 w-4 text-text-muted shrink-0" />}
+                                            <span className={cn("text-sm", req.is_done ? "line-through text-text-muted" : "text-text-dark")}>
+                                                {req.content}
+                                            </span>
+                                        </button>
+                                        <button
+                                            onClick={() => { setEditingReqId(req.id); setEditingReqLabel(req.content ?? ""); }}
+                                            className="text-text-muted hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                        >
+                                            <Pencil className="h-3 w-3" />
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                const ok = await deleteRequirementHandler(req.id);
+                                                if (ok) patchTaskLocal(task.id, { requirements: requirements.filter((r) => r.id !== req.id) });
+                                            }}
+                                            className="text-text-muted hover:text-error opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        ))}
+                        {showReqInput && (
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    autoFocus
+                                    value={reqInput}
+                                    onChange={(e) => setReqInput(e.target.value)}
+                                    onKeyDown={async (e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            const v = reqInput.trim();
+                                            if (!v) return;
+                                            const res = await createRequirementHandler(task.id, { content: v });
+                                            if (res) {
+                                                patchTaskLocal(task.id, { requirements: [...requirements, res as RequirementInterface] });
+                                                setReqInput("");
+                                                setShowReqInput(false);
+                                            }
+                                        }
+                                    }}
+                                    placeholder={t("Requirement")}
+                                    className="h-8 text-sm"
+                                />
+                                <Button size="sm" variant="ghost" onClick={() => { setShowReqInput(false); setReqInput(""); }} className="h-8 px-2 text-xs">{t("Cancel")}</Button>
+                            </div>
+                        )}
+                        {requirements.length === 0 && !showReqInput && (
+                            <p className="text-xs text-text-muted italic">{t("No requirements yet")}</p>
+                        )}
+                    </div>
+                </div>
 
-                <TaskAttachments task={task} onUpdateAttachments={onUpdateAttachments} />
-                <TaskTimeLogs task={task} members={members} onUpdateTimeLogs={onUpdateTimeLogs} />
-                <TaskComments task={task} currentUserId={currentUserId} members={members} onUpdateComments={onUpdateComments} />
+                <TaskAttachments task={task} patchTaskLocal={patchTaskLocal} />
+                <TaskTimeLogs task={task} members={members} patchTaskLocal={patchTaskLocal} />
+                <TaskComments task={task} currentUserId={currentUserId} members={members} />
+
+                {/* Delete confirmation */}
+                <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+                    <DialogContent className="max-w-sm">
+                        <DialogHeader>
+                            <DialogTitle>{t("Delete Task")}</DialogTitle>
+                        </DialogHeader>
+                        <p className="text-sm text-text-secondary">
+                            {t("Are you sure you want to delete")} <strong className="text-text-dark">{task.title}</strong>? {t("This action cannot be undone.")}
+                        </p>
+                        <div className="flex justify-end gap-2 mt-4">
+                            <Button variant="outline" onClick={() => setConfirmDelete(false)}>{t("Cancel")}</Button>
+                            <Button variant="destructive" onClick={handleDelete}>{t("Delete")}</Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </DialogContent>
         </Dialog>
     );

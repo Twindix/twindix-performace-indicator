@@ -3,9 +3,9 @@ import { ShieldCheck, Lock, CheckCircle2, AlertCircle, Clock } from "lucide-reac
 import { Badge, Button, Input } from "@/atoms";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
 import { cn } from "@/utils";
-import { t } from "@/hooks";
+import { t, useTaskViews } from "@/hooks";
 import type { TaskInterface } from "@/interfaces";
-import type { TaskPhase } from "@/enums";
+import { TaskPhase, TaskPriority } from "@/enums";
 import {
     PHASE_INDEX,
     PRIORITY_VARIANT,
@@ -33,6 +33,7 @@ export const TransitionDialog = ({
     onConfirm,
     isAssignee = false,
 }: TransitionDialogProps) => {
+    const { transitionCriteriaHandler } = useTaskViews();
     const [hours, setHours] = useState("");
     const [note, setNote] = useState("");
 
@@ -40,9 +41,14 @@ export const TransitionDialog = ({
         if (open) { setHours(""); setNote(""); }
     }, [open]);
 
+    useEffect(() => {
+        if (!open || !task) return;
+        transitionCriteriaHandler(task.id, targetPhase ?? "");
+    }, [open, task?.id, transitionCriteriaHandler]);
+
     if (!task || !targetPhase || !transitionResult) return null;
 
-    const isBackward = PHASE_INDEX[targetPhase] < PHASE_INDEX[task.phase];
+    const isBackward = PHASE_INDEX[targetPhase as TaskPhase] < PHASE_INDEX[task.phase as TaskPhase ?? TaskPhase.Backlog];
     const showTimeInput = isAssignee && transitionResult.allowed && !isBackward;
 
     const handleConfirm = () => {
@@ -64,7 +70,7 @@ export const TransitionDialog = ({
                     </div>
                     <DialogDescription>
                         {isBackward ? t("Moving back") : t("Moving forward")}:{" "}
-                        <strong>{t(phaseLabel(task.phase))}</strong> → <strong>{t(phaseLabel(targetPhase))}</strong>
+                        <strong>{t(phaseLabel(task.phase as TaskPhase ?? TaskPhase.Backlog))}</strong> → <strong>{t(phaseLabel(targetPhase as TaskPhase))}</strong>
                     </DialogDescription>
                 </DialogHeader>
 
@@ -72,7 +78,7 @@ export const TransitionDialog = ({
                 <div className="rounded-xl bg-muted p-3 mt-2">
                     <p className="text-sm font-semibold text-text-dark">{task.title}</p>
                     <div className="flex items-center gap-2 mt-1">
-                        <Badge variant={PRIORITY_VARIANT[task.priority]} className="text-[10px]">{t(capitalize(task.priority))}</Badge>
+                        <Badge variant={PRIORITY_VARIANT[task.priority as TaskPriority]} className="text-[10px]">{t(capitalize(task.priority))}</Badge>
                         <span className="text-xs text-text-muted">{task.storyPoints} {t("points")}</span>
                     </div>
                 </div>

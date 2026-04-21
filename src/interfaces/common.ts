@@ -29,7 +29,6 @@ export interface UserInterface {
     last_seen_at?: string;
     settings?: UserSettingsInterface;
     created_at?: string;
-    // legacy seed/localStorage aliases
     name?: string;
     avatar?: string;
     role?: string;

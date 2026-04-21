@@ -1,130 +1,100 @@
 import { Circle, AlertCircle, Clock } from "lucide-react";
+
 import { Badge } from "@/atoms";
 import { TaskPriority } from "@/enums";
-import type { TaskInterface, UserInterface } from "@/interfaces";
+import type { PipelineBoardInterface, TaskInterface, UserInterface } from "@/interfaces";
 import { t } from "@/hooks";
 import { cn } from "@/utils";
 import { PHASE_INDEX, PRIORITY_VARIANT } from "./constants";
 
 export interface PipelineViewProps {
-    tasks: TaskInterface[];
+    pipeline: PipelineBoardInterface;
     members: UserInterface[];
     setSelectedTask: (task: TaskInterface) => void;
     setDialogOpen: (open: boolean) => void;
 }
 
-const WORK_TYPES = ["Design", "Frontend", "Backend", "QA", "Done"] as const;
-
 export const PipelineView = ({
-    tasks,
-    members,
+    pipeline,
     setSelectedTask,
     setDialogOpen,
 }: PipelineViewProps) => {
-    // Group tasks by workType
-    const tasksByWorkType = new Map<string, TaskInterface[]>();
-    for (const type of WORK_TYPES) {
-        tasksByWorkType.set(type, []);
-    }
+    const columns = Object.entries(pipeline);
 
-    for (const task of tasks) {
-        // Fallback to "Frontend" if undefined for legacy data handling
-        const type = task.workType || "Frontend";
-        if (tasksByWorkType.has(type)) {
-            tasksByWorkType.get(type)!.push(task);
-        } else {
-            // Push to Done if it doesn't match standard?
-            // In a strict enum setup it won't happen, but just in case.
-            if (!tasksByWorkType.has("Other")) tasksByWorkType.set("Other", []);
-            tasksByWorkType.get("Other")!.push(task);
-        }
+    if (columns.length === 0) {
+        return (
+            <div className="flex items-center justify-center h-48 text-text-muted text-sm">
+                {t("No pipeline data available")}
+            </div>
+        );
     }
-
-    const availableWorkTypes = Array.from(tasksByWorkType.keys());
 
     return (
         <div className="flex flex-1 gap-4 pb-4 overflow-x-auto min-h-[calc(100vh-14rem)] bg-surface-body p-4 rounded-xl">
-            {availableWorkTypes.map((type) => {
-                const columnTasks = tasksByWorkType.get(type) ?? [];
+            {columns.map(([colKey, tasks]) => (
+                <div
+                    key={colKey}
+                    className="flex flex-col w-80 shrink-0 bg-surface rounded-xl overflow-hidden border border-border shadow-sm"
+                >
+                    <div className="p-3 border-b border-border flex items-center justify-between sticky top-0 z-10 hidden-scrollbar bg-surface relative">
+                        <h3 className="text-sm font-bold text-text-dark flex items-center gap-2">
+                            <Circle className={cn("h-2.5 w-2.5 fill-current", COLUMN_COLOR_CLASS[colKey] ?? "text-text-muted")} />
+                            {t(colKey.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()))}
+                        </h3>
+                        <span className="text-[10px] font-semibold text-text-muted bg-muted px-2 py-0.5 rounded-full border border-border">
+                            {tasks.length}
+                        </span>
+                    </div>
 
-                return (
-                    <div
-                        key={type}
-                        className="flex flex-col w-80 shrink-0 bg-surface rounded-xl overflow-hidden border border-border shadow-sm"
-                    >
-                        {/* Column Header */}
-                        <div className="p-3 border-b border-border flex items-center justify-between sticky top-0 z-10 hidden-scrollbar bg-surface relative">
-                            <h3 className="text-sm font-bold text-text-dark flex items-center gap-2">
-                                <Circle className={cn(
-                                    "h-2.5 w-2.5 fill-current",
-                                    type === "Design" ? "text-purple-500" :
-                                        type === "Frontend" ? "text-blue-500" :
-                                            type === "Backend" ? "text-green-500" :
-                                                type === "QA" ? "text-yellow-500" : "text-gray-500"
-                                )} />
-                                {t(type)}
-                            </h3>
-                            <span className="text-[10px] font-semibold text-white bg-primary px-2 py-0.5 rounded-full">
-                                {columnTasks.length}
-                            </span>
-                        </div>
+                    <div className="flex-1 p-2 space-y-2 overflow-y-auto">
+                        {tasks.length === 0 && (
+                            <p className="text-xs text-text-muted italic text-center py-8">{t("No tasks")}</p>
+                        )}
+                        {tasks.map((task) => (
+                            <div
+                                key={task.id}
+                                className="bg-surface rounded-lg p-3 border border-border shadow-sm hover:shadow-md hover:border-primary transition-all cursor-pointer"
+                                onClick={() => { setSelectedTask(task); setDialogOpen(true); }}
+                            >
+                                <div className="flex items-start justify-between mb-2 gap-2">
+                                    <span className="text-[10px] font-semibold text-text-muted shrink-0">
+                                        {task.task_number ?? task.id}
+                                    </span>
+                                    <div className="flex items-center gap-1 flex-wrap justify-end">
+                                        <Badge variant={PRIORITY_VARIANT[task.priority as TaskPriority] ?? "default"} className="text-[9px] px-1.5 py-0.5">
+                                            {t(task.priority.charAt(0).toUpperCase() + task.priority.slice(1))}
+                                        </Badge>
+                                        {task.is_blocked && (
+                                            <AlertCircle className="h-3.5 w-3.5 text-error shrink-0" />
+                                        )}
+                                    </div>
+                                </div>
 
-                        {/* Task List */}
-                        <div className="flex-1 p-3 overflow-y-auto space-y-3 bg-muted/20">
-                            {columnTasks.map((task) => {
-                                const assignees = (task.assigneeIds ?? []).map(id => members.find((m) => m.id === id)).filter(Boolean);
-                                const assignee = assignees[0]; // Use first assignee for display
-                                const progressIndex = PHASE_INDEX[task.phase];
-                                const maxStages = 5; // Backlog is 0, Done is 5
+                                <p className="text-sm font-medium text-text-dark mb-2 line-clamp-2">{task.title}</p>
 
-                                // Mock data for realism in this view based on screenshot
-                                const isOverdue = task.priority === TaskPriority.Critical || task.priority === TaskPriority.High;
-                                const reworks = task.priority === TaskPriority.Critical ? 2 : task.priority === TaskPriority.High ? 1 : 0;
+                                <div className="flex items-center gap-1 flex-wrap mb-2">
+                                    {task.tags.map((tag) => (
+                                        <span key={typeof tag === "string" ? tag : tag.id} className="text-[9px] font-medium text-text-secondary bg-muted px-1.5 py-0.5 rounded">
+                                            #{typeof tag === "string" ? tag : tag.tag}
+                                        </span>
+                                    ))}
+                                </div>
 
-                                return (
-                                    <div
-                                        key={task.id}
-                                        className="bg-surface rounded-xl p-4 border border-border hover:shadow-md transition-shadow cursor-pointer pointer-events-auto flex flex-col"
-                                        onClick={() => {
-                                            setSelectedTask(task);
-                                            setDialogOpen(true);
-                                        }}
-                                    >
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-[10px] font-medium text-text-muted flex items-center gap-1">
-                                                <Circle className="h-2 w-2 fill-primary text-primary" />
-                                                Pipeline Engine {/* Mock project group */}
-                                            </span>
-                                            <span className="text-text-muted cursor-pointer hover:bg-muted p-1 rounded">
-                                                ...
-                                            </span>
-                                        </div>
-
-                                        <h4 className="text-sm font-bold text-text-dark mb-3 leading-tight line-clamp-2">
-                                            {task.title}
-                                        </h4>
-
-                                        <div className="flex items-center gap-1.5 mb-5 flex-wrap">
-                                            <Badge variant={PRIORITY_VARIANT[task.priority]} className="text-[9px] px-2 shadow-none font-bold bg-opacity-20 text-opacity-100 rounded">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-current mr-1 inline-block opacity-80" />
-                                                {t(task.priority)}
-                                            </Badge>
-
-                                            {reworks > 0 && (
-                                                <Badge variant="error" className="text-[9px] px-2 shadow-none font-bold bg-error-light/50 text-error rounded border-none">
-                                                    <Clock className="w-2.5 h-2.5 mr-1" />
-                                                    {reworks}x rework
-                                                </Badge>
-                                            )}
-
-                                            {isOverdue && progressIndex < 5 && (
-                                                <Badge variant="error" className="text-[9px] px-2 shadow-none font-bold bg-error-light/50 text-error rounded border-none">
-                                                    <AlertCircle className="w-2.5 h-2.5 mr-1" />
-                                                    Overdue
-                                                </Badge>
-                                            )}
-                                        </div>
-
+                                <div className="flex items-center justify-between text-[10px] text-text-muted">
+                                    {task.estimated_hours ? (
+                                        <span className="flex items-center gap-1">
+                                            <Clock className="h-3 w-3" />
+                                            {task.estimated_hours}h
+                                        </span>
+                                    ) : <span />}
+                                    {task.assignee && (
+                                        <span className="font-medium bg-primary/10 text-primary rounded-full px-1.5 py-0.5">
+                                            {task.assignee.avatar_initials}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
                                         <div className="flex items-center justify-between mt-auto">
                                             {assignee ? (
                                                 <div className="flex items-center gap-2">
@@ -146,8 +116,8 @@ export const PipelineView = ({
                             })}
                         </div>
                     </div>
-                );
-            })}
+                </div>
+            ))}
         </div>
     );
 };
