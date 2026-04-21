@@ -21,11 +21,17 @@ const TasksViewInner = () => {
     const { activeSprintId } = useSprintStore();
 
     const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [priorityFilter, setPriorityFilter] = useState("all");
     const [assigneeFilter, setAssigneeFilter] = useState("all");
     const [typeFilter, setTypeFilter] = useState("all");
     const [viewMode, setViewMode] = useState<"board" | "pipeline">("board");
+
+    useEffect(() => {
+        const id = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+        return () => clearTimeout(id);
+    }, [searchQuery]);
 
     const {
         tasks,
@@ -40,7 +46,7 @@ const TasksViewInner = () => {
         assigned_to: assigneeFilter !== "all" ? assigneeFilter : undefined,
         priority: priorityFilter !== "all" ? priorityFilter : undefined,
         type: typeFilter !== "all" ? typeFilter : undefined,
-        search: searchQuery || undefined,
+        search: debouncedSearch || undefined,
     });
 
     const { pipeline, isLoading: pipelineLoading } = usePipeline(activeSprintId);
