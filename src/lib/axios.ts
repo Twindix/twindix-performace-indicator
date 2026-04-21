@@ -33,13 +33,29 @@ apiClient.interceptors.request.use(
     (error: AxiosError) => Promise.reject(error),
 );
 
+export const AUTH_UNAUTHORIZED_EVENT = "auth:unauthorized";
+
+let unauthorized = false;
+
+const dispatchUnauthorized = () => {
+    if (unauthorized) return;
+    unauthorized = true;
+    deleteCookieHandler(commonData.token.tokenKey);
+    window.dispatchEvent(new Event(AUTH_UNAUTHORIZED_EVENT));
+};
+
+export const resetAuthState = () => {
+    unauthorized = false;
+};
+
 apiClient.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
         const { message, response: { data, status } = {} } = error;
 
         if (status === 401) {
-            deleteCookieHandler(commonData.token.tokenKey);
+            dispatchUnauthorized();
+            return Promise.reject(new ApiError(401, "Unauthorized", data));
         }
 
         const errorMessage =

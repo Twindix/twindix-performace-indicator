@@ -2,6 +2,7 @@ export enum DecisionStatus {
     Pending = "pending",
     Approved = "approved",
     Rejected = "rejected",
+    Deferred = "deferred",
 }
 
 export enum DecisionCategory {

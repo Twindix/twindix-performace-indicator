@@ -1,32 +1,37 @@
-import type { SprintStatus, UserRole } from "@/enums";
-
 export interface ApiSuccessResponse<T> {
     data: T;
-    isSuccess: boolean;
+    isSuccess?: boolean;
     message?: string;
 }
 
-export interface LoginResponseInterface {
-    data: {
-        token: string;
-        user: UserInterface;
-    };
-    isSuccess: boolean;
-    message: string;
+export interface UserSettingsInterface {
+    dark_mode: boolean;
+    compact_view: boolean;
+    language: string;
+    date_format: string;
 }
 
-export interface MeResponseInterface {
-    data: UserInterface;
-    isSuccess: boolean;
+export interface UserTeamInterface {
+    id: string;
+    name: string;
 }
 
 export interface UserInterface {
     id: string;
-    name: string;
-    email: string;
-    role: UserRole;
-    avatar: string;
-    team: string;
+    full_name?: string;
+    email?: string;
+    role_label?: string;
+    role_tier?: string;
+    team?: UserTeamInterface | string;
+    avatar_initials?: string;
+    account_status?: string;
+    presence_status?: string;
+    last_seen_at?: string;
+    settings?: UserSettingsInterface;
+    created_at?: string;
+    name?: string;
+    avatar?: string;
+    role?: string;
     status?: string;
 }
 
@@ -35,17 +40,10 @@ export interface SprintInterface {
     name: string;
     startDate: string;
     endDate: string;
-    status: SprintStatus;
-    healthScore: number;
-    goals: string[];
-}
-
-export interface AuthContextInterface {
-    isAuthenticated: boolean;
-    user: UserInterface | null;
-    onLogin: (email: string, password: string) => boolean;
-    onLogout: () => void;
-    onUpdateUser: (updates: Partial<UserInterface>) => void;
+    status: string;
+    healthScore?: number;
+    goals?: string[];
+    [key: string]: unknown;
 }
 
 export interface ThemeContextInterface {

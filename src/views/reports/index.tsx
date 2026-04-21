@@ -202,7 +202,7 @@ export const ReportsView = () => {
                             <h2 className="text-xl sm:text-3xl font-bold text-text-dark">{sprint?.name ?? t("Current Sprint")}</h2>
                             {sprint && (
                                 <p className="text-base text-text-secondary mt-2">
-                                    {formatDate(sprint.startDate)} - {formatDate(sprint.endDate)}
+                                    {formatDate(sprint.startDate ?? "")} - {formatDate(sprint.endDate ?? "")}
                                 </p>
                             )}
                         </div>

@@ -1,6 +1,7 @@
 export const routesData = {
     login: "/login",
     dashboard: "/",
+    sprints: "/sprints",
     tasks: "/tasks",
     blockers: "/blockers",
     decisions: "/decisions",
@@ -12,9 +13,11 @@ export const routesData = {
     handoffs: "/handoffs",
     users: "/users",
     userDetail: "/users/:userId",
+    teams: "/teams",
     commentsLog: "/comments-log",
     redFlags: "/red-flags",
     alerts: "/alerts",
     profile: "/profile",
     settings: "/settings",
+    sprints: "/sprints",
 } as const;

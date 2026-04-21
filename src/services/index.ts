@@ -1,1 +1,13 @@
-export { authService } from "./auth";
+export { authService } from "./auth/index";
+export { teamsService } from "./teams";
+export { sprintsService } from "./sprints";
+export { dashboardService } from "./dashboard";
+export { alertsService } from "./alerts";
+export { redFlagsService } from "./red-flags";
+export { blockersService } from "./blockers";
+export { decisionsService } from "./decisions";
+export { tasksService } from "./tasks";
+export { requirementsService } from "./requirements";
+export { timeLogsService } from "./time-logs";
+export { usersService } from "./users";
+export { commentsService } from "./comments";
