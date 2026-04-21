@@ -2,12 +2,14 @@ import {
     AlertTriangle,
     Bell,
     BookOpen,
+    CalendarDays,
     Flag,
     LayoutDashboard,
     ListChecks,
     MessageCircle,
     type LucideIcon,
     Settings,
+    Target,
     UserCog,
     Users,
 } from "lucide-react";
@@ -23,6 +25,7 @@ export interface SidebarItemInterface {
 
 export const sidebarItems: SidebarItemInterface[] = [
     { label: "Dashboard", path: routesData.dashboard, icon: LayoutDashboard },
+    { label: "Sprints", path: routesData.sprints, icon: Target },
     { label: "Tasks", path: routesData.tasks, icon: ListChecks },
     { label: "Blockers", path: routesData.blockers, icon: AlertTriangle },
     { label: "Comments Log", path: routesData.commentsLog, icon: MessageCircle },
@@ -32,10 +35,4 @@ export const sidebarItems: SidebarItemInterface[] = [
     { label: "Alerts", path: routesData.alerts, icon: Bell },
     { label: "Decisions", path: routesData.decisions, icon: BookOpen },
     { label: "Settings", path: routesData.settings, icon: Settings },
-    // { label: "Communication", path: routesData.communication, icon: MessageSquare, disabled: true },
-    // { label: "Workload", path: routesData.workload, icon: Users, disabled: true },
-    // { label: "Reports", path: routesData.reports, icon: BarChart3, disabled: true },
-    // { label: "Analytics", path: routesData.analytics, icon: TrendingUp, disabled: true },
-    // { label: "Ownership", path: routesData.ownership, icon: Shield, disabled: true },
-    // { label: "Handoffs", path: routesData.handoffs, icon: GitBranch, disabled: true },
 ];
