@@ -39,7 +39,9 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPat
                 onPatch(res);
             }
         });
-    }, [open, blocker?.id, getBlockerHandler, onPatch]);
+        // onPatch is a fresh inline prop each render; depending on it here would infinite-loop.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, blocker?.id]);
 
     if (!current) return null;
 
