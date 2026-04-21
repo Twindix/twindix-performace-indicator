@@ -288,7 +288,10 @@ const TasksViewInner = () => {
                 onUpdateRequirements={() => {}}
                 patchTaskLocal={(id, updates) => {
                     const existing = tasks.find((t) => t.id === id);
-                    if (existing) patchTaskLocal({ ...existing, ...updates });
+                    if (!existing) return;
+                    const merged = { ...existing, ...updates };
+                    patchTaskLocal(merged);
+                    setSelectedTask((prev) => (prev && prev.id === id ? merged : prev));
                 }}
                 removeTaskLocal={removeTaskLocal}
             />
