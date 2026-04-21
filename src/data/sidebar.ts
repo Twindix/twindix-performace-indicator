@@ -11,6 +11,7 @@ import {
     Settings,
     Target,
     UserCog,
+    Users,
 } from "lucide-react";
 
 import { routesData } from "./routes";
@@ -29,6 +30,7 @@ export const sidebarItems: SidebarItemInterface[] = [
     { label: "Blockers", path: routesData.blockers, icon: AlertTriangle },
     { label: "Comments Log", path: routesData.commentsLog, icon: MessageCircle },
     { label: "Users", path: routesData.users, icon: UserCog },
+    { label: "Teams", path: routesData.teams, icon: Users },
     { label: "Red Flags", path: routesData.redFlags, icon: Flag },
     { label: "Alerts", path: routesData.alerts, icon: Bell },
     { label: "Decisions", path: routesData.decisions, icon: BookOpen },

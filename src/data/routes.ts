@@ -13,6 +13,7 @@ export const routesData = {
     handoffs: "/handoffs",
     users: "/users",
     userDetail: "/users/:userId",
+    teams: "/teams",
     commentsLog: "/comments-log",
     redFlags: "/red-flags",
     alerts: "/alerts",
