@@ -5,6 +5,11 @@ export interface SprintInterface {
     start_date: string;
     end_date: string;
     created_at: string;
+    // Additional properties expected by the code
+    startDate?: string; // Alias for start_date
+    endDate?: string; // Alias for end_date
+    goals?: string[];
+    healthScore?: number;
 }
 
 export interface SprintMetaInterface {
