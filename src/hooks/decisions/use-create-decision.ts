@@ -14,7 +14,7 @@ export const useCreateDecision = () => {
         try {
             const res = await decisionsService.createHandler(sprintId, payload);
             toast.success(decisionsConstants.messages.createSuccess);
-            return res.data;
+            return (res as unknown as { data?: DecisionInterface }).data ?? (res as unknown as DecisionInterface);
         } catch (err) {
             toast.error(getErrorMessage(err, decisionsConstants.errors.createFailed));
             return null;
