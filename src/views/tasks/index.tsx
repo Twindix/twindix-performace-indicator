@@ -1,213 +1,124 @@
-import { useState, useMemo, useCallback, type DragEvent } from "react";
-import {
-    ArrowRight,
-    ClipboardList,
-    Filter,
-    Plus,
-    Search,
-} from "lucide-react";
+import { useState, useMemo, useCallback, useEffect, type DragEvent } from "react";
+import { ClipboardList, Filter, Plus, Search } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge, Button, Card, CardContent, Input } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
 import { TasksSkeleton } from "@/components/skeletons";
-import { TaskPhase, TaskPriority } from "@/enums";
-import type {
-    TaskInterface,
-    UserInterface,
-    BlockerInterface,
-} from "@/interfaces";
-import { t, useSettings, usePageLoader } from "@/hooks";
+import { TaskPriority } from "@/enums";
+import type { TaskInterface, TaskStatsInterface } from "@/interfaces";
+import { t, useTasksList, usePipeline, useTaskStats, useUpdateTaskStatus, useUsersList, useGetTask } from "@/hooks";
 import { useSprintStore } from "@/store";
-import {
-    Select,
-    SelectTrigger,
-    SelectContent,
-    SelectItem,
-    SelectValue,
-} from "@/ui";
-import { cn, getStorageItem, setStorageItem, storageKeys } from "@/utils";
-import {
-    COLUMNS,
-    COLUMN_COLORS,
-    inferWorkType,
-    checkTransition,
-    type TransitionResult,
-} from "../../data/seed/constants";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/ui";
 import { BoardView } from "./BoardView";
 import { PipelineView } from "./PipelineView";
 import { TaskDetailDialog } from "./TaskDetailDialog";
-import { TransitionDialog } from "./TransitionDialog";
 import { AddTaskDialog } from "./add-task-dialog";
 
-/* -------------------------------------------------------------------------- */
-/*  Main View                                                                  */
-/* -------------------------------------------------------------------------- */
+export const TasksView = () => <TasksViewInner />;
 
-export const TasksView = () => {
-    const isLoading = usePageLoader();
-    useSettings();
+const TasksViewInner = () => {
     const { activeSprintId } = useSprintStore();
 
-    const [allTasks, setAllTasks] = useState<TaskInterface[]>(() => {
-        const stored = getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? [];
-        const hasMissing = stored.some((t) => !t.workType);
-        if (!hasMissing) return stored;
-        const migrated = stored.map((t) => t.workType ? t : { ...t, workType: inferWorkType(t.tags) });
-        setStorageItem(storageKeys.tasks, migrated);
-        return migrated;
+    const [searchQuery, setSearchQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
+    const [priorityFilter, setPriorityFilter] = useState("all");
+    const [assigneeFilter, setAssigneeFilter] = useState("all");
+    const [typeFilter, setTypeFilter] = useState("all");
+    const [viewMode, setViewMode] = useState<"board" | "pipeline">("board");
+
+    const {
+        tasks,
+        isLoading: tasksLoading,
+        patchTaskLocal,
+        removeTaskLocal,
+        addTaskLocal,
+        toKanban,
+        refetch,
+    } = useTasksList(activeSprintId, {
+        status: statusFilter !== "all" && statusFilter !== "blocked" ? statusFilter : undefined,
+        assigned_to: assigneeFilter !== "all" ? assigneeFilter : undefined,
+        priority: priorityFilter !== "all" ? priorityFilter : undefined,
+        type: typeFilter !== "all" ? typeFilter : undefined,
+        search: searchQuery || undefined,
     });
 
-    const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
-    const blockers = getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? [];
+    const { pipeline, isLoading: pipelineLoading } = usePipeline(activeSprintId);
+    const { statsHandler } = useTaskStats();
+    const { updateStatusHandler } = useUpdateTaskStatus();
+    const { getHandler: getTaskHandler } = useGetTask();
+    const { users } = useUsersList();
 
+    const [stats, setStats] = useState<TaskStatsInterface | null>(null);
     const [selectedTask, setSelectedTask] = useState<TaskInterface | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [addTaskDialogOpen, setAddTaskDialogOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [priorityFilter, setPriorityFilter] = useState<string>("all");
-    const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
-    const [phaseFilter, setPhaseFilter] = useState<string>("all");
-    const [readinessFilter, setReadinessFilter] = useState<string>("all");
-    const [typeFilter, setTypeFilter] = useState<string>("all");
-    const [viewMode, setViewMode] = useState<"board" | "pipeline">("board");
-
     const [draggedTask, setDraggedTask] = useState<TaskInterface | null>(null);
-    const [dragOverPhase, setDragOverPhase] = useState<TaskPhase | null>(null);
+    const [dragOverStatus, setDragOverStatus] = useState<string | null>(null);
 
-    const [transitionDialogOpen, setTransitionDialogOpen] = useState(false);
-    const [transitionTask, setTransitionTask] = useState<TaskInterface | null>(null);
-    const [transitionTarget, setTransitionTarget] = useState<TaskPhase | null>(null);
-    const [transitionResult, setTransitionResult] = useState<TransitionResult | null>(null);
+    useEffect(() => {
+        if (!activeSprintId) return;
+        statsHandler(activeSprintId).then((res) => { if (res) setStats(res); });
+    }, [activeSprintId, statsHandler]);
 
-    const sprintTasks = useMemo(
-        () => allTasks.filter((t) => t.sprintId === activeSprintId),
-        [allTasks, activeSprintId],
-    );
-
-    const filteredTasks = useMemo(() => {
-        let result = sprintTasks;
-        if (searchQuery.trim()) {
-            const q = searchQuery.toLowerCase();
-            result = result.filter((t) => t.title.toLowerCase().includes(q) || t.tags.some((tag) => tag.toLowerCase().includes(q)));
-        }
-        if (phaseFilter !== "all") {
-            if (phaseFilter === "blocked") result = result.filter((t) => t.hasBlocker);
-            else result = result.filter((t) => t.phase === phaseFilter);
-        }
-        if (priorityFilter !== "all") result = result.filter((t) => t.priority === priorityFilter);
-        if (assigneeFilter !== "all") result = result.filter((t) => (t.assigneeIds ?? []).includes(assigneeFilter));
-        if (readinessFilter === "ready") result = result.filter((t) => t.readinessScore >= 70);
-        if (readinessFilter === "not_ready") result = result.filter((t) => t.readinessScore < 70);
-        if (typeFilter !== "all") result = result.filter((t) => (t.type ?? "feature") === typeFilter);
-        return result;
-    }, [sprintTasks, searchQuery, phaseFilter, priorityFilter, assigneeFilter, readinessFilter, typeFilter]);
-
-    const tasksByPhase = useMemo(() => {
-        const map = new Map<TaskPhase, TaskInterface[]>();
-        for (const col of COLUMNS) map.set(col.phase, []);
-        for (const task of filteredTasks) map.get(task.phase)?.push(task);
-        return map;
-    }, [filteredTasks]);
-
-    const sprintAssigneeIds = useMemo(
-        () => [...new Set(sprintTasks.flatMap((t) => t.assigneeIds ?? []))],
-        [sprintTasks],
-    );
-
-    const totalPoints = sprintTasks.reduce((sum, t) => sum + t.storyPoints, 0);
-    const donePoints = sprintTasks.filter((t) => t.phase === TaskPhase.Done).reduce((sum, t) => sum + t.storyPoints, 0);
-    const blockedCount = sprintTasks.filter((t) => t.hasBlocker).length;
-
-    const updateTasks = useCallback((updater: (prev: TaskInterface[]) => TaskInterface[]) => {
-        setAllTasks((prev) => {
-            const next = updater(prev);
-            setStorageItem(storageKeys.tasks, next);
-            return next;
+    useEffect(() => {
+        if (!dialogOpen || !selectedTask) return;
+        getTaskHandler(selectedTask.id).then((res) => {
+            if (res) {
+                setSelectedTask(res);
+                patchTaskLocal(res);
+            }
         });
-    }, []);
+    }, [dialogOpen, selectedTask?.id]);
 
-    const handleAddTask = useCallback((task: TaskInterface) => {
-        updateTasks((prev) => [...prev, task]);
-    }, [updateTasks]);
-
-    const moveTask = useCallback((taskId: string, newPhase: TaskPhase, extraProps?: Partial<TaskInterface>) => {
-        updateTasks((prev) => prev.map((t) =>
-            t.id === taskId ? { ...t, phase: newPhase, updatedAt: new Date().toISOString().split("T")[0], ...extraProps } : t,
-        ));
-    }, [updateTasks]);
-
-    const requestTransition = useCallback((task: TaskInterface, targetPhase: TaskPhase) => {
-        if (task.phase === targetPhase) return;
-        setTransitionTask(task);
-        setTransitionTarget(targetPhase);
-        setTransitionResult(checkTransition(task, targetPhase, blockers));
-        setTransitionDialogOpen(true);
-    }, [blockers]);
-
-    const confirmTransition = useCallback((payload?: { loggedHours?: number; note?: string }) => {
-        if (!transitionTask || !transitionTarget) return;
-
-        const toLabel = COLUMNS.find((c) => c.phase === transitionTarget)?.label;
-        const extraProps: Partial<TaskInterface> = {};
-
-        if (payload?.loggedHours) {
-            const currentUserId = getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "";
-            const newLog = {
-                id: `log-${Date.now()}`,
-                userId: currentUserId,
-                phase: transitionTask.phase,
-                hours: payload.loggedHours,
-                description: payload.note || `Time tracked moving to ${toLabel ?? transitionTarget}`,
-                createdAt: new Date().toISOString(),
-            };
-            extraProps.timeLogs = [...(transitionTask.timeLogs ?? []), newLog];
+    const kanban = useMemo(() => {
+        const board = toKanban();
+        if (statusFilter === "blocked") {
+            for (const col of Object.keys(board)) {
+                board[col] = board[col].filter((t) => t.is_blocked);
+            }
         }
+        return board;
+    }, [toKanban, statusFilter]);
 
-        moveTask(transitionTask.id, transitionTarget, extraProps);
-        toast_success(transitionTask, transitionTarget);
-        setTransitionDialogOpen(false);
-        setTransitionTask(null);
-        setTransitionTarget(null);
-        setTransitionResult(null);
-    }, [transitionTask, transitionTarget, moveTask]);
+    const filteredPipeline = useMemo(() => {
+        if (statusFilter === "blocked") {
+            const result = { ...pipeline };
+            for (const col of Object.keys(result)) {
+                result[col] = result[col].filter((t) => t.is_blocked);
+            }
+            return result;
+        }
+        return pipeline;
+    }, [pipeline, statusFilter]);
 
-    const handleDragStart  = useCallback((_e: DragEvent<HTMLDivElement>, task: TaskInterface) => setDraggedTask(task), []);
-    const handleDragOver   = useCallback((e: DragEvent<HTMLDivElement>) => e.preventDefault(), []);
-    const handleDragEnter  = useCallback((_e: DragEvent<HTMLDivElement>, phase: TaskPhase) => setDragOverPhase(phase), []);
-    const handleDragLeave  = useCallback((e: DragEvent<HTMLDivElement>) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverPhase(null);
+    const filteredCount = viewMode === "board"
+        ? Object.values(kanban).reduce((sum, arr) => sum + arr.length, 0)
+        : Object.values(filteredPipeline).reduce((sum, arr) => sum + arr.length, 0);
+
+    const handleDragStart = useCallback((_e: DragEvent<HTMLDivElement>, task: TaskInterface) => setDraggedTask(task), []);
+    const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => e.preventDefault(), []);
+    const handleDragEnter = useCallback((_e: DragEvent<HTMLDivElement>, status: string) => setDragOverStatus(status), []);
+    const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverStatus(null);
     }, []);
-    const handleDrop = useCallback((e: DragEvent<HTMLDivElement>, targetPhase: TaskPhase) => {
+    const handleDrop = useCallback(async (e: DragEvent<HTMLDivElement>, targetStatus: string) => {
         e.preventDefault();
-        setDragOverPhase(null);
-        if (draggedTask && draggedTask.phase !== targetPhase) requestTransition(draggedTask, targetPhase);
+        setDragOverStatus(null);
+        if (!draggedTask || draggedTask.status === targetStatus) { setDraggedTask(null); return; }
+        const updated = await updateStatusHandler(draggedTask.id, targetStatus);
+        if (updated && typeof updated === "object") {
+            patchTaskLocal(updated as TaskInterface);
+            toast.success(`${t("Task moved to")} ${targetStatus.replace(/_/g, " ")}`);
+        }
         setDraggedTask(null);
-    }, [draggedTask, requestTransition]);
+    }, [draggedTask, updateStatusHandler, patchTaskLocal]);
 
-    const handleUpdateAttachments = useCallback((taskId: string, attachments: TaskInterface["attachments"]) => {
-        updateTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, attachments } : t));
-        setSelectedTask((prev) => prev?.id === taskId ? { ...prev, attachments } : prev);
-    }, [updateTasks]);
-
-    const handleUpdateComments = useCallback((taskId: string, comments: TaskInterface["comments"]) => {
-        updateTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, comments } : t));
-        setSelectedTask((prev) => prev?.id === taskId ? { ...prev, comments } : prev);
-    }, [updateTasks]);
-
-    const handleUpdateTimeLogs = useCallback((taskId: string, timeLogs: TaskInterface["timeLogs"]) => {
-        updateTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, timeLogs } : t));
-        setSelectedTask((prev) => prev?.id === taskId ? { ...prev, timeLogs } : prev);
-    }, [updateTasks]);
-
-    const handleUpdateRequirements = useCallback((taskId: string, requirements: TaskInterface["requirements"]) => {
-        updateTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, requirements } : t));
-        setSelectedTask((prev) => prev?.id === taskId ? { ...prev, requirements } : prev);
-    }, [updateTasks]);
-
-    const selectedBlocker = useMemo(() => {
-        if (!selectedTask?.blockerId) return undefined;
-        return blockers.find((b) => b.id === selectedTask.blockerId);
-    }, [selectedTask, blockers]);
+    const isLoading = tasksLoading || (viewMode === "pipeline" && pipelineLoading);
+    const totalTasks = stats?.total_tasks ?? tasks.length;
+    const donePoints = stats?.story_points.used ?? 0;
+    const totalPoints = stats?.story_points.total ?? 0;
+    const blockedCount = stats?.blocked_count ?? tasks.filter((t) => t.is_blocked).length;
 
     if (isLoading) return <TasksSkeleton />;
 
@@ -215,19 +126,26 @@ export const TasksView = () => {
         <div>
             <Header
                 title={t("Task Management")}
-                description={t("Drag tasks between columns to change their phase. Phase gates enforce readiness criteria.")}
+                description={t("Drag tasks between columns to change their status.")}
                 actions={
-                    <div className="flex items-center gap-2 text-sm text-text-secondary">
-                        <span><strong className="text-text-dark">{sprintTasks.length}</strong> {t("tasks")}</span>
-                        <span className="text-border">|</span>
-                        <span><strong className="text-text-dark">{donePoints}</strong>/{totalPoints} {t("points")}</span>
-                        {blockedCount > 0 && (
-                            <>
-                                <span className="text-border">|</span>
-                                <Badge variant="error">{blockedCount} {t("blocked")}</Badge>
-                            </>
-                        )}
-                    </div>
+                    tasks.length === 0 && !searchQuery && statusFilter === "all" && priorityFilter === "all" && assigneeFilter === "all" && typeFilter === "all" ? (
+                        <Button size="sm" className="gap-1.5" onClick={() => setAddTaskDialogOpen(true)}>
+                            <Plus className="h-4 w-4" />
+                            {t("Add Task")}
+                        </Button>
+                    ) : (
+                        <div className="flex items-center gap-2 text-sm text-text-secondary">
+                            <span><strong className="text-text-dark">{totalTasks}</strong> {t("tasks")}</span>
+                            <span className="text-border">|</span>
+                            <span><strong className="text-text-dark">{donePoints}</strong>/{totalPoints} {t("pts")}</span>
+                            {blockedCount > 0 && (
+                                <>
+                                    <span className="text-border">|</span>
+                                    <Badge variant="error">{blockedCount} {t("blocked")}</Badge>
+                                </>
+                            )}
+                        </div>
+                    )
                 }
             />
 
@@ -236,48 +154,37 @@ export const TasksView = () => {
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                         <div className="relative flex-1 min-w-0 sm:min-w-[200px] sm:max-w-sm">
                             <Search className="absolute top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" style={{ insetInlineStart: 12 }} />
-                            <Input placeholder={t("Search tasks or tags...")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ paddingInlineStart: 40 }} />
+                            <Input
+                                placeholder={t("Search tasks or tags...")}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                style={{ paddingInlineStart: 40 }}
+                            />
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                             <Filter className="h-4 w-4 text-text-muted hidden sm:block shrink-0" />
 
-                            <Select value={phaseFilter} onValueChange={setPhaseFilter}>
-                                <SelectTrigger className="w-[150px] h-9 text-xs sm:text-sm"><SelectValue placeholder={t("Status")} /></SelectTrigger>
+                            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                <SelectTrigger className="w-[150px] h-9 text-xs sm:text-sm">
+                                    <SelectValue placeholder={t("Status")} />
+                                </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">{t("All Statuses")}</SelectItem>
-                                    <SelectItem value={TaskPhase.Backlog}>{t("Backlog")}</SelectItem>
-                                    <SelectItem value={TaskPhase.Ready}>{t("Ready")}</SelectItem>
-                                    <SelectItem value={TaskPhase.InProgress}>{t("In Progress")}</SelectItem>
-                                    <SelectItem value={TaskPhase.Review}>{t("Review")}</SelectItem>
-                                    <SelectItem value={TaskPhase.QA}>{t("Ready for Testing")}</SelectItem>
-                                    <SelectItem value={TaskPhase.Done}>{t("Deployed")}</SelectItem>
+                                    <SelectItem value="backlog">{t("Backlog")}</SelectItem>
+                                    <SelectItem value="ready">{t("Ready")}</SelectItem>
+                                    <SelectItem value="in_progress">{t("In Progress")}</SelectItem>
+                                    <SelectItem value="review">{t("Review")}</SelectItem>
+                                    <SelectItem value="qa">{t("QA")}</SelectItem>
+                                    <SelectItem value="done">{t("Done")}</SelectItem>
                                     <SelectItem value="blocked">{t("Blocked")}</SelectItem>
                                 </SelectContent>
                             </Select>
 
-                            <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-                                <SelectTrigger className="w-[150px] h-9 text-xs sm:text-sm"><SelectValue placeholder={t("Assignee")} /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">{t("All Assignees")}</SelectItem>
-                                    {sprintAssigneeIds.map((id) => {
-                                        const m = members.find((mem) => mem.id === id);
-                                        return <SelectItem key={id} value={id}>{m?.name ?? id}</SelectItem>;
-                                    })}
-                                </SelectContent>
-                            </Select>
-
-                            <Select value={readinessFilter} onValueChange={setReadinessFilter}>
-                                <SelectTrigger className="w-[150px] h-9 text-xs sm:text-sm"><SelectValue placeholder={t("Readiness")} /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">{t("All Readiness")}</SelectItem>
-                                    <SelectItem value="ready">{t("Ready (≥70%)")}</SelectItem>
-                                    <SelectItem value="not_ready">{t("Not Ready (<70%)")}</SelectItem>
-                                </SelectContent>
-                            </Select>
-
                             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                                <SelectTrigger className="w-[130px] h-9 text-xs sm:text-sm"><SelectValue placeholder={t("Priority")} /></SelectTrigger>
+                                <SelectTrigger className="w-[130px] h-9 text-xs sm:text-sm">
+                                    <SelectValue placeholder={t("Priority")} />
+                                </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">{t("All Priorities")}</SelectItem>
                                     <SelectItem value={TaskPriority.Low}>{t("Low")}</SelectItem>
@@ -287,8 +194,22 @@ export const TasksView = () => {
                                 </SelectContent>
                             </Select>
 
+                            <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
+                                <SelectTrigger className="w-[150px] h-9 text-xs sm:text-sm">
+                                    <SelectValue placeholder={t("Assignee")} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">{t("All Assignees")}</SelectItem>
+                                    {users.map((u) => (
+                                        <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
                             <Select value={typeFilter} onValueChange={setTypeFilter}>
-                                <SelectTrigger className="w-[120px] h-9 text-xs sm:text-sm"><SelectValue placeholder={t("Type")} /></SelectTrigger>
+                                <SelectTrigger className="w-[120px] h-9 text-xs sm:text-sm">
+                                    <SelectValue placeholder={t("Type")} />
+                                </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">{t("All Types")}</SelectItem>
                                     <SelectItem value="feature">{t("Feature")}</SelectItem>
@@ -296,14 +217,15 @@ export const TasksView = () => {
                                 </SelectContent>
                             </Select>
 
-                            {(phaseFilter !== "all" || assigneeFilter !== "all" || readinessFilter !== "all" || priorityFilter !== "all" || typeFilter !== "all" || searchQuery) && (
+                            {(statusFilter !== "all" || assigneeFilter !== "all" || priorityFilter !== "all" || typeFilter !== "all" || searchQuery) && (
                                 <button
-                                    onClick={() => { setPhaseFilter("all"); setAssigneeFilter("all"); setReadinessFilter("all"); setPriorityFilter("all"); setTypeFilter("all"); setSearchQuery(""); }}
+                                    onClick={() => { setStatusFilter("all"); setAssigneeFilter("all"); setPriorityFilter("all"); setTypeFilter("all"); setSearchQuery(""); }}
                                     className="text-xs text-text-muted hover:text-text-dark underline cursor-pointer"
                                 >
                                     {t("Clear all")}
                                 </button>
                             )}
+
                             <Button size="sm" className="gap-1.5 shrink-0" onClick={() => setAddTaskDialogOpen(true)}>
                                 <Plus className="h-4 w-4" />
                                 {t("Add Task")}
@@ -322,23 +244,17 @@ export const TasksView = () => {
                 </CardContent>
             </Card>
 
-            <div className="flex flex-wrap items-center gap-1.5 mb-6 mt-1 py-2 text-[10px] text-text-muted">
-                {COLUMNS.map((col, i) => (
-                    <span key={col.phase} className="flex items-center gap-1">
-                        {i > 0 && <ArrowRight className="h-3 w-3 mx-0.5" />}
-                        <span className={cn("h-2 w-2 rounded-full", COLUMN_COLORS[col.phase])} />
-                        <span className="font-medium">{t(col.label)}</span>
-                    </span>
-                ))}
-            </div>
-
-            {filteredTasks.length === 0 ? (
-                <EmptyState icon={ClipboardList} title={t("No tasks found")} description={t("Try adjusting your filters or search query.")} />
+            {filteredCount === 0 ? (
+                <EmptyState
+                    icon={ClipboardList}
+                    title={t("No tasks found")}
+                    description={t("Try adjusting your filters or search query.")}
+                />
             ) : viewMode === "board" ? (
                 <BoardView
-                    tasksByPhase={tasksByPhase}
+                    kanban={kanban}
                     draggedTask={draggedTask}
-                    dragOverPhase={dragOverPhase}
+                    dragOverStatus={dragOverStatus}
                     handleDragStart={handleDragStart}
                     handleDragOver={handleDragOver}
                     handleDragEnter={handleDragEnter}
@@ -349,8 +265,8 @@ export const TasksView = () => {
                 />
             ) : (
                 <PipelineView
-                    tasks={filteredTasks}
-                    members={members}
+                    pipeline={filteredPipeline}
+                    members={users}
                     setSelectedTask={setSelectedTask}
                     setDialogOpen={setDialogOpen}
                 />
@@ -358,44 +274,29 @@ export const TasksView = () => {
 
             <TaskDetailDialog
                 task={selectedTask}
-                members={members}
-                blocker={selectedBlocker}
+                members={users}
+                blocker={undefined}
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
-                onMoveRequest={requestTransition}
-                onUpdateComments={handleUpdateComments}
-                onUpdateAttachments={handleUpdateAttachments}
-                onUpdateTimeLogs={handleUpdateTimeLogs}
-                onUpdateRequirements={handleUpdateRequirements}
-            />
-
-            <TransitionDialog
-                open={transitionDialogOpen}
-                onOpenChange={setTransitionDialogOpen}
-                task={transitionTask}
-                targetPhase={transitionTarget}
-                transitionResult={transitionResult}
-                isAssignee={(transitionTask?.assigneeIds ?? []).includes(getStorageItem<{ id: string }>(storageKeys.authUser)?.id ?? "")}
-                onConfirm={confirmTransition}
+                onMoveRequest={() => {}}
+                onUpdateRequirements={() => {}}
+                patchTaskLocal={(id, updates) => {
+                    const existing = tasks.find((t) => t.id === id);
+                    if (existing) patchTaskLocal({ ...existing, ...updates });
+                }}
+                removeTaskLocal={removeTaskLocal}
             />
 
             <AddTaskDialog
                 open={addTaskDialogOpen}
-                onOpenChange={setAddTaskDialogOpen}
-                members={members}
-                sprintId={activeSprintId ?? ""}
-                onAddTask={handleAddTask}
+                onOpenChange={(open) => {
+                    setAddTaskDialogOpen(open);
+                    if (!open) refetch();
+                }}
+                members={users}
+                sprintId={activeSprintId}
+                addTaskLocal={addTaskLocal}
             />
         </div>
     );
 };
-
-// helper to avoid importing toast at top level (toast is already imported in sub-files)
-function toast_success(task: TaskInterface, targetPhase: TaskPhase) {
-    const toLabel = COLUMNS.find((c) => c.phase === targetPhase)?.label ?? targetPhase;
-    const fromLabel = COLUMNS.find((c) => c.phase === task.phase)?.label ?? task.phase;
-    // fire-and-forget — import toast lazily to avoid circular issues
-    import("sonner").then(({ toast }) => {
-        toast.success(`${t("Task moved")}: ${t(fromLabel)} → ${t(toLabel)}`, { description: task.title });
-    });
-}

@@ -6,9 +6,8 @@ import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { WorkloadSkeleton } from "@/components/skeletons";
 import { t, useSettings, usePageLoader } from "@/hooks";
 import type { TeamMemberWorkloadInterface, UserInterface } from "@/interfaces";
-import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback } from "@/ui";
-import { cn, getStorageItem, storageKeys } from "@/utils";
+import { cn } from "@/utils";
 
 const getUtilizationColor = (util: number): string => {
     if (util > 100) return "bg-error";
@@ -26,11 +25,8 @@ export const WorkloadView = () => {
     const isLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
-    const { activeSprintId } = useSprintStore();
-    const allWorkload = getStorageItem<TeamMemberWorkloadInterface[]>(storageKeys.workload) ?? [];
-    const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
-
-    const sprintWorkload = allWorkload.filter((w) => w.sprintId === activeSprintId);
+    const sprintWorkload: TeamMemberWorkloadInterface[] = [];
+    const members: UserInterface[] = [];
 
     const getMember = (id: string) => members.find((m) => m.id === id);
 
@@ -117,11 +113,11 @@ export const WorkloadView = () => {
                                     {/* Avatar + Name + Overloaded (mobile) */}
                                     <div className="flex items-center gap-3 md:w-48 md:shrink-0">
                                         <Avatar className="h-9 w-9">
-                                            <AvatarFallback>{member?.avatar ?? "?"}</AvatarFallback>
+                                            <AvatarFallback>{member?.avatar_initials ?? "?"}</AvatarFallback>
                                         </Avatar>
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-sm font-semibold text-text-dark truncate">{member?.name ?? "Unknown"}</p>
-                                            <p className="text-xs text-text-muted truncate">{member?.role?.replace(/_/g, " ")}</p>
+                                            <p className="text-sm font-semibold text-text-dark truncate">{member?.full_name ?? "Unknown"}</p>
+                                            <p className="text-xs text-text-muted truncate">{member?.role_tier?.replace(/_/g, " ")}</p>
                                         </div>
                                         {isOverloaded && (
                                             <Badge variant="error" className="shrink-0 md:hidden">
@@ -207,9 +203,9 @@ export const WorkloadView = () => {
                                 <div className="flex items-center justify-between mb-1.5">
                                     <div className="flex items-center gap-2">
                                         <Avatar className="h-5 w-5">
-                                            <AvatarFallback className="text-[8px]">{member?.avatar ?? "?"}</AvatarFallback>
+                                            <AvatarFallback className="text-[8px]">{member?.avatar_initials ?? "?"}</AvatarFallback>
                                         </Avatar>
-                                        <span className="text-xs font-medium text-text-dark">{member?.name ?? "Unknown"}</span>
+                                        <span className="text-xs font-medium text-text-dark">{member?.full_name ?? "Unknown"}</span>
                                     </div>
                                     <span className={cn("text-xs font-medium", isOverloaded ? "text-error" : "text-text-secondary")}>
                                         {w.assignedPoints} / {w.capacity} {t("points")}
@@ -269,9 +265,9 @@ export const WorkloadView = () => {
                                 <div key={w.memberId} className="flex items-center gap-3">
                                     <span className="text-xs text-text-muted w-5 text-right shrink-0">#{index + 1}</span>
                                     <Avatar className="h-6 w-6 shrink-0">
-                                        <AvatarFallback className="text-[8px]">{member?.avatar ?? "?"}</AvatarFallback>
+                                        <AvatarFallback className="text-[8px]">{member?.avatar_initials ?? "?"}</AvatarFallback>
                                     </Avatar>
-                                    <span className="text-xs font-medium text-text-dark w-32 truncate shrink-0">{member?.name ?? "Unknown"}</span>
+                                    <span className="text-xs font-medium text-text-dark w-32 truncate shrink-0">{member?.full_name ?? "Unknown"}</span>
                                     <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden">
                                         <div
                                             className={cn("h-full rounded-full transition-all duration-500 progress-animated", isHigh ? "bg-error" : "bg-warning")}

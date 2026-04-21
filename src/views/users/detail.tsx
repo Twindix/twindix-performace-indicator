@@ -14,7 +14,7 @@ import type {
     UserInterface,
 } from "@/interfaces";
 import { Avatar, AvatarFallback, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
-import { cn, getStorageItem, storageKeys } from "@/utils";
+import { cn } from "@/utils";
 
 const ROLE_LABELS: Record<string, string> = {
     ceo: "CEO", cto: "CTO",
@@ -47,27 +47,27 @@ export const UserDetailView = () => {
     const navigate = useNavigate();
     const [sprintFilter, setSprintFilter] = useState("all");
 
-    const members     = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
-    const allTasks    = getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? [];
-    const allBlockers = getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? [];
-    const allComms    = getStorageItem<CommunicationInterface[]>(storageKeys.communications) ?? [];
-    const sprints     = getStorageItem<SprintInterface[]>(storageKeys.sprints) ?? [];
-    const alerts      = getStorageItem<{ id: string; mentionedIds: string[]; resolvedByIds: string[]; sprintId: string }[]>(storageKeys.alerts) ?? [];
-    const redFlags    = getStorageItem<{ id: string; createdById: string; sprintId: string }[]>(storageKeys.redFlags) ?? [];
-    const comments    = getStorageItem<{ id: string; authorId: string; mentionedId?: string; responderId?: string; hasResponse: boolean; sprintId?: string }[]>(storageKeys.comments) ?? [];
+    const members: UserInterface[] = [];
+    const allTasks: TaskInterface[] = [];
+    const allBlockers: BlockerInterface[] = [];
+    const allComms: CommunicationInterface[] = [];
+    const sprints: SprintInterface[] = [];
+    const alerts: { id: string; mentionedIds: string[]; resolvedByIds: string[]; sprintId: string }[] = [];
+    const redFlags: { id: string; createdById: string; sprintId: string }[] = [];
+    const comments: { id: string; authorId: string; mentionedId?: string; responderId?: string; hasResponse: boolean; sprintId?: string }[] = [];
 
     const user = members.find((m) => m.id === userId);
 
     const inSprint = (sprintId: string) => sprintFilter === "all" || sprintId === sprintFilter;
 
-    const tasks    = useMemo(() => allTasks.filter((t) => (t.assigneeIds ?? []).includes(userId ?? "") && inSprint(t.sprintId)), [allTasks, userId, sprintFilter]);
-    const blockers = useMemo(() => allBlockers.filter((b) => inSprint(b.sprintId)), [allBlockers, sprintFilter]);
+    const tasks    = useMemo(() => allTasks.filter((t) => (t.assigneeIds ?? []).includes(userId ?? "") && inSprint(t.sprintId ?? "")), [allTasks, userId, sprintFilter]);
+    const blockers = useMemo(() => allBlockers, [allBlockers, sprintFilter]);
     const comms    = useMemo(() => allComms.filter((c) => inSprint(c.sprintId)), [allComms, sprintFilter]);
 
     /* ── Task analytics ── */
     const doneTasks    = tasks.filter((t) => t.phase === TaskPhase.Done);
-    const totalPoints  = tasks.reduce((s, t) => s + t.storyPoints, 0);
-    const donePoints   = doneTasks.reduce((s, t) => s + t.storyPoints, 0);
+    const totalPoints  = tasks.reduce((s, t) => s + (t.storyPoints ?? 0), 0);
+    const donePoints   = doneTasks.reduce((s, t) => s + (t.storyPoints ?? 0), 0);
     const deliveryRate = totalPoints > 0 ? Math.round((donePoints / totalPoints) * 100) : 0;
 
     const tasksByPhase = useMemo(() => {
@@ -84,8 +84,8 @@ export const UserDetailView = () => {
         ? Math.round((answered.reduce((s, c) => s + (c.responseTimeHours ?? 0), 0) / answered.length) * 10) / 10 : 0;
 
     /* ── Blocker analytics ── */
-    const reportedBlockers   = blockers.filter((b) => b.reporterId === userId);
-    const ownedBlockers      = blockers.filter((b) => b.ownerId === userId);
+    const reportedBlockers   = blockers.filter((b) => b.reporter?.id === userId);
+    const ownedBlockers      = blockers.filter((b) => b.owner?.id === userId);
     const resolvedOwned      = ownedBlockers.filter((b) => b.status === "resolved");
     const blockerResolveRate = ownedBlockers.length > 0 ? Math.round((resolvedOwned.length / ownedBlockers.length) * 100) : 0;
 
@@ -125,8 +125,8 @@ export const UserDetailView = () => {
             </div>
 
             <Header
-                title={user.name}
-                description={`${ROLE_LABELS[user.role] ?? user.role} · ${user.team}`}
+                title={user.name ?? ""}
+                description={`${ROLE_LABELS[user.role ?? ""] ?? user.role} · ${user.team?.name ?? ""}`}
                 actions={
                     <Select value={sprintFilter} onValueChange={setSprintFilter}>
                         <SelectTrigger className="w-[180px] h-9 text-sm">
@@ -155,8 +155,8 @@ export const UserDetailView = () => {
                                 <p className="text-xs text-text-muted mt-0.5">{user.email}</p>
                             </div>
                             <div className="flex flex-wrap justify-center gap-1.5">
-                                <Badge variant="outline">{ROLE_LABELS[user.role] ?? user.role}</Badge>
-                                <Badge variant="secondary">{user.team}</Badge>
+                                <Badge variant="outline">{ROLE_LABELS[user.role ?? ""] ?? user.role}</Badge>
+                                <Badge variant="secondary">{user.team?.name ?? "No Team"}</Badge>
                             </div>
                         </CardContent>
                     </Card>
@@ -263,9 +263,9 @@ export const UserDetailView = () => {
                                 <div key={b.id} className="flex items-center justify-between gap-3 rounded-lg bg-muted p-2.5 mb-2">
                                     <p className="text-xs text-text-secondary truncate flex-1">{b.title}</p>
                                     <div className="flex items-center gap-2 shrink-0">
-                                        <span className="text-xs text-text-muted">{b.durationDays}d</span>
+                                        <span className="text-xs text-text-muted">{b.duration_days}d</span>
                                         <Badge variant={b.status === "resolved" ? "success" : b.status === "escalated" ? "error" : "warning"} className="text-[10px]">
-                                            {t(b.status.charAt(0).toUpperCase() + b.status.slice(1))}
+                                            {t((b.status ?? "").charAt(0).toUpperCase() + (b.status ?? "").slice(1))}
                                         </Badge>
                                     </div>
                                 </div>
@@ -279,7 +279,7 @@ export const UserDetailView = () => {
                             <CardHeader><CardTitle className="text-base flex items-center gap-2"><ListChecks className="h-4 w-4" />{t("Assigned Tasks")}</CardTitle></CardHeader>
                             <CardContent className="flex flex-col gap-2">
                                 {tasks.map((task) => {
-                                    const phaseLabel = task.phase === "in_progress" ? "In Progress" : task.phase.charAt(0).toUpperCase() + task.phase.slice(1);
+                                    const phaseLabel = (task.phase ?? "") === "in_progress" ? "In Progress" : (task.phase ?? "").charAt(0).toUpperCase() + (task.phase ?? "").slice(1);
                                     return (
                                         <div key={task.id} className="flex items-center justify-between gap-3 rounded-lg bg-muted p-2.5">
                                             <div className="flex-1 min-w-0">

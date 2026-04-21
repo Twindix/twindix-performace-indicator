@@ -1,51 +1,39 @@
-import type { SprintStatus, UserRole } from "@/enums";
-
 export interface ApiSuccessResponse<T> {
     data: T;
-    isSuccess: boolean;
+    isSuccess?: boolean;
     message?: string;
 }
 
-export interface LoginResponseInterface {
-    data: {
-        token: string;
-        user: UserInterface;
-    };
-    isSuccess: boolean;
-    message: string;
+export interface UserSettingsInterface {
+    dark_mode: boolean | null;
+    compact_view: boolean | null;
+    language: string | null;
+    date_format: string | null;
 }
 
-export interface MeResponseInterface {
-    data: UserInterface;
-    isSuccess: boolean;
+export interface UserTeamInterface {
+    id: string;
+    name: string;
 }
 
 export interface UserInterface {
     id: string;
-    name: string;
+    full_name: string;
     email: string;
-    role: UserRole;
-    avatar: string;
-    team: string;
-    status?: string;
-}
-
-export interface SprintInterface {
-    id: string;
-    name: string;
-    startDate: string;
-    endDate: string;
-    status: SprintStatus;
-    healthScore: number;
-    goals: string[];
-}
-
-export interface AuthContextInterface {
-    isAuthenticated: boolean;
-    user: UserInterface | null;
-    onLogin: (email: string, password: string) => boolean;
-    onLogout: () => void;
-    onUpdateUser: (updates: Partial<UserInterface>) => void;
+    role_label: string | null;
+    role_tier: string;
+    team: UserTeamInterface;
+    avatar_initials: string;
+    account_status: string | null;
+    presence_status: string | null;
+    last_seen_at: string | null;
+    settings: UserSettingsInterface;
+    created_at: string;
+    // Additional properties expected by the code
+    name?: string; // Alias for full_name
+    avatar?: string; // Alias for avatar_initials
+    role?: string; // Alias for role_label
+    status?: string; // Alias for account_status
 }
 
 export interface ThemeContextInterface {

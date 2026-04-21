@@ -1,4 +1,4 @@
-import type { TaskPriority, TaskStatus } from "@/enums";
+import type { TaskPriority } from "@/enums";
 import type { TaskInterface, UserInterface } from "@/interfaces";
 
 export interface RequirementDraftInterface {
@@ -16,12 +16,12 @@ export interface AttachmentInterface {
 export interface AddTaskFormState {
     title: string;
     description: string;
-    assigneeIds: string[];
+    assigned_to: string;
     priority: TaskPriority;
-    status: TaskStatus;
     estimatedHours: number;
     attachments: AttachmentInterface[];
-    initialComment: string;
+    files: File[];
+    tags: string[];
     requirements: RequirementDraftInterface[];
 }
 
@@ -30,5 +30,6 @@ export interface AddTaskDialogProps {
     onOpenChange: (open: boolean) => void;
     members: UserInterface[];
     sprintId: string;
-    onAddTask: (task: TaskInterface) => void;
+    onAddTask?: (task: TaskInterface) => void;
+    addTaskLocal?: (task: TaskInterface) => void;
 }
