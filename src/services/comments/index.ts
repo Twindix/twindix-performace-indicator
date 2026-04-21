@@ -34,7 +34,7 @@ export const commentsService = {
     },
 
     respondHandler: async (id: string): Promise<CommentInterface> => {
-        const { data } = await apiClient.post<{ data: CommentInterface }>(apisData.comments.respond(id));
+        const { data } = await apiClient.patch<{ data: CommentInterface }>(apisData.comments.respond(id));
         return data.data ?? (data as any);
     },
 
