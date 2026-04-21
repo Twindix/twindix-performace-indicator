@@ -42,7 +42,7 @@ export const CommentsLogView = () => {
         setForm({
             body: c.body,
             task_title: c.task_title ?? "",
-            mentioned_user_ids: c.mentions.map((m) => m.id),
+            mentioned_user_ids: c.mentioned_users.map((m) => m.id),
         });
         setEditTarget(c);
     };
@@ -91,7 +91,7 @@ export const CommentsLogView = () => {
 
     const stats = {
         total: analytics?.total_comments ?? comments.length,
-        withMention: analytics?.with_mention ?? comments.filter((c) => c.mentions.length > 0).length,
+        withMention: analytics?.with_mention ?? comments.filter((c) => c.mentioned_users.length > 0).length,
         withResponse: analytics?.responded ?? comments.filter((c) => !!c.responded_at).length,
         noResponse: analytics?.no_response ?? comments.filter((c) => !c.responded_at).length,
     };
@@ -326,10 +326,10 @@ export const CommentsLogView = () => {
                                         </div>
 
                                         {/* Mentions */}
-                                        {comment.mentions.length > 0 && (
+                                        {comment.mentioned_users.length > 0 && (
                                             <div className="flex items-center gap-1.5 flex-wrap">
                                                 <AtSign className="h-3.5 w-3.5 text-primary" />
-                                                {comment.mentions.map((m) => (
+                                                {comment.mentioned_users.map((m) => (
                                                     <div key={m.id} className="flex items-center gap-1">
                                                         <Avatar className="h-5 w-5">
                                                             <AvatarFallback className="text-[8px]">{m.avatar_initials}</AvatarFallback>
@@ -400,11 +400,11 @@ export const CommentsLogView = () => {
                                             <span className="text-sm text-text-secondary">{author.full_name}</span>
                                         </div>
                                     </div>
-                                    {viewTarget.mentions.length > 0 && (
+                                    {viewTarget.mentioned_users.length > 0 && (
                                         <div>
                                             <p className="text-xs font-medium text-text-muted mb-1.5">{t("Mentioned")}</p>
                                             <div className="flex flex-col gap-1">
-                                                {viewTarget.mentions.map((m) => (
+                                                {viewTarget.mentioned_users.map((m) => (
                                                     <div key={m.id} className="flex items-center gap-2">
                                                         <AtSign className="h-4 w-4 text-primary" />
                                                         <Avatar className="h-6 w-6"><AvatarFallback className="text-[9px]">{m.avatar_initials}</AvatarFallback></Avatar>

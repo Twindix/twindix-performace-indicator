@@ -12,7 +12,7 @@ export interface CommentInterface {
     author: CommentUserInterface;
     response_status: string | null;
     responded_at: string | null;
-    mentions: CommentUserInterface[];
+    mentioned_users: CommentUserInterface[];
     created_at: string;
 }
 
