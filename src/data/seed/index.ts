@@ -9,7 +9,6 @@ import { seedMetrics } from "./metrics";
 import { seedWorkload } from "./workload";
 import { seedOwnership } from "./ownership";
 import { seedHandoffs } from "./handoffs";
-import { seedComments } from "./comments";
 import { seedRedFlags } from "./red-flags";
 import { seedAlerts } from "./alerts";
 
@@ -28,7 +27,6 @@ export const initializeSeedData = () => {
     setStorageItem(storageKeys.workload, seedWorkload);
     setStorageItem(storageKeys.ownership, seedOwnership);
     setStorageItem(storageKeys.handoffs, seedHandoffs);
-    setStorageItem(storageKeys.comments, seedComments);
     setStorageItem(storageKeys.redFlags, seedRedFlags);
     setStorageItem(storageKeys.alerts, seedAlerts);
     setStorageItem(storageKeys.seeded, SEED_VERSION);
@@ -43,6 +41,5 @@ export { seedMetrics } from "./metrics";
 export { seedWorkload } from "./workload";
 export { seedOwnership } from "./ownership";
 export { seedHandoffs } from "./handoffs";
-export { seedComments } from "./comments";
 export { seedRedFlags } from "./red-flags";
 export { seedAlerts } from "./alerts";

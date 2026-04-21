@@ -29,6 +29,11 @@ export interface UserInterface {
     last_seen_at: string;
     settings: UserSettingsInterface;
     created_at: string;
+    // Additional properties expected by the code
+    name?: string; // Alias for full_name
+    avatar?: string; // Alias for avatar_initials
+    role?: string; // Alias for role_label
+    status?: string; // Alias for account_status
 }
 
 export interface ThemeContextInterface {
