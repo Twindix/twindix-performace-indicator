@@ -336,7 +336,7 @@ export const TaskDetailDialog = ({
                                         </button>
                                         <button
                                             onClick={() => { setEditingReqId(req.id); setEditingReqLabel(req.content ?? ""); }}
-                                            className="text-text-muted hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                            className="text-text-muted hover:text-primary transition-colors cursor-pointer"
                                         >
                                             <Pencil className="h-3 w-3" />
                                         </button>
@@ -345,7 +345,7 @@ export const TaskDetailDialog = ({
                                                 const ok = await deleteRequirementHandler(req.id);
                                                 if (ok) patchTaskLocal(task.id, { requirements: requirements.filter((r) => r.id !== req.id) });
                                             }}
-                                            className="text-text-muted hover:text-error opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                            className="text-text-muted hover:text-error transition-colors cursor-pointer"
                                         >
                                             <X className="h-3 w-3" />
                                         </button>

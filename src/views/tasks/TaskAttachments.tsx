@@ -69,7 +69,7 @@ export const TaskAttachments = ({ task, patchTaskLocal }: Props) => {
                                 <a href={att.url ?? att.dataUrl} download={att.name} className="text-xs font-medium text-text-dark hover:text-primary truncate block transition-colors">{att.name}</a>
                                 <p className="text-[10px] text-text-muted">{formatSize(att.size)}</p>
                             </div>
-                            <button onClick={() => handleDelete(att.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                            <button onClick={() => handleDelete(att.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light transition-colors cursor-pointer">
                                 <Trash2 className="h-3.5 w-3.5" />
                             </button>
                         </div>

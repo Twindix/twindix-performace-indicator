@@ -254,10 +254,10 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
                                         </span>
                                         {isAuthor && !isEditing && (
                                             <>
-                                                <button onClick={() => startEdit(c)} className="p-1.5 rounded text-text-muted hover:text-primary hover:bg-primary-lighter opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                                <button onClick={() => startEdit(c)} className="p-1.5 rounded text-text-muted hover:text-primary hover:bg-primary-lighter transition-colors cursor-pointer">
                                                     <Pencil className="h-3 w-3" />
                                                 </button>
-                                                <button onClick={() => deleteComment(c.id)} className="p-1.5 rounded text-text-muted hover:text-error hover:bg-error-light opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                                <button onClick={() => deleteComment(c.id)} className="p-1.5 rounded text-text-muted hover:text-error hover:bg-error-light transition-colors cursor-pointer">
                                                     <Trash2 className="h-3 w-3" />
                                                 </button>
                                             </>
