@@ -1,3 +1,9 @@
 export { authService } from "./auth";
 export { sprintsService } from "./sprints";
 export { blockersService } from "./blockers";
+export { decisionsService } from "./decisions";
+export { tasksService } from "./tasks";
+export { requirementsService } from "./requirements";
+export { timeLogsService } from "./time-logs";
+export { usersService } from "./users";
+export { commentsService } from "./comments";
