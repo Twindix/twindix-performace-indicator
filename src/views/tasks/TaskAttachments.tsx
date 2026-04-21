@@ -1,7 +1,6 @@
 import { Paperclip, Trash2 } from "lucide-react";
 
-// import { useTasks } from "@/contexts";
-import { t, useTaskAttachments } from "@/hooks";
+import { t, useGetTask, useTaskAttachments } from "@/hooks";
 import type { TaskInterface } from "@/interfaces";
 
 interface Props {
@@ -13,22 +12,27 @@ const formatSize = (bytes: number) =>
     bytes < 1024 ? `${bytes} B` : bytes < 1048576 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
 
 export const TaskAttachments = ({ task, patchTaskLocal }: Props) => {
-    // const { patchTaskLocal } = useTasks();
     const { uploadHandler, deleteHandler } = useTaskAttachments();
+    const { getHandler: getTaskHandler } = useGetTask();
     const attachments = task.attachments ?? [];
+
+    const refreshAttachments = async () => {
+        const fresh = await getTaskHandler(task.id);
+        if (fresh) patchTaskLocal(task.id, { attachments: fresh.attachments ?? [] });
+    };
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files ?? []);
         e.target.value = "";
         for (const file of files) {
-            const attachments = await uploadHandler(task.id, file);
-            if (attachments) patchTaskLocal(task.id, { attachments });
+            const ok = await uploadHandler(task.id, file);
+            if (ok !== null) await refreshAttachments();
         }
     };
 
     const handleDelete = async (attachmentId: string) => {
         const ok = await deleteHandler(task.id, attachmentId);
-        if (ok) patchTaskLocal(task.id, { attachments: attachments.filter((a) => a.id !== attachmentId) });
+        if (ok) await refreshAttachments();
     };
 
     return (
