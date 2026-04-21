@@ -22,5 +22,5 @@ export const useUsersList = () => {
 
     useEffect(() => { fetch(); }, [fetch]);
 
-    return { users, isLoading };
+    return { users, isLoading, refetch: fetch };
 };
