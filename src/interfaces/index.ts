@@ -45,6 +45,7 @@ export type { CommentInterface, CommentUserInterface, CommentsListResponseInterf
 export type { RedFlagInterface, RedFlagSeverity } from "./red-flags";
 export type { AttachmentInterface, AddTaskFormState, AddTaskDialogProps, RequirementDraftInterface } from "./tasks-dialog";
 export type { UsersListResponseInterface, UserDetailResponseInterface, CreateUserPayloadInterface, UpdateUserPayloadInterface, UserAnalyticsInterface, UserAnalyticsAssignedTaskInterface } from "./users";
+export type { TeamInterface, TeamsListResponseInterface, TeamDetailResponseInterface, CreateTeamPayloadInterface } from "./teams";
 export type { DashboardInterface, HealthScoreInterface, DashboardMetricsInterface, DashboardSubScoreInterface, DashboardActiveBlockerInterface, DashboardSummaryInterface } from "./dashboard";
 export type { SprintMetaInterface } from "./sprints";
 export type { AlertInterface, AlertCreatorInterface, AlertsListResponseInterface, AlertDetailResponseInterface, AlertsCountInterface, CreateAlertPayloadInterface, UpdateAlertPayloadInterface } from "./alerts";
