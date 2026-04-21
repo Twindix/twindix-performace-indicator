@@ -7,7 +7,7 @@ import { BlockerStatus } from "@/enums";
 import type { TaskPhase } from "@/enums";
 import { TaskStatus } from "@/enums";
 import type { TaskInterface, TaskAttachmentInterface, TaskCommentInterface, TaskTimeLogInterface, UserInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
-import { PHASE_INDEX, COLUMNS, COLUMN_COLORS, PRIORITY_VARIANT, capitalize, phaseLabel } from "../../data/seed/constants";
+import { PHASE_INDEX, COLUMNS, COLUMN_COLORS, PRIORITY_VARIANT, capitalize, phaseLabel } from "./constants";
 import { TaskAttachments } from "./TaskAttachments";
 import { TaskTimeLogs } from "./TaskTimeLogs";
 import { TaskComments } from "./TaskComments";

@@ -16,7 +16,6 @@ export const storageKeys = {
     alerts: `${PREFIX}alerts`,
     redFlags: `${PREFIX}red_flags`,
     comments: `${PREFIX}comments`,
-    seeded: `${PREFIX}seeded`,
 } as const;
 
 export const getStorageItem = <T>(key: string): T | null => {

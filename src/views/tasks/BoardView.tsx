@@ -6,7 +6,7 @@ import { TaskPhase } from "@/enums";
 import type { TaskInterface } from "@/interfaces";
 import { t } from "@/hooks";
 import { cn } from "@/utils";
-import { COLUMNS, COLUMN_COLORS, PRIORITY_VARIANT } from "../../data/seed/constants";
+import { COLUMNS, COLUMN_COLORS, PRIORITY_VARIANT } from "./constants";
 
 export interface BoardViewProps {
     tasksByPhase: Map<TaskPhase, TaskInterface[]>;

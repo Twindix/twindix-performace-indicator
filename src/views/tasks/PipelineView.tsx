@@ -4,7 +4,7 @@ import { TaskPriority } from "@/enums";
 import type { TaskInterface, UserInterface } from "@/interfaces";
 import { t } from "@/hooks";
 import { cn } from "@/utils";
-import { PHASE_INDEX, PRIORITY_VARIANT } from "../../data/seed/constants";
+import { PHASE_INDEX, PRIORITY_VARIANT } from "./constants";
 
 export interface PipelineViewProps {
     tasks: TaskInterface[];

@@ -32,7 +32,7 @@ import {
     inferWorkType,
     checkTransition,
     type TransitionResult,
-} from "../../data/seed/constants";
+} from "./constants";
 import { BoardView } from "./BoardView";
 import { PipelineView } from "./PipelineView";
 import { TaskDetailDialog } from "./TaskDetailDialog";
