@@ -1,12 +1,23 @@
 import { useState } from "react";
-import { BookOpen, Calendar, Check, Filter, Plus, Users, X } from "lucide-react";
+import { BookOpen, Calendar, Check, Filter, Plus, Trash2, X } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { DecisionsSkeleton } from "@/components/skeletons";
-import { DecisionCategory, DecisionStatus, UserRole } from "@/enums";
-import { t, useAuth, useSettings, usePageLoader } from "@/hooks";
-import type { DecisionInterface, UserInterface } from "@/interfaces";
+import { DecisionCategory, DecisionStatus } from "@/enums";
+import {
+    t,
+    useAuth,
+    useCreateDecision,
+    useDecisionsAnalytics,
+    useDecisionsList,
+    useDeleteDecision,
+    useGetDecision,
+    usePageLoader,
+    useSettings,
+    useUpdateDecision,
+} from "@/hooks";
+import type { DecisionInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import {
     Avatar,
@@ -22,12 +33,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/ui";
-import { cn, formatDate, getStorageItem, setStorageItem, storageKeys } from "@/utils";
+import { cn, formatDate } from "@/utils";
 
-const statusVariant: Record<DecisionStatus, "success" | "warning" | "error"> = {
+const statusVariant: Record<DecisionStatus, "success" | "warning" | "error" | "secondary"> = {
     [DecisionStatus.Approved]: "success",
     [DecisionStatus.Pending]:  "warning",
     [DecisionStatus.Rejected]: "error",
+    [DecisionStatus.Deferred]: "secondary",
 };
 
 const categoryLabels: Record<DecisionCategory, string> = {
@@ -37,101 +49,99 @@ const categoryLabels: Record<DecisionCategory, string> = {
     [DecisionCategory.Design]:      "Design",
 };
 
-const PM_ROLES = [UserRole.ProjectManager, UserRole.CEO, UserRole.CTO];
-
 const emptyForm = { title: "", description: "", category: DecisionCategory.Process };
 
 export const DecisionsView = () => {
-    const isLoading = usePageLoader();
+    const pageLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
     const { activeSprintId } = useSprintStore();
     const { user } = useAuth();
 
-    const members  = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
-    const [decisions, setDecisions] = useState<DecisionInterface[]>(
-        () => getStorageItem<DecisionInterface[]>(storageKeys.decisions) ?? [],
-    );
+    const [statusFilter, setStatusFilter] = useState<DecisionStatus | "all">("all");
+    const [categoryFilter, setCategoryFilter] = useState<DecisionCategory | "all">("all");
 
-    const sprintDecisions = decisions.filter((d) => d.sprintId === activeSprintId);
-
-    const [statusFilter,   setStatusFilter]   = useState<string>("all");
-    const [categoryFilter, setCategoryFilter] = useState<string>("all");
+    const { decisions, isLoading: isFetching, patchDecisionLocal, removeDecisionLocal } = useDecisionsList(activeSprintId, {
+        status: statusFilter === "all" ? undefined : statusFilter,
+        category: categoryFilter === "all" ? undefined : categoryFilter,
+    });
+    const { analytics, refetch: refetchAnalytics } = useDecisionsAnalytics(activeSprintId);
+    const { createHandler: createDecisionHandler, isLoading: isSubmitting } = useCreateDecision();
+    const { updateHandler: updateDecisionHandler } = useUpdateDecision();
+    const { deleteHandler: deleteDecisionHandler } = useDeleteDecision();
+    const { getHandler: getDecisionHandler, isLoading: isLoadingDetail } = useGetDecision();
 
     const [addOpen, setAddOpen] = useState(false);
-    const [form, setForm]       = useState(emptyForm);
-    const [errors, setErrors]   = useState<Partial<typeof emptyForm>>({});
+    const [form, setForm] = useState(emptyForm);
+    const [errors, setErrors] = useState<Partial<typeof emptyForm>>({});
 
     const [viewTarget, setViewTarget] = useState<DecisionInterface | null>(null);
 
-    const isPM = user ? PM_ROLES.includes(user.role as UserRole) : false;
-
-    const filteredDecisions = sprintDecisions.filter((d) => {
-        if (statusFilter   !== "all" && d.status   !== statusFilter)   return false;
-        if (categoryFilter !== "all" && d.category !== categoryFilter) return false;
-        return true;
-    });
-
-    const getMember = (id: string) => members.find((m) => m.id === id);
-
-    const save = (updated: DecisionInterface[]) => {
-        setDecisions(updated);
-        setStorageItem(storageKeys.decisions, updated);
-    };
+    const isPM = user?.role_tier === "manager";
 
     const validate = () => {
         const e: Partial<typeof emptyForm> = {};
-        if (!form.title.trim())       e.title       = t("Title is required");
+        if (!form.title.trim()) e.title = t("Title is required");
         if (!form.description.trim()) e.description = t("Description is required");
-
         return e;
     };
 
-    const handleAdd = () => {
+    const handleAdd = async () => {
         const e = validate();
         if (Object.keys(e).length) { setErrors(e); return; }
+        if (!activeSprintId) return;
 
-        const newDecision: DecisionInterface = {
-            id:           `dec-${Date.now()}`,
-            title:        form.title.trim(),
-            description:  form.description.trim(),
-            context:      "",
-            category:     form.category,
-            status:       DecisionStatus.Pending,
-            ownerId:      user?.id ?? "",
-            participants: [],
-            sprintId:     activeSprintId,
-            createdAt:    new Date().toISOString(),
-        };
-
-        save([...decisions, newDecision]);
-        setForm(emptyForm);
-        setErrors({});
-        setAddOpen(false);
+        const res = await createDecisionHandler(activeSprintId, {
+            title: form.title.trim(),
+            description: form.description.trim(),
+            category: form.category,
+            status: DecisionStatus.Pending,
+        });
+        if (res) {
+            patchDecisionLocal(res);
+            refetchAnalytics();
+            setForm(emptyForm);
+            setErrors({});
+            setAddOpen(false);
+        }
     };
 
-    const handleApprove = (id: string) => {
-        save(decisions.map((d) => d.id === id
-            ? { ...d, status: DecisionStatus.Approved, decidedAt: new Date().toISOString() }
-            : d,
-        ));
-        if (viewTarget?.id === id) setViewTarget((prev) => prev ? { ...prev, status: DecisionStatus.Approved } : null);
+    const handleSetStatus = async (id: string, status: DecisionStatus) => {
+        const res = await updateDecisionHandler(id, {
+            status,
+            decided_at: new Date().toISOString().split("T")[0],
+        });
+        if (res) {
+            patchDecisionLocal(res);
+            refetchAnalytics();
+            if (viewTarget?.id === id) setViewTarget(res);
+        }
     };
 
-    const handleReject = (id: string) => {
-        save(decisions.map((d) => d.id === id
-            ? { ...d, status: DecisionStatus.Rejected, decidedAt: new Date().toISOString() }
-            : d,
-        ));
-        if (viewTarget?.id === id) setViewTarget((prev) => prev ? { ...prev, status: DecisionStatus.Rejected } : null);
+    const handleView = async (d: DecisionInterface) => {
+        setViewTarget(d);
+        const fresh = await getDecisionHandler(d.id);
+        if (fresh) {
+            patchDecisionLocal(fresh);
+            setViewTarget(fresh);
+        }
     };
 
-    if (isLoading) return <DecisionsSkeleton />;
+    const handleDelete = async (id: string) => {
+        const ok = await deleteDecisionHandler(id);
+        if (ok) {
+            removeDecisionLocal(id);
+            refetchAnalytics();
+            setViewTarget(null);
+        }
+    };
 
-    const totalCount    = sprintDecisions.length;
-    const approvedCount = sprintDecisions.filter((d) => d.status === DecisionStatus.Approved).length;
-    const pendingCount  = sprintDecisions.filter((d) => d.status === DecisionStatus.Pending).length;
-    const rejectedCount = sprintDecisions.filter((d) => d.status === DecisionStatus.Rejected).length;
+    if (pageLoading || isFetching) return <DecisionsSkeleton />;
+
+    const totalCount = analytics?.total ?? decisions.length;
+    const approvedCount = analytics?.approved ?? decisions.filter((d) => d.status === DecisionStatus.Approved).length;
+    const pendingCount = analytics?.pending ?? decisions.filter((d) => d.status === DecisionStatus.Pending).length;
+    const rejectedCount = analytics?.rejected ?? decisions.filter((d) => d.status === DecisionStatus.Rejected).length;
 
     return (
         <div>
@@ -178,7 +188,7 @@ export const DecisionsView = () => {
             <div className={cn("flex flex-wrap items-center justify-between", compact ? "gap-2 mb-3" : "gap-3 mb-6")}>
                 <div className="flex flex-wrap items-center gap-2">
                     <Filter className="h-4 w-4 text-text-muted hidden sm:block" />
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as DecisionStatus | "all")}>
                         <SelectTrigger className="w-[150px]">
                             <SelectValue placeholder={t("Status")} />
                         </SelectTrigger>
@@ -191,7 +201,7 @@ export const DecisionsView = () => {
                             ))}
                         </SelectContent>
                     </Select>
-                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as DecisionCategory | "all")}>
                         <SelectTrigger className="w-[160px]">
                             <SelectValue placeholder={t("Category")} />
                         </SelectTrigger>
@@ -214,12 +224,12 @@ export const DecisionsView = () => {
                     )}
                 </div>
                 <span className="text-xs text-text-muted">
-                    {filteredDecisions.length} / {sprintDecisions.length} {t("decisions")}
+                    {decisions.length} {t("decisions")}
                 </span>
             </div>
 
             {/* List */}
-            {filteredDecisions.length === 0 ? (
+            {decisions.length === 0 ? (
                 <EmptyState
                     icon={BookOpen}
                     title={t("No decisions found")}
@@ -227,63 +237,49 @@ export const DecisionsView = () => {
                 />
             ) : (
                 <div className={cn("flex flex-col", compact ? "gap-2" : "gap-4")}>
-                    {filteredDecisions.map((decision) => {
-                        const owner = getMember(decision.ownerId);
+                    {decisions.map((decision) => {
+                        const creator = decision.created_by;
                         const isPending = decision.status === DecisionStatus.Pending;
 
                         return (
                             <Card
                                 key={decision.id}
                                 className="cursor-pointer hover:border-primary/40 transition-colors"
-                                onClick={() => setViewTarget(decision)}
+                                onClick={() => handleView(decision)}
                             >
                                 <CardContent className={compact ? "p-3" : "p-5"}>
                                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-4 mb-3">
                                         <div className="flex-1 min-w-0">
                                             <h3 className="text-sm font-semibold text-text-dark mb-1">{decision.title}</h3>
-                                            <p className="text-xs text-text-secondary line-clamp-2">{decision.description}</p>
+                                            {decision.description && (
+                                                <p className="text-xs text-text-secondary line-clamp-2">{decision.description}</p>
+                                            )}
                                         </div>
                                         <div className="flex items-center gap-2 shrink-0">
                                             <Badge variant={statusVariant[decision.status]}>
                                                 {t(decision.status.charAt(0).toUpperCase() + decision.status.slice(1))}
                                             </Badge>
-                                            <Badge variant="outline">{t(categoryLabels[decision.category])}</Badge>
+                                            {decision.category && (
+                                                <Badge variant="outline">{t(categoryLabels[decision.category])}</Badge>
+                                            )}
                                         </div>
                                     </div>
 
                                     <div className="flex flex-wrap items-center gap-4 text-xs text-text-muted">
-                                        {owner && (
+                                        {creator && (
                                             <div className="flex items-center gap-1.5">
                                                 <Avatar className="h-5 w-5">
-                                                    <AvatarFallback className="text-[8px]">{owner.avatar}</AvatarFallback>
+                                                    <AvatarFallback className="text-[8px]">{creator.avatar_initials}</AvatarFallback>
                                                 </Avatar>
-                                                <span>{owner.name}</span>
-                                            </div>
-                                        )}
-                                        {decision.participants.length > 0 && (
-                                            <div className="flex items-center gap-1">
-                                                <Users className="h-3 w-3" />
-                                                <div className="flex -space-x-1.5">
-                                                    {decision.participants.slice(0, 4).map((pId) => {
-                                                        const p = getMember(pId);
-                                                        return (
-                                                            <Avatar key={pId} className="h-5 w-5 border-2 border-card">
-                                                                <AvatarFallback className="text-[7px]">{p?.avatar ?? "?"}</AvatarFallback>
-                                                            </Avatar>
-                                                        );
-                                                    })}
-                                                    {decision.participants.length > 4 && (
-                                                        <span className="ms-1">+{decision.participants.length - 4}</span>
-                                                    )}
-                                                </div>
+                                                <span>{creator.full_name}</span>
                                             </div>
                                         )}
                                         <div className="flex items-center gap-1">
                                             <Calendar className="h-3 w-3" />
-                                            <span>{formatDate(decision.createdAt)}</span>
+                                            <span>{formatDate(decision.created_at)}</span>
                                         </div>
-                                        {decision.decidedAt && (
-                                            <span>{t("Decided")}: {formatDate(decision.decidedAt)}</span>
+                                        {decision.decided_at && (
+                                            <span>{t("Decided")}: {formatDate(decision.decided_at)}</span>
                                         )}
                                     </div>
 
@@ -304,14 +300,14 @@ export const DecisionsView = () => {
                                                 size="sm"
                                                 variant="outline"
                                                 className="h-7 px-3 gap-1 text-xs border-error text-error hover:bg-error-light"
-                                                onClick={() => handleReject(decision.id)}
+                                                onClick={() => handleSetStatus(decision.id, DecisionStatus.Rejected)}
                                             >
                                                 <X className="h-3 w-3" /> {t("Reject")}
                                             </Button>
                                             <Button
                                                 size="sm"
                                                 className="h-7 px-3 gap-1 text-xs"
-                                                onClick={() => handleApprove(decision.id)}
+                                                onClick={() => handleSetStatus(decision.id, DecisionStatus.Approved)}
                                             >
                                                 <Check className="h-3 w-3" /> {t("Approve")}
                                             </Button>
@@ -328,19 +324,22 @@ export const DecisionsView = () => {
             <Dialog open={!!viewTarget} onOpenChange={(open) => { if (!open) setViewTarget(null); }}>
                 <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                     {viewTarget && (() => {
-                        const owner = getMember(viewTarget.ownerId);
+                        const creator = viewTarget.created_by;
                         return (
                             <>
                                 <DialogHeader>
                                     <DialogTitle>{viewTarget.title}</DialogTitle>
-                                    <DialogDescription>{t("Decision details and context")}</DialogDescription>
+                                    <DialogDescription>{t("Decision details")}</DialogDescription>
                                 </DialogHeader>
 
                                 <div className="flex items-center gap-2 mt-2">
                                     <Badge variant={statusVariant[viewTarget.status]}>
                                         {t(viewTarget.status.charAt(0).toUpperCase() + viewTarget.status.slice(1))}
                                     </Badge>
-                                    <Badge variant="outline">{t(categoryLabels[viewTarget.category])}</Badge>
+                                    {viewTarget.category && (
+                                        <Badge variant="outline">{t(categoryLabels[viewTarget.category])}</Badge>
+                                    )}
+                                    {isLoadingDetail && <span className="text-xs text-text-muted">{t("Refreshing...")}</span>}
                                 </div>
 
                                 {isPM && viewTarget.status === DecisionStatus.Pending && (
@@ -349,21 +348,23 @@ export const DecisionsView = () => {
                                             size="sm"
                                             variant="outline"
                                             className="gap-1 border-error text-error hover:bg-error-light"
-                                            onClick={() => handleReject(viewTarget.id)}
+                                            onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Rejected)}
                                         >
                                             <X className="h-3.5 w-3.5" /> {t("Reject")}
                                         </Button>
-                                        <Button size="sm" className="gap-1" onClick={() => handleApprove(viewTarget.id)}>
+                                        <Button size="sm" className="gap-1" onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Approved)}>
                                             <Check className="h-3.5 w-3.5" /> {t("Approve")}
                                         </Button>
                                     </div>
                                 )}
 
                                 <div className="mt-4 space-y-4">
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-text-dark mb-1">{t("Description")}</h4>
-                                        <p className="text-sm text-text-secondary">{viewTarget.description}</p>
-                                    </div>
+                                    {viewTarget.description && (
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-text-dark mb-1">{t("Description")}</h4>
+                                            <p className="text-sm text-text-secondary">{viewTarget.description}</p>
+                                        </div>
+                                    )}
                                     {viewTarget.outcome && (
                                         <div>
                                             <h4 className="text-sm font-semibold text-text-dark mb-1">{t("Outcome")}</h4>
@@ -371,32 +372,14 @@ export const DecisionsView = () => {
                                         </div>
                                     )}
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <h4 className="text-sm font-semibold text-text-dark mb-1">{t("Owner")}</h4>
-                                            {owner && (
+                                        {creator && (
+                                            <div>
+                                                <h4 className="text-sm font-semibold text-text-dark mb-1">{t("Raised by")}</h4>
                                                 <div className="flex items-center gap-2">
                                                     <Avatar className="h-6 w-6">
-                                                        <AvatarFallback className="text-[9px]">{owner.avatar}</AvatarFallback>
+                                                        <AvatarFallback className="text-[9px]">{creator.avatar_initials}</AvatarFallback>
                                                     </Avatar>
-                                                    <span className="text-sm text-text-secondary">{owner.name}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        {viewTarget.participants.length > 0 && (
-                                            <div>
-                                                <h4 className="text-sm font-semibold text-text-dark mb-1">{t("Participants")}</h4>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {viewTarget.participants.map((pId) => {
-                                                        const p = getMember(pId);
-                                                        return (
-                                                            <div key={pId} className="flex items-center gap-1.5">
-                                                                <Avatar className="h-5 w-5">
-                                                                    <AvatarFallback className="text-[8px]">{p?.avatar ?? "?"}</AvatarFallback>
-                                                                </Avatar>
-                                                                <span className="text-xs text-text-secondary">{p?.name}</span>
-                                                            </div>
-                                                        );
-                                                    })}
+                                                    <span className="text-sm text-text-secondary">{creator.full_name}</span>
                                                 </div>
                                             </div>
                                         )}
@@ -404,16 +387,28 @@ export const DecisionsView = () => {
                                     <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border">
                                         <div>
                                             <h4 className="text-xs font-medium text-text-muted">{t("Created")}</h4>
-                                            <p className="text-sm text-text-secondary">{formatDate(viewTarget.createdAt)}</p>
+                                            <p className="text-sm text-text-secondary">{formatDate(viewTarget.created_at)}</p>
                                         </div>
-                                        {viewTarget.decidedAt && (
+                                        {viewTarget.decided_at && (
                                             <div>
                                                 <h4 className="text-xs font-medium text-text-muted">{t("Decided")}</h4>
-                                                <p className="text-sm text-text-secondary">{formatDate(viewTarget.decidedAt)}</p>
+                                                <p className="text-sm text-text-secondary">{formatDate(viewTarget.decided_at)}</p>
                                             </div>
                                         )}
                                     </div>
                                 </div>
+
+                                {isPM && (
+                                    <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => handleDelete(viewTarget.id)}
+                                            className="gap-1 text-error border-error hover:bg-error-light"
+                                        >
+                                            <Trash2 className="h-4 w-4" /> {t("Delete")}
+                                        </Button>
+                                    </div>
+                                )}
                             </>
                         );
                     })()}
@@ -459,9 +454,11 @@ export const DecisionsView = () => {
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {Object.values(DecisionCategory).map((c) => (
-                                        <SelectItem key={c} value={c}>{t(categoryLabels[c])}</SelectItem>
-                                    ))}
+                                    {Object.values(DecisionCategory)
+                                        .filter((c) => c !== DecisionCategory.Requirement)
+                                        .map((c) => (
+                                            <SelectItem key={c} value={c}>{t(categoryLabels[c])}</SelectItem>
+                                        ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -471,10 +468,10 @@ export const DecisionsView = () => {
                         </div>
 
                         <div className="flex justify-end gap-2 pt-1">
-                            <Button variant="outline" onClick={() => setAddOpen(false)}>{t("Cancel")}</Button>
-                            <Button onClick={handleAdd} className="gap-2">
+                            <Button variant="outline" onClick={() => setAddOpen(false)} disabled={isSubmitting}>{t("Cancel")}</Button>
+                            <Button onClick={handleAdd} disabled={isSubmitting} className="gap-2">
                                 <Plus className="h-4 w-4" />
-                                {t("Submit Decision")}
+                                {isSubmitting ? t("Submitting...") : t("Submit Decision")}
                             </Button>
                         </div>
                     </div>

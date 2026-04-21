@@ -32,7 +32,7 @@ export type {
     UpdateTimeLogPayloadInterface,
 } from "./tasks";
 export type { BlockerInterface } from "./blockers";
-export type { DecisionInterface } from "./decisions";
+export type { DecisionInterface, DecisionCreatorInterface, DecisionsListResponseInterface, DecisionDetailResponseInterface, DecisionsAnalyticsInterface, CreateDecisionPayloadInterface, UpdateDecisionPayloadInterface, DecisionsListFiltersInterface } from "./decisions";
 export type { CommunicationInterface, CommunicationChannel, CommunicationStatus } from "./communications";
 export type { TeamMemberWorkloadInterface } from "./workload";
 export type { MetricInterface, FrictionScoresInterface, SprintMetricsInterface } from "./metrics";
