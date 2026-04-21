@@ -8,6 +8,9 @@ export const tasksConstants = {
         attachmentDeleteFailed: "Failed to delete attachment.",
         tagAddFailed: "Failed to add tag.",
         tagRemoveFailed: "Failed to remove tag.",
+        commentAddFailed: "Failed to add comment.",
+        commentUpdateFailed: "Failed to update comment.",
+        commentDeleteFailed: "Failed to delete comment.",
     },
     messages: {
         createSuccess: "Task created.",
@@ -17,5 +20,8 @@ export const tasksConstants = {
         attachmentDeleteSuccess: "Attachment deleted.",
         tagAddSuccess: "Tag added.",
         tagRemoveSuccess: "Tag removed.",
+        commentAddSuccess: "Comment added.",
+        commentUpdateSuccess: "Comment updated.",
+        commentDeleteSuccess: "Comment deleted.",
     },
 };

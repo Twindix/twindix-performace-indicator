@@ -51,7 +51,8 @@ export const apisData = {
     },
     comments: {
         taskList: (taskId: string) => `/tasks/${taskId}/comments`,
-        create: "/comments",
+        create: (taskId: string) => `/tasks/${taskId}/comments`,
+        update: (id: string) => `/comments/${id}`,
         delete: (id: string) => `/comments/${id}`,
     },
     baseUrl: import.meta.env.VITE_API_URL as string,

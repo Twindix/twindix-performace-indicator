@@ -14,10 +14,29 @@ export type TaskTag = string | TaskTagInterface;
 
 export interface TaskCommentInterface {
     id: string;
-    content: string;
+    body: string;
     author: TaskUserInterface;
+    mentioned_users: { id: string; full_name: string }[];
+    response_status: string;
+    responded_by: TaskUserInterface | null;
+    responded_at: string | null;
     created_at: string;
-    reactions?: Record<string, string[]>;
+    updated_at: string;
+}
+
+export interface CommentListResponseInterface {
+    data: TaskCommentInterface[];
+    count: number;
+}
+
+export interface CreateCommentPayloadInterface {
+    body: string;
+    mentioned_user_ids?: string[];
+}
+
+export interface UpdateCommentPayloadInterface {
+    body: string;
+    mentioned_user_ids?: string[];
 }
 
 export interface TaskPhaseNavigationInterface {
