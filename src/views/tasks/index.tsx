@@ -5,15 +5,17 @@ import { toast } from "sonner";
 import { Badge, Button, Card, CardContent, Input } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
 import { TasksSkeleton } from "@/components/skeletons";
-import { TaskPriority } from "@/enums";
+import { TaskPhase, TaskPriority } from "@/enums";
 import type { TaskInterface, TaskStatsInterface } from "@/interfaces";
-import { t, useTasksList, usePipeline, useTaskStats, useUpdateTaskStatus, useUsersList, useGetTask } from "@/hooks";
-import { useSprintStore } from "@/store";
+import { t, useTasksList, usePipeline, useTaskStats, useTaskViews, useUpdateTaskStatus, useUsersList, useGetTask } from "@/hooks";
+import { useAuthStore, useSprintStore } from "@/store";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/ui";
 import { BoardView } from "./BoardView";
 import { PipelineView } from "./PipelineView";
 import { TaskDetailDialog } from "./TaskDetailDialog";
 import { AddTaskDialog } from "./add-task-dialog";
+import { TransitionDialog } from "./TransitionDialog";
+import type { TransitionResult } from "./constants";
 
 export const TasksView = () => <TasksViewInner />;
 
@@ -53,7 +55,9 @@ const TasksViewInner = () => {
     const { statsHandler } = useTaskStats();
     const { updateStatusHandler } = useUpdateTaskStatus();
     const { getHandler: getTaskHandler } = useGetTask();
+    const { transitionCriteriaHandler } = useTaskViews();
     const { users } = useUsersList();
+    const { user: currentUser } = useAuthStore();
 
     const [stats, setStats] = useState<TaskStatsInterface | null>(null);
     const [selectedTask, setSelectedTask] = useState<TaskInterface | null>(null);
@@ -61,6 +65,46 @@ const TasksViewInner = () => {
     const [addTaskDialogOpen, setAddTaskDialogOpen] = useState(false);
     const [draggedTask, setDraggedTask] = useState<TaskInterface | null>(null);
     const [dragOverStatus, setDragOverStatus] = useState<string | null>(null);
+
+    const [transitionOpen, setTransitionOpen] = useState(false);
+    const [transitionTask, setTransitionTask] = useState<TaskInterface | null>(null);
+    const [transitionTarget, setTransitionTarget] = useState<string | null>(null);
+    const [transitionResult, setTransitionResult] = useState<TransitionResult | null>(null);
+
+    const openTransition = useCallback(async (task: TaskInterface, targetPhase: TaskPhase) => {
+        setTransitionTask(task);
+        setTransitionTarget(targetPhase);
+        setTransitionResult(null);
+        setTransitionOpen(true);
+        const res = await transitionCriteriaHandler(task.id, targetPhase);
+        if (res) {
+            setTransitionResult({
+                allowed: res.all_passed,
+                reason: res.all_passed
+                    ? t("All criteria met. Ready to move forward.")
+                    : t("Some criteria are not yet met."),
+                criteria: res.criteria.map((c) => ({ label: c.label, met: c.passed })),
+            });
+        } else {
+            setTransitionOpen(false);
+        }
+    }, [transitionCriteriaHandler]);
+
+    const confirmTransition = useCallback(async () => {
+        if (!transitionTask || !transitionTarget) return;
+        const ok = await updateStatusHandler(transitionTask.id, transitionTarget);
+        if (ok) {
+            const fresh = await getTaskHandler(transitionTask.id);
+            if (fresh) {
+                patchTaskLocal(fresh);
+                setSelectedTask((prev) => (prev && prev.id === fresh.id ? fresh : prev));
+            }
+            setTransitionOpen(false);
+            setTransitionTask(null);
+            setTransitionTarget(null);
+            setTransitionResult(null);
+        }
+    }, [transitionTask, transitionTarget, updateStatusHandler, getTaskHandler, patchTaskLocal]);
 
     useEffect(() => {
         if (!activeSprintId) return;
@@ -284,7 +328,7 @@ const TasksViewInner = () => {
                 blocker={undefined}
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
-                onMoveRequest={() => {}}
+                onMoveRequest={(task, targetPhase) => { setDialogOpen(false); openTransition(task, targetPhase); }}
                 onUpdateRequirements={() => {}}
                 patchTaskLocal={(id, updates) => {
                     const existing = tasks.find((t) => t.id === id);
@@ -305,6 +349,16 @@ const TasksViewInner = () => {
                 members={users}
                 sprintId={activeSprintId}
                 addTaskLocal={addTaskLocal}
+            />
+
+            <TransitionDialog
+                open={transitionOpen}
+                onOpenChange={(open) => { setTransitionOpen(open); if (!open) { setTransitionTask(null); setTransitionTarget(null); setTransitionResult(null); } }}
+                task={transitionTask}
+                targetPhase={transitionTarget as TaskPhase | null}
+                transitionResult={transitionResult}
+                onConfirm={confirmTransition}
+                isAssignee={Boolean(transitionTask && currentUser && (transitionTask.assignee?.id === currentUser.id))}
             />
         </div>
     );
