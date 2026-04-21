@@ -6,9 +6,8 @@ import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { CommunicationSkeleton } from "@/components/skeletons";
 import { t, useSettings, usePageLoader } from "@/hooks";
 import type { CommunicationChannel, CommunicationInterface, UserInterface } from "@/interfaces";
-import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Tabs, TabsList, TabsTrigger, TabsContent } from "@/ui";
-import { cn, getStorageItem, storageKeys } from "@/utils";
+import { cn } from "@/utils";
 
 const channelConfig: Record<CommunicationChannel, { label: string; icon: typeof MessageSquare; variant: "default" | "success" | "warning" | "error" | "secondary" | "outline" }> = {
     slack: { label: "Slack", icon: Hash, variant: "default" },
@@ -48,10 +47,8 @@ export const CommunicationView = () => {
     const [settings] = useSettings();
     const compact = settings.compactView;
     const isRTL = settings.language === "ar";
-    const { activeSprintId } = useSprintStore();
-    const allComms = getStorageItem<CommunicationInterface[]>(storageKeys.communications) ?? [];
-    const comms = allComms.filter((c) => c.sprintId === activeSprintId);
-    const members = getStorageItem<UserInterface[]>(storageKeys.teamMembers) ?? [];
+    const comms: CommunicationInterface[] = [];
+    const members: UserInterface[] = [];
 
     const getMember = (id: string) => members.find((m) => m.id === id);
 
@@ -207,9 +204,9 @@ export const CommunicationView = () => {
                                                 {/* Asked by */}
                                                 <div className="flex items-center gap-2">
                                                     <Avatar className="h-6 w-6">
-                                                        <AvatarFallback className="text-[8px]">{askedBy?.avatar}</AvatarFallback>
+                                                        <AvatarFallback className="text-[8px]">{askedBy?.avatar_initials}</AvatarFallback>
                                                     </Avatar>
-                                                    <span className="text-xs text-text-secondary">{askedBy?.name ?? "Unknown"}</span>
+                                                    <span className="text-xs text-text-secondary">{askedBy?.full_name ?? "Unknown"}</span>
                                                 </div>
 
                                                 <span className="text-xs text-text-muted">-&gt;</span>
@@ -217,9 +214,9 @@ export const CommunicationView = () => {
                                                 {/* Asked to */}
                                                 <div className="flex items-center gap-2">
                                                     <Avatar className="h-6 w-6">
-                                                        <AvatarFallback className="text-[8px]">{askedTo?.avatar}</AvatarFallback>
+                                                        <AvatarFallback className="text-[8px]">{askedTo?.avatar_initials}</AvatarFallback>
                                                     </Avatar>
-                                                    <span className="text-xs text-text-secondary">{askedTo?.name ?? "Unknown"}</span>
+                                                    <span className="text-xs text-text-secondary">{askedTo?.full_name ?? "Unknown"}</span>
                                                 </div>
 
                                                 <Badge variant={channel.variant}>

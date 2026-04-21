@@ -13,8 +13,7 @@ export const useGetComment = () => {
         if (!navigator.onLine) throw new Error(commentsConstants.errors.genericError);
         setIsLoading(true);
         try {
-            const res = await commentsService.detailHandler(id);
-            return res.data;
+            return await commentsService.detailHandler(id);
         } catch (err) {
             toast.error(getErrorMessage(err, commentsConstants.errors.fetchDetailFailed));
             return null;
@@ -41,8 +40,7 @@ export const useGetComment = () => {
         if (!navigator.onLine) throw new Error(commentsConstants.errors.genericError);
         setIsLoading(true);
         try {
-            const res = await commentsService.analyticsHandler(sprintId);
-            return res.data;
+            return await commentsService.analyticsHandler(sprintId);
         } catch (err) {
             toast.error(getErrorMessage(err, commentsConstants.errors.analyticsFailed));
             return null;

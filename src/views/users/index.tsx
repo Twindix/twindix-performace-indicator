@@ -176,7 +176,6 @@ export const UsersView = () => {
                     </DialogHeader>
 
                     <div className="flex flex-col gap-4 py-2">
-                        {/* Row 1: name + email */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1.5">
                                 <Label htmlFor="u-name">{t("Full Name")}</Label>
@@ -190,14 +189,12 @@ export const UsersView = () => {
                             </div>
                         </div>
 
-                        {/* Row 2: password */}
                         <div className="flex flex-col gap-1.5">
                             <Label htmlFor="u-password">{t("Password")}</Label>
                             <Input id="u-password" type="password" value={form.password} onChange={(e) => set("password", e.target.value)} placeholder="••••••••" className={errors.password ? "border-error" : ""} />
                             {errors.password && <p className="text-xs text-error">{errors.password}</p>}
                         </div>
 
-                        {/* Row 3: role_label + role_tier */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1.5">
                                 <Label htmlFor="u-role-label">{t("Role Title")}</Label>
@@ -215,7 +212,6 @@ export const UsersView = () => {
                             </div>
                         </div>
 
-                        {/* Row 4: team + avatar */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1.5">
                                 <Label>{t("Team")}</Label>

@@ -18,4 +18,3 @@ export { SprintsView } from "./sprints";
 export { RedFlagsView } from "./red-flags";
 export { AlertsView } from "./alerts";
 export { TeamsView } from "./teams";
-export { SprintsView } from "./sprints";

@@ -9,7 +9,7 @@ import { t, useSettings, usePageLoader } from "@/hooks";
 import type { BlockerInterface, SprintInterface, SprintMetricsInterface, TaskInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
-import { cn, td, formatDate, getStorageItem, storageKeys } from "@/utils";
+import { cn, td, formatDate } from "@/utils";
 
 const getScoreStatus = (score: number): MetricStatus => {
     if (score >= 80) return MetricStatus.Healthy;
@@ -122,12 +122,11 @@ export const ReportsView = () => {
     const isRTL = settings.language === "ar";
     const { activeSprintId } = useSprintStore();
 
-    const sprints = getStorageItem<SprintInterface[]>(storageKeys.sprints) ?? [];
+    const sprints: SprintInterface[] = [];
     const sprint = sprints.find((s) => s.id === activeSprintId);
-    const allMetrics = getStorageItem<SprintMetricsInterface[]>(storageKeys.metrics) ?? [];
-    const sprintMetrics = allMetrics.find((m) => m.sprintId === activeSprintId);
-    const tasks = (getStorageItem<TaskInterface[]>(storageKeys.tasks) ?? []).filter((t) => t.sprintId === activeSprintId);
-    const blockers = (getStorageItem<BlockerInterface[]>(storageKeys.blockers) ?? []).filter((b) => b.sprintId === activeSprintId);
+    const sprintMetrics = undefined as SprintMetricsInterface | undefined;
+    const tasks: TaskInterface[] = [];
+    const blockers: BlockerInterface[] = [];
 
     const taskStats = useMemo(() => {
         const total = tasks.length;

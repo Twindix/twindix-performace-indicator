@@ -35,7 +35,6 @@ export const TaskDetailDialog = ({
     open,
     onOpenChange,
     onMoveRequest,
-    onUpdateComments,
     patchTaskLocal,
     removeTaskLocal,
 }: TaskDetailDialogProps) => {
@@ -240,7 +239,7 @@ export const TaskDetailDialog = ({
                         <div className="flex items-center gap-2 mb-2">
                             <AlertCircle className="h-4 w-4 text-error" />
                             <h4 className="text-sm font-semibold text-error">{t("Blocker")}</h4>
-                            <Badge variant={blocker.status === BlockerStatus.Escalated ? "error" : "warning"}>{t(capitalize(blocker.status))}</Badge>
+                            <Badge variant={blocker.status === BlockerStatus.Escalated ? "error" : "warning"}>{t(capitalize(blocker.status ?? ""))}</Badge>
                         </div>
                         <p className="text-sm font-medium text-text-dark">{blocker.title}</p>
                         <p className="text-xs text-text-secondary mt-1">{blocker.description}</p>

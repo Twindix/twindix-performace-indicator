@@ -1,42 +1,34 @@
-import { apisData } from "@/data";
-import type { UserInterface } from "@/interfaces/common";
-import type {
-    CreateUserPayloadInterface,
-    UpdateUserPayloadInterface,
-    UserAnalyticsInterface,
-    UserListParamsInterface,
-    UserListResponseInterface,
-} from "@/interfaces/users";
 import { apiClient } from "@/lib/axios";
+import { apisData } from "@/data/apis";
+import type { CreateUserPayloadInterface, UpdateUserPayloadInterface, UserAnalyticsInterface, UserInterface } from "@/interfaces";
 
 export const usersService = {
-    listHandler: async (params?: UserListParamsInterface): Promise<UserListResponseInterface> => {
-        const { data } = await apiClient.get<UserListResponseInterface>(apisData.users.list, { params });
-        return data;
+    listHandler: async (): Promise<UserInterface[]> => {
+        const res = await apiClient.get(apisData.users.list);
+        return res.data.data ?? res.data;
     },
 
     detailHandler: async (id: string): Promise<UserInterface> => {
-        const { data } = await apiClient.get<{ data: UserInterface }>(apisData.users.detail(id));
-        return data.data;
+        const res = await apiClient.get(apisData.users.detail(id));
+        return res.data.data ?? res.data;
+    },
+
+    analyticsHandler: async (id: string): Promise<UserAnalyticsInterface> => {
+        const res = await apiClient.get(apisData.users.analytics(id));
+        return res.data.data ?? res.data;
     },
 
     createHandler: async (payload: CreateUserPayloadInterface): Promise<UserInterface> => {
-        const { data } = await apiClient.post<{ data: UserInterface }>(apisData.users.create, payload);
-        return data.data;
+        const res = await apiClient.post(apisData.users.create, payload);
+        return res.data.data ?? res.data;
     },
 
     updateHandler: async (id: string, payload: UpdateUserPayloadInterface): Promise<UserInterface> => {
-        const { data } = await apiClient.put<{ data: UserInterface }>(apisData.users.update(id), payload);
-        return data.data;
+        const res = await apiClient.put(apisData.users.update(id), payload);
+        return res.data.data ?? res.data;
     },
 
     deleteHandler: async (id: string): Promise<void> => {
         await apiClient.delete(apisData.users.delete(id));
-    },
-
-    analyticsHandler: async (id: string, sprintId?: string): Promise<UserAnalyticsInterface> => {
-        const params = sprintId ? { sprint_id: sprintId } : undefined;
-        const { data } = await apiClient.get<UserAnalyticsInterface>(apisData.users.analytics(id), { params });
-        return data;
     },
 };

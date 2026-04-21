@@ -15,7 +15,7 @@ export const useUpdateComment = () => {
         try {
             const res = await commentsService.updateHandler(id, payload);
             toast.success(commentsConstants.messages.updateSuccess);
-            return res.data;
+            return res;
         } catch (err) {
             toast.error(getErrorMessage(err, commentsConstants.errors.updateFailed));
             return null;
