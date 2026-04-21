@@ -5,22 +5,7 @@ import { TaskPriority } from "@/enums";
 import type { PipelineBoardInterface, TaskInterface, UserInterface } from "@/interfaces";
 import { t } from "@/hooks";
 import { cn } from "@/utils";
-
-const PRIORITY_VARIANT: Record<string, "error" | "warning" | "default" | "secondary"> = {
-    critical: "error",
-    high: "warning",
-    medium: "default",
-    low: "secondary",
-};
-
-const COLUMN_COLOR_CLASS: Record<string, string> = {
-    backlog: "text-slate-400",
-    ready: "text-primary",
-    in_progress: "text-warning",
-    review: "text-purple-500",
-    qa: "text-pink-500",
-    done: "text-success",
-};
+import { PHASE_INDEX, PRIORITY_VARIANT } from "./constants";
 
 export interface PipelineViewProps {
     pipeline: PipelineBoardInterface;

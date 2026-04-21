@@ -6,31 +6,7 @@ import { TaskPriority } from "@/enums";
 import type { KanbanBoardInterface, TaskInterface } from "@/interfaces";
 import { t } from "@/hooks";
 import { cn } from "@/utils";
-
-const COLUMNS = [
-    { status: "backlog", label: "Backlog" },
-    { status: "ready", label: "Ready" },
-    { status: "in_progress", label: "In Progress" },
-    { status: "review", label: "Review" },
-    { status: "qa", label: "QA" },
-    { status: "done", label: "Done" },
-] as const;
-
-const COLUMN_COLORS: Record<string, string> = {
-    backlog: "bg-text-muted",
-    ready: "bg-primary",
-    in_progress: "bg-warning",
-    review: "bg-[#8b5cf6]",
-    qa: "bg-[#ec4899]",
-    done: "bg-success",
-};
-
-const PRIORITY_VARIANT: Record<string, "error" | "warning" | "default" | "secondary"> = {
-    critical: "error",
-    high: "warning",
-    medium: "default",
-    low: "secondary",
-};
+import { COLUMNS, COLUMN_COLORS, PRIORITY_VARIANT } from "./constants";
 
 export interface BoardViewProps {
     kanban: KanbanBoardInterface;

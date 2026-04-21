@@ -11,6 +11,14 @@ export const apisData = {
         create: "/teams",
     users: {
         list: "/users",
+        detail: (id: string) => `/users/${id}`,
+        create: "/users",
+        update: (id: string) => `/users/${id}`,
+        delete: (id: string) => `/users/${id}`,
+        analytics: (id: string) => `/users/${id}/analytics`,
+    },
+    teams: {
+        list: "/teams",
     },
     sprints: {
         list: "/sprints",

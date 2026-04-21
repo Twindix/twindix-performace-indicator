@@ -1,7 +1,11 @@
 export { msgsConstants } from "./msgs";
 export { buttonsConstants } from "./buttons";
 export { authConstants } from "./auth";
+<<<<<<< feat/integrate-users
+export { usersConstants } from "./users";
+=======
 export { teamsConstants } from "./teams";
+>>>>>>> feat/integrate-authentication
 export { sprintsConstants } from "./sprints";
 export { dashboardConstants } from "./dashboard";
 export { redFlagsConstants } from "./red-flags";

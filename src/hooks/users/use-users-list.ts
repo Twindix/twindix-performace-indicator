@@ -1,40 +1,35 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { apisData } from "@/data";
-import { apiClient } from "@/lib/axios";
-import { toast } from "sonner";
+import type { UserInterface } from "@/interfaces/common";
+import type { UserListParamsInterface, UserPaginationMetaInterface } from "@/interfaces/users";
+import { usersService } from "@/services/users";
 
-import type { UserInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
-import { usersService } from "@/services";
+interface UsersListState {
+    users: UserInterface[];
+    meta: UserPaginationMetaInterface | null;
+    isLoading: boolean;
+    error: string | null;
+}
 
-export const useUsersList = () => {
-    const [users, setUsers] = useState<UserInterface[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export const useUsersList = (params?: UserListParamsInterface) => {
+    const [state, setState] = useState<UsersListState>({
+        users: [],
+        meta: null,
+        isLoading: true,
+        error: null,
+    });
 
-    const fetch = useCallback(async () => {
-        setIsLoading(true);
+    const fetch = useCallback(async (fetchParams?: UserListParamsInterface) => {
+        setState((prev) => ({ ...prev, isLoading: true, error: null }));
         try {
-            const { data } = await apiClient.get<{ data: UserInterface[] }>(apisData.users.list);
-            setUsers(data.data);
+            const response = await usersService.listHandler(fetchParams ?? params);
+            setState({ users: response.data, meta: response.meta, isLoading: false, error: null });
         } catch {
-            // silent — users list is a UI helper
-    const refetch = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const res = await usersService.listHandler();
-            setUsers(res);
-        } catch (err) {
-            toast.error(getErrorMessage(err, "Failed to fetch users"));
-        } finally {
-            setIsLoading(false);
+            setState((prev) => ({ ...prev, isLoading: false, error: "Failed to load users" }));
         }
-    }, []);
+    }, [params]);
 
     useEffect(() => { fetch(); }, [fetch]);
 
-    return { users, isLoading };
-    useEffect(() => { refetch(); }, [refetch]);
-
-    return { users, isLoading, refetch };
+    return { ...state, refetch: fetch };
 };

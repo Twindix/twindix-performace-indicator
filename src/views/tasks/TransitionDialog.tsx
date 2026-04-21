@@ -12,7 +12,7 @@ import {
     phaseLabel,
     capitalize,
     type TransitionResult,
-} from "../../data/seed/constants";
+} from "./constants";
 
 interface TransitionDialogProps {
     open: boolean;
