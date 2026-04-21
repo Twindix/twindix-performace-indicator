@@ -232,6 +232,7 @@ Base URL: `VITE_API_URL` env variable. All routes defined in `src/data/apis.ts`.
 | POST | `/sprints/:sprintId/blockers` | Create |
 | GET | `/blockers/:id` | Detail |
 | PUT | `/blockers/:id` | Update |
+| DELETE | `/blockers/:id` | Delete |
 | POST | `/blockers/:id/resolve` | Resolve |
 | POST | `/blockers/:id/escalate` | Escalate |
 | POST | `/blockers/:id/tasks` | Link task |
@@ -283,7 +284,9 @@ Base URL: `VITE_API_URL` env variable. All routes defined in `src/data/apis.ts`.
 |---|---|---|
 | GET | `/sprints/:sprintId/comments` | List |
 | GET | `/sprints/:sprintId/comments/analytics` | Analytics |
-| POST | `/sprints/:sprintId/comments` | Create |
+| POST | `/sprints/:sprintId/comments` | Create (sprint log) |
+| GET | `/tasks/:taskId/comments` | List task comments |
+| POST | `/tasks/:taskId/comments` | Create task comment |
 | GET | `/comments/:id` | Detail |
 | PUT | `/comments/:id` | Update |
 | DELETE | `/comments/:id` | Delete |
@@ -306,6 +309,6 @@ Base URL: `VITE_API_URL` env variable. All routes defined in `src/data/apis.ts`.
 | `feat/integrate-*` | Per-feature API integration branches (auth, sprints, tasks, blockers, alerts, red-flags, decisions, comments, dashboard, requirements, teams, users) |
 | `feat/integration-core` | Core integration work merged across features |
 
-**Current branch:** `feat/create-project-module`
+**Current branch:** `bug/hotfix`
 
-**Recent work:** Added a UI-only Projects layer above Sprints (`views/projects/`, `store/project.ts`, `data/seed/projects.ts`); sidebar replaces Sprints with Projects; topbar gained a project dropdown beside the sprint dropdown; clicking a project card renders `SprintsView` inline with a back button.
+**Recent work:** Hotfix batch across tasks, blockers, comments, decisions, red flags, alerts, users and teams — fixed infinite refetch in blocker detail, wired blocker delete (new DELETE /blockers/:id), pointed comments-log create at the sprint-scoped POST (separate createOnTask path for task comments), made users deactivate clickable, restored @mention picker in task comments, wired TransitionDialog to prev/next phase buttons (PATCH /tasks/:id/status), refetched task after attachment upload/delete for UI sync, made sidebar highlight stick on nested routes, debounced tasks search, added explicit Add button for requirements, surfaced newly created/updated items immediately (defensive response unwrap + merge patches), always show edit/delete controls, prepend new red flags and alerts, treat every 2xx status as success in the axios error interceptor (fixes empty-body 204 flakiness), switched sprint activate from PATCH to POST. Also added a UI-only Projects layer above Sprints.
