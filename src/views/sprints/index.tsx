@@ -30,9 +30,10 @@ export const SprintsView = () => {
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<SprintInterface | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<SprintInterface | null>(null);
-    const [form, setForm] = useState<CreateSprintPayloadInterface>(emptyForm);
+    const [form, setForm] = useState(emptyForm);
 
     const openAdd = () => { setForm(emptyForm); setAddOpen(true); };
+
     const openEdit = (s: SprintInterface) => {
         setForm({ name: s.name, start_date: s.start_date, end_date: s.end_date });
         setEditTarget(s);
@@ -54,22 +55,29 @@ export const SprintsView = () => {
     const handleDelete = async () => {
         if (!deleteTarget) return;
         const ok = await deleteHandler(deleteTarget.id);
-        if (ok) { removeSprintLocal(deleteTarget.id); closeDialogs(); }
+        if (ok) { removeSprintLocal(deleteTarget.id); setDeleteTarget(null); }
     };
 
     const handleActivate = async (s: SprintInterface) => {
-        const res = await activateHandler(s.id);
-        if (res) patchSprintLocal(res);
+        const updated = await activateHandler(s.id);
+        if (updated) patchSprintLocal(updated);
+    };
+
+    const statusBadge = (status: string | null) => {
+        if (status === "active") return <Badge variant="success">{t("Active")}</Badge>;
+        if (status === "completed") return <Badge variant="outline">{t("Completed")}</Badge>;
+        return <Badge variant="secondary">{t("Planned")}</Badge>;
     };
 
     return (
         <div>
             <Header
                 title={t("Sprints")}
-                description={t("Manage project sprints.")}
+                description={t("Manage sprints and activate the current one.")}
                 actions={
                     <Button size="sm" className="gap-1.5" onClick={openAdd}>
-                        <Plus className="h-4 w-4" />{t("New Sprint")}
+                        <Plus className="h-4 w-4" />
+                        {t("Add Sprint")}
                     </Button>
                 }
             />

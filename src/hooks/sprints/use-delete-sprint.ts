@@ -15,6 +15,7 @@ export const useDeleteSprint = () => {
             toast.success(sprintsConstants.messages.deleteSuccess);
             return true;
         } catch (err) {
+            console.error(err);
             toast.error(getErrorMessage(err, sprintsConstants.errors.deleteFailed));
             return false;
         } finally {

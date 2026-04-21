@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { apisData } from "@/data";
-import type { UserInterface } from "@/interfaces";
 import { apiClient } from "@/lib/axios";
+import { toast } from "sonner";
+
+import type { UserInterface } from "@/interfaces";
+import { getErrorMessage } from "@/lib/error";
+import { usersService } from "@/services";
 
 export const useUsersList = () => {
     const [users, setUsers] = useState<UserInterface[]>([]);
@@ -14,7 +18,14 @@ export const useUsersList = () => {
             const { data } = await apiClient.get<{ data: UserInterface[] }>(apisData.users.list);
             setUsers(data.data);
         } catch {
-            // silent — users list is UI-only helper
+            // silent — users list is a UI helper
+    const refetch = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const res = await usersService.listHandler();
+            setUsers(res);
+        } catch (err) {
+            toast.error(getErrorMessage(err, "Failed to fetch users"));
         } finally {
             setIsLoading(false);
         }
@@ -23,4 +34,7 @@ export const useUsersList = () => {
     useEffect(() => { fetch(); }, [fetch]);
 
     return { users, isLoading };
+    useEffect(() => { refetch(); }, [refetch]);
+
+    return { users, isLoading, refetch };
 };
