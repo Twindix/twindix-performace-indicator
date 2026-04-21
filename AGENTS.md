@@ -7,7 +7,6 @@
 - Run `npm run preview` to locally preview the production build before deploying.
 - Use the path alias `@/` instead of relative paths — it maps to `src/`. Example: `import { Button } from "@/atoms"`.
 - Every folder under `src/` has a barrel `index.ts`; always import from the barrel, not the individual file.
-- Demo login credentials: `admin@twindix.com` / `demo` (seed data auto-loads into localStorage on first run).
 
 ## Folder structure
 
@@ -19,7 +18,6 @@ src/
 │   └── error/
 ├── contexts/
 ├── data/
-│   └── seed/
 ├── enums/
 ├── hooks/
 │   └── shared/
@@ -59,8 +57,7 @@ src/
 - **components/shared/** — Layout and utility components used across all pages (Sidebar, Topbar, Header, MetricCard, ScoreGauge, AnimatedNumber, EmptyState, OfflineBanner, MobileNav, StatusBadge). Composed from atoms.
 - **components/error/** — Error boundary and network error display components (Boundary, NetworkError, StackTrace).
 - **contexts/** — Raw React context definitions only. No providers or initialization logic here.
-- **data/** — Static app-wide constants: `apis.ts` (all API endpoint URLs), `common.ts` (token/auth constants), seed demo data.
-- **data/seed/** — Demo data for all domain entities (tasks, sprints, blockers, members, etc.) loaded into localStorage on first run. Also holds task phase transition rules.
+- **data/** — Static app-wide constants: `apis.ts` (all API endpoint URLs), `common.ts` (token/auth constants), `routes.ts`, sidebar items.
 - **enums/** — TypeScript enums for every categorical value (TaskPhase, TaskPriority, BlockerStatus, SprintStatus, MetricStatus, MetricTrend, BrowserEvents, etc.).
 - **hooks/shared/** — Custom React hooks: `useAuth`, `useTheme`, `useLocalStorage`, `useSettings`, `useCountUp`, `useOnlineStatus`, `usePageLoader`, `usePresence`, `t()` i18n function.
 - **interfaces/** — TypeScript interfaces for all data model shapes. One file per domain entity plus dialog-specific types.
@@ -86,7 +83,7 @@ src/
 | Functions & variables | `camelCase` | `checkTransition()`, `inferWorkType()`, `getMember()` |
 | Interfaces | `PascalCase` + `Interface` suffix | `TaskInterface`, `BlockerInterface`, `UserInterface` |
 | Enums & enum members | `PascalCase` | `TaskPhase.InProgress`, `BlockerStatus.Escalated` |
-| Folders | `kebab-case` | `components/shared/`, `views/comments-log/`, `data/seed/` |
+| Folders | `kebab-case` | `components/shared/`, `views/comments-log/`, `views/red-flags/` |
 | Zustand stores | `camelCase` file, exported as `use*Store` | `store/sprint.ts` → `useSprintStore` |
 | Storage keys | `SCREAMING_SNAKE_CASE` constants in `utils/storage.ts` | `storageKeys.tasks`, `storageKeys.authUser` |
 
