@@ -14,7 +14,7 @@ export const useUpdateAlert = () => {
         try {
             const res = await alertsService.updateHandler(id, payload);
             toast.success(alertsConstants.messages.updateSuccess);
-            return res.data;
+            return (res as unknown as { data?: AlertInterface }).data ?? (res as unknown as AlertInterface);
         } catch (err) {
             console.error(err);
             toast.error(getErrorMessage(err, alertsConstants.errors.updateFailed));
