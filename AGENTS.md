@@ -16,23 +16,30 @@ src/
 ├── components/
 │   ├── shared/
 │   └── error/
+├── constants/            # one subfolder per domain (auth, users, tasks, …)
 ├── contexts/
 ├── data/
+│   └── seed/             # UI-only seed data (e.g. projects)
 ├── enums/
 ├── hooks/
-│   └── shared/
+│   ├── shared/
+│   └── <domain>/         # per-domain hook folders (auth, users, sprints, tasks, blockers, …)
 ├── interfaces/
+│   └── <domain>/         # per-domain interface folders + legacy flat files (communications, metrics, …)
 ├── layouts/
 ├── lib/
 ├── providers/
 ├── routes/
 ├── schemas/
 ├── services/
+│   └── <domain>/         # per-domain service folders
 ├── store/
 ├── ui/
 ├── utils/
 └── views/
     ├── dashboard/
+    ├── projects/         # Projects grid — click a card to show that project's sprints
+    ├── sprints/
     ├── tasks/
     ├── blockers/
     ├── decisions/
@@ -43,11 +50,13 @@ src/
     ├── ownership/
     ├── handoffs/
     ├── users/
+    ├── teams/
     ├── alerts/
     ├── red-flags/
     ├── comments-log/
     ├── profile/
     ├── settings/
+    ├── errors/
     └── auth/
 ```
 
@@ -56,21 +65,24 @@ src/
 - **atoms/** — Smallest reusable UI pieces (Button, Badge, Input, Card, Textarea, Skeleton, Logo). No business logic, no API calls.
 - **components/shared/** — Layout and utility components used across all pages (Sidebar, Topbar, Header, MetricCard, ScoreGauge, AnimatedNumber, EmptyState, OfflineBanner, MobileNav, StatusBadge). Composed from atoms.
 - **components/error/** — Error boundary and network error display components (Boundary, NetworkError, StackTrace).
+- **constants/** — Domain-scoped constant bags (error messages, labels, button copy). One subfolder per domain, each exporting a `<domain>Constants` object consumed by that domain's hooks.
 - **contexts/** — Raw React context definitions only. No providers or initialization logic here.
-- **data/** — Static app-wide constants: `apis.ts` (all API endpoint URLs), `common.ts` (token/auth constants), `routes.ts`, sidebar items.
+- **data/** — Static app-wide constants: `apis.ts` (all API endpoint URLs), `common.ts` (token/auth constants), `routes.ts`, `sidebar.ts`. `data/seed/` holds UI-only seed arrays (currently just `projects.ts`).
 - **enums/** — TypeScript enums for every categorical value (TaskPhase, TaskPriority, BlockerStatus, SprintStatus, MetricStatus, MetricTrend, BrowserEvents, etc.).
-- **hooks/shared/** — Custom React hooks: `useAuth`, `useTheme`, `useLocalStorage`, `useSettings`, `useCountUp`, `useOnlineStatus`, `usePageLoader`, `usePresence`, `t()` i18n function.
-- **interfaces/** — TypeScript interfaces for all data model shapes. One file per domain entity plus dialog-specific types.
+- **hooks/shared/** — Cross-cutting hooks: `useAuth`, `useTheme`, `useLocalStorage`, `useSettings`, `useCountUp`, `useOnlineStatus`, `usePageLoader`, `usePresence`, `t()` i18n function.
+- **hooks/<domain>/** — Per-domain CRUD hooks (e.g. `use-users-list`, `use-create-task`). Each calls into the matching `services/<domain>` handler and surfaces `{ data, isLoading, error, refetch }`-shaped returns.
+- **interfaces/** — TypeScript interfaces for data shapes. Most domains have their own subfolder (`interfaces/users/`, `interfaces/tasks/`, `interfaces/projects/`, …); legacy domains still live as flat files (`communications.ts`, `metrics.ts`, `ownership.ts`, `handoffs.ts`, `workload.ts`, `tasks-dialog.ts`, `common.ts`).
 - **layouts/** — Page shell components: `AuthLayout`, `DashboardLayout` (with sidebar, topbar, and provider wrapping).
-- **lib/** — Low-level platform utilities: `axios.ts` (client with interceptors, token refresh, 401 handling), `cookies.ts`, `error.ts` (ApiError class), `utils.ts`.
+- **lib/** — Low-level platform utilities: `axios.ts` (client with interceptors, token refresh, 401 handling, body-less PATCH/POST/PUT fix), `cookies.ts`, `error.ts` (ApiError class), `utils.ts`.
 - **providers/** — React Provider components that wrap contexts and run initialization side-effects on mount.
 - **routes/** — React Router v7 configuration, route guards (`ProtectedRoute`, `PublicRoute`), and error boundary page.
 - **schemas/** — Yup validation schemas, one per form (e.g. `add-task`). Keeps validation logic out of components.
-- **services/** — Axios-based API client functions. One file per domain: `auth`, `users`, `teams`, `sprints`, `tasks`, `blockers`, `alerts`, `red-flags`, `decisions`, `comments`, `dashboard`, `requirements`, `time-logs`.
-- **store/** — Zustand stores for lightweight global UI state: active sprint, sidebar open state, alerts count, red-flags count, network errors.
+- **services/** — Axios-based API client functions. One subfolder per domain: `auth`, `users`, `teams`, `sprints`, `tasks`, `blockers`, `alerts`, `red-flags`, `decisions`, `comments`, `dashboard`, `requirements`, `time-logs`.
+- **store/** — Zustand stores for lightweight global UI state: `useAuthStore`, `useSprintStore`, `useProjectStore` (in-memory seeded project list), `useSidebarStore`, `useNetworkErrorStore`.
 - **ui/** — Thin wrappers around Radix UI primitives following the shadcn/ui pattern (Dialog, Select, Tabs, Tooltip, Avatar, Checkbox, DropdownMenu, ScrollArea, Separator, Sonner toast). Never import Radix directly outside this folder.
 - **utils/** — Pure helper functions: `cn`, `formatDate`, `translateData`, `errorHandlers`, `generateClassName`, localStorage key map.
 - **views/** — One subfolder per feature page. Each contains the page component and any dialogs or sub-components that belong only to that page.
+- **views/projects/** — Projects layer sits above sprints. Renders a grid of project cards with per-card Edit/Delete (`…` menu) and a page-level Add button. Clicking a card swaps the inline view to `SprintsView` with a **Back to Projects** button. UI-only — all CRUD hits the in-memory `useProjectStore` seeded from `data/seed/projects.ts`.
 
 ## Naming conventions
 
@@ -294,6 +306,6 @@ Base URL: `VITE_API_URL` env variable. All routes defined in `src/data/apis.ts`.
 | `feat/integrate-*` | Per-feature API integration branches (auth, sprints, tasks, blockers, alerts, red-flags, decisions, comments, dashboard, requirements, teams, users) |
 | `feat/integration-core` | Core integration work merged across features |
 
-**Current branch:** `feat/integrate-users`
+**Current branch:** `feat/create-project-module`
 
-**Recent work:** Aligning `UserInterface` fields with actual API response shapes, hoisting Alerts/RedFlags providers to layout level, fixing 401 infinite-request loop, auth-gating sprints provider.
+**Recent work:** Added a UI-only Projects layer above Sprints (`views/projects/`, `store/project.ts`, `data/seed/projects.ts`); sidebar replaces Sprints with Projects; topbar gained a project dropdown beside the sprint dropdown; clicking a project card renders `SprintsView` inline with a back button.
