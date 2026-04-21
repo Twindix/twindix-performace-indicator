@@ -21,7 +21,13 @@ const TasksViewInner = () => {
     const { activeSprintId } = useSprintStore();
 
     const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+
+    useEffect(() => {
+        const id = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+        return () => clearTimeout(id);
+    }, [searchQuery]);
     const [priorityFilter, setPriorityFilter] = useState("all");
     const [assigneeFilter, setAssigneeFilter] = useState("all");
     const [typeFilter, setTypeFilter] = useState("all");
@@ -40,7 +46,7 @@ const TasksViewInner = () => {
         assigned_to: assigneeFilter !== "all" ? assigneeFilter : undefined,
         priority: priorityFilter !== "all" ? priorityFilter : undefined,
         type: typeFilter !== "all" ? typeFilter : undefined,
-        search: searchQuery || undefined,
+        search: debouncedSearch || undefined,
     });
 
     const { pipeline, isLoading: pipelineLoading } = usePipeline(activeSprintId);
@@ -120,7 +126,7 @@ const TasksViewInner = () => {
     const totalPoints = stats?.story_points.total ?? 0;
     const blockedCount = stats?.blocked_count ?? tasks.filter((t) => t.is_blocked).length;
 
-    if (isLoading) return <TasksSkeleton />;
+    if (isLoading && tasks.length === 0) return <TasksSkeleton />;
 
     return (
         <div>
