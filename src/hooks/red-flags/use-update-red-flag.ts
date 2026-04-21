@@ -14,7 +14,7 @@ export const useUpdateRedFlag = () => {
         try {
             const res = await redFlagsService.updateHandler(id, payload);
             toast.success(redFlagsConstants.messages.updateSuccess);
-            return res.data;
+            return (res as unknown as { data?: RedFlagInterface }).data ?? (res as unknown as RedFlagInterface);
         } catch (err) {
             console.error(err);
             toast.error(getErrorMessage(err, redFlagsConstants.errors.updateFailed));
