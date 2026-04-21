@@ -10,7 +10,6 @@ export const apiClient = axios.create({
     baseURL: apisData.baseUrl,
     headers: {
         "Accept": "application/json",
-        "Content-Type": "application/json",
     },
     timeout: 30000,
 });
@@ -22,6 +21,13 @@ apiClient.interceptors.request.use(
             config.headers[commonData.token.authorizationHeader] =
                 `${commonData.token.bearerPrefix}${token}`;
         }
+
+        const method = (config.method ?? "get").toLowerCase();
+        const needsBody = method === "post" || method === "put" || method === "patch";
+        if (needsBody && (config.data === undefined || config.data === null)) {
+            config.data = {};
+        }
+
         return config;
     },
     (error: AxiosError) => Promise.reject(error),
