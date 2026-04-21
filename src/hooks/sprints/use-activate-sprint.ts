@@ -16,6 +16,7 @@ export const useActivateSprint = () => {
             toast.success(sprintsConstants.messages.activateSuccess);
             return res.data;
         } catch (err) {
+            console.error(err);
             toast.error(getErrorMessage(err, sprintsConstants.errors.activateFailed));
             return null;
         } finally {

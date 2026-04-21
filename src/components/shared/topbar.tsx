@@ -34,6 +34,7 @@ import {
 
 const presenceConfig: Record<PresenceStatus, { label: string; dot: string }> = {
     active:  { label: "Active",  dot: "bg-success" },
+    // away:    { label: "Away",    dot: "bg-warning" },
     offline: { label: "Offline", dot: "bg-text-muted" },
 };
 
@@ -142,12 +143,12 @@ export const Topbar = () => {
                         <button className="flex items-center gap-2 rounded-full p-1 pe-3 hover:bg-accent transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                             <div className="relative">
                                 <Avatar className="h-8 w-8">
-                                    <AvatarFallback className="text-[10px]">{user?.avatar_initials}</AvatarFallback>
+                                    <AvatarFallback className="text-[10px]">{user?.avatar}</AvatarFallback>
                                 </Avatar>
                                 <span className={`absolute bottom-0 end-0 h-2.5 w-2.5 rounded-full border-2 border-surface ${presenceConfig[status].dot}`} />
                             </div>
                             <div className="hidden sm:flex flex-col items-start">
-                                <span className="text-sm font-medium text-text-dark leading-tight">{user?.full_name}</span>
+                                <span className="text-sm font-medium text-text-dark leading-tight">{user?.name}</span>
                                 <span className="text-[10px] text-text-muted leading-tight flex items-center gap-1">
                                     <span className={`h-1.5 w-1.5 rounded-full ${presenceConfig[status].dot}`} />
                                     {t(presenceConfig[status].label)}
@@ -157,7 +158,7 @@ export const Topbar = () => {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
                         <div className="px-2 py-2.5">
-                            <p className="text-sm font-semibold text-text-dark">{user?.full_name}</p>
+                            <p className="text-sm font-semibold text-text-dark">{user?.name}</p>
                             <p className="text-xs text-text-muted">{user?.email}</p>
                         </div>
                         <DropdownMenuSeparator />
