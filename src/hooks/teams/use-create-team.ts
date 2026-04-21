@@ -15,7 +15,7 @@ export const useCreateTeam = () => {
         try {
             const res = await teamsService.createHandler(payload);
             toast.success(teamsConstants.messages.createSuccess);
-            return res.data;
+            return (res as unknown as { data?: TeamInterface }).data ?? (res as unknown as TeamInterface);
         } catch (err) {
             toast.error(getErrorMessage(err, teamsConstants.errors.createFailed));
             return null;
