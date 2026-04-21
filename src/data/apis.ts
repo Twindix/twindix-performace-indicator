@@ -65,6 +65,7 @@ export const apisData = {
         create: (sprintId: string) => `/sprints/${sprintId}/blockers`,
         detail: (id: string) => `/blockers/${id}`,
         update: (id: string) => `/blockers/${id}`,
+        delete: (id: string) => `/blockers/${id}`,
         resolve: (id: string) => `/blockers/${id}/resolve`,
         escalate: (id: string) => `/blockers/${id}/escalate`,
         linkTasks: (id: string) => `/blockers/${id}/tasks`,

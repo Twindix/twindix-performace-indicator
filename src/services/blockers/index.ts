@@ -28,6 +28,10 @@ export const blockersService = {
         return data;
     },
 
+    deleteHandler: async (id: string): Promise<void> => {
+        await apiClient.delete(apisData.blockers.delete(id));
+    },
+
     resolveHandler: async (id: string): Promise<BlockerDetailResponseInterface> => {
         const { data } = await apiClient.patch<BlockerDetailResponseInterface>(apisData.blockers.resolve(id));
         return data;

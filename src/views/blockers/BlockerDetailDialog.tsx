@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { AlertCircle, Calendar, CheckCircle2, Clock, Edit, Layers, ShieldAlert, TrendingUp, User } from "lucide-react";
+import { AlertCircle, Calendar, CheckCircle2, Clock, Edit, Layers, ShieldAlert, Trash2, TrendingUp, User } from "lucide-react";
 
 import { Badge, Button } from "@/atoms";
-import { t, useEscalateBlocker, useGetBlocker, useResolveBlocker } from "@/hooks";
+import { t, useDeleteBlocker, useEscalateBlocker, useGetBlocker, useResolveBlocker } from "@/hooks";
 import type { BlockerInterface } from "@/interfaces";
 import { Avatar, AvatarFallback, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/ui";
 import { cn, formatDate } from "@/utils";
@@ -13,6 +13,7 @@ interface Props {
     onOpenChange: (open: boolean) => void;
     onEdit: (blocker: BlockerInterface) => void;
     onPatch: (blocker: BlockerInterface) => void;
+    onDelete: (id: string) => void;
     refetchAnalytics: () => void;
 }
 
@@ -23,10 +24,11 @@ const statusVariant = (status: string | null): "error" | "success" | "warning" |
     return "secondary";
 };
 
-export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPatch, refetchAnalytics }: Props) => {
+export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPatch, onDelete, refetchAnalytics }: Props) => {
     const { getHandler: getBlockerHandler } = useGetBlocker();
     const { resolveHandler: resolveBlockerHandler, isLoading: isResolving } = useResolveBlocker();
     const { escalateHandler: escalateBlockerHandler, isLoading: isEscalating } = useEscalateBlocker();
+    const { deleteHandler: deleteBlockerHandler, isLoading: isDeleting } = useDeleteBlocker();
     const [current, setCurrent] = useState<BlockerInterface | null>(blocker);
 
     useEffect(() => { setCurrent(blocker); }, [blocker]);
@@ -68,6 +70,16 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPat
         }
     };
 
+    const handleDelete = async () => {
+        if (!confirm(t("Delete this blocker? This cannot be undone."))) return;
+        const ok = await deleteBlockerHandler(current.id);
+        if (ok) {
+            onDelete(current.id);
+            refetchAnalytics();
+            onOpenChange(false);
+        }
+    };
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
@@ -81,15 +93,16 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPat
                         )}
                         <Badge variant="outline">{t(current.type)}</Badge>
                         <Badge variant="secondary">{t(current.severity.charAt(0).toUpperCase() + current.severity.slice(1))}</Badge>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onEdit(current)}
-                            className="ms-auto h-7 gap-1.5 text-xs me-8"
-                        >
-                            <Edit className="h-3.5 w-3.5" />
-                            {t("Edit")}
-                        </Button>
+                        <div className="ms-auto flex items-center gap-1.5 me-8">
+                            <Button variant="ghost" size="sm" onClick={() => onEdit(current)} className="h-7 gap-1.5 text-xs">
+                                <Edit className="h-3.5 w-3.5" />
+                                {t("Edit")}
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={handleDelete} disabled={isDeleting} className="h-7 gap-1.5 text-xs text-error hover:text-error hover:bg-error-light">
+                                <Trash2 className="h-3.5 w-3.5" />
+                                {isDeleting ? t("Deleting...") : t("Delete")}
+                            </Button>
+                        </div>
                     </div>
                     <DialogTitle className="text-xl">{current.title}</DialogTitle>
                     {current.description && <p className="text-sm text-text-secondary">{current.description}</p>}
