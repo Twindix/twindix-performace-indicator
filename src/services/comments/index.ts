@@ -23,8 +23,13 @@ export const commentsService = {
         return data.data;
     },
 
-    createHandler: async (taskId: string, payload: CreateCommentPayloadInterface): Promise<CommentInterface> => {
-        const { data } = await apiClient.post<{ data: CommentInterface }>(apisData.comments.create(taskId), payload);
+    createHandler: async (sprintId: string, payload: CreateCommentPayloadInterface): Promise<CommentInterface> => {
+        const { data } = await apiClient.post<{ data: CommentInterface }>(apisData.comments.create(sprintId), payload);
+        return data.data ?? (data as any);
+    },
+
+    createOnTaskHandler: async (taskId: string, payload: CreateCommentPayloadInterface): Promise<CommentInterface> => {
+        const { data } = await apiClient.post<{ data: CommentInterface }>(apisData.comments.createOnTask(taskId), payload);
         return data.data ?? (data as any);
     },
 

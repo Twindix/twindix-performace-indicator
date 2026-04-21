@@ -124,7 +124,7 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
         setIsSending(true);
         setMentionActive(false);
         try {
-            const created = await commentsService.createHandler(task.id, {
+            const created = await commentsService.createOnTaskHandler(task.id, {
                 body: commentText.trim(),
                 ...(mentionedUserIds.length > 0 && { mentioned_user_ids: mentionedUserIds }),
             }) as unknown as TaskCommentInterface;
