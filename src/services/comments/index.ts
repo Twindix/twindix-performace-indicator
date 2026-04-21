@@ -1,24 +1,39 @@
+import { apisData } from "@/data";
+import type { CommentDetailResponseInterface, CommentsAnalyticsResponseInterface, CommentsListFiltersInterface, CommentsListResponseInterface, CreateCommentPayloadInterface, UpdateCommentPayloadInterface } from "@/interfaces";
 import { apiClient } from "@/lib/axios";
-import { apisData } from "@/data/apis";
-import type { TaskCommentInterface, CommentListResponseInterface, CreateCommentPayloadInterface, UpdateCommentPayloadInterface } from "@/interfaces";
 
 export const commentsService = {
-    listByTaskHandler: async (taskId: string): Promise<CommentListResponseInterface> => {
-        const { data } = await apiClient.get<CommentListResponseInterface>(apisData.comments.taskList(taskId));
+    listHandler: async (sprintId: string, filters?: CommentsListFiltersInterface): Promise<CommentsListResponseInterface> => {
+        const { data } = await apiClient.get<CommentsListResponseInterface>(apisData.comments.list(sprintId), { params: filters });
         return data;
     },
 
-    createHandler: async (taskId: string, payload: CreateCommentPayloadInterface): Promise<TaskCommentInterface> => {
-        const { data } = await apiClient.post<{ data: TaskCommentInterface }>(apisData.comments.create(taskId), payload);
-        return data.data ?? data;
+    analyticsHandler: async (sprintId: string): Promise<CommentsAnalyticsResponseInterface> => {
+        const { data } = await apiClient.get<CommentsAnalyticsResponseInterface>(apisData.comments.analytics(sprintId));
+        return data;
     },
 
-    updateHandler: async (id: string, payload: UpdateCommentPayloadInterface): Promise<TaskCommentInterface> => {
-        const { data } = await apiClient.put<{ data: TaskCommentInterface }>(apisData.comments.update(id), payload);
-        return data.data ?? data;
+    detailHandler: async (id: string): Promise<CommentDetailResponseInterface> => {
+        const { data } = await apiClient.get<CommentDetailResponseInterface>(apisData.comments.detail(id));
+        return data;
+    },
+
+    createHandler: async (sprintId: string, payload: CreateCommentPayloadInterface): Promise<CommentDetailResponseInterface> => {
+        const { data } = await apiClient.post<CommentDetailResponseInterface>(apisData.comments.create(sprintId), payload);
+        return data;
+    },
+
+    updateHandler: async (id: string, payload: UpdateCommentPayloadInterface): Promise<CommentDetailResponseInterface> => {
+        const { data } = await apiClient.put<CommentDetailResponseInterface>(apisData.comments.update(id), payload);
+        return data;
     },
 
     deleteHandler: async (id: string): Promise<void> => {
         await apiClient.delete(apisData.comments.delete(id));
+    },
+
+    respondHandler: async (id: string): Promise<CommentDetailResponseInterface> => {
+        const { data } = await apiClient.patch<CommentDetailResponseInterface>(apisData.comments.respond(id));
+        return data;
     },
 };

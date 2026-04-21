@@ -38,7 +38,7 @@ export type { TeamMemberWorkloadInterface } from "./workload";
 export type { MetricInterface, FrictionScoresInterface, SprintMetricsInterface } from "./metrics";
 export type { OwnershipEntryInterface } from "./ownership";
 export type { HandoffInterface, CriterionInterface } from "./handoffs";
-export type { CommentInterface } from "./comments";
+export type { CommentInterface, CommentUserInterface, CommentsListResponseInterface, CommentDetailResponseInterface, CommentsAnalyticsInterface, CommentsAnalyticsResponseInterface, CreateCommentPayloadInterface, UpdateCommentPayloadInterface, CommentsListFiltersInterface } from "./comments";
 export type { RedFlagInterface, RedFlagSeverity } from "./red-flags";
 export type { AlertInterface } from "./alerts";
 export type { AttachmentInterface, AddTaskFormState, AddTaskDialogProps, RequirementDraftInterface } from "./tasks-dialog";

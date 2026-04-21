@@ -1,10 +1,11 @@
+import { LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { useEffect } from "react";
 import { Bell, Flag, LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/atoms";
 import { routesData } from "@/data";
-import { useAuth, useTheme, t, useSettings, usePresence, type PresenceStatus, useSprintsList } from "@/hooks";
+import { useAuth, useSprintsList, useTheme, t, useSettings, usePresence, type PresenceStatus } from "@/hooks";
 import { useSprintStore } from "@/store";
 import { MobileNav } from "./mobile-nav";
 import {
@@ -37,6 +38,17 @@ export const Topbar = () => {
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings] = useSettings();
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
+    const { sprints } = useSprintsList();
+    const navigate = useNavigate();
+    const { status, updateStatus } = usePresence(user?.id);
+
+    useEffect(() => {
+        if (sprints.length === 0) return;
+        if (activeSprintId && sprints.some((s) => s.id === activeSprintId)) return;
+        const active = sprints.find((s) => s.status === "active") ?? sprints[0];
+        if (active) onSetActiveSprint(active.id);
+    }, [sprints, activeSprintId, onSetActiveSprint]);
+
     const { count: redFlagCount } = { count: 0 }; // Placeholder for useRedFlags();
     const { count: pendingAlertCount } = { count: 0 }; // Placeholder for useAlerts();
     const { sprints, isLoading: isLoadingSprints } = useSprintsList();
@@ -67,7 +79,12 @@ export const Topbar = () => {
                     <SelectContent>
                         {sprints.map((s) => (
                             <SelectItem key={s.id} value={s.id}>
-                                {s.name} {s.status === "active" && `(${t("Active")})`}
+                                <span className="flex items-center gap-1.5">
+                                    {s.status === "active" && (
+                                        <span className="h-2 w-2 rounded-full bg-success shrink-0" />
+                                    )}
+                                    {s.name}
+                                </span>
                             </SelectItem>
                         ))}
                     </SelectContent>
@@ -76,48 +93,6 @@ export const Topbar = () => {
 
             <div className="flex items-center gap-2">
                 <TooltipProvider delayDuration={300}>
-                    {/* Red Flags indicator */}
-                    {redFlagCount > 0 && (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <button
-                                    onClick={() => navigate(routesData.redFlags)}
-                                    className="relative flex items-center gap-1.5 h-9 px-2.5 rounded-[var(--radius-default)] text-error hover:bg-error-light transition-colors cursor-pointer"
-                                    aria-label="Red Flags"
-                                >
-                                    <Flag className="h-4 w-4 animate-[flag-wave_1.8s_ease-in-out_infinite]" />
-                                    <span className="text-xs font-semibold hidden sm:inline">
-                                        {t("Red Flags")}
-                                    </span>
-                                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-error text-[10px] font-bold text-white px-1">
-                                        {redFlagCount}
-                                    </span>
-                                </button>
-                            </TooltipTrigger>
-                            <TooltipContent>{t("View all red flags for this sprint")}</TooltipContent>
-                        </Tooltip>
-                    )}
-
-                    {/* Alerts indicator */}
-                    {pendingAlertCount > 0 && (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <button
-                                    onClick={() => navigate(routesData.alerts)}
-                                    className="relative flex items-center gap-1.5 h-9 px-2.5 rounded-[var(--radius-default)] text-warning hover:bg-warning-light transition-colors cursor-pointer"
-                                    aria-label="Alerts"
-                                >
-                                    <Bell className="h-4 w-4 animate-[bell-ring_2s_ease-in-out_infinite]" />
-                                    <span className="text-xs font-semibold hidden sm:inline">{t("Alerts")}</span>
-                                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-warning text-[10px] font-bold text-white px-1">
-                                        {pendingAlertCount}
-                                    </span>
-                                </button>
-                            </TooltipTrigger>
-                            <TooltipContent>{t("You have pending alerts")}</TooltipContent>
-                        </Tooltip>
-                    )}
-
                     {/* Theme toggle */}
                     <Tooltip>
                         <TooltipTrigger asChild>
