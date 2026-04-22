@@ -7,6 +7,7 @@ import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
 import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { UsersSkeleton } from "@/components/skeletons";
 import { usersConstants } from "@/constants";
+import type { RoleTier } from "@/constants/permissions";
 import { t } from "@/hooks";
 import type { UserInterface } from "@/interfaces";
 import { useUsersList, useUsersCreate, useUsersUpdate } from "@/hooks/users";
@@ -29,7 +30,7 @@ const emptyForm = {
     email: "",
     password: "",
     role_label: "",
-    role_tier: "member" as string,
+    role_tier: "member" as RoleTier,
     team_id: "",
     avatar_initials: "",
 };

@@ -1,9 +1,10 @@
+import type { RoleTier } from "@/constants/permissions";
 import type { UserInterface } from "@/interfaces/common";
 
 export interface UserListParamsInterface {
     page?: number;
     per_page?: number;
-    role_tier?: string;
+    role_tier?: RoleTier;
     team_id?: string;
 }
 
@@ -32,7 +33,7 @@ export interface CreateUserPayloadInterface {
     email: string;
     password: string;
     role_label: string;
-    role_tier: string;
+    role_tier: RoleTier;
     team_id: string;
     avatar_initials?: string;
 }
@@ -40,7 +41,7 @@ export interface CreateUserPayloadInterface {
 export interface UpdateUserPayloadInterface {
     full_name?: string;
     email?: string;
-    role_tier?: string;
+    role_tier?: RoleTier;
     team_id?: string;
     account_status?: string;
 }
