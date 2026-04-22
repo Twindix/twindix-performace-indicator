@@ -139,12 +139,16 @@ const TasksViewInner = () => {
         e.preventDefault();
         setDragOverStatus(null);
         if (!draggedTask || draggedTask.status === targetStatus) { setDraggedTask(null); return; }
-        const updated = await updateStatusHandler(draggedTask.id, targetStatus);
+        const snapshot = draggedTask;
+        patchTaskLocal({ ...snapshot, status: targetStatus } as TaskInterface);
+        setDraggedTask(null);
+        const updated = await updateStatusHandler(snapshot.id, targetStatus);
         if (updated && typeof updated === "object") {
             patchTaskLocal(updated as TaskInterface);
             toast.success(`${t("Task moved to")} ${targetStatus.replace(/_/g, " ")}`);
+        } else {
+            patchTaskLocal(snapshot);
         }
-        setDraggedTask(null);
     }, [draggedTask, updateStatusHandler, patchTaskLocal]);
 
     const isLoading = tasksLoading || (viewMode === "pipeline" && pipelineLoading);

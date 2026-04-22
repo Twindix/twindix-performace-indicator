@@ -37,7 +37,7 @@ type FormErrors = Partial<Record<keyof FormState, string>>;
 
 export const UsersView = () => {
     const navigate = useNavigate();
-    const { users, isLoading, refetch } = useUsersList();
+    const { users, isLoading, refetch, patchUserLocal } = useUsersList();
 
     const [errors, setErrors] = useState<FormErrors>({});
     const mapFieldErrors = (fe: Record<string, string[]>) => {
@@ -153,10 +153,14 @@ export const UsersView = () => {
                                                         className="gap-2 cursor-pointer"
                                                         onClick={async () => {
                                                             const next = isInactive ? "active" : "inactive";
+                                                            const optimistic = { ...member, account_status: next as UserInterface["account_status"] };
+                                                            patchUserLocal(optimistic);
                                                             const res = await updateUser(member.id, { account_status: next });
                                                             if (res) {
+                                                                patchUserLocal(res as UserInterface);
                                                                 toast.success(t(isInactive ? "User activated" : "User deactivated"));
-                                                                refetch();
+                                                            } else {
+                                                                patchUserLocal(member);
                                                             }
                                                         }}
                                                     >

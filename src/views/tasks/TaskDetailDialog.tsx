@@ -101,15 +101,19 @@ export const TaskDetailDialog = ({
     const handleAddTag = async () => {
         const v = tagInput.trim();
         if (!v) return;
-        const ok = await addTagHandler(task.id, v);
-        if (ok) patchTaskLocal(task.id, { tags: [...task.tags, v] });
+        const snapshot = task.tags;
+        patchTaskLocal(task.id, { tags: [...snapshot, v] });
         setTagInput("");
         setShowTagInput(false);
+        const ok = await addTagHandler(task.id, v);
+        if (!ok) patchTaskLocal(task.id, { tags: snapshot });
     };
 
     const handleRemoveTag = async (tagId: string) => {
+        const snapshot = task.tags;
+        patchTaskLocal(task.id, { tags: snapshot.filter((t) => (typeof t === "string" ? t : t.id) !== tagId) });
         const ok = await removeTagHandler(task.id, tagId);
-        if (ok) patchTaskLocal(task.id, { tags: task.tags.filter((t) => (typeof t === "string" ? t : t.id) !== tagId) });
+        if (!ok) patchTaskLocal(task.id, { tags: snapshot });
     };
 
     const handleDelete = async () => {
@@ -331,9 +335,13 @@ export const TaskDetailDialog = ({
                                         <button
                                             type="button"
                                             onClick={async () => {
+                                                const optimisticDone = !req.is_done;
+                                                patchTaskLocal(task.id, { requirements: requirements.map((r) => r.id === req.id ? { ...r, is_done: optimisticDone } : r) });
                                                 const res = await toggleRequirementHandler(req.id);
                                                 if (res) {
                                                     patchTaskLocal(task.id, { requirements: requirements.map((r) => r.id === req.id ? { ...r, is_done: res.is_done } : r) });
+                                                } else {
+                                                    patchTaskLocal(task.id, { requirements: requirements.map((r) => r.id === req.id ? { ...r, is_done: req.is_done } : r) });
                                                 }
                                             }}
                                             className="flex items-center gap-3 flex-1 text-start cursor-pointer hover:opacity-80"
