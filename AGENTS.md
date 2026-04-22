@@ -299,6 +299,73 @@ Base URL: `VITE_API_URL` env variable. All routes defined in `src/data/apis.ts`.
 | GET | `/sprints/:sprintId/dashboard/health-score` | Health score |
 | GET | `/sprints/:sprintId/dashboard/metrics` | Metrics (17 KPIs) |
 
+## Error handling
+
+Every API call goes through `runAction` in `src/lib/handle-action.ts`. Hooks never `try/catch` directly — they use `useMutationAction` or `useQueryAction` from `src/hooks/shared/`, which delegate to `runAction`. Components never handle errors at all; they consume `{ data, isLoading, fieldErrors }` and render.
+
+### Priority rules (apply everywhere)
+
+1. **Backend message has first priority.** Strings in `src/constants/<domain>/errors` are fallbacks — a user only sees them when the backend sent no `data.message`. Never write a toast or inline string in a component or hook that overrides the backend.
+2. **Never handle errors in a component.** Always in a hook via `runAction`. Components only consume `{ data, isLoading, error?, submit, fieldErrors }`.
+3. **Toasts are for events, inline errors are for forms.** Never both for the same error. 422 errors route to `useFormErrors` via the hook's `onFieldErrors` option and never toast.
+4. **Never swallow an error silently** unless it's a background side-effect (heartbeat, presence, analytics, secondary widgets). Use `silent: true` explicitly — makes intent auditable.
+5. **Never `console.error` in app code** — `runAction` handles dev-only logging via its `context` option.
+6. **Fallback constants per domain.** Every hook pulls its fallback message from `constants/<domain>/index.ts` — but the backend message wins whenever present (rule #1).
+7. **401 is global.** No hook handles it; the axios interceptor dispatches `AUTH_UNAUTHORIZED_EVENT` and clears the cookie. Don't toast unauthorized.
+8. **Optimistic updates must revert on error.** For `toggle`, drag-drop, etc. — snapshot before, restore in the caller when `runAction` returns `null`.
+9. **Don't re-throw unless the caller needs to branch** (login navigate, etc.). Default is catch-and-toast via `runAction`; use `rethrow: true` only when the view needs the exception (e.g. to skip `navigate(dashboard)` on failed login).
+10. **One place maps HTTP status → UX.** If you need to change "what 403 looks like", you change it in `runAction` — nowhere else.
+11. **Form closes iff the handler returns truthy.** Never `closeDialog()` unconditionally after `await submit()`. On 422 the dialog stays open with inline errors; on other errors it stays open with a toast.
+
+### Files you will touch
+
+| File | Purpose |
+|---|---|
+| `src/lib/error.ts` | `ApiError` class with `statusCode`, `message`, `data`, `fieldErrors`, `code` |
+| `src/lib/axios.ts` | Response interceptor — only stores backend `data.message`; extracts `data.errors` into `fieldErrors` on 422 |
+| `src/lib/handle-action.ts` | `runAction(fn, options)` — status routing, network detection, dev-mode logging |
+| `src/hooks/shared/use-mutation-action.ts` | Thin wrapper over `runAction` owning `isLoading`; returns a stable `mutate` reference |
+| `src/hooks/shared/use-query-action.ts` | Same idea for on-mount queries; exposes `data`, `isLoading`, `refetch`, `setData` |
+| `src/hooks/shared/use-form-errors.ts` | `{ fieldErrors, setFieldErrors, clearError, clear, getError }` for inline 422 display |
+| `src/constants/<domain>/index.ts` | Per-domain `errors` and `messages` bags (fallback copy only) |
+
+### Writing a new hook
+
+```ts
+export const useCreateThing = ({ onFieldErrors }: { onFieldErrors?: (e: FieldErrors) => void } = {}) => {
+    const { mutate, isLoading } = useMutationAction(
+        async (payload: CreateThingPayloadInterface): Promise<ThingInterface> => {
+            const res = await thingsService.createHandler(payload);
+            return res.data;
+        },
+        {
+            successMessage: thingsConstants.messages.createSuccess,
+            errorFallback: thingsConstants.errors.createFailed,
+            onFieldErrors,
+            context: "things.create",
+        },
+    );
+    return { createHandler: mutate, isLoading };
+};
+```
+
+### Wiring a form
+
+```tsx
+const { setFieldErrors, clearError, clear: clearFieldErrors, getError } = useFormErrors();
+const { createHandler } = useCreateThing({ onFieldErrors: setFieldErrors });
+
+const handleSubmit = async () => {
+    const res = await createHandler(payload);
+    if (res) { /* success: close dialog + refetch */ }
+    // non-truthy: dialog stays open, 422 errors are already inline, other errors already toasted
+};
+
+// Per input:
+<Input value={name} onChange={(e) => { setName(e.target.value); clearError("name"); }} />
+{getError("name") && <p className="text-xs text-error">{getError("name")}</p>}
+```
+
 ## Branch strategy
 
 | Branch | Purpose |
