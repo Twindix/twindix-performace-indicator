@@ -64,11 +64,19 @@ apiClient.interceptors.response.use(
             return Promise.reject(new ApiError(401, "Unauthorized", data));
         }
 
+        const body = data as
+            | { message?: string; errors?: Record<string, string[]>; code?: string }
+            | undefined;
+
         const errorMessage =
-            (data as { message?: string })?.message ||
+            body?.message ||
             message ||
             "Something went wrong. Please try again.";
 
-        return Promise.reject(new ApiError(status ?? 500, errorMessage, data));
+        const fieldErrors = status === 422 ? body?.errors : undefined;
+
+        return Promise.reject(
+            new ApiError(status ?? 500, errorMessage, data, fieldErrors, body?.code),
+        );
     },
 );

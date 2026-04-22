@@ -3,6 +3,8 @@ export class ApiError extends Error {
         public statusCode: number,
         message: string,
         public data?: unknown,
+        public fieldErrors?: Record<string, string[]>,
+        public code?: string,
     ) {
         super(message);
         this.name = "ApiError";
