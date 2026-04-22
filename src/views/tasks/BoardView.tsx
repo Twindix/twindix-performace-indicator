@@ -1,5 +1,5 @@
 import type { DragEvent } from "react";
-import { Circle, GripVertical, Lock } from "lucide-react";
+import { Circle, Clock, GripVertical, Link2, Lock } from "lucide-react";
 
 import { Badge } from "@/atoms";
 import { TaskPriority } from "@/enums";
@@ -91,14 +91,18 @@ export const BoardView = ({
                                 </div>
                             )}
 
-                            {columnTasks.map((task) => (
+                            {columnTasks.map((task) => {
+                                const blockedByDep = task.is_blocked_by_dependency === true;
+                                const draggable = !blockedByDep;
+                                return (
                                 <div
                                     key={task.id}
-                                    draggable
+                                    draggable={draggable}
                                     className={cn(
-                                        "bg-surface rounded-lg p-3 border cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-all z-20 pointer-events-auto relative",
-                                        task.is_blocked ? "border-error bg-error/5" : "border-border",
-                                        draggedTask?.id === task.id ? "opacity-50 scale-95" : (!task.is_blocked && "hover:border-primary"),
+                                        "bg-surface rounded-lg p-3 border shadow-sm hover:shadow-md transition-all z-20 pointer-events-auto relative",
+                                        draggable ? "cursor-grab active:cursor-grabbing" : "cursor-not-allowed",
+                                        task.is_blocked || blockedByDep ? "border-error bg-error/5" : "border-border",
+                                        draggedTask?.id === task.id ? "opacity-50 scale-95" : (!task.is_blocked && !blockedByDep && "hover:border-primary"),
                                         dragOverStatus === status ? "pointer-events-none" : ""
                                     )}
                                     onDragStart={(e) => handleDragStart(e, task)}
@@ -111,6 +115,9 @@ export const BoardView = ({
                                                 {task.task_number ?? task.id}
                                             </span>
                                             {task.is_blocked && <Lock className="h-3 w-3 text-error shrink-0" />}
+                                            {blockedByDep && <Link2 className="h-3 w-3 text-error shrink-0" aria-label={t("Blocked by dependency")} />}
+                                            {task.dead_time_status === "approaching" && <Clock className="h-3 w-3 text-warning shrink-0" aria-label={t("Approaching deadline")} />}
+                                            {task.dead_time_status === "overdue" && <Clock className="h-3 w-3 text-error shrink-0" aria-label={t("Overdue")} />}
                                         </div>
                                     </div>
 
@@ -142,7 +149,8 @@ export const BoardView = ({
                                         )}
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 );

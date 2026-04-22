@@ -139,6 +139,12 @@ const TasksViewInner = () => {
         e.preventDefault();
         setDragOverStatus(null);
         if (!draggedTask || draggedTask.status === targetStatus) { setDraggedTask(null); return; }
+        if (draggedTask.is_blocked_by_dependency) {
+            const dep = draggedTask.depends_on_task;
+            toast.error(dep ? `${t("Blocked by dependency")}: ${dep.code ?? dep.title}` : t("Blocked by dependency"));
+            setDraggedTask(null);
+            return;
+        }
         const snapshot = draggedTask;
         patchTaskLocal({ ...snapshot, status: targetStatus } as TaskInterface);
         setDraggedTask(null);

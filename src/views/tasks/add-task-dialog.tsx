@@ -6,7 +6,7 @@ import { TaskPriority } from "@/enums";
 import type { AddTaskDialogProps, AddTaskFormState } from "@/interfaces";
 import type { TaskInterface } from "@/interfaces";
 import type { UserInterface } from "@/interfaces";
-import { t, useCreateTask, useFormErrors, useTasksList } from "@/hooks";
+import { t, useCreateTask, useFormErrors, useTasksListLite } from "@/hooks";
 import { runAction } from "@/lib/handle-action";
 import { requirementsService, tasksService } from "@/services";
 import { useSprintStore } from "@/store";
@@ -162,12 +162,12 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
     const [requirementInput, setRequirementInput] = useState("");
     const [tagInput, setTagInput] = useState("");
     const [deadline, setDeadline] = useState("");
-    const [taskType, setTaskType] = useState<"stand_alone" | "compound">("stand_alone");
+    const [taskType, setTaskType] = useState<"standalone" | "compound">("standalone");
     const [startAfterEnabled, setStartAfterEnabled] = useState(false);
     const [startAfterTaskId, setStartAfterTaskId] = useState("");
     const [notifyEnabled, setNotifyEnabled] = useState(false);
     const [notifyUserIds, setNotifyUserIds] = useState<string[]>([]);
-    const { tasks: sprintTasks } = useTasksList(activeSprintId ?? "");
+    const { tasks: sprintTasks } = useTasksListLite({ sprint_id: activeSprintId ?? undefined, exclude_done: true });
     const requirementInputRef = useRef<HTMLInputElement>(null);
     const tagInputRef = useRef<HTMLInputElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -184,7 +184,7 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
             setRequirementInput("");
             setTagInput("");
             setDeadline("");
-            setTaskType("stand_alone");
+            setTaskType("standalone");
             setStartAfterEnabled(false);
             setStartAfterTaskId("");
             setNotifyEnabled(false);
@@ -259,6 +259,10 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
             assigned_to: formState.assigned_to,
             priority: formState.priority,
             estimated_hours: formState.estimatedHours,
+            dead_time: deadline || null,
+            task_type: taskType,
+            depends_on_task: taskType === "compound" && startAfterEnabled && startAfterTaskId ? startAfterTaskId : null,
+            notify_on_done: taskType === "compound" && notifyEnabled,
         });
 
         if (created) {
@@ -501,12 +505,12 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                                 <ListChecks className="h-4 w-4 text-text-muted" />
                                 {t("Task Type")}
                             </Label>
-                            <Select value={taskType} onValueChange={(v) => setTaskType(v as "stand_alone" | "compound")}>
+                            <Select value={taskType} onValueChange={(v) => setTaskType(v as "standalone" | "compound")}>
                                 <SelectTrigger id="taskType" className="w-full">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="stand_alone">{t("Stand-alone")}</SelectItem>
+                                    <SelectItem value="standalone">{t("Stand-alone")}</SelectItem>
                                     <SelectItem value="compound">{t("Compound")}</SelectItem>
                                 </SelectContent>
                             </Select>
