@@ -1,49 +1,42 @@
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useCallback } from "react";
 
 import { tasksConstants } from "@/constants";
 import type { PipelineBoardInterface, TaskInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { tasksService } from "@/services";
 
+import { useQueryAction } from "../shared";
+
 export const usePipeline = (sprintId: string) => {
-    const [pipeline, setPipeline] = useState<PipelineBoardInterface>({});
-    const [isLoading, setIsLoading] = useState(true);
-
-    const refetch = useCallback(async () => {
-        if (!sprintId) { setPipeline({}); setIsLoading(false); return; }
-        setIsLoading(true);
-        try {
-            const res = await tasksService.pipelineHandler(sprintId);
-            setPipeline(res);
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
-        } finally {
-            setIsLoading(false);
-        }
-    }, [sprintId]);
-
-    useEffect(() => { refetch(); }, [refetch]);
+    const { data, isLoading, refetch, setData } = useQueryAction<PipelineBoardInterface>(
+        async () => (sprintId ? await tasksService.pipelineHandler(sprintId) : {}),
+        [sprintId],
+        {
+            enabled: !!sprintId,
+            errorFallback: tasksConstants.errors.fetchFailed,
+            initialData: {},
+            context: "tasks.pipeline",
+        },
+    );
 
     const patchTaskLocal = useCallback((task: TaskInterface) => {
-        setPipeline((prev) => {
+        setData((prev) => {
             const next: PipelineBoardInterface = {};
-            for (const [col, tasks] of Object.entries(prev)) {
-                next[col] = tasks.map((t) => t.id === task.id ? task : t);
+            for (const [col, tasks] of Object.entries(prev ?? {})) {
+                next[col] = tasks.map((t) => (t.id === task.id ? task : t));
             }
             return next;
         });
-    }, []);
+    }, [setData]);
 
     const removeTaskLocal = useCallback((id: string) => {
-        setPipeline((prev) => {
+        setData((prev) => {
             const next: PipelineBoardInterface = {};
-            for (const [col, tasks] of Object.entries(prev)) {
+            for (const [col, tasks] of Object.entries(prev ?? {})) {
                 next[col] = tasks.filter((t) => t.id !== id);
             }
             return next;
         });
-    }, []);
+    }, [setData]);
 
-    return { pipeline, isLoading, refetch, patchTaskLocal, removeTaskLocal };
+    return { pipeline: data ?? {}, isLoading, refetch, patchTaskLocal, removeTaskLocal };
 };

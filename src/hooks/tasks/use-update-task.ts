@@ -1,27 +1,26 @@
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
-
 import { tasksConstants } from "@/constants/tasks";
 import type { UpdateTaskPayloadInterface, TaskInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { tasksService } from "@/services";
 
-export const useUpdateTask = () => {
-    const [isLoading, setIsLoading] = useState(false);
+import { useMutationAction, type FieldErrors } from "../shared";
 
-    const updateHandler = useCallback(async (id: string, payload: UpdateTaskPayloadInterface): Promise<TaskInterface | null> => {
-        setIsLoading(true);
-        try {
+export interface UseUpdateTaskOptions {
+    onFieldErrors?: (errors: FieldErrors) => void;
+}
+
+export const useUpdateTask = ({ onFieldErrors }: UseUpdateTaskOptions = {}) => {
+    const { mutate, isLoading } = useMutationAction(
+        async (id: string, payload: UpdateTaskPayloadInterface): Promise<TaskInterface> => {
             const res = await tasksService.updateHandler(id, payload);
-            toast.success(tasksConstants.messages.updateSuccess);
             return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.updateFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+        },
+        {
+            successMessage: tasksConstants.messages.updateSuccess,
+            errorFallback: tasksConstants.errors.updateFailed,
+            onFieldErrors,
+            context: "tasks.update",
+        },
+    );
 
-    return { updateHandler, isLoading };
+    return { updateHandler: mutate, isLoading };
 };

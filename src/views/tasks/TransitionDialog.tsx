@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { ShieldCheck, Lock, CheckCircle2, AlertCircle, Clock } from "lucide-react";
-import { Badge, Button, Input } from "@/atoms";
+import { ShieldCheck, Lock, CheckCircle2, AlertCircle, Clock, Undo2 } from "lucide-react";
+import { Badge, Button, Input, Textarea } from "@/atoms";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
 import { cn } from "@/utils";
 import { t, useTaskViews } from "@/hooks";
@@ -19,8 +19,7 @@ interface TransitionDialogProps {
     onOpenChange: (open: boolean) => void;
     task: TaskInterface | null;
     targetPhase: TaskPhase | null;
-    transitionResult: TransitionResult | null;
-    onConfirm: (payload?: { loggedHours?: number; note?: string }) => void;
+    onConfirm: (payload?: { loggedHours?: number; note?: string; reason?: string }) => void;
     isAssignee?: boolean;
 }
 
@@ -29,52 +28,139 @@ export const TransitionDialog = ({
     onOpenChange,
     task,
     targetPhase,
-    transitionResult,
     onConfirm,
     isAssignee = false,
 }: TransitionDialogProps) => {
     const { transitionCriteriaHandler } = useTaskViews();
+    const [result, setResult] = useState<TransitionResult | null>(null);
+    const [isFetching, setIsFetching] = useState(false);
     const [hours, setHours] = useState("");
     const [note, setNote] = useState("");
+    const [reason, setReason] = useState("");
+
+    const isBackward = task && targetPhase
+        ? PHASE_INDEX[targetPhase as TaskPhase] < PHASE_INDEX[(task.status as TaskPhase) ?? TaskPhase.Backlog]
+        : false;
 
     useEffect(() => {
-        if (open) { setHours(""); setNote(""); }
-    }, [open]);
+        if (!open || !task || !targetPhase) {
+            setResult(null);
+            setHours("");
+            setNote("");
+            setReason("");
+            return;
+        }
+        // Backward move: skip criteria fetch — only needs a reason from the user
+        if (isBackward) {
+            setResult(null);
+            setIsFetching(false);
+            return;
+        }
+        let cancelled = false;
+        setIsFetching(true);
+        setResult(null);
+        transitionCriteriaHandler(task.id, targetPhase).then((res) => {
+            if (cancelled) return;
+            if (res) {
+                setResult({
+                    allowed: res.all_passed,
+                    reason: res.all_passed
+                        ? t("All criteria met. Ready to move forward.")
+                        : t("Some criteria are not yet met."),
+                    criteria: res.criteria.map((c) => ({ label: c.label, met: c.passed })),
+                });
+            } else {
+                onOpenChange(false);
+            }
+            setIsFetching(false);
+        });
+        return () => { cancelled = true; };
+    }, [open, task?.id, targetPhase, isBackward, transitionCriteriaHandler, onOpenChange]);
 
-    useEffect(() => {
-        if (!open || !task) return;
-        transitionCriteriaHandler(task.id, targetPhase ?? "");
-    }, [open, task?.id, transitionCriteriaHandler]);
+    if (!task || !targetPhase) return null;
 
-    if (!task || !targetPhase || !transitionResult) return null;
+    const showTimeInput = !isBackward && isAssignee && (result?.allowed ?? false);
 
-    const isBackward = PHASE_INDEX[targetPhase as TaskPhase] < PHASE_INDEX[task.phase as TaskPhase ?? TaskPhase.Backlog];
-    const showTimeInput = isAssignee && transitionResult.allowed && !isBackward;
-
-    const handleConfirm = () => {
+    const handleConfirmForward = () => {
         const h = parseFloat(hours);
         onConfirm(showTimeInput && !isNaN(h) && h > 0 ? { loggedHours: h, note: note.trim() } : undefined);
     };
 
+    const handleConfirmBackward = () => {
+        onConfirm({ reason: reason.trim() });
+    };
+
+    // Backward move dialog — reason input, no criteria fetch
+    if (isBackward) {
+        const canSubmit = reason.trim().length > 0;
+        return (
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <div className="flex items-center gap-2 mb-1">
+                            <Undo2 className="h-5 w-5 text-warning" />
+                            <DialogTitle>{t("Move Task Back")}</DialogTitle>
+                        </div>
+                        <DialogDescription>
+                            {t("Moving back")}:{" "}
+                            <strong>{t(phaseLabel(task.status as TaskPhase ?? TaskPhase.Backlog))}</strong> → <strong>{t(phaseLabel(targetPhase as TaskPhase))}</strong>
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="rounded-xl bg-muted p-3 mt-2">
+                        <p className="text-sm font-semibold text-text-dark">{task.title}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <Badge variant={PRIORITY_VARIANT[task.priority as TaskPriority]} className="text-[10px]">{t(capitalize(task.priority))}</Badge>
+                            <span className="text-xs text-text-muted">{task.storyPoints} {t("points")}</span>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 space-y-2">
+                        <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
+                            {t("Reason")} <span className="text-error">*</span>
+                        </p>
+                        <p className="text-xs text-text-muted">
+                            {t("Explain why this task needs to go back to a previous phase. The PM will review this request.")}
+                        </p>
+                        <Textarea
+                            placeholder={t("Why are you moving this task back?")}
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            rows={4}
+                            className="bg-surface"
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-2 mt-4">
+                        <Button variant="outline" onClick={() => onOpenChange(false)}>{t("Cancel")}</Button>
+                        <Button onClick={handleConfirmBackward} disabled={!canSubmit}>{t("Request Move Back")}</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        );
+    }
+
+    // Forward move dialog — criteria + optional time input
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
                     <div className="flex items-center gap-2 mb-1">
-                        {transitionResult.allowed
-                            ? <ShieldCheck className="h-5 w-5 text-success" />
-                            : <Lock className="h-5 w-5 text-error" />}
+                        {isFetching || !result
+                            ? <ShieldCheck className="h-5 w-5 text-text-muted" />
+                            : result.allowed
+                                ? <ShieldCheck className="h-5 w-5 text-success" />
+                                : <Lock className="h-5 w-5 text-error" />}
                         <DialogTitle>
-                            {transitionResult.allowed ? t("Confirm Phase Transition") : t("Transition Blocked")}
+                            {isFetching || !result ? t("Checking criteria…") : result.allowed ? t("Confirm Phase Transition") : t("Transition Blocked")}
                         </DialogTitle>
                     </div>
                     <DialogDescription>
-                        {isBackward ? t("Moving back") : t("Moving forward")}:{" "}
-                        <strong>{t(phaseLabel(task.phase as TaskPhase ?? TaskPhase.Backlog))}</strong> → <strong>{t(phaseLabel(targetPhase as TaskPhase))}</strong>
+                        {t("Moving forward")}:{" "}
+                        <strong>{t(phaseLabel(task.status as TaskPhase ?? TaskPhase.Backlog))}</strong> → <strong>{t(phaseLabel(targetPhase as TaskPhase))}</strong>
                     </DialogDescription>
                 </DialogHeader>
 
-                {/* Task info */}
                 <div className="rounded-xl bg-muted p-3 mt-2">
                     <p className="text-sm font-semibold text-text-dark">{task.title}</p>
                     <div className="flex items-center gap-2 mt-1">
@@ -83,65 +169,69 @@ export const TransitionDialog = ({
                     </div>
                 </div>
 
-                {/* Criteria checklist */}
-                {transitionResult.criteria.length > 0 && (
-                    <div className="mt-4">
-                        <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
-                            {transitionResult.allowed ? t("Transition Criteria") : t("Required Criteria")}
-                        </p>
-                        <div className="space-y-2">
-                            {transitionResult.criteria.map((c, i) => (
-                                <div key={i} className={cn("flex items-center gap-3 rounded-lg px-3 py-2", c.met ? "bg-success-light/50" : "bg-error-light/50")}>
-                                    {c.met
-                                        ? <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                                        : <AlertCircle className="h-4 w-4 text-error shrink-0" />}
-                                    <span className={cn("text-sm", c.met ? "text-text-dark" : "text-error font-medium")}>{c.label}</span>
+                {isFetching || !result ? (
+                    <div className="mt-4 flex flex-col gap-2">
+                        {[...Array(3)].map((_, i) => (
+                            <div key={i} className="h-9 rounded-lg bg-muted animate-pulse" />
+                        ))}
+                    </div>
+                ) : (
+                    <>
+                        {result.criteria.length > 0 && (
+                            <div className="mt-4">
+                                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
+                                    {result.allowed ? t("Transition Criteria") : t("Required Criteria")}
+                                </p>
+                                <div className="space-y-2">
+                                    {result.criteria.map((c, i) => (
+                                        <div key={i} className={cn("flex items-center gap-3 rounded-lg px-3 py-2", c.met ? "bg-success-light/50" : "bg-error-light/50")}>
+                                            {c.met
+                                                ? <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                                                : <AlertCircle className="h-4 w-4 text-error shrink-0" />}
+                                            <span className={cn("text-sm", c.met ? "text-text-dark" : "text-error font-medium")}>{c.label}</span>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    </div>
+                            </div>
+                        )}
+
+                        <p className={cn("text-sm mt-4 p-3 rounded-lg", result.allowed ? "bg-success-light/30 text-success" : "bg-error-light/30 text-error")}>
+                            {result.reason}
+                        </p>
+
+                        {showTimeInput && (
+                            <div className="mt-4 p-4 rounded-xl bg-muted border border-border space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-text-muted" />
+                                    <p className="text-sm font-semibold text-text-dark">{t("Log Time Spent")}</p>
+                                </div>
+                                <p className="text-xs text-text-muted">{t("How many hours did you work on this phase?")}</p>
+                                <div className="flex gap-2">
+                                    <Input
+                                        type="number"
+                                        min="0.5"
+                                        step="0.5"
+                                        placeholder={t("e.g. 4.5")}
+                                        value={hours}
+                                        onChange={(e) => setHours(e.target.value)}
+                                        className="w-28 bg-surface"
+                                    />
+                                    <Input
+                                        placeholder={t("Note (optional)")}
+                                        value={note}
+                                        onChange={(e) => setNote(e.target.value)}
+                                        className="flex-1 bg-surface"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </>
                 )}
 
-                {/* Reason */}
-                <p className={cn("text-sm mt-4 p-3 rounded-lg", transitionResult.allowed ? "bg-success-light/30 text-success" : "bg-error-light/30 text-error")}>
-                    {transitionResult.reason}
-                </p>
-
-                {/* Time input — only for assignee on forward moves */}
-                {showTimeInput && (
-                    <div className="mt-4 p-4 rounded-xl bg-muted border border-border space-y-3">
-                        <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-text-muted" />
-                            <p className="text-sm font-semibold text-text-dark">{t("Log Time Spent")}</p>
-                        </div>
-                        <p className="text-xs text-text-muted">{t("How many hours did you work on this phase?")}</p>
-                        <div className="flex gap-2">
-                            <Input
-                                type="number"
-                                min="0.5"
-                                step="0.5"
-                                placeholder={t("e.g. 4.5")}
-                                value={hours}
-                                onChange={(e) => setHours(e.target.value)}
-                                className="w-28 bg-surface"
-                            />
-                            <Input
-                                placeholder={t("Note (optional)")}
-                                value={note}
-                                onChange={(e) => setNote(e.target.value)}
-                                className="flex-1 bg-surface"
-                            />
-                        </div>
-                    </div>
-                )}
-
-                {/* Actions */}
                 <div className="flex justify-end gap-2 mt-4">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>{t("Cancel")}</Button>
-                    {transitionResult.allowed && (
-                        <Button onClick={handleConfirm}>
-                            {isBackward ? t("Move Back") : t("Move Forward")}
-                        </Button>
+                    {!isFetching && result?.allowed && (
+                        <Button onClick={handleConfirmForward}>{t("Move Forward")}</Button>
                     )}
                 </div>
             </DialogContent>

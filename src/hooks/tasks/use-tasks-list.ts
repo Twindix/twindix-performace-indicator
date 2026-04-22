@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useCallback } from "react";
 
 import { tasksConstants } from "@/constants";
 import type { KanbanBoardInterface, TaskInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { tasksService } from "@/services";
+
+import { useQueryAction } from "../shared";
 
 export interface TasksListFilters {
     status?: string;
@@ -17,47 +17,51 @@ export interface TasksListFilters {
     sort_order?: string;
 }
 
-export const useTasksList = (sprintId: string, filters: TasksListFilters = {}) => {
-    const [tasks, setTasks] = useState<TaskInterface[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+const buildParams = (filters: TasksListFilters): TasksListFilters => {
+    const { status, assigned_to, priority, type, search, per_page, sort_by, sort_order } = filters;
+    const params: TasksListFilters = {};
+    if (status && status !== "all") params.status = status;
+    if (assigned_to && assigned_to !== "all") params.assigned_to = assigned_to;
+    if (priority && priority !== "all") params.priority = priority;
+    if (type && type !== "all") params.type = type;
+    if (search) params.search = search;
+    if (per_page) params.per_page = per_page;
+    if (sort_by) params.sort_by = sort_by;
+    if (sort_order) params.sort_order = sort_order;
+    return params;
+};
 
+export const useTasksList = (sprintId: string, filters: TasksListFilters = {}) => {
     const { status, assigned_to, priority, type, search, per_page, sort_by, sort_order } = filters;
 
-    const refetch = useCallback(async () => {
-        if (!sprintId) { setTasks([]); setIsLoading(false); return; }
-        setIsLoading(true);
-        const params: TasksListFilters = {};
-        if (status && status !== "all") params.status = status;
-        if (assigned_to && assigned_to !== "all") params.assigned_to = assigned_to;
-        if (priority && priority !== "all") params.priority = priority;
-        if (type && type !== "all") params.type = type;
-        if (search) params.search = search;
-        if (per_page) params.per_page = per_page;
-        if (sort_by) params.sort_by = sort_by;
-        if (sort_order) params.sort_order = sort_order;
-        try {
-            const res = await tasksService.listHandler(sprintId, params);
-            setTasks(res.data);
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
-        } finally {
-            setIsLoading(false);
-        }
-    }, [sprintId, status, assigned_to, priority, type, search, per_page, sort_by, sort_order]);
+    const { data, isLoading, refetch, setData } = useQueryAction<TaskInterface[]>(
+        async () => {
+            if (!sprintId) return [];
+            const res = await tasksService.listHandler(sprintId, buildParams(filters));
+            return res.data;
+        },
+        [sprintId, status, assigned_to, priority, type, search, per_page, sort_by, sort_order],
+        {
+            enabled: !!sprintId,
+            errorFallback: tasksConstants.errors.fetchFailed,
+            initialData: [],
+            context: "tasks.list",
+        },
+    );
 
-    useEffect(() => { refetch(); }, [refetch]);
+    const tasks = data ?? [];
 
     const patchTaskLocal = useCallback((task: TaskInterface) => {
-        setTasks((prev) => prev.map((t) => t.id === task.id ? task : t));
-    }, []);
+        setData((prev) => (prev ?? []).map((t) => (t.id === task.id ? task : t)));
+    }, [setData]);
 
     const removeTaskLocal = useCallback((id: string) => {
-        setTasks((prev) => prev.filter((t) => t.id !== id));
-    }, []);
+        setData((prev) => (prev ?? []).filter((t) => t.id !== id));
+    }, [setData]);
 
     const addTaskLocal = useCallback((task: TaskInterface) => {
-        setTasks((prev) => [task, ...prev]);
-    }, []);
+        setData((prev) => [task, ...(prev ?? [])]);
+    }, [setData]);
 
     const toKanban = useCallback((): KanbanBoardInterface => {
         const board: KanbanBoardInterface = {};

@@ -7,7 +7,7 @@ import { EmptyState, Header } from "@/components/shared";
 import { TasksSkeleton } from "@/components/skeletons";
 import { TaskPhase, TaskPriority } from "@/enums";
 import type { TaskInterface, TaskStatsInterface } from "@/interfaces";
-import { t, useTasksList, usePipeline, useTaskStats, useTaskViews, useUpdateTaskStatus, useUsersList, useGetTask } from "@/hooks";
+import { t, useTasksList, usePipeline, useTaskStats, useUpdateTaskStatus, useUsersList, useGetTask } from "@/hooks";
 import { useAuthStore, useSprintStore } from "@/store";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/ui";
 import { BoardView } from "./BoardView";
@@ -15,7 +15,6 @@ import { PipelineView } from "./PipelineView";
 import { TaskDetailDialog } from "./TaskDetailDialog";
 import { AddTaskDialog } from "./add-task-dialog";
 import { TransitionDialog } from "./TransitionDialog";
-import type { TransitionResult } from "./constants";
 
 export const TasksView = () => <TasksViewInner />;
 
@@ -55,7 +54,6 @@ const TasksViewInner = () => {
     const { statsHandler } = useTaskStats();
     const { updateStatusHandler } = useUpdateTaskStatus();
     const { getHandler: getTaskHandler } = useGetTask();
-    const { transitionCriteriaHandler } = useTaskViews();
     const { users } = useUsersList();
     const { user: currentUser } = useAuthStore();
 
@@ -69,26 +67,12 @@ const TasksViewInner = () => {
     const [transitionOpen, setTransitionOpen] = useState(false);
     const [transitionTask, setTransitionTask] = useState<TaskInterface | null>(null);
     const [transitionTarget, setTransitionTarget] = useState<string | null>(null);
-    const [transitionResult, setTransitionResult] = useState<TransitionResult | null>(null);
 
-    const openTransition = useCallback(async (task: TaskInterface, targetPhase: TaskPhase) => {
+    const openTransition = useCallback((task: TaskInterface, targetPhase: TaskPhase) => {
         setTransitionTask(task);
         setTransitionTarget(targetPhase);
-        setTransitionResult(null);
         setTransitionOpen(true);
-        const res = await transitionCriteriaHandler(task.id, targetPhase);
-        if (res) {
-            setTransitionResult({
-                allowed: res.all_passed,
-                reason: res.all_passed
-                    ? t("All criteria met. Ready to move forward.")
-                    : t("Some criteria are not yet met."),
-                criteria: res.criteria.map((c) => ({ label: c.label, met: c.passed })),
-            });
-        } else {
-            setTransitionOpen(false);
-        }
-    }, [transitionCriteriaHandler]);
+    }, []);
 
     const confirmTransition = useCallback(async () => {
         if (!transitionTask || !transitionTarget) return;
@@ -102,7 +86,6 @@ const TasksViewInner = () => {
             setTransitionOpen(false);
             setTransitionTask(null);
             setTransitionTarget(null);
-            setTransitionResult(null);
         }
     }, [transitionTask, transitionTarget, updateStatusHandler, getTaskHandler, patchTaskLocal]);
 
@@ -353,10 +336,9 @@ const TasksViewInner = () => {
 
             <TransitionDialog
                 open={transitionOpen}
-                onOpenChange={(open) => { setTransitionOpen(open); if (!open) { setTransitionTask(null); setTransitionTarget(null); setTransitionResult(null); } }}
+                onOpenChange={(open) => { setTransitionOpen(open); if (!open) { setTransitionTask(null); setTransitionTarget(null); } }}
                 task={transitionTask}
                 targetPhase={transitionTarget as TaskPhase | null}
-                transitionResult={transitionResult}
                 onConfirm={confirmTransition}
                 isAssignee={Boolean(transitionTask && currentUser && (transitionTask.assignee?.id === currentUser.id))}
             />

@@ -1,43 +1,40 @@
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
-
 import { tasksConstants } from "@/constants/tasks";
 import type { TaskAttachmentInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { tasksService } from "@/services";
 
-export const useTaskAttachments = () => {
-    const [isLoading, setIsLoading] = useState(false);
+import { useMutationAction, type FieldErrors } from "../shared";
 
-    const uploadHandler = useCallback(async (taskId: string, file: File): Promise<TaskAttachmentInterface[] | null> => {
-        setIsLoading(true);
-        try {
+export interface UseTaskAttachmentsOptions {
+    onFieldErrors?: (errors: FieldErrors) => void;
+}
+
+export const useTaskAttachments = ({ onFieldErrors }: UseTaskAttachmentsOptions = {}) => {
+    const { mutate: uploadHandler, isLoading: isUploading } = useMutationAction(
+        async (taskId: string, file: File): Promise<TaskAttachmentInterface[]> => {
             const res = await tasksService.addAttachmentHandler(taskId, file);
             const task = (res as unknown as { data?: { attachments?: TaskAttachmentInterface[] } }).data
                 ?? (res as unknown as { attachments?: TaskAttachmentInterface[] });
-            toast.success(tasksConstants.messages.attachmentUploadSuccess);
             return task?.attachments ?? [];
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.attachmentUploadFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+        },
+        {
+            successMessage: tasksConstants.messages.attachmentUploadSuccess,
+            errorFallback: tasksConstants.errors.attachmentUploadFailed,
+            onFieldErrors,
+            context: "tasks.attachments.upload",
+        },
+    );
 
-    const deleteHandler = useCallback(async (taskId: string, attachmentId: string): Promise<boolean> => {
-        setIsLoading(true);
-        try {
+    const { mutate: deleteHandler, isLoading: isDeleting } = useMutationAction(
+        async (taskId: string, attachmentId: string): Promise<true> => {
             await tasksService.removeAttachmentHandler(taskId, attachmentId);
-            toast.success(tasksConstants.messages.attachmentDeleteSuccess);
             return true;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.attachmentDeleteFailed));
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+        },
+        {
+            successMessage: tasksConstants.messages.attachmentDeleteSuccess,
+            errorFallback: tasksConstants.errors.attachmentDeleteFailed,
+            context: "tasks.attachments.delete",
+        },
+    );
 
-    return { uploadHandler, deleteHandler, isLoading };
+    return { uploadHandler, deleteHandler, isLoading: isUploading || isDeleting };
 };

@@ -1,51 +1,44 @@
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useCallback } from "react";
 
 import { tasksConstants } from "@/constants";
 import type { KanbanBoardInterface, TaskInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { tasksService } from "@/services";
 
+import { useQueryAction } from "../shared";
+
 export const useKanban = (sprintId: string) => {
-    const [kanban, setKanban] = useState<KanbanBoardInterface>({});
-    const [isLoading, setIsLoading] = useState(true);
-
-    const refetch = useCallback(async () => {
-        if (!sprintId) { setKanban({}); setIsLoading(false); return; }
-        setIsLoading(true);
-        try {
-            const res = await tasksService.kanbanHandler(sprintId);
-            setKanban(res);
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
-        } finally {
-            setIsLoading(false);
-        }
-    }, [sprintId]);
-
-    useEffect(() => { refetch(); }, [refetch]);
+    const { data, isLoading, refetch, setData } = useQueryAction<KanbanBoardInterface>(
+        async () => (sprintId ? await tasksService.kanbanHandler(sprintId) : {}),
+        [sprintId],
+        {
+            enabled: !!sprintId,
+            errorFallback: tasksConstants.errors.fetchFailed,
+            initialData: {},
+            context: "tasks.kanban",
+        },
+    );
 
     const patchTaskLocal = useCallback((task: TaskInterface) => {
-        setKanban((prev) => {
+        setData((prev) => {
             const next: KanbanBoardInterface = {};
-            for (const [col, tasks] of Object.entries(prev)) {
+            for (const [col, tasks] of Object.entries(prev ?? {})) {
                 next[col] = tasks.filter((t) => t.id !== task.id);
             }
             const targetCol = task.status ?? "backlog";
             next[targetCol] = [task, ...(next[targetCol] ?? [])];
             return next;
         });
-    }, []);
+    }, [setData]);
 
     const removeTaskLocal = useCallback((id: string) => {
-        setKanban((prev) => {
+        setData((prev) => {
             const next: KanbanBoardInterface = {};
-            for (const [col, tasks] of Object.entries(prev)) {
+            for (const [col, tasks] of Object.entries(prev ?? {})) {
                 next[col] = tasks.filter((t) => t.id !== id);
             }
             return next;
         });
-    }, []);
+    }, [setData]);
 
-    return { kanban, isLoading, refetch, patchTaskLocal, removeTaskLocal };
+    return { kanban: data ?? {}, isLoading, refetch, patchTaskLocal, removeTaskLocal };
 };

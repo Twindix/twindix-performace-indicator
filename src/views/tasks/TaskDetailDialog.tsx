@@ -110,10 +110,10 @@ export const TaskDetailDialog = ({
     };
 
     const handleDelete = async () => {
+        setConfirmDelete(false);
         const ok = await deleteTaskHandler(task.id);
         if (ok) {
             removeTaskLocal(task.id);
-            setConfirmDelete(false);
             onOpenChange(false);
         }
     };

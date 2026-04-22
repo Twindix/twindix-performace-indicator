@@ -1,27 +1,26 @@
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
-
 import { tasksConstants } from "@/constants";
 import type { CreateTaskPayloadInterface, TaskInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { tasksService } from "@/services";
 
-export const useCreateTask = () => {
-    const [isLoading, setIsLoading] = useState(false);
+import { useMutationAction, type FieldErrors } from "../shared";
 
-    const createHandler = useCallback(async (sprintId: string, payload: CreateTaskPayloadInterface): Promise<TaskInterface | null> => {
-        setIsLoading(true);
-        try {
+export interface UseCreateTaskOptions {
+    onFieldErrors?: (errors: FieldErrors) => void;
+}
+
+export const useCreateTask = ({ onFieldErrors }: UseCreateTaskOptions = {}) => {
+    const { mutate, isLoading } = useMutationAction(
+        async (sprintId: string, payload: CreateTaskPayloadInterface): Promise<TaskInterface> => {
             const res = await tasksService.createHandler(sprintId, payload);
-            toast.success(tasksConstants.messages.createSuccess);
             return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.createFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+        },
+        {
+            successMessage: tasksConstants.messages.createSuccess,
+            errorFallback: tasksConstants.errors.createFailed,
+            onFieldErrors,
+            context: "tasks.create",
+        },
+    );
 
-    return { createHandler, isLoading };
+    return { createHandler: mutate, isLoading };
 };
