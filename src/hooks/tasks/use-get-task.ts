@@ -13,7 +13,7 @@ export const useGetTask = () => {
         setIsLoading(true);
         try {
             const res = await tasksService.detailHandler(id);
-            return res.data;
+            return (res as unknown as { data?: TaskInterface }).data ?? (res as unknown as TaskInterface);
         } catch (err) {
             toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
             return null;

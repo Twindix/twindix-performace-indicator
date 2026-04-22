@@ -336,7 +336,7 @@ export const TaskDetailDialog = ({
                                         </button>
                                         <button
                                             onClick={() => { setEditingReqId(req.id); setEditingReqLabel(req.content ?? ""); }}
-                                            className="text-text-muted hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                            className="text-text-muted hover:text-primary transition-colors cursor-pointer"
                                         >
                                             <Pencil className="h-3 w-3" />
                                         </button>
@@ -345,7 +345,7 @@ export const TaskDetailDialog = ({
                                                 const ok = await deleteRequirementHandler(req.id);
                                                 if (ok) patchTaskLocal(task.id, { requirements: requirements.filter((r) => r.id !== req.id) });
                                             }}
-                                            className="text-text-muted hover:text-error opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                            className="text-text-muted hover:text-error transition-colors cursor-pointer"
                                         >
                                             <X className="h-3 w-3" />
                                         </button>
@@ -353,31 +353,40 @@ export const TaskDetailDialog = ({
                                 )}
                             </div>
                         ))}
-                        {showReqInput && (
-                            <div className="flex items-center gap-2">
-                                <Input
-                                    autoFocus
-                                    value={reqInput}
-                                    onChange={(e) => setReqInput(e.target.value)}
-                                    onKeyDown={async (e) => {
-                                        if (e.key === "Enter") {
-                                            e.preventDefault();
-                                            const v = reqInput.trim();
-                                            if (!v) return;
-                                            const res = await createRequirementHandler(task.id, { content: v });
-                                            if (res) {
-                                                patchTaskLocal(task.id, { requirements: [...requirements, res as RequirementInterface] });
-                                                setReqInput("");
+                        {showReqInput && (() => {
+                            const submitRequirement = async () => {
+                                const v = reqInput.trim();
+                                if (!v) return;
+                                const res = await createRequirementHandler(task.id, { content: v });
+                                if (res) {
+                                    patchTaskLocal(task.id, { requirements: [...requirements, res as RequirementInterface] });
+                                    setReqInput("");
+                                    setShowReqInput(false);
+                                }
+                            };
+                            return (
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        autoFocus
+                                        value={reqInput}
+                                        onChange={(e) => setReqInput(e.target.value)}
+                                        onKeyDown={async (e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                                await submitRequirement();
+                                            } else if (e.key === "Escape") {
                                                 setShowReqInput(false);
+                                                setReqInput("");
                                             }
-                                        }
-                                    }}
-                                    placeholder={t("Requirement")}
-                                    className="h-8 text-sm"
-                                />
-                                <Button size="sm" variant="ghost" onClick={() => { setShowReqInput(false); setReqInput(""); }} className="h-8 px-2 text-xs">{t("Cancel")}</Button>
-                            </div>
-                        )}
+                                        }}
+                                        placeholder={t("Requirement")}
+                                        className="h-8 text-sm"
+                                    />
+                                    <Button size="sm" onClick={submitRequirement} disabled={!reqInput.trim()} className="h-8 px-3 text-xs">{t("Add")}</Button>
+                                    <Button size="sm" variant="ghost" onClick={() => { setShowReqInput(false); setReqInput(""); }} className="h-8 px-2 text-xs">{t("Cancel")}</Button>
+                                </div>
+                            );
+                        })()}
                         {requirements.length === 0 && !showReqInput && (
                             <p className="text-xs text-text-muted italic">{t("No requirements yet")}</p>
                         )}

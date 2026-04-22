@@ -29,7 +29,9 @@ export const useAlertsList = (sprintId: string) => {
     const patchAlertLocal = useCallback((alert: AlertInterface) => {
         setAlerts((prev) => {
             const exists = prev.some((a) => a.id === alert.id);
-            return exists ? prev.map((a) => a.id === alert.id ? alert : a) : [...prev, alert];
+            return exists
+                ? prev.map((a) => a.id === alert.id ? { ...a, ...alert } : a)
+                : [alert, ...prev];
         });
     }, []);
 
