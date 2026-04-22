@@ -147,10 +147,12 @@ export const DecisionsView = () => {
                 title={t("Decision Log")}
                 description={t("Document and track important project decisions")}
                 actions={
-                    <Button onClick={() => { setForm(emptyForm); setErrors({}); setAddOpen(true); }} className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        {t("Add Decision")}
-                    </Button>
+                    p.decisions.create() ? (
+                        <Button onClick={() => { setForm(emptyForm); setErrors({}); setAddOpen(true); }} className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            {t("Add Decision")}
+                        </Button>
+                    ) : null
                 }
             />
 
@@ -340,33 +342,35 @@ export const DecisionsView = () => {
                                     {isLoadingDetail && <span className="text-xs text-text-muted">{t("Refreshing...")}</span>}
                                 </div>
 
-                                <div className="flex gap-2 mt-2 flex-wrap">
-                                    {viewTarget.status !== DecisionStatus.Approved && (
-                                        <Button size="sm" className="gap-1" onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Approved)}>
-                                            <Check className="h-3.5 w-3.5" /> {t("Approve")}
-                                        </Button>
-                                    )}
-                                    {viewTarget.status !== DecisionStatus.Rejected && (
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="gap-1 border-error text-error hover:bg-error-light"
-                                            onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Rejected)}
-                                        >
-                                            <X className="h-3.5 w-3.5" /> {t("Reject")}
-                                        </Button>
-                                    )}
-                                    {viewTarget.status !== DecisionStatus.Pending && (
-                                        <Button size="sm" variant="outline" className="gap-1" onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Pending)}>
-                                            {t("Set Pending")}
-                                        </Button>
-                                    )}
-                                    {viewTarget.status !== DecisionStatus.Deferred && (
-                                        <Button size="sm" variant="outline" className="gap-1" onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Deferred)}>
-                                            {t("Defer")}
-                                        </Button>
-                                    )}
-                                </div>
+                                {p.decisions.setStatus() && (
+                                    <div className="flex gap-2 mt-2 flex-wrap">
+                                        {viewTarget.status !== DecisionStatus.Approved && (
+                                            <Button size="sm" className="gap-1" onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Approved)}>
+                                                <Check className="h-3.5 w-3.5" /> {t("Approve")}
+                                            </Button>
+                                        )}
+                                        {viewTarget.status !== DecisionStatus.Rejected && (
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="gap-1 border-error text-error hover:bg-error-light"
+                                                onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Rejected)}
+                                            >
+                                                <X className="h-3.5 w-3.5" /> {t("Reject")}
+                                            </Button>
+                                        )}
+                                        {viewTarget.status !== DecisionStatus.Pending && (
+                                            <Button size="sm" variant="outline" className="gap-1" onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Pending)}>
+                                                {t("Set Pending")}
+                                            </Button>
+                                        )}
+                                        {viewTarget.status !== DecisionStatus.Deferred && (
+                                            <Button size="sm" variant="outline" className="gap-1" onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Deferred)}>
+                                                {t("Defer")}
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div className="mt-4 space-y-4">
                                     {viewTarget.description && (
