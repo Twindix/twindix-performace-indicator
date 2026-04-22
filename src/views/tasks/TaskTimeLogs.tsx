@@ -153,7 +153,7 @@ export const TaskTimeLogs = ({ task, members, patchTaskLocal }: Props) => {
                     <div className="flex gap-2 items-center bg-surface border border-border rounded-xl p-2">
                 <Input type="number" min="0.5" step="0.5" placeholder={t("Hrs")} value={logHours} onChange={(e) => setLogHours(e.target.value)} className="w-20 h-8 text-sm bg-muted" />
                 <Input placeholder={t("What did you work on? (optional)")} value={logNote} onChange={(e) => setLogNote(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submitLog(); }} className="flex-1 h-8 text-sm bg-muted" />
-                <Button size="sm" onClick={submitLog} disabled={isCreating || !logHours || parseFloat(logHours) <= 0} className="h-8 shrink-0">{isCreating ? t("...") : t("Log")}</Button>
+                <Button size="sm" onClick={submitLog} loading={isCreating} disabled={!logHours || parseFloat(logHours) <= 0} className="h-8 shrink-0">{t("Log")}</Button>
             </div>
         </div>
     );
