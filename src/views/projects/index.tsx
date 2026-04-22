@@ -2,8 +2,9 @@ import { useState } from "react";
 import { ArrowLeft, Calendar, Edit, FolderKanban, MoreHorizontal, Plus, Trash2, Users } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
-import { EmptyState, Header } from "@/components/shared";
-import { t } from "@/hooks";
+import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { ProjectsSkeleton } from "@/components/skeletons";
+import { t, useCreateProject, useDeleteProject, useFormErrors, useProjectsList, useUpdateProject } from "@/hooks";
 import type { CreateProjectPayloadInterface, ProjectInterface } from "@/interfaces";
 import { useProjectStore } from "@/store";
 import {
@@ -36,7 +37,12 @@ const STATUS_LABEL: Record<ProjectInterface["status"], string> = {
 };
 
 export const ProjectsView = () => {
-    const { projects, createProject, updateProject, deleteProject, onSetActiveProject } = useProjectStore();
+    const { onSetActiveProject } = useProjectStore();
+    const { setFieldErrors, clearError, clear: clearFieldErrors, getError } = useFormErrors();
+    const { projects, isLoading, prependProjectLocal, patchProjectLocal, removeProjectLocal } = useProjectsList();
+    const { createHandler, isLoading: isCreating } = useCreateProject({ onFieldErrors: setFieldErrors });
+    const { updateHandler, isLoading: isUpdating } = useUpdateProject({ onFieldErrors: setFieldErrors });
+    const { deleteHandler, isLoading: isDeleting } = useDeleteProject();
 
     const [openedProject, setOpenedProject] = useState<ProjectInterface | null>(null);
     const [addOpen, setAddOpen] = useState(false);
@@ -44,35 +50,39 @@ export const ProjectsView = () => {
     const [deleteTarget, setDeleteTarget] = useState<ProjectInterface | null>(null);
     const [form, setForm] = useState<CreateProjectPayloadInterface>(emptyForm);
 
-    const openAdd = () => { setForm(emptyForm); setAddOpen(true); };
+    const isSubmitting = isCreating || isUpdating;
+
+    const openAdd = () => { setForm(emptyForm); clearFieldErrors(); setAddOpen(true); };
 
     const openEdit = (project: ProjectInterface) => {
         setEditTarget(project);
+        clearFieldErrors();
         setForm({
             name: project.name,
             description: project.description ?? "",
-            start_date: project.start_date,
-            end_date: project.end_date,
+            start_date: project.start_date ?? "",
+            end_date: project.end_date ?? "",
             status: project.status,
         });
     };
 
-    const handleSave = () => {
+    const closeDialogs = () => { setAddOpen(false); setEditTarget(null); setForm(emptyForm); clearFieldErrors(); };
+
+    const handleSave = async () => {
         if (!form.name.trim()) return;
         if (editTarget) {
-            updateProject(editTarget.id, form);
-            setEditTarget(null);
+            const res = await updateHandler(editTarget.id, form);
+            if (res) { patchProjectLocal(res); closeDialogs(); }
         } else {
-            createProject(form);
-            setAddOpen(false);
+            const res = await createHandler(form);
+            if (res) { prependProjectLocal(res); closeDialogs(); }
         }
-        setForm(emptyForm);
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!deleteTarget) return;
-        deleteProject(deleteTarget.id);
-        setDeleteTarget(null);
+        const ok = await deleteHandler(deleteTarget.id);
+        if (ok) { removeProjectLocal(deleteTarget.id); setDeleteTarget(null); }
     };
 
     const enterProject = (project: ProjectInterface) => {
@@ -110,91 +120,88 @@ export const ProjectsView = () => {
                 }
             />
 
-            {projects.length === 0 ? (
-                <EmptyState
-                    icon={FolderKanban}
-                    title={t("No projects yet")}
-                    description={t("Create your first project to start organizing sprints.")}
-                />
-            ) : (
+            <QueryBoundary
+                isLoading={isLoading}
+                skeleton={<ProjectsSkeleton />}
+                empty={projects.length === 0}
+                emptyState={<EmptyState icon={FolderKanban} title={t("No projects yet")} description={t("Create your first project to start organizing sprints.")} />}
+            >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {projects.map((project) => (
-                        <Card key={project.id} className="hover:shadow-md transition-shadow">
-                            <CardContent className="p-5">
-                                <div className="flex items-start justify-between gap-3 mb-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => enterProject(project)}
-                                        className="flex items-start gap-3 text-start flex-1 min-w-0 cursor-pointer"
-                                    >
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-lighter text-primary-medium shrink-0">
-                                            <FolderKanban className="h-5 w-5" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <h3 className="text-base font-semibold text-text-dark truncate">
-                                                {project.name}
-                                            </h3>
-                                            <Badge variant={STATUS_VARIANT[project.status]} className="mt-1 text-[10px]">
-                                                {t(STATUS_LABEL[project.status])}
-                                            </Badge>
-                                        </div>
-                                    </button>
+                    {projects.map((project) => {
+                        const sprintCount = project.sprint_count ?? project.sprints_count ?? 0;
+                        const memberCount = project.member_count ?? project.members_count ?? 0;
+                        return (
+                            <Card key={project.id} className="hover:shadow-md transition-shadow">
+                                <CardContent className="p-5">
+                                    <div className="flex items-start justify-between gap-3 mb-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => enterProject(project)}
+                                            className="flex items-start gap-3 text-start flex-1 min-w-0 cursor-pointer"
+                                        >
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-lighter text-primary-medium shrink-0">
+                                                <FolderKanban className="h-5 w-5" />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <h3 className="text-base font-semibold text-text-dark truncate">
+                                                    {project.name}
+                                                </h3>
+                                                <Badge variant={STATUS_VARIANT[project.status]} className="mt-1 text-[10px]">
+                                                    {t(STATUS_LABEL[project.status])}
+                                                </Badge>
+                                            </div>
+                                        </button>
 
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => openEdit(project)} className="gap-2 cursor-pointer">
-                                                <Edit className="h-4 w-4" /> {t("Edit")}
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem
-                                                onClick={() => setDeleteTarget(project)}
-                                                className="gap-2 text-error focus:text-error cursor-pointer"
-                                            >
-                                                <Trash2 className="h-4 w-4" /> {t("Delete")}
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => openEdit(project)} className="gap-2 cursor-pointer">
+                                                    <Edit className="h-4 w-4" /> {t("Edit")}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem
+                                                    onClick={() => setDeleteTarget(project)}
+                                                    className="gap-2 text-error focus:text-error cursor-pointer"
+                                                >
+                                                    <Trash2 className="h-4 w-4" /> {t("Delete")}
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
 
-                                {project.description && (
-                                    <p className="text-xs text-text-muted line-clamp-2 mb-3">{project.description}</p>
-                                )}
+                                    {project.description && (
+                                        <p className="text-xs text-text-muted line-clamp-2 mb-3">{project.description}</p>
+                                    )}
 
-                                <div className="flex items-center gap-3 text-[11px] text-text-muted">
-                                    <span className="flex items-center gap-1">
-                                        <Calendar className="h-3 w-3" />
-                                        {project.start_date} → {project.end_date}
-                                    </span>
-                                </div>
+                                    <div className="flex items-center gap-3 text-[11px] text-text-muted">
+                                        <span className="flex items-center gap-1">
+                                            <Calendar className="h-3 w-3" />
+                                            {project.start_date ?? "—"} → {project.end_date ?? "—"}
+                                        </span>
+                                    </div>
 
-                                <div className="flex items-center justify-between mt-3 pt-3 border-t border-border text-[11px] text-text-muted">
-                                    <span>{project.sprints_count} {t("sprints")}</span>
-                                    <span className="flex items-center gap-1">
-                                        <Users className="h-3 w-3" />
-                                        {project.members_count}
-                                    </span>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
+                                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-border text-[11px] text-text-muted">
+                                        <span>{sprintCount} {t("sprints")}</span>
+                                        <span className="flex items-center gap-1">
+                                            <Users className="h-3 w-3" />
+                                            {memberCount}
+                                        </span>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        );
+                    })}
                 </div>
-            )}
+            </QueryBoundary>
 
             {/* Add / Edit Dialog */}
             <Dialog
                 open={addOpen || editTarget !== null}
-                onOpenChange={(open) => {
-                    if (!open) {
-                        setAddOpen(false);
-                        setEditTarget(null);
-                        setForm(emptyForm);
-                    }
-                }}
+                onOpenChange={(open) => { if (!open) closeDialogs(); }}
             >
                 <DialogContent className="max-w-md">
                     <DialogHeader>
@@ -206,9 +213,10 @@ export const ProjectsView = () => {
                             <Input
                                 id="pj-name"
                                 value={form.name}
-                                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                                onChange={(e) => { setForm({ ...form, name: e.target.value }); clearError("name"); }}
                                 placeholder={t("Project name")}
                             />
+                            {getError("name") && <p className="text-xs text-error">{getError("name")}</p>}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="pj-desc">{t("Description")}</Label>
@@ -216,9 +224,10 @@ export const ProjectsView = () => {
                                 id="pj-desc"
                                 rows={3}
                                 value={form.description ?? ""}
-                                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                                onChange={(e) => { setForm({ ...form, description: e.target.value }); clearError("description"); }}
                                 placeholder={t("What is this project about?")}
                             />
+                            {getError("description") && <p className="text-xs text-error">{getError("description")}</p>}
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
@@ -226,18 +235,20 @@ export const ProjectsView = () => {
                                 <Input
                                     id="pj-start"
                                     type="date"
-                                    value={form.start_date}
-                                    onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+                                    value={form.start_date ?? ""}
+                                    onChange={(e) => { setForm({ ...form, start_date: e.target.value }); clearError("start_date"); }}
                                 />
+                                {getError("start_date") && <p className="text-xs text-error">{getError("start_date")}</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="pj-end">{t("End Date")}</Label>
                                 <Input
                                     id="pj-end"
                                     type="date"
-                                    value={form.end_date}
-                                    onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+                                    value={form.end_date ?? ""}
+                                    onChange={(e) => { setForm({ ...form, end_date: e.target.value }); clearError("end_date"); }}
                                 />
+                                {getError("end_date") && <p className="text-xs text-error">{getError("end_date")}</p>}
                             </div>
                         </div>
                         <div className="space-y-2">
@@ -259,9 +270,9 @@ export const ProjectsView = () => {
                     </div>
                     <div className="flex justify-end gap-2 mt-4">
                         <DialogClose asChild>
-                            <Button variant="outline">{t("Cancel")}</Button>
+                            <Button variant="outline" disabled={isSubmitting}>{t("Cancel")}</Button>
                         </DialogClose>
-                        <Button onClick={handleSave} disabled={!form.name.trim()}>
+                        <Button onClick={handleSave} loading={isSubmitting} disabled={!form.name.trim()}>
                             {editTarget ? t("Save Changes") : t("Create Project")}
                         </Button>
                     </div>
@@ -279,9 +290,9 @@ export const ProjectsView = () => {
                     </p>
                     <div className="flex justify-end gap-2 mt-4">
                         <DialogClose asChild>
-                            <Button variant="outline">{t("Cancel")}</Button>
+                            <Button variant="outline" disabled={isDeleting}>{t("Cancel")}</Button>
                         </DialogClose>
-                        <Button variant="destructive" onClick={handleDelete}>{t("Delete")}</Button>
+                        <Button variant="destructive" onClick={handleDelete} loading={isDeleting}>{t("Delete")}</Button>
                     </div>
                 </DialogContent>
             </Dialog>

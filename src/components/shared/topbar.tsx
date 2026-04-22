@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Button, Input, Label } from "@/atoms";
 import { routesData } from "@/data";
-import { useAuth, useSprintsList, useTheme, t, useSettings, usePresence, useUpdateSprint, type PresenceStatus } from "@/hooks";
+import { useAuth, useProjectsListLite, useSprintsList, useTheme, t, useSettings, usePresence, useUpdateSprint, type PresenceStatus } from "@/hooks";
 import type { SprintInterface } from "@/interfaces";
 import { useProjectStore, useSprintStore } from "@/store";
 import { MobileNav } from "./mobile-nav";
@@ -42,7 +42,8 @@ export const Topbar = () => {
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings] = useSettings();
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
-    const { projects, activeProjectId, onSetActiveProject } = useProjectStore();
+    const { activeProjectId, onSetActiveProject } = useProjectStore();
+    const { projects } = useProjectsListLite();
     const { sprints, refetch: refetchSprints } = useSprintsList();
     const { updateHandler: updateSprintHandler, isLoading: isSaving } = useUpdateSprint();
     const navigate = useNavigate();
