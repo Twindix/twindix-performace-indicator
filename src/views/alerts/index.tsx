@@ -5,7 +5,7 @@ import { Bell, Check, CheckCheck, Clock, ExternalLink, Link2, Pencil, Plus, Sear
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { AlertsSkeleton } from "@/components/skeletons";
-import { t, useAcknowledgeAlert, useAlertsList, useCreateAlert, useDeleteAlert, useDoneAlert, useUpdateAlert, useUsersList } from "@/hooks";
+import { t, useAcknowledgeAlert, useAlertsList, useCreateAlert, useDeleteAlert, useDoneAlert, usePermissions, useUpdateAlert, useUsersList } from "@/hooks";
 import type { AlertInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import {
@@ -107,6 +107,7 @@ const UserMultiSelect = ({
 };
 
 export const AlertsView = () => {
+    const p = usePermissions();
     const { activeSprintId } = useSprintStore();
     const [typeFilter, setTypeFilter] = useState<string>("");
     const { alerts, isLoading, patchAlertLocal, removeAlertLocal } = useAlertsList(activeSprintId, typeFilter ? { type: typeFilter } : {});
@@ -206,12 +207,16 @@ export const AlertsView = () => {
                         )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                        <button onClick={() => openEdit(alert)} className="p-1.5 rounded hover:bg-muted text-text-muted hover:text-primary cursor-pointer">
-                            <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                        <button onClick={() => setDeleteTarget(alert)} className="p-1.5 rounded hover:bg-error-light text-text-muted hover:text-error cursor-pointer">
-                            <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        {p.alerts.edit(alert) && (
+                            <button onClick={() => openEdit(alert)} className="p-1.5 rounded hover:bg-muted text-text-muted hover:text-primary cursor-pointer">
+                                <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                        )}
+                        {p.alerts.delete(alert) && (
+                            <button onClick={() => setDeleteTarget(alert)} className="p-1.5 rounded hover:bg-error-light text-text-muted hover:text-error cursor-pointer">
+                                <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -257,12 +262,16 @@ export const AlertsView = () => {
                                 <ExternalLink className="h-3 w-3" /> {t("Go to task")}
                             </Button>
                         )}
-                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleAcknowledge(alert.id)} loading={actingId === alert.id && isAcknowledging}>
-                            {!(actingId === alert.id && isAcknowledging) && <Check className="h-3 w-3" />} {t("Acknowledge")}
-                        </Button>
-                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleDone(alert.id)} loading={actingId === alert.id && isMarkingDone}>
-                            {!(actingId === alert.id && isMarkingDone) && <CheckCheck className="h-3 w-3" />} {t("Done")}
-                        </Button>
+                        {p.alerts.acknowledge() && (
+                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleAcknowledge(alert.id)} loading={actingId === alert.id && isAcknowledging}>
+                                {!(actingId === alert.id && isAcknowledging) && <Check className="h-3 w-3" />} {t("Acknowledge")}
+                            </Button>
+                        )}
+                        {p.alerts.markDone() && (
+                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleDone(alert.id)} loading={actingId === alert.id && isMarkingDone}>
+                                {!(actingId === alert.id && isMarkingDone) && <CheckCheck className="h-3 w-3" />} {t("Done")}
+                            </Button>
+                        )}
                     </div>
                 </div>
             </CardContent>
@@ -275,10 +284,12 @@ export const AlertsView = () => {
                 title={t("Alerts")}
                 description={t("Create announcements and track acknowledgements.")}
                 actions={
-                    <Button onClick={() => { setForm(emptyForm); setAddOpen(true); }} className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        {t("Create Alert")}
-                    </Button>
+                    p.alerts.create() ? (
+                        <Button onClick={() => { setForm(emptyForm); setAddOpen(true); }} className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            {t("Create Alert")}
+                        </Button>
+                    ) : null
                 }
             />
 
