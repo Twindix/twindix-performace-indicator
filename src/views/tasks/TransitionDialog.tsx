@@ -21,6 +21,7 @@ interface TransitionDialogProps {
     targetPhase: TaskPhase | null;
     onConfirm: (payload?: { loggedHours?: number; note?: string; reason?: string }) => void;
     isAssignee?: boolean;
+    isSubmitting?: boolean;
 }
 
 export const TransitionDialog = ({
@@ -30,6 +31,7 @@ export const TransitionDialog = ({
     targetPhase,
     onConfirm,
     isAssignee = false,
+    isSubmitting = false,
 }: TransitionDialogProps) => {
     const { transitionCriteriaHandler } = useTaskViews();
     const [result, setResult] = useState<TransitionResult | null>(null);
@@ -132,8 +134,8 @@ export const TransitionDialog = ({
                     </div>
 
                     <div className="flex justify-end gap-2 mt-4">
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>{t("Cancel")}</Button>
-                        <Button onClick={handleConfirmBackward} disabled={!canSubmit}>{t("Request Move Back")}</Button>
+                        <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>{t("Cancel")}</Button>
+                        <Button onClick={handleConfirmBackward} loading={isSubmitting} disabled={!canSubmit}>{t("Request Move Back")}</Button>
                     </div>
                 </DialogContent>
             </Dialog>
@@ -229,9 +231,9 @@ export const TransitionDialog = ({
                 )}
 
                 <div className="flex justify-end gap-2 mt-4">
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>{t("Cancel")}</Button>
+                    <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>{t("Cancel")}</Button>
                     {!isFetching && result?.allowed && (
-                        <Button onClick={handleConfirmForward}>{t("Move Forward")}</Button>
+                        <Button onClick={handleConfirmForward} loading={isSubmitting}>{t("Move Forward")}</Button>
                     )}
                 </div>
             </DialogContent>

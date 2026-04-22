@@ -52,7 +52,7 @@ const TasksViewInner = () => {
 
     const { pipeline, isLoading: pipelineLoading } = usePipeline(activeSprintId);
     const { statsHandler } = useTaskStats();
-    const { updateStatusHandler } = useUpdateTaskStatus();
+    const { updateStatusHandler, isLoading: isUpdatingStatus } = useUpdateTaskStatus();
     const { getHandler: getTaskHandler } = useGetTask();
     const { users } = useUsersList();
     const { user: currentUser } = useAuthStore();
@@ -341,6 +341,7 @@ const TasksViewInner = () => {
                 targetPhase={transitionTarget as TaskPhase | null}
                 onConfirm={confirmTransition}
                 isAssignee={Boolean(transitionTask && currentUser && (transitionTask.assignee?.id === currentUser.id))}
+                isSubmitting={isUpdatingStatus}
             />
         </div>
     );

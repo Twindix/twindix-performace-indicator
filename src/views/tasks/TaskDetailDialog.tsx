@@ -62,10 +62,10 @@ export const TaskDetailDialog = ({
     patchTaskLocal,
     removeTaskLocal,
 }: TaskDetailDialogProps) => {
-    const { deleteHandler: deleteTaskHandler } = useDeleteTask();
+    const { deleteHandler: deleteTaskHandler, isLoading: isDeletingTask } = useDeleteTask();
     const { addHandler: addTagHandler, removeHandler: removeTagHandler } = useTaskTags();
     const { getAllHandler: getRequirementsHandler } = useGetRequirement();
-    const { createHandler: createRequirementHandler } = useCreateRequirement();
+    const { createHandler: createRequirementHandler, isLoading: isAddingReq } = useCreateRequirement();
     const { toggleHandler: toggleRequirementHandler } = useToggleRequirement();
     const { updateHandler: updateRequirementHandler } = useUpdateRequirement();
     const { deleteHandler: deleteRequirementHandler } = useDeleteRequirement();
@@ -382,7 +382,7 @@ export const TaskDetailDialog = ({
                                         placeholder={t("Requirement")}
                                         className="h-8 text-sm"
                                     />
-                                    <Button size="sm" onClick={submitRequirement} disabled={!reqInput.trim()} className="h-8 px-3 text-xs">{t("Add")}</Button>
+                                    <Button size="sm" onClick={submitRequirement} disabled={!reqInput.trim()} loading={isAddingReq} className="h-8 px-3 text-xs">{t("Add")}</Button>
                                     <Button size="sm" variant="ghost" onClick={() => { setShowReqInput(false); setReqInput(""); }} className="h-8 px-2 text-xs">{t("Cancel")}</Button>
                                 </div>
                             );
@@ -407,8 +407,8 @@ export const TaskDetailDialog = ({
                             {t("Are you sure you want to delete")} <strong className="text-text-dark">{task.title}</strong>? {t("This action cannot be undone.")}
                         </p>
                         <div className="flex justify-end gap-2 mt-4">
-                            <Button variant="outline" onClick={() => setConfirmDelete(false)}>{t("Cancel")}</Button>
-                            <Button variant="destructive" onClick={handleDelete}>{t("Delete")}</Button>
+                            <Button variant="outline" onClick={() => setConfirmDelete(false)} disabled={isDeletingTask}>{t("Cancel")}</Button>
+                            <Button variant="destructive" onClick={handleDelete} loading={isDeletingTask}>{t("Delete")}</Button>
                         </div>
                     </DialogContent>
                 </Dialog>

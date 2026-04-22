@@ -564,18 +564,9 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                         <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting}>
                             {t("Cancel")}
                         </Button>
-                        <Button type="submit" disabled={isSubmitting} className="gap-2">
-                            {isSubmitting ? (
-                                <>
-                                    <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                    {t("Creating...")}
-                                </>
-                            ) : (
-                                <>
-                                    <Plus className="h-4 w-4" />
-                                    {t("Create Task")}
-                                </>
-                            )}
+                        <Button type="submit" loading={isSubmitting} className="gap-2">
+                            {!isSubmitting && <Plus className="h-4 w-4" />}
+                            {t("Create Task")}
                         </Button>
                     </div>
                 </form>
