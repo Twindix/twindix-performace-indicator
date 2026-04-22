@@ -481,9 +481,9 @@ export const DecisionsView = () => {
 
                         <div className="flex justify-end gap-2 pt-1">
                             <Button variant="outline" onClick={() => setAddOpen(false)} disabled={isSubmitting}>{t("Cancel")}</Button>
-                            <Button onClick={handleAdd} disabled={isSubmitting} className="gap-2">
-                                <Plus className="h-4 w-4" />
-                                {isSubmitting ? t("Submitting...") : t("Submit Decision")}
+                            <Button onClick={handleAdd} loading={isSubmitting} className="gap-2">
+                                {!isSubmitting && <Plus className="h-4 w-4" />}
+                                {t("Submit Decision")}
                             </Button>
                         </div>
                     </div>
