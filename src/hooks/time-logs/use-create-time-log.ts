@@ -1,27 +1,26 @@
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { timeLogsConstants } from "@/constants/time-logs";
 import type { CreateTimeLogPayloadInterface, TimeLogInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { timeLogsService } from "@/services";
 
-export const useCreateTimeLog = () => {
-    const [isLoading, setIsLoading] = useState(false);
+import { useMutationAction, type FieldErrors } from "../shared";
 
-    const createHandler = async (taskId: string, payload: CreateTimeLogPayloadInterface): Promise<TimeLogInterface | null> => {
-        setIsLoading(true);
-        try {
+export interface UseCreateTimeLogOptions {
+    onFieldErrors?: (errors: FieldErrors) => void;
+}
+
+export const useCreateTimeLog = ({ onFieldErrors }: UseCreateTimeLogOptions = {}) => {
+    const { mutate, isLoading } = useMutationAction(
+        async (taskId: string, payload: CreateTimeLogPayloadInterface): Promise<TimeLogInterface> => {
             const res = await timeLogsService.createHandler(taskId, payload);
-            toast.success(timeLogsConstants.messages.createSuccess);
             return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, timeLogsConstants.errors.createFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        },
+        {
+            successMessage: timeLogsConstants.messages.createSuccess,
+            errorFallback: timeLogsConstants.errors.createFailed,
+            onFieldErrors,
+            context: "time-logs.create",
+        },
+    );
 
-    return { createHandler, isLoading };
+    return { createHandler: mutate, isLoading };
 };
