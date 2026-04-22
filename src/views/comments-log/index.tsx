@@ -149,8 +149,8 @@ export const CommentsLogView = () => {
                 </div>
                 <div className="flex justify-end gap-2 mt-4">
                     <DialogClose asChild><Button variant="outline">{t("Cancel")}</Button></DialogClose>
-                    <Button onClick={editTarget ? handleEdit : handleAdd} disabled={isCreating || isUpdating || !form.body.trim()}>
-                        {(isCreating || isUpdating) ? t("Saving...") : editTarget ? t("Save") : t("Create")}
+                    <Button onClick={editTarget ? handleEdit : handleAdd} loading={isCreating || isUpdating} disabled={!form.body.trim()}>
+                        {editTarget ? t("Save") : t("Create")}
                     </Button>
                 </div>
             </DialogContent>
