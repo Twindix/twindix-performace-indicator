@@ -170,6 +170,7 @@ Base URL: `VITE_API_URL` env variable. All routes defined in `src/data/apis.ts`.
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/users` | List (filters: per_page, page, role_tier, team_id) |
+| GET | `/users/list` | Lite list for dropdowns (id, full_name, avatar_initials) |
 | POST | `/users` | Create |
 | GET | `/users/:id` | Detail |
 | PUT | `/users/:id` | Update |
@@ -182,8 +183,23 @@ Base URL: `VITE_API_URL` env variable. All routes defined in `src/data/apis.ts`.
 ### Teams
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/teams` | List |
-| POST | `/teams` | Create |
+| GET | `/teams` | List with member_count + members[] |
+| GET | `/teams/list` | Lite list for dropdowns (id, name) |
+| GET | `/teams/:id` | Detail (members, created_at) |
+| POST | `/teams` | Create — admin only |
+| PUT | `/teams/:id` | Update — admin only |
+| DELETE | `/teams/:id` | Delete — admin only |
+
+### Projects
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/projects` | List (filterable by status) |
+| GET | `/projects/list` | Lite list for dropdowns (id, name, status) |
+| GET | `/projects/:id` | Detail (sprint_count, member_count) |
+| POST | `/projects` | Create — admin/manager |
+| PUT | `/projects/:id` | Update — admin/manager |
+| DELETE | `/projects/:id` | Soft-delete — admin only |
+| GET | `/projects/:id/sprints` | List sprints in project (used by topbar Sprint selector when project active) |
 
 ### Sprints
 | Method | Path | Purpose |
@@ -204,11 +220,13 @@ Base URL: `VITE_API_URL` env variable. All routes defined in `src/data/apis.ts`.
 | GET | `/sprints/:sprintId/tasks/pipeline-counts` | Pipeline stage counts |
 | GET | `/sprints/:sprintId/tasks/stats` | Statistics |
 | GET | `/sprints/:sprintId/tasks` | List |
+| GET | `/tasks/list` | Lite list for dropdowns (sprint_id, status, exclude_done filters) |
 | POST | `/sprints/:sprintId/tasks` | Create |
 | GET | `/tasks/:taskId` | Detail |
 | PUT | `/tasks/:taskId` | Update |
 | DELETE | `/tasks/:taskId` | Delete |
 | PATCH | `/tasks/:taskId/status` | Update status |
+| POST | `/tasks/:taskId/mark-complete` | Assignee/manager triggers approval workflow (sets pending_approval=true) |
 | POST | `/tasks/:taskId/tags` | Add tag |
 | DELETE | `/tasks/:taskId/tags/:tag` | Remove tag |
 | POST | `/tasks/:taskId/attachments` | Add attachment |
@@ -405,7 +423,8 @@ Loading UX is the sibling of error handling: every API-calling hook already expo
 | `feat/integration-core` | Core integration work merged across features |
 | `bug/error-handling` | Centralized error handling across all 13 domains via `runAction` primitive |
 | `feat/loading-handling` | Loading UX standardization (`Button.loading`, `QueryBoundary`, skeleton reuse) — branched from `bug/error-handling` |
+| `feat/integrate-projects` | V0.5 + V0.6 API integration (Projects, Teams CRUD, task dead_time, task type & dependencies, mark-complete workflow, lightweight list endpoints) — branched from `feat/loading-handling` |
 
-**Current branch:** `feat/loading-handling`
+**Current branch:** `feat/integrate-projects`
 
-**Recent work:** Added `LOADING_HANDLING_PLAN.md` as sibling to `ERROR_HANDLING_PLAN.md`. Branch is forked from `bug/error-handling` so all the error-handling primitives (`runAction`, `useMutationAction`, `useQueryAction`, `useFormErrors`, per-domain constants) are already in place. Plan covers six phases: (1) extend `atoms/button.tsx` with a `loading` prop, (2) add `<QueryBoundary>` in `components/shared/`, (3) audit page-level skeletons and replace any remaining `"Loading..."` strings, (4) silence background mutations (presence, heartbeat, analytics), (5) optional global top-bar progress for route transitions, (6) regression pass against every view. Error-handling fixes from the parent branch were merged in (commit `0ac7c5a`) so no divergence.
+**Recent work:** Implemented the V0.5 and V0.6 API plan updates. Projects domain went from UI-only (Zustand seed) to full API integration (`useProjectsList`, `useCreateProject`, `useUpdateProject`, `useDeleteProject`, `useProjectSprints`, `useProjectsListLite`); the in-memory `useProjectStore` is now slimmed to UI-only `activeProjectId` state and the topbar Project selector populates from `/api/projects/list`. `useSprintsList` automatically calls `/api/projects/{id}/sprints` whenever a project is active and falls back to `/api/sprints` otherwise. Teams domain extended with detail (`/teams/:id`), update, and delete (admin-gated); a clickable `TeamDetailDialog` shows member list. Tasks gained the V0.5 fields (`dead_time`, `dead_time_status`, `task_type`, `depends_on_task`, `notify_on_done`, `is_blocked_by_dependency`) — surfaced as form inputs in `add-task-dialog`, deadline/dependency badges on Kanban + Pipeline cards, and a kanban drag-drop guard that blocks forward moves on unmet dependencies. The V0.6 mark-complete workflow is wired in `TaskDetailDialog`: assignee/admin/manager sees a **Finish** button (only when status ≠ done, no `pending_approval`, and not all reqs already approved) → clicking POSTs `/tasks/:id/mark-complete` and patches `pending_approval=true` locally. The phase-Next button is hidden while Finish is showing or while `pending_approval=true`; it reappears once the manager toggles all requirements done (the existing `PATCH /requirements/:id/toggle` covers the manager side, and the requirements section is now a real `<Checkbox>` checklist). Phase-Next now reads `task.phase_navigation.next` from the backend instead of a hardcoded COLUMNS array. Alerts gained a `type` filter (chips: All/Manual/Deadline/Dependency/Review/Approved), a `source_task` link button on cards (auto-generated alerts have `creator: null` → render "System"), and a primary **Go to task** button that appears when `alert.title === "Task Completion Review Required"` and navigates to `/tasks?taskId=<id>` (the tasks page reads the param, opens the detail dialog, and clears the URL). Lightweight `/users/list`, `/tasks/list`, `/teams/list`, `/projects/list` endpoints are wired across all dropdown/autocomplete callers (no more loading the full paginated list just to populate a select). Role tiers updated to V0.4 spec (added `viewer`, centralized in `usersConstants.roleTiers` + `roleTierLabels`). The compound-task add-form sends `dead_time`, `task_type`, `depends_on_task`, and `notify_on_done` correctly (fixed a stale-closure bug in `handleSubmit` that was sending nulls/false).
