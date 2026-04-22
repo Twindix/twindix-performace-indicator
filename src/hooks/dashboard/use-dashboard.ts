@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
 
 import { dashboardConstants } from "@/constants";
 import type { DashboardInterface, DashboardMetricsInterface, HealthScoreInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
+import { runAction } from "@/lib/handle-action";
 import { dashboardService } from "@/services";
 
 export const useDashboard = (sprintId: string) => {
@@ -14,10 +13,11 @@ export const useDashboard = (sprintId: string) => {
         if (!sprintId) { setDashboard(null); setIsLoading(false); return; }
         setIsLoading(true);
         try {
-            const res = await dashboardService.fullHandler(sprintId);
-            setDashboard(res);
-        } catch (err) {
-            toast.error(getErrorMessage(err, dashboardConstants.errors.fetchFailed));
+            const res = await runAction(() => dashboardService.fullHandler(sprintId), {
+                errorFallback: dashboardConstants.errors.fetchFailed,
+                context: "dashboard.full",
+            });
+            if (res) setDashboard(res);
         } finally {
             setIsLoading(false);
         }
@@ -25,22 +25,20 @@ export const useDashboard = (sprintId: string) => {
 
     const refetchHealthScore = useCallback(async () => {
         if (!sprintId) return;
-        try {
-            const res: HealthScoreInterface = await dashboardService.healthScoreHandler(sprintId);
-            setDashboard((prev) => prev ? { ...prev, health_score: res } : prev);
-        } catch (err) {
-            toast.error(getErrorMessage(err, dashboardConstants.errors.healthScoreFailed));
-        }
+        const res = await runAction<HealthScoreInterface>(() => dashboardService.healthScoreHandler(sprintId), {
+            silent: true,
+            context: "dashboard.health-score",
+        });
+        if (res) setDashboard((prev) => (prev ? { ...prev, health_score: res } : prev));
     }, [sprintId]);
 
     const refetchMetrics = useCallback(async () => {
         if (!sprintId) return;
-        try {
-            const res: DashboardMetricsInterface = await dashboardService.metricsHandler(sprintId);
-            setDashboard((prev) => prev ? { ...prev, metrics: res } : prev);
-        } catch (err) {
-            toast.error(getErrorMessage(err, dashboardConstants.errors.metricsFailed));
-        }
+        const res = await runAction<DashboardMetricsInterface>(() => dashboardService.metricsHandler(sprintId), {
+            silent: true,
+            context: "dashboard.metrics",
+        });
+        if (res) setDashboard((prev) => (prev ? { ...prev, metrics: res } : prev));
     }, [sprintId]);
 
     useEffect(() => { refetch(); }, [refetch]);
