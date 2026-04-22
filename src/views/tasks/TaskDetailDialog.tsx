@@ -3,7 +3,7 @@ import { Activity, AlertCircle, ArrowRight, CheckCircle2, Circle, ClipboardList,
 
 import { Badge, Button, Input, Skeleton } from "@/atoms";
 import { BlockerStatus, TaskPriority, TaskPhase } from "@/enums";
-import { t, useCreateRequirement, useDeleteRequirement, useDeleteTask, useGetRequirement, useMarkTaskComplete, useTaskTags, useToggleRequirement, useUpdateRequirement } from "@/hooks";
+import { t, useCreateRequirement, useDeleteRequirement, useDeleteTask, useGetRequirement, useMarkTaskComplete, usePermissions, useTaskTags, useToggleRequirement, useUpdateRequirement } from "@/hooks";
 import type { TaskInterface, UserLiteInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
 import { Avatar, AvatarFallback, Checkbox, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
 import { cn, formatDate } from "@/utils";
@@ -73,6 +73,7 @@ export const TaskDetailDialog = ({
 
     const { user: authUser } = useAuthStore();
     const currentUserId = authUser?.id ?? "";
+    const p = usePermissions();
 
     const [editingReqId, setEditingReqId] = useState<string | null>(null);
     const [editingReqLabel, setEditingReqLabel] = useState("");
@@ -100,9 +101,7 @@ export const TaskDetailDialog = ({
         : null;
     const taskRequirements = task.requirements ?? [];
     const allReqsApproved = taskRequirements.length > 0 && taskRequirements.every((r) => r.is_done);
-    const isAssignee = !!authUser && task.assignee?.id === authUser.id;
-    const isManager = authUser?.role_tier === "admin" || authUser?.role_tier === "manager";
-    const canFinish = isAssignee || isManager;
+    const canFinish = p.tasks.finishPhase(task);
     const isPendingApproval = task.pending_approval === true;
     const isDone = (task.status ?? "backlog") === "done";
     const showFinish = canFinish && !isDone && !isPendingApproval && !allReqsApproved;

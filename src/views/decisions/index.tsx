@@ -7,13 +7,13 @@ import { DecisionsSkeleton } from "@/components/skeletons";
 import { DecisionCategory, DecisionStatus } from "@/enums";
 import {
     t,
-    useAuth,
     useCreateDecision,
     useDecisionsAnalytics,
     useDecisionsList,
     useDeleteDecision,
     useGetDecision,
     usePageLoader,
+    usePermissions,
     useSettings,
     useUpdateDecision,
 } from "@/hooks";
@@ -56,7 +56,7 @@ export const DecisionsView = () => {
     const [settings] = useSettings();
     const compact = settings.compactView;
     const { activeSprintId } = useSprintStore();
-    const { user } = useAuth();
+    const p = usePermissions();
 
     const [statusFilter, setStatusFilter] = useState<DecisionStatus | "all">("all");
     const [categoryFilter, setCategoryFilter] = useState<DecisionCategory | "all">("all");
@@ -76,8 +76,6 @@ export const DecisionsView = () => {
     const [errors, setErrors] = useState<Partial<typeof emptyForm>>({});
 
     const [viewTarget, setViewTarget] = useState<DecisionInterface | null>(null);
-
-    const isPM = user?.role_tier === "manager";
 
     const validate = () => {
         const e: Partial<typeof emptyForm> = {};
@@ -293,7 +291,7 @@ export const DecisionsView = () => {
                                     )}
 
                                     {/* PM approve / reject actions */}
-                                    {isPM && isPending && (
+                                    {p.decisions.setStatus() && isPending && (
                                         <div className="mt-3 pt-3 border-t border-border flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                             <span className="text-xs text-text-muted flex-1">{t("Awaiting PM approval")}</span>
                                             <Button
@@ -410,7 +408,7 @@ export const DecisionsView = () => {
                                     </div>
                                 </div>
 
-                                {isPM && (
+                                {p.decisions.delete() && (
                                     <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border">
                                         <Button
                                             variant="outline"
