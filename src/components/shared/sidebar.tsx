@@ -34,7 +34,7 @@ export const Sidebar = () => {
                 <TooltipProvider delayDuration={0}>
                     <ul className="flex flex-col gap-1">
                         {sidebarItems.map(({ label, path, icon: Icon, disabled }) => {
-                            const isActive = pathname === path;
+                            const isActive = path === "/" ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
 
                             if (disabled) {
                                 const disabledEl = (

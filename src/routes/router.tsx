@@ -15,6 +15,7 @@ import {
     NotFoundView,
     OwnershipView,
     ProfileView,
+    ProjectsView,
     RedFlagsView,
     ServerErrorView,
     SettingsView,
@@ -52,6 +53,7 @@ export const router = createBrowserRouter([
                         errorElement: <RouteError />,
                         children: [
                             { path: routesData.dashboard, element: <DashboardView /> },
+                            { path: routesData.projects, element: <ProjectsView /> },
                             { path: routesData.sprints, element: <SprintsView /> },
                             { path: routesData.tasks, element: <TasksView /> },
                             { path: routesData.blockers, element: <BlockerView /> },
@@ -67,7 +69,6 @@ export const router = createBrowserRouter([
                             { path: routesData.commentsLog, element: <CommentsLogView /> },
                             { path: routesData.redFlags, element: <RedFlagsView /> },
                             { path: routesData.alerts, element: <AlertsView /> },
-                            { path: routesData.sprints, element: <SprintsView /> },
                             { path: routesData.profile, element: <ProfileView /> },
                             { path: routesData.settings, element: <SettingsView /> },
                         ],

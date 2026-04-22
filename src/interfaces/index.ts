@@ -15,3 +15,4 @@ export type { TeamMemberWorkloadInterface } from "./workload";
 export type { MetricInterface, FrictionScoresInterface, SprintMetricsInterface } from "./metrics";
 export type { OwnershipEntryInterface } from "./ownership";
 export type { HandoffInterface, CriterionInterface } from "./handoffs";
+export type { ProjectInterface, CreateProjectPayloadInterface, UpdateProjectPayloadInterface } from "./projects";

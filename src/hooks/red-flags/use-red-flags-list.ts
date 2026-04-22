@@ -29,7 +29,9 @@ export const useRedFlagsList = (sprintId: string) => {
     const patchRedFlagLocal = useCallback((flag: RedFlagInterface) => {
         setRedFlags((prev) => {
             const exists = prev.some((f) => f.id === flag.id);
-            return exists ? prev.map((f) => f.id === flag.id ? flag : f) : [...prev, flag];
+            return exists
+                ? prev.map((f) => f.id === flag.id ? { ...f, ...flag } : f)
+                : [flag, ...prev];
         });
     }, []);
 

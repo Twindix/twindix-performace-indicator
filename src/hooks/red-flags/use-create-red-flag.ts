@@ -14,7 +14,7 @@ export const useCreateRedFlag = () => {
         try {
             const res = await redFlagsService.createHandler(sprintId, payload);
             toast.success(redFlagsConstants.messages.createSuccess);
-            return res.data;
+            return (res as unknown as { data?: RedFlagInterface }).data ?? (res as unknown as RedFlagInterface);
         } catch (err) {
             console.error(err);
             toast.error(getErrorMessage(err, redFlagsConstants.errors.createFailed));

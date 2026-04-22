@@ -48,7 +48,7 @@ export const BlockerView = () => {
     const [ownerFilter, setOwnerFilter] = useState<string>("all");
     const [reporterFilter, setReporterFilter] = useState<string>("all");
 
-    const { blockers, analytics, isLoading: isFetching, patchBlockerLocal, refetchAnalytics } = useBlockersList(activeSprintId, {
+    const { blockers, analytics, isLoading: isFetching, patchBlockerLocal, removeBlockerLocal, refetchAnalytics } = useBlockersList(activeSprintId, {
         status: statusFilter === "all" ? undefined : statusFilter,
         type: typeFilter === "all" ? undefined : typeFilter,
         severity: severityFilter === "all" ? undefined : severityFilter,
@@ -282,6 +282,7 @@ export const BlockerView = () => {
                 onOpenChange={setDetailOpen}
                 onEdit={(b) => { setDetailOpen(false); setEditTarget(b); }}
                 onPatch={patchBlockerLocal}
+                onDelete={removeBlockerLocal}
                 refetchAnalytics={refetchAnalytics}
             />
         </div>

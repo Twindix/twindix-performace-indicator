@@ -63,7 +63,7 @@ export const MobileNav = () => {
                         <nav className="flex-1 overflow-y-auto p-2 scrollbar-thin">
                             <ul className="flex flex-col gap-1">
                                 {sidebarItems.map(({ label, path, icon: Icon, disabled }) => {
-                                    const isActive = pathname === path;
+                                    const isActive = path === "/" ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
                                     if (disabled) return (
                                         <li key={path}>
                                             <span className="flex items-center gap-3 rounded-[var(--radius-default)] px-3 py-2.5 text-sm font-medium text-text-muted opacity-40 cursor-not-allowed select-none">

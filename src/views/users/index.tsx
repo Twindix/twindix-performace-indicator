@@ -7,7 +7,7 @@ import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
 import { t } from "@/hooks";
 import type { UserInterface } from "@/interfaces";
-import { useUsersList, useUsersCreate } from "@/hooks/users";
+import { useUsersList, useUsersCreate, useUsersUpdate } from "@/hooks/users";
 import {
     Avatar, AvatarFallback,
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
@@ -38,6 +38,7 @@ export const UsersView = () => {
     const navigate = useNavigate();
     const { users, isLoading, refetch } = useUsersList();
     const { create, isLoading: isCreating } = useUsersCreate();
+    const { update: updateUser } = useUsersUpdate();
 
     const [teams, setTeams] = useState<TeamOption[]>([]);
     const [addOpen, setAddOpen] = useState(false);
@@ -135,7 +136,19 @@ export const UsersView = () => {
                                                     </button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="w-44">
-                                                    <DropdownMenuItem className="gap-2 cursor-pointer" disabled>
+                                                    <DropdownMenuItem
+                                                        className="gap-2 cursor-pointer"
+                                                        onClick={async () => {
+                                                            const next = isInactive ? "active" : "inactive";
+                                                            const res = await updateUser(member.id, { account_status: next });
+                                                            if (res) {
+                                                                toast.success(t(isInactive ? "User activated" : "User deactivated"));
+                                                                refetch();
+                                                            } else {
+                                                                toast.error(t("Failed to update user status"));
+                                                            }
+                                                        }}
+                                                    >
                                                         {isInactive
                                                             ? <><Zap className="h-4 w-4 text-success" />{t("Activate")}</>
                                                             : <><PowerOff className="h-4 w-4 text-warning" />{t("Deactivate")}</>

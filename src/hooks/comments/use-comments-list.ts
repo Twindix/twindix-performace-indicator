@@ -53,7 +53,9 @@ export const useCommentsList = (sprintId: string, options: UseCommentsListOption
     const patchCommentLocal = useCallback((comment: CommentInterface) => {
         setComments((prev) => {
             const exists = prev.some((c) => c.id === comment.id);
-            return exists ? prev.map((c) => c.id === comment.id ? comment : c) : [comment, ...prev];
+            return exists
+                ? prev.map((c) => c.id === comment.id ? { ...c, ...comment } : c)
+                : [comment, ...prev];
         });
     }, []);
 

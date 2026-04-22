@@ -51,7 +51,13 @@ export const resetAuthState = () => {
 apiClient.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
-        const { message, response: { data, status } = {} } = error;
+        const { message, response } = error;
+        const status = response?.status;
+        const data = response?.data;
+
+        if (status !== undefined && status >= 200 && status < 300) {
+            return Promise.resolve(response);
+        }
 
         if (status === 401) {
             dispatchUnauthorized();

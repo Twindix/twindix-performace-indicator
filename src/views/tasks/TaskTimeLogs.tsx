@@ -128,10 +128,10 @@ export const TaskTimeLogs = ({ task, members, patchTaskLocal }: Props) => {
                                                 <span className="text-xs font-bold text-primary bg-primary-lighter/30 px-1.5 py-0.5 rounded">{log.hours}h</span>
                                                 {isOwner && (
                                                     <>
-                                                        <button onClick={() => { setEditingId(log.id); setEditHours(String(log.hours)); setEditNote(log.description ?? ""); }} className="p-1 rounded text-text-muted hover:text-primary hover:bg-primary-lighter opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                                                        <button onClick={() => { setEditingId(log.id); setEditHours(String(log.hours)); setEditNote(log.description ?? ""); }} className="p-1 rounded text-text-muted hover:text-primary hover:bg-primary-lighter transition-colors cursor-pointer">
                                                             <Pencil className="h-3 w-3" />
                                                         </button>
-                                                        <button onClick={() => deleteLog(log.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                                                        <button onClick={() => deleteLog(log.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light transition-colors cursor-pointer">
                                                             <Trash2 className="h-3 w-3" />
                                                         </button>
                                                     </>
