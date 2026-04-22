@@ -3,7 +3,8 @@ import { Edit, MoreHorizontal, Plus, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
-import { EmptyState, Header } from "@/components/shared";
+import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { TeamsSkeleton } from "@/components/skeletons";
 import { t, useCreateTeam, useFormErrors, useGetTeams } from "@/hooks";
 import type { TeamInterface } from "@/interfaces";
 import {
@@ -64,19 +65,12 @@ export const TeamsView = () => {
                 }
             />
 
-            {isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="h-20 bg-muted animate-pulse rounded-xl" />
-                    ))}
-                </div>
-            ) : teams.length === 0 ? (
-                <EmptyState
-                    icon={Users}
-                    title={t("No teams yet")}
-                    description={t("Create your first team to group members.")}
-                />
-            ) : (
+            <QueryBoundary
+                isLoading={isLoading}
+                skeleton={<TeamsSkeleton />}
+                empty={teams.length === 0}
+                emptyState={<EmptyState icon={Users} title={t("No teams yet")} description={t("Create your first team to group members.")} />}
+            >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {teams.filter((team) => team.id !== deleteTarget?.id).map((team) => (
                         <Card key={team.id} className="hover:shadow-md transition-shadow">
@@ -107,7 +101,7 @@ export const TeamsView = () => {
                         </Card>
                     ))}
                 </div>
-            )}
+            </QueryBoundary>
 
             <Dialog open={addOpen || editTarget !== null} onOpenChange={(open) => !open && closeDialog()}>
                 <DialogContent className="max-w-md">

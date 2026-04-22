@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Calendar, Edit, MoreHorizontal, Plus, Target, Trash2, Zap } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
-import { EmptyState, Header } from "@/components/shared";
+import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { SprintsSkeleton } from "@/components/skeletons";
 import { t, useActivateSprint, useCreateSprint, useDeleteSprint, useFormErrors, useSprintsList, useUpdateSprint } from "@/hooks";
 import type { CreateSprintPayloadInterface, SprintInterface } from "@/interfaces";
 import {
@@ -80,9 +81,12 @@ export const SprintsView = () => {
                 }
             />
 
-            {sprints.length === 0 && !isLoading ? (
-                <EmptyState icon={Target} title={t("No sprints yet")} description={t("Create your first sprint to start planning work.")} />
-            ) : (
+            <QueryBoundary
+                isLoading={isLoading}
+                skeleton={<SprintsSkeleton />}
+                empty={sprints.length === 0}
+                emptyState={<EmptyState icon={Target} title={t("No sprints yet")} description={t("Create your first sprint to start planning work.")} />}
+            >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {sprints.map((s) => (
                         <Card key={s.id} className="hover:shadow-md transition-shadow">
@@ -124,7 +128,7 @@ export const SprintsView = () => {
                         </Card>
                     ))}
                 </div>
-            )}
+            </QueryBoundary>
 
             <Dialog open={addOpen || !!editTarget} onOpenChange={(open) => { if (!open) closeDialogs(); }}>
                 <DialogContent className="max-w-md">

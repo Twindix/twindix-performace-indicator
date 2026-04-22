@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
-import { EmptyState, Header } from "@/components/shared";
+import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { UsersSkeleton } from "@/components/skeletons";
 import { t } from "@/hooks";
 import type { UserInterface } from "@/interfaces";
 import { useUsersList, useUsersCreate, useUsersUpdate } from "@/hooks/users";
@@ -114,15 +115,12 @@ export const UsersView = () => {
                 </Button>
             </div>
 
-            {isLoading ? (
-                <div className="flex flex-col gap-3">
-                    {[...Array(4)].map((_, i) => (
-                        <Card key={i}><CardContent className="p-4 h-16 animate-pulse bg-muted rounded-xl" /></Card>
-                    ))}
-                </div>
-            ) : users.length === 0 ? (
-                <EmptyState icon={UserCog} title={t("No Users")} description={t("Add team members to get started")} />
-            ) : (
+            <QueryBoundary
+                isLoading={isLoading}
+                skeleton={<UsersSkeleton />}
+                empty={users.length === 0}
+                emptyState={<EmptyState icon={UserCog} title={t("No Users")} description={t("Add team members to get started")} />}
+            >
                 <div className="flex flex-col gap-3">
                     {users.map((member) => {
                         const isInactive = member.account_status === "inactive";
@@ -189,7 +187,7 @@ export const UsersView = () => {
                         );
                     })}
                 </div>
-            )}
+            </QueryBoundary>
 
             {/* ── Add User Dialog ── */}
             <Dialog open={addOpen} onOpenChange={setAddOpen}>

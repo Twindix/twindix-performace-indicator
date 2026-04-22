@@ -1,7 +1,7 @@
 import { ArrowLeft, Bell, Flag, ListChecks, MessageCircle, MessageSquare, TrendingUp } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Skeleton } from "@/atoms";
 import { AnimatedNumber, Header } from "@/components/shared";
 import { t, useUsersAnalytics } from "@/hooks";
 import { Avatar, AvatarFallback } from "@/ui";
@@ -41,7 +41,7 @@ export const UserDetailView = () => {
                     <ArrowLeft className="h-4 w-4" />{t("Back")}
                 </Button>
                 <div className="flex flex-col gap-4">
-                    {[...Array(4)].map((_, i) => <div key={i} className="h-24 animate-pulse bg-muted rounded-xl" />)}
+                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
                 </div>
             </div>
         );
