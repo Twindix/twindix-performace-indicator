@@ -10,6 +10,7 @@ import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/ui";
+import { TeamDetailDialog } from "./TeamDetailDialog";
 
 export const TeamsView = () => {
     const { user } = useAuth();
@@ -24,6 +25,7 @@ export const TeamsView = () => {
     const [deleteTarget, setDeleteTarget] = useState<TeamInterface | null>(null);
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
+    const [detailTeamId, setDetailTeamId] = useState<string | null>(null);
 
     const isSubmitting = isCreating || isUpdating;
 
@@ -85,7 +87,7 @@ export const TeamsView = () => {
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {teams.filter((team) => team.id !== deleteTarget?.id).map((team) => (
-                        <Card key={team.id} className="hover:shadow-md transition-shadow">
+                        <Card key={team.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setDetailTeamId(team.id)}>
                             <CardContent className="p-5">
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-lighter text-primary-medium shrink-0">
@@ -95,16 +97,16 @@ export const TeamsView = () => {
                                     {isAdmin && (
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => e.stopPropagation()}>
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => openEdit(team)} className="gap-2 cursor-pointer">
+                                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEdit(team); }} className="gap-2 cursor-pointer">
                                                     <Edit className="h-4 w-4" /> {t("Edit")}
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem onClick={() => setDeleteTarget(team)} className="gap-2 text-error focus:text-error cursor-pointer">
+                                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setDeleteTarget(team); }} className="gap-2 text-error focus:text-error cursor-pointer">
                                                     <Trash2 className="h-4 w-4" /> {t("Delete")}
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
@@ -163,6 +165,12 @@ export const TeamsView = () => {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <TeamDetailDialog
+                teamId={detailTeamId}
+                open={detailTeamId !== null}
+                onOpenChange={(open) => { if (!open) setDetailTeamId(null); }}
+            />
         </div>
     );
 };
