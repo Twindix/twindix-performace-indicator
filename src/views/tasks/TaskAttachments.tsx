@@ -1,6 +1,6 @@
 import { Paperclip, Trash2 } from "lucide-react";
 
-import { t, useGetTask, useTaskAttachments } from "@/hooks";
+import { t, useGetTask, usePermissions, useTaskAttachments } from "@/hooks";
 import type { TaskInterface } from "@/interfaces";
 
 interface Props {
@@ -12,6 +12,8 @@ const formatSize = (bytes: number) =>
     bytes < 1024 ? `${bytes} B` : bytes < 1048576 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
 
 export const TaskAttachments = ({ task, patchTaskLocal }: Props) => {
+    const p = usePermissions();
+    const canManage = p.tasks.manageAttachment(task);
     const { uploadHandler, deleteHandler } = useTaskAttachments();
     const { getHandler: getTaskHandler } = useGetTask();
     const attachments = task.attachments ?? [];
@@ -45,19 +47,25 @@ export const TaskAttachments = ({ task, patchTaskLocal }: Props) => {
                         <span className="bg-muted rounded-full px-1.5 py-0.5 text-[10px] font-bold">{attachments.length}</span>
                     )}
                 </p>
-                <label className="flex items-center gap-1 text-xs text-primary hover:text-primary-dark font-medium cursor-pointer transition-colors">
-                    <Paperclip className="h-3.5 w-3.5" />
-                    {t("Upload")}
-                    <input type="file" multiple className="hidden" onChange={handleFileChange} />
-                </label>
+                {canManage && (
+                    <label className="flex items-center gap-1 text-xs text-primary hover:text-primary-dark font-medium cursor-pointer transition-colors">
+                        <Paperclip className="h-3.5 w-3.5" />
+                        {t("Upload")}
+                        <input type="file" multiple className="hidden" onChange={handleFileChange} />
+                    </label>
+                )}
             </div>
 
             {attachments.length === 0 ? (
-                <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-5 cursor-pointer hover:border-primary hover:bg-primary-lighter/10 transition-colors">
-                    <Paperclip className="h-5 w-5 text-text-muted" />
-                    <p className="text-xs text-text-muted">{t("Click to upload files")}</p>
-                    <input type="file" multiple className="hidden" onChange={handleFileChange} />
-                </label>
+                canManage ? (
+                    <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-5 cursor-pointer hover:border-primary hover:bg-primary-lighter/10 transition-colors">
+                        <Paperclip className="h-5 w-5 text-text-muted" />
+                        <p className="text-xs text-text-muted">{t("Click to upload files")}</p>
+                        <input type="file" multiple className="hidden" onChange={handleFileChange} />
+                    </label>
+                ) : (
+                    <p className="text-xs text-text-muted italic">{t("No attachments")}</p>
+                )
             ) : (
                 <div className="flex flex-col gap-2">
                     {attachments.map((att) => (
@@ -73,9 +81,11 @@ export const TaskAttachments = ({ task, patchTaskLocal }: Props) => {
                                 <a href={att.url ?? att.dataUrl} download={att.name} className="text-xs font-medium text-text-dark hover:text-primary truncate block transition-colors">{att.name}</a>
                                 <p className="text-[10px] text-text-muted">{formatSize(att.size)}</p>
                             </div>
-                            <button onClick={() => handleDelete(att.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light transition-colors cursor-pointer">
-                                <Trash2 className="h-3.5 w-3.5" />
-                            </button>
+                            {canManage && (
+                                <button onClick={() => handleDelete(att.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light transition-colors cursor-pointer">
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>

@@ -8,7 +8,7 @@ import { EmptyState, Header } from "@/components/shared";
 import { TasksSkeleton } from "@/components/skeletons";
 import { TaskPhase, TaskPriority } from "@/enums";
 import type { TaskInterface, TaskStatsInterface } from "@/interfaces";
-import { t, useTasksList, usePipeline, useTaskStats, useUpdateTaskStatus, useUsersListLite, useGetTask } from "@/hooks";
+import { t, useTasksList, usePipeline, usePermissions, useTaskStats, useUpdateTaskStatus, useUsersListLite, useGetTask } from "@/hooks";
 import { useAuthStore, useSprintStore } from "@/store";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/ui";
 import { BoardView } from "./BoardView";
@@ -21,6 +21,7 @@ export const TasksView = () => <TasksViewInner />;
 
 const TasksViewInner = () => {
     const { activeSprintId } = useSprintStore();
+    const p = usePermissions();
 
     const [searchQuery, setSearchQuery] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -186,10 +187,12 @@ const TasksViewInner = () => {
                 description={t("Drag tasks between columns to change their status.")}
                 actions={
                     tasks.length === 0 && !searchQuery && statusFilter === "all" && priorityFilter === "all" && assigneeFilter === "all" && typeFilter === "all" ? (
-                        <Button size="sm" className="gap-1.5" onClick={() => setAddTaskDialogOpen(true)}>
-                            <Plus className="h-4 w-4" />
-                            {t("Add Task")}
-                        </Button>
+                        p.tasks.create() ? (
+                            <Button size="sm" className="gap-1.5" onClick={() => setAddTaskDialogOpen(true)}>
+                                <Plus className="h-4 w-4" />
+                                {t("Add Task")}
+                            </Button>
+                        ) : null
                     ) : (
                         <div className="flex items-center gap-2 text-sm text-text-secondary">
                             <span><strong className="text-text-dark">{totalTasks}</strong> {t("tasks")}</span>
@@ -283,10 +286,12 @@ const TasksViewInner = () => {
                                 </button>
                             )}
 
-                            <Button size="sm" className="gap-1.5 shrink-0" onClick={() => setAddTaskDialogOpen(true)}>
-                                <Plus className="h-4 w-4" />
-                                {t("Add Task")}
-                            </Button>
+                            {p.tasks.create() && (
+                                <Button size="sm" className="gap-1.5 shrink-0" onClick={() => setAddTaskDialogOpen(true)}>
+                                    <Plus className="h-4 w-4" />
+                                    {t("Add Task")}
+                                </Button>
+                            )}
                         </div>
 
                         <div className="flex items-center bg-muted p-1 rounded-lg ml-auto">
