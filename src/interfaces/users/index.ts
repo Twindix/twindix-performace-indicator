@@ -19,6 +19,12 @@ export interface UserListResponseInterface {
     meta: UserPaginationMetaInterface;
 }
 
+export interface UserLiteInterface {
+    id: string;
+    full_name: string;
+    avatar_initials: string;
+}
+
 export interface CreateUserPayloadInterface {
     full_name: string;
     email: string;

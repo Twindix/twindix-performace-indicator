@@ -95,6 +95,12 @@ export interface TaskAttachmentInterface {
     dataUrl?: string; // Expected by the code
 }
 
+export interface TaskLiteInterface {
+    id: string;
+    code?: string;
+    title: string;
+}
+
 export interface RequirementInterface {
     id: string;
     content: string;

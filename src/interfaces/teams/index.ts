@@ -15,3 +15,8 @@ export interface CreateTeamPayloadInterface {
     name: string;
     description?: string;
 }
+
+export interface TeamLiteInterface {
+    id: string;
+    name: string;
+}

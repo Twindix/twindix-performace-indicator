@@ -12,3 +12,4 @@ export * from "./alerts";
 export * from "./dashboard";
 export * from "./users";
 export * from "./teams";
+export * from "./projects";

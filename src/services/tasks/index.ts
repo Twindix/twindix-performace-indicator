@@ -6,6 +6,7 @@ import type {
     TaskDetailResponseInterface,
     TaskInterface,
     TaskListResponseInterface,
+    TaskLiteInterface,
     TaskStatsInterface,
     TransitionCriteriaResponseInterface,
     UpdateTaskPayloadInterface,
@@ -102,5 +103,10 @@ export const tasksService = {
     markCompleteHandler: async (taskId: string): Promise<TaskInterface> => {
         const { data } = await apiClient.post<{ task: TaskInterface } | TaskInterface>(apisData.tasks.markComplete(taskId));
         return (data && typeof data === "object" && "task" in data ? data.task : data) as TaskInterface;
+    },
+
+    listLiteHandler: async (params?: { sprint_id?: string; status?: string; exclude_done?: boolean }): Promise<TaskLiteInterface[]> => {
+        const { data } = await apiClient.get<TaskLiteInterface[]>(apisData.tasks.listLite, { params });
+        return data;
     },
 };

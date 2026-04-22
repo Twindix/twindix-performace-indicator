@@ -18,3 +18,9 @@ export interface CreateProjectPayloadInterface {
 }
 
 export interface UpdateProjectPayloadInterface extends Partial<CreateProjectPayloadInterface> {}
+
+export interface ProjectLiteInterface {
+    id: string;
+    name: string;
+    status: ProjectInterface["status"];
+}

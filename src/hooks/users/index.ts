@@ -1,4 +1,5 @@
 export { useUsersList } from "./use-users-list";
+export { useUsersListLite } from "./use-users-list-lite";
 export { useUsersDetail } from "./use-users-detail";
 export { useUsersAnalytics } from "./use-users-analytics";
 export { useUsersCreate } from "./use-users-create";

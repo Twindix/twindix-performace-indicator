@@ -11,3 +11,4 @@ export { alertsService } from "./alerts";
 export { dashboardService } from "./dashboard";
 export { usersService } from "./users";
 export { teamsService } from "./teams";
+export { projectsService } from "./projects";
