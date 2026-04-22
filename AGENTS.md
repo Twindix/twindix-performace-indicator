@@ -405,7 +405,3 @@ Loading UX is the sibling of error handling: every API-calling hook already expo
 | `feat/integration-core` | Core integration work merged across features |
 | `bug/error-handling` | Centralized error handling across all 13 domains via `runAction` primitive |
 | `feat/loading-handling` | Loading UX standardization (`Button.loading`, `QueryBoundary`, skeleton reuse) — branched from `bug/error-handling` |
-
-**Current branch:** `feat/loading-handling`
-
-**Recent work:** Added `LOADING_HANDLING_PLAN.md` as sibling to `ERROR_HANDLING_PLAN.md`. Branch is forked from `bug/error-handling` so all the error-handling primitives (`runAction`, `useMutationAction`, `useQueryAction`, `useFormErrors`, per-domain constants) are already in place. Plan covers six phases: (1) extend `atoms/button.tsx` with a `loading` prop, (2) add `<QueryBoundary>` in `components/shared/`, (3) audit page-level skeletons and replace any remaining `"Loading..."` strings, (4) silence background mutations (presence, heartbeat, analytics), (5) optional global top-bar progress for route transitions, (6) regression pass against every view. Error-handling fixes from the parent branch were merged in (commit `0ac7c5a`) so no divergence.
