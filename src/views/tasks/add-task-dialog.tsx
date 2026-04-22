@@ -286,7 +286,7 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
             handleOpenChange(false);
         }
         submittingRef.current = false;
-    }, [formState, activeSprintId, createTaskHandler, handleOpenChange, addTaskLocal]);
+    }, [formState, activeSprintId, createTaskHandler, handleOpenChange, addTaskLocal, deadline, taskType, startAfterEnabled, startAfterTaskId, notifyEnabled, setFieldErrors]);
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
