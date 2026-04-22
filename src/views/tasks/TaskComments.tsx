@@ -3,13 +3,13 @@ import { MessageCircle, Send, Trash2, Pencil, Check, X } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/ui";
 import { t, useCreateTaskComment, useDeleteComment, useUpdateComment } from "@/hooks";
-import type { TaskInterface, TaskCommentInterface, UserInterface } from "@/interfaces";
+import type { TaskInterface, TaskCommentInterface, UserLiteInterface } from "@/interfaces";
 import { useAuthStore } from "@/store";
 
 interface Props {
     task: TaskInterface;
     currentUserId: string;
-    members: UserInterface[];
+    members: UserLiteInterface[];
     onUpdateComments?: (taskId: string, comments: TaskCommentInterface[]) => void;
 }
 
@@ -20,7 +20,7 @@ const getMentionQuery = (text: string, cursor: number): string | null => {
 };
 
 // Replace @query with @Full Name and return new text + cursor
-const applyMention = (text: string, cursor: number, user: UserInterface) => {
+const applyMention = (text: string, cursor: number, user: UserLiteInterface) => {
     const match = text.slice(0, cursor).match(/@(\w*)$/);
     if (!match) return { text, cursor };
     const start = cursor - match[0].length;
@@ -95,7 +95,7 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
         else setMentionActive(false);
     };
 
-    const selectMention = (user: UserInterface) => {
+    const selectMention = (user: UserLiteInterface) => {
         const cursor = textareaRef.current?.selectionStart ?? commentText.length;
         const result = applyMention(commentText, cursor, user);
         setCommentText(result.text);
@@ -157,7 +157,7 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
         else setEditMentionActive(false);
     };
 
-    const selectEditMention = (user: UserInterface) => {
+    const selectEditMention = (user: UserLiteInterface) => {
         const cursor = editTextareaRef.current?.selectionStart ?? editText.length;
         const result = applyMention(editText, cursor, user);
         setEditText(result.text);
@@ -313,9 +313,9 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
 };
 
 interface MentionDropdownProps {
-    members: UserInterface[];
+    members: UserLiteInterface[];
     activeIndex: number;
-    onSelect: (user: UserInterface) => void;
+    onSelect: (user: UserLiteInterface) => void;
 }
 
 const MentionDropdown = ({ members, activeIndex, onSelect }: MentionDropdownProps) => (
@@ -332,7 +332,7 @@ const MentionDropdown = ({ members, activeIndex, onSelect }: MentionDropdownProp
                 </Avatar>
                 <div className="min-w-0">
                     <p className={`text-xs font-medium truncate ${i === activeIndex ? "text-primary" : "text-text-dark"}`}>{m.full_name}</p>
-                    <p className="text-[10px] text-text-muted truncate">{m.role_label}</p>
+                    {m.role_label && <p className="text-[10px] text-text-muted truncate">{m.role_label}</p>}
                 </div>
             </button>
         ))}

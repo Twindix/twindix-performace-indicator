@@ -7,7 +7,7 @@ import { EmptyState, Header } from "@/components/shared";
 import { TasksSkeleton } from "@/components/skeletons";
 import { TaskPhase, TaskPriority } from "@/enums";
 import type { TaskInterface, TaskStatsInterface } from "@/interfaces";
-import { t, useTasksList, usePipeline, useTaskStats, useUpdateTaskStatus, useUsersList, useGetTask } from "@/hooks";
+import { t, useTasksList, usePipeline, useTaskStats, useUpdateTaskStatus, useUsersListLite, useGetTask } from "@/hooks";
 import { useAuthStore, useSprintStore } from "@/store";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/ui";
 import { BoardView } from "./BoardView";
@@ -54,7 +54,7 @@ const TasksViewInner = () => {
     const { statsHandler } = useTaskStats();
     const { updateStatusHandler, isLoading: isUpdatingStatus } = useUpdateTaskStatus();
     const { getHandler: getTaskHandler } = useGetTask();
-    const { users } = useUsersList();
+    const { users } = useUsersListLite();
     const { user: currentUser } = useAuthStore();
 
     const [stats, setStats] = useState<TaskStatsInterface | null>(null);

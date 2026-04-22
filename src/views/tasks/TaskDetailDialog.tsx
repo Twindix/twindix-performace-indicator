@@ -4,7 +4,7 @@ import { Activity, AlertCircle, ArrowRight, CheckCircle2, Circle, ClipboardList,
 import { Badge, Button, Input, Skeleton } from "@/atoms";
 import { BlockerStatus, TaskPriority, TaskPhase } from "@/enums";
 import { t, useCreateRequirement, useDeleteRequirement, useDeleteTask, useGetRequirement, useMarkTaskComplete, useTaskTags, useToggleRequirement, useUpdateRequirement } from "@/hooks";
-import type { TaskInterface, UserInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
+import type { TaskInterface, UserLiteInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
 import { Avatar, AvatarFallback, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
 import { cn, formatDate } from "@/utils";
 import { useAuthStore } from "@/store";
@@ -42,7 +42,7 @@ const statusLabel = (status: string) => status.replace(/_/g, " ").replace(/\b\w/
 
 export interface TaskDetailDialogProps {
     task: TaskInterface | null;
-    members: UserInterface[];
+    members: UserLiteInterface[];
     blocker: BlockerInterface | undefined;
     open: boolean;
     onOpenChange: (open: boolean) => void;

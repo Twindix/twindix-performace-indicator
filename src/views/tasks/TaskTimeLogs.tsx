@@ -3,13 +3,13 @@ import { Check, Clock, Pencil, Trash2, X } from "lucide-react";
 
 import { Button, Input, Skeleton } from "@/atoms";
 import { t, useCreateTimeLog, useDeleteTimeLog, useGetTimeLog, useUpdateTimeLog } from "@/hooks";
-import type { TaskInterface, TimeLogInterface, UserInterface } from "@/interfaces";
+import type { TaskInterface, TimeLogInterface, UserLiteInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
 import { useAuthStore } from "@/store";
 
 interface Props {
     task: TaskInterface;
-    members: UserInterface[];
+    members: UserLiteInterface[];
     patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
 }
 

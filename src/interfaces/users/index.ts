@@ -23,6 +23,8 @@ export interface UserLiteInterface {
     id: string;
     full_name: string;
     avatar_initials: string;
+    email?: string;
+    role_label?: string | null;
 }
 
 export interface CreateUserPayloadInterface {

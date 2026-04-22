@@ -2,7 +2,7 @@ import { Circle, AlertCircle, Clock, Link2 } from "lucide-react";
 
 import { Badge } from "@/atoms";
 import { TaskPriority } from "@/enums";
-import type { PipelineBoardInterface, TaskInterface, UserInterface } from "@/interfaces";
+import type { PipelineBoardInterface, TaskInterface, UserLiteInterface } from "@/interfaces";
 import { t } from "@/hooks";
 import { cn } from "@/utils";
 
@@ -24,7 +24,7 @@ const COLUMN_COLOR_CLASS: Record<string, string> = {
 
 export interface PipelineViewProps {
     pipeline: PipelineBoardInterface;
-    members: UserInterface[];
+    members: UserLiteInterface[];
     setSelectedTask: (task: TaskInterface) => void;
     setDialogOpen: (open: boolean) => void;
 }

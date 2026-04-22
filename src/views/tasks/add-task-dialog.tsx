@@ -5,7 +5,7 @@ import { Button, Input, Label, Textarea } from "@/atoms";
 import { TaskPriority } from "@/enums";
 import type { AddTaskDialogProps, AddTaskFormState } from "@/interfaces";
 import type { TaskInterface } from "@/interfaces";
-import type { UserInterface } from "@/interfaces";
+import type { UserLiteInterface } from "@/interfaces";
 import { t, useCreateTask, useFormErrors, useTasksListLite } from "@/hooks";
 import { runAction } from "@/lib/handle-action";
 import { requirementsService, tasksService } from "@/services";
@@ -81,7 +81,7 @@ const TaskAutocomplete = ({ tasks, value, onChange, placeholder }: TaskAutocompl
 };
 
 interface UsersAutocompleteProps {
-    members: UserInterface[];
+    members: UserLiteInterface[];
     values: string[];
     onChange: (ids: string[]) => void;
     placeholder?: string;
@@ -94,7 +94,7 @@ const UsersAutocomplete = ({ members, values, onChange, placeholder }: UsersAuto
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
         return members.filter((m) =>
-            !values.includes(m.id) && (!q || m.full_name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q)),
+            !values.includes(m.id) && (!q || m.full_name.toLowerCase().includes(q) || (m.email ?? "").toLowerCase().includes(q)),
         ).slice(0, 8);
     }, [members, values, query]);
 
@@ -132,7 +132,7 @@ const UsersAutocomplete = ({ members, values, onChange, placeholder }: UsersAuto
                                 className="w-full px-3 py-2 text-left text-sm hover:bg-muted cursor-pointer flex items-center gap-2">
                                 <span className="text-xs font-medium bg-muted rounded-full h-5 w-5 flex items-center justify-center shrink-0">{m.avatar_initials}</span>
                                 <span className="flex-1 truncate">{m.full_name}</span>
-                                <span className="text-xs text-text-muted truncate">{m.email}</span>
+                                {m.email && <span className="text-xs text-text-muted truncate">{m.email}</span>}
                             </button>
                         ))}
                     </div>
