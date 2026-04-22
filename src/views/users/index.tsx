@@ -177,12 +177,6 @@ export const UsersView = () => {
                                                             }
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
-                                                        <DropdownMenuItem
-                                                            className="gap-2 text-error focus:text-error cursor-pointer"
-                                                            onClick={() => setDeleteTarget(member)}
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />{t("Delete")}
-                                                        </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             )}
@@ -269,20 +263,6 @@ export const UsersView = () => {
                     <div className="flex justify-end gap-2 mt-2">
                         <DialogClose asChild><Button variant="outline" disabled={isCreating}>{t("Cancel")}</Button></DialogClose>
                         <Button onClick={handleAdd} loading={isCreating}>{t("Add Member")}</Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            {/* ── Delete Confirm ── */}
-            <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-                <DialogContent className="max-w-sm">
-                    <DialogHeader><DialogTitle className="text-error">{t("Remove User")}</DialogTitle></DialogHeader>
-                    <p className="text-sm text-text-secondary py-2">
-                        {t("Are you sure you want to remove")} <span className="font-semibold text-text-dark">{deleteTarget?.full_name}</span>? {t("This cannot be undone.")}
-                    </p>
-                    <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setDeleteTarget(null)}>{t("Cancel")}</Button>
-                        <Button variant="destructive" onClick={() => setDeleteTarget(null)}>{t("Remove")}</Button>
                     </div>
                 </DialogContent>
             </Dialog>
