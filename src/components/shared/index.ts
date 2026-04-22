@@ -11,3 +11,5 @@ export { OfflineBanner } from "./offline-banner";
 export { MobileNav } from "./mobile-nav";
 export { BoundaryErrorClass, NetworkError, IndicatorNetworkError, StackError } from "./error";
 export { QueryBoundary } from "./query-boundary";
+export { Can, type CanProps } from "./can";
+export { CanRoute, type CanRouteProps } from "./can-route";
