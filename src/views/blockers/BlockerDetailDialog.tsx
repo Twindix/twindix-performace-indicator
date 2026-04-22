@@ -5,7 +5,7 @@ import { Badge, Button } from "@/atoms";
 import { t, useDeleteBlocker, useEscalateBlocker, useGetBlocker, useResolveBlocker } from "@/hooks";
 import type { BlockerInterface } from "@/interfaces";
 import { Avatar, AvatarFallback, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/ui";
-import { cn, formatDate } from "@/utils";
+import { formatDate } from "@/utils";
 
 interface Props {
     blocker: BlockerInterface | null;
@@ -98,9 +98,9 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPat
                                 <Edit className="h-3.5 w-3.5" />
                                 {t("Edit")}
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={handleDelete} disabled={isDeleting} className="h-7 gap-1.5 text-xs text-error hover:text-error hover:bg-error-light">
-                                <Trash2 className="h-3.5 w-3.5" />
-                                {isDeleting ? t("Deleting...") : t("Delete")}
+                            <Button variant="ghost" size="sm" onClick={handleDelete} loading={isDeleting} className="h-7 gap-1.5 text-xs text-error hover:text-error hover:bg-error-light">
+                                {!isDeleting && <Trash2 className="h-3.5 w-3.5" />}
+                                {t("Delete")}
                             </Button>
                         </div>
                     </div>
@@ -174,14 +174,14 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPat
                 <div className="flex items-center gap-2 mt-4">
                     {!isResolved ? (
                         <>
-                            <Button onClick={handleResolve} disabled={isResolving} className="gap-1.5">
-                                <CheckCircle2 className={cn("h-4 w-4", isResolving && "animate-spin")} />
-                                {isResolving ? t("Resolving...") : t("Mark as Resolved")}
+                            <Button onClick={handleResolve} loading={isResolving} className="gap-1.5">
+                                {!isResolving && <CheckCircle2 className="h-4 w-4" />}
+                                {t("Mark as Resolved")}
                             </Button>
                             {!isEscalated && (
-                                <Button variant="outline" onClick={handleEscalate} disabled={isEscalating} className="gap-1.5 border-warning text-warning hover:bg-warning-light">
-                                    <TrendingUp className="h-4 w-4" />
-                                    {isEscalating ? t("Escalating...") : t("Escalate")}
+                                <Button variant="outline" onClick={handleEscalate} loading={isEscalating} className="gap-1.5 border-warning text-warning hover:bg-warning-light">
+                                    {!isEscalating && <TrendingUp className="h-4 w-4" />}
+                                    {t("Escalate")}
                                 </Button>
                             )}
                         </>
