@@ -33,7 +33,7 @@ export const sprintsService = {
     },
 
     activateHandler: async (id: string): Promise<SprintDetailResponseInterface> => {
-        const { data } = await apiClient.post<SprintDetailResponseInterface>(apisData.sprints.activate(id), {});
+        const { data } = await apiClient.patch<SprintDetailResponseInterface>(apisData.sprints.activate(id));
         return data;
     },
 };
