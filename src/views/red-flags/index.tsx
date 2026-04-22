@@ -27,7 +27,7 @@ export const RedFlagsView = () => {
     const { redFlags, isLoading, patchRedFlagLocal, removeRedFlagLocal } = useRedFlagsList(activeSprintId);
     const { createHandler, isLoading: isCreating } = useCreateRedFlag();
     const { updateHandler, isLoading: isUpdating } = useUpdateRedFlag();
-    const { deleteHandler } = useDeleteRedFlag();
+    const { deleteHandler, isLoading: isDeleting } = useDeleteRedFlag();
 
     const isSubmitting = isCreating || isUpdating;
 
@@ -142,8 +142,8 @@ export const RedFlagsView = () => {
                     </div>
                     <div className="flex justify-end gap-2 mt-4">
                         <DialogClose asChild><Button variant="outline" disabled={isSubmitting}>{t("Cancel")}</Button></DialogClose>
-                        <Button onClick={editTarget ? handleEdit : handleAdd} disabled={isSubmitting || !form.title.trim()}>
-                            {isSubmitting ? t("Saving...") : editTarget ? t("Save Changes") : t("Create")}
+                        <Button onClick={editTarget ? handleEdit : handleAdd} loading={isSubmitting} disabled={!form.title.trim()}>
+                            {editTarget ? t("Save Changes") : t("Create")}
                         </Button>
                     </div>
                 </DialogContent>
@@ -154,8 +154,8 @@ export const RedFlagsView = () => {
                     <DialogHeader><DialogTitle>{t("Delete Red Flag")}</DialogTitle></DialogHeader>
                     <p className="text-sm text-text-secondary py-2">{t("Are you sure?")}</p>
                     <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setDeleteTarget(null)}>{t("Cancel")}</Button>
-                        <Button variant="destructive" onClick={handleDelete}>{t("Delete")}</Button>
+                        <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>{t("Cancel")}</Button>
+                        <Button variant="destructive" onClick={handleDelete} loading={isDeleting}>{t("Delete")}</Button>
                     </div>
                 </DialogContent>
             </Dialog>
