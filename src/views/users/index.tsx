@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, MoreHorizontal, Plus, PowerOff, Trash2, UserCog, Zap } from "lucide-react";
+import { ArrowRight, MoreHorizontal, Plus, PowerOff, UserCog, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -55,7 +55,6 @@ export const UsersView = () => {
 
     const [teams, setTeams] = useState<TeamOption[]>([]);
     const [addOpen, setAddOpen] = useState(false);
-    const [deleteTarget, setDeleteTarget] = useState<UserInterface | null>(null);
     const [form, setForm] = useState<FormState>(emptyForm);
 
     useEffect(() => {
