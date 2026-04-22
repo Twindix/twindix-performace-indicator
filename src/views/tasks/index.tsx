@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, type DragEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ClipboardList, Filter, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
@@ -73,6 +74,19 @@ const TasksViewInner = () => {
         setTransitionTarget(targetPhase);
         setTransitionOpen(true);
     }, []);
+
+    const [searchParams, setSearchParams] = useSearchParams();
+    const queryTaskId = searchParams.get("taskId");
+    useEffect(() => {
+        if (!queryTaskId) return;
+        getTaskHandler(queryTaskId).then((res) => {
+            if (res) {
+                setSelectedTask(res as TaskInterface);
+                setDialogOpen(true);
+            }
+            setSearchParams((prev) => { const next = new URLSearchParams(prev); next.delete("taskId"); return next; }, { replace: true });
+        });
+    }, [queryTaskId, getTaskHandler, setSearchParams]);
 
     const confirmTransition = useCallback(async () => {
         if (!transitionTask || !transitionTarget) return;
