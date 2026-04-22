@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import { Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
-import { t, useCreateTeam, useGetTeams } from "@/hooks";
+import { t, useCreateTeam, useFormErrors, useGetTeams } from "@/hooks";
 import type { TeamInterface } from "@/interfaces";
 import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
@@ -13,7 +13,8 @@ import {
 
 export const TeamsView = () => {
     const { teams, isLoading, patchTeamLocal, refetch } = useGetTeams();
-    const { createHandler, isLoading: isSubmitting } = useCreateTeam();
+    const { setFieldErrors, clearError, clear: clearFieldErrors, getError } = useFormErrors();
+    const { createHandler, isLoading: isSubmitting } = useCreateTeam({ onFieldErrors: setFieldErrors });
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<TeamInterface | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<TeamInterface | null>(null);
@@ -31,18 +32,14 @@ export const TeamsView = () => {
         if (editTarget) {
             patchTeamLocal({ ...editTarget, name: name.trim() });
             toast.success(t("Team updated (local only)"));
-            setEditTarget(null);
-            setName("");
-            setDescription("");
+            closeDialog();
             return;
         }
         const res = await createHandler({ name: name.trim(), description: description.trim() || undefined });
         if (res) {
             patchTeamLocal(res);
             refetch();
-            setAddOpen(false);
-            setName("");
-            setDescription("");
+            closeDialog();
         }
     };
 
@@ -52,7 +49,7 @@ export const TeamsView = () => {
         setDeleteTarget(null);
     };
 
-    const closeDialog = () => { setAddOpen(false); setEditTarget(null); setName(""); setDescription(""); };
+    const closeDialog = () => { setAddOpen(false); setEditTarget(null); setName(""); setDescription(""); clearFieldErrors(); };
 
     return (
         <div>
@@ -121,12 +118,14 @@ export const TeamsView = () => {
                     <div className="space-y-4 mt-2">
                         <div className="space-y-2">
                             <Label htmlFor="team-name">{t("Name")} <span className="text-error">*</span></Label>
-                            <Input id="team-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("Frontend")} />
+                            <Input id="team-name" value={name} onChange={(e) => { setName(e.target.value); clearError("name"); }} placeholder={t("Frontend")} />
+                            {getError("name") && <p className="text-xs text-error">{getError("name")}</p>}
                         </div>
                         {!editTarget && (
                             <div className="space-y-2">
                                 <Label htmlFor="team-desc">{t("Description")}</Label>
-                                <Textarea id="team-desc" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("What does this team do?")} />
+                                <Textarea id="team-desc" rows={3} value={description} onChange={(e) => { setDescription(e.target.value); clearError("description"); }} placeholder={t("What does this team do?")} />
+                                {getError("description") && <p className="text-xs text-error">{getError("description")}</p>}
                             </div>
                         )}
                     </div>
