@@ -11,6 +11,10 @@ export interface RunActionOptions {
     silent?: boolean;
     rethrow?: boolean;
     context?: string;
+    // Caller already gated the action with a permission check. A 403 here means
+    // the role changed mid-session — toast + log. Set to false for speculative
+    // calls where 403 is an expected outcome and should be silenced.
+    expectAuthorized?: boolean;
 }
 
 const FORBIDDEN_MESSAGE = "You don't have permission to do this.";
@@ -47,6 +51,7 @@ export const runAction = async <T>(
         silent = false,
         rethrow = false,
         context,
+        expectAuthorized = true,
     } = options;
 
     try {
@@ -77,6 +82,12 @@ export const runAction = async <T>(
             return null;
         }
 
+        if (status === 403 && !expectAuthorized) {
+            devLog(context ?? "permissions", err);
+            if (rethrow) throw err;
+            return null;
+        }
+
         if (!silent) {
             const backendMessage = apiError?.message || null;
             let statusFallback: string;
@@ -86,7 +97,7 @@ export const runAction = async <T>(
             toast.error(backendMessage || getErrorMessage(err, statusFallback));
         }
 
-        devLog(context, err);
+        devLog(status === 403 ? (context ?? "permissions") : context, err);
 
         if (rethrow) throw err;
         return null;

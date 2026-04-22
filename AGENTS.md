@@ -334,6 +334,7 @@ Every API call goes through `runAction` in `src/lib/handle-action.ts`. Hooks nev
 9. **Don't re-throw unless the caller needs to branch** (login navigate, etc.). Default is catch-and-toast via `runAction`; use `rethrow: true` only when the view needs the exception (e.g. to skip `navigate(dashboard)` on failed login).
 10. **One place maps HTTP status → UX.** If you need to change "what 403 looks like", you change it in `runAction` — nowhere else.
 11. **Form closes iff the handler returns truthy.** Never `closeDialog()` unconditionally after `await submit()`. On 422 the dialog stays open with inline errors; on other errors it stays open with a toast.
+12. **403 = permission denied.** By default `runAction` toasts the forbidden message and logs under the `permissions` context — the UI should have gated the action, so a 403 means the role changed mid-session. For speculative calls where 403 is an expected outcome (e.g. probing), pass `expectAuthorized: false` to silence the toast.
 
 ### Files you will touch
 
