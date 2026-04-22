@@ -29,11 +29,31 @@ const buttonVariants = cva(
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
     asChild?: boolean;
+    loading?: boolean;
 }
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
-});
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+    ({ className, variant, size, asChild = false, loading = false, disabled, children, ...props }, ref) => {
+        const Comp = asChild ? Slot : "button";
+        const isDisabled = disabled || loading;
+        const content = asChild ? children : (
+            <>
+                {loading && <span aria-hidden className="h-4 w-4 shrink-0 rounded-full border-2 border-current border-t-transparent animate-spin" />}
+                {children}
+            </>
+        );
+        return (
+            <Comp
+                className={cn(buttonVariants({ variant, size, className }))}
+                ref={ref}
+                disabled={isDisabled}
+                aria-busy={loading || undefined}
+                {...props}
+            >
+                {content}
+            </Comp>
+        );
+    },
+);
 
 Button.displayName = "Button";
