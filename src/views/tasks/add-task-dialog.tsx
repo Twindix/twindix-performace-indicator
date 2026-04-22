@@ -495,9 +495,9 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                                 id="deadline"
                                 type="datetime-local"
                                 value={deadline}
-                                onChange={(e) => { setDeadline(e.target.value); clearError("deadline"); }}
+                                onChange={(e) => { setDeadline(e.target.value); clearError("dead_time"); }}
                             />
-                            {getError("deadline") && <p className="text-xs text-error">{getError("deadline")}</p>}
+                            {getError("dead_time") && <p className="text-xs text-error">{getError("dead_time")}</p>}
                         </div>
 
                         <div className="space-y-2">

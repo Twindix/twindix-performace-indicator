@@ -1,4 +1,4 @@
-import { Circle, AlertCircle, Clock } from "lucide-react";
+import { Circle, AlertCircle, Clock, Link2 } from "lucide-react";
 
 import { Badge } from "@/atoms";
 import { TaskPriority } from "@/enums";
@@ -81,6 +81,15 @@ export const PipelineView = ({
                                         </Badge>
                                         {task.is_blocked && (
                                             <AlertCircle className="h-3.5 w-3.5 text-error shrink-0" />
+                                        )}
+                                        {task.is_blocked_by_dependency && (
+                                            <Link2 className="h-3.5 w-3.5 text-error shrink-0" aria-label={t("Blocked by dependency")} />
+                                        )}
+                                        {task.dead_time_status === "approaching" && (
+                                            <Clock className="h-3.5 w-3.5 text-warning shrink-0" aria-label={t("Approaching deadline")} />
+                                        )}
+                                        {task.dead_time_status === "overdue" && (
+                                            <Clock className="h-3.5 w-3.5 text-error shrink-0" aria-label={t("Overdue")} />
                                         )}
                                     </div>
                                 </div>
