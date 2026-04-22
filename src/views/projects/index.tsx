@@ -4,7 +4,7 @@ import { ArrowLeft, Calendar, Edit, FolderKanban, MoreHorizontal, Plus, Trash2, 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { ProjectsSkeleton } from "@/components/skeletons";
-import { t, useCreateProject, useDeleteProject, useFormErrors, useProjectsList, useUpdateProject } from "@/hooks";
+import { t, useCreateProject, useDeleteProject, useFormErrors, usePermissions, useProjectsList, useUpdateProject } from "@/hooks";
 import type { CreateProjectPayloadInterface, ProjectInterface } from "@/interfaces";
 import { useProjectStore } from "@/store";
 import {
@@ -37,6 +37,7 @@ const STATUS_LABEL: Record<ProjectInterface["status"], string> = {
 };
 
 export const ProjectsView = () => {
+    const p = usePermissions();
     const { onSetActiveProject } = useProjectStore();
     const { setFieldErrors, clearError, clear: clearFieldErrors, getError } = useFormErrors();
     const { projects, isLoading, prependProjectLocal, patchProjectLocal, removeProjectLocal } = useProjectsList();
@@ -113,10 +114,12 @@ export const ProjectsView = () => {
                 title={t("Projects")}
                 description={t("Group your sprints into projects.")}
                 actions={
-                    <Button size="sm" className="gap-1.5" onClick={openAdd}>
-                        <Plus className="h-4 w-4" />
-                        {t("Add Project")}
-                    </Button>
+                    p.projects.create() ? (
+                        <Button size="sm" className="gap-1.5" onClick={openAdd}>
+                            <Plus className="h-4 w-4" />
+                            {t("Add Project")}
+                        </Button>
+                    ) : null
                 }
             />
 
@@ -152,25 +155,31 @@ export const ProjectsView = () => {
                                             </div>
                                         </button>
 
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => openEdit(project)} className="gap-2 cursor-pointer">
-                                                    <Edit className="h-4 w-4" /> {t("Edit")}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem
-                                                    onClick={() => setDeleteTarget(project)}
-                                                    className="gap-2 text-error focus:text-error cursor-pointer"
-                                                >
-                                                    <Trash2 className="h-4 w-4" /> {t("Delete")}
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        {(p.projects.edit() || p.projects.delete()) && (
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    {p.projects.edit() && (
+                                                        <DropdownMenuItem onClick={() => openEdit(project)} className="gap-2 cursor-pointer">
+                                                            <Edit className="h-4 w-4" /> {t("Edit")}
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    {p.projects.edit() && p.projects.delete() && <DropdownMenuSeparator />}
+                                                    {p.projects.delete() && (
+                                                        <DropdownMenuItem
+                                                            onClick={() => setDeleteTarget(project)}
+                                                            className="gap-2 text-error focus:text-error cursor-pointer"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" /> {t("Delete")}
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        )}
                                     </div>
 
                                     {project.description && (
