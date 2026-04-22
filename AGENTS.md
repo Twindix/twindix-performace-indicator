@@ -366,6 +366,34 @@ const handleSubmit = async () => {
 {getError("name") && <p className="text-xs text-error">{getError("name")}</p>}
 ```
 
+## Loading handling
+
+Loading UX is the sibling of error handling: every API-calling hook already exposes `isLoading` via `useMutationAction` / `useQueryAction` — this section locks down **what the user sees while that flag is true**. Full implementation plan lives in `LOADING_HANDLING_PLAN.md`.
+
+### Priority rules (apply everywhere)
+
+1. **`isLoading` comes from the hook, never from view state.** Don't add a parallel `useState<boolean>("loading")` next to a hook call — you'll desync them.
+2. **Never render the string `"Loading..."`.** Page-level waits render a skeleton from `src/components/skeletons.tsx`. Button-level waits use `<Button loading>`.
+3. **One skeleton per page view.** `components/skeletons.tsx` already holds compositions for every view — reuse; don't invent inline spinners.
+4. **Buttons use `<Button loading={isLoading}>`.** The atom renders an inline spinner, preserves width (no layout shift), and auto-sets `disabled`. No hand-rolled `<span className="animate-spin" />` inside buttons.
+5. **Wrap list/detail queries in `<QueryBoundary>`.** Declarative ternary for `(isLoading, data, empty)` — stops each view reinventing the pattern.
+6. **Optimistic mutations show nothing.** If the UI is updated locally (toggle, drag-drop), don't also flash a spinner — the spinner implies "waiting" and the user isn't.
+7. **Background mutations are silent.** Presence, heartbeat, analytics, secondary widgets — never flicker a button or toast. Pair with `silent: true` on `runAction`.
+8. **Route transitions use the global top-bar (optional).** If flicker becomes visible, enable a thin top-bar progress driven by in-flight queries — not per-page spinners.
+9. **No global `isLoading` context.** Every call owns its own flag. Stacking contexts hides the source and causes whole-page flashes.
+10. **Loading state flips back on error too.** `useMutationAction`/`useQueryAction` already wrap `runAction` in `try/finally` — never re-implement loading state in a hook; always delegate.
+
+### Primitives you will touch
+
+| File | Purpose |
+|---|---|
+| `src/atoms/button.tsx` | Add `loading?: boolean` → inline spinner + `disabled` when true |
+| `src/components/shared/query-boundary.tsx` | `<QueryBoundary isLoading skeleton empty emptyState>children</QueryBoundary>` — one declarative wrapper |
+| `src/components/skeletons.tsx` | Per-view skeleton compositions (already exists for 14 views) |
+| `src/hooks/shared/use-mutation-action.ts` | Owns `isLoading` for one-shot calls |
+| `src/hooks/shared/use-query-action.ts` | Owns `isLoading` for on-mount queries |
+| `src/hooks/shared/use-page-loader.ts` | (Optional) drives the top-bar progress bar |
+
 ## Branch strategy
 
 | Branch | Purpose |
@@ -375,7 +403,9 @@ const handleSubmit = async () => {
 | `test2` | Secondary testing branch |
 | `feat/integrate-*` | Per-feature API integration branches (auth, sprints, tasks, blockers, alerts, red-flags, decisions, comments, dashboard, requirements, teams, users) |
 | `feat/integration-core` | Core integration work merged across features |
+| `bug/error-handling` | Centralized error handling across all 13 domains via `runAction` primitive |
+| `feat/loading-handling` | Loading UX standardization (`Button.loading`, `QueryBoundary`, skeleton reuse) — branched from `bug/error-handling` |
 
-**Current branch:** `bug/hotfix`
+**Current branch:** `feat/loading-handling`
 
-**Recent work:** Hotfix batch across tasks, blockers, comments, decisions, red flags, alerts, users and teams — fixed infinite refetch in blocker detail, wired blocker delete (new DELETE /blockers/:id), pointed comments-log create at the sprint-scoped POST (separate createOnTask path for task comments), made users deactivate clickable, restored @mention picker in task comments, wired TransitionDialog to prev/next phase buttons (PATCH /tasks/:id/status), refetched task after attachment upload/delete for UI sync, made sidebar highlight stick on nested routes, debounced tasks search, added explicit Add button for requirements, surfaced newly created/updated items immediately (defensive response unwrap + merge patches), always show edit/delete controls, prepend new red flags and alerts, treat every 2xx status as success in the axios error interceptor (fixes empty-body 204 flakiness), switched sprint activate from PATCH to POST. Also added a UI-only Projects layer above Sprints.
+**Recent work:** Added `LOADING_HANDLING_PLAN.md` as sibling to `ERROR_HANDLING_PLAN.md`. Branch is forked from `bug/error-handling` so all the error-handling primitives (`runAction`, `useMutationAction`, `useQueryAction`, `useFormErrors`, per-domain constants) are already in place. Plan covers six phases: (1) extend `atoms/button.tsx` with a `loading` prop, (2) add `<QueryBoundary>` in `components/shared/`, (3) audit page-level skeletons and replace any remaining `"Loading..."` strings, (4) silence background mutations (presence, heartbeat, analytics), (5) optional global top-bar progress for route transitions, (6) regression pass against every view. Error-handling fixes from the parent branch were merged in (commit `0ac7c5a`) so no divergence.
