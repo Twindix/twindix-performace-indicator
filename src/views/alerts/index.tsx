@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Bell, Check, CheckCheck, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
-import { EmptyState, Header } from "@/components/shared";
+import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { AlertsSkeleton } from "@/components/skeletons";
 import { t, useAcknowledgeAlert, useAlertsList, useCreateAlert, useDeleteAlert, useDoneAlert, useUpdateAlert, useUsersList } from "@/hooks";
 import type { AlertInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
@@ -250,11 +251,14 @@ export const AlertsView = () => {
                 </TabsList>
 
                 <TabsContent value="pending" className="mt-4">
-                    {isLoading ? null : pendingAlerts.length === 0 ? (
-                        <EmptyState icon={Bell} title={t("No pending alerts")} description={t("All clear!")} />
-                    ) : (
+                    <QueryBoundary
+                        isLoading={isLoading}
+                        skeleton={<AlertsSkeleton />}
+                        empty={pendingAlerts.length === 0}
+                        emptyState={<EmptyState icon={Bell} title={t("No pending alerts")} description={t("All clear!")} />}
+                    >
                         <div className="flex flex-col gap-3">{pendingAlerts.map(renderCard)}</div>
-                    )}
+                    </QueryBoundary>
                 </TabsContent>
 
                 <TabsContent value="done" className="mt-4">

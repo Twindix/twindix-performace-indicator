@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Edit, Flag, Plus, Trash2 } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
-import { EmptyState, Header } from "@/components/shared";
+import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { RedFlagsSkeleton } from "@/components/skeletons";
 import { t, useCreateRedFlag, useDeleteRedFlag, useRedFlagsList, useUpdateRedFlag } from "@/hooks";
 import type { RedFlagInterface, CreateRedFlagPayloadInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
@@ -73,9 +74,12 @@ export const RedFlagsView = () => {
                 }
             />
 
-            {isLoading ? null : redFlags.length === 0 ? (
-                <EmptyState icon={Flag} title={t("No red flags")} description={t("No risks identified for this sprint.")} />
-            ) : (
+            <QueryBoundary
+                isLoading={isLoading}
+                skeleton={<RedFlagsSkeleton />}
+                empty={redFlags.length === 0}
+                emptyState={<EmptyState icon={Flag} title={t("No red flags")} description={t("No risks identified for this sprint.")} />}
+            >
                 <div className="flex flex-col gap-3">
                     {redFlags.map((f) => (
                         <Card key={f.id} className="hover:shadow-md transition-shadow">
@@ -112,7 +116,7 @@ export const RedFlagsView = () => {
                         </Card>
                     ))}
                 </div>
-            )}
+            </QueryBoundary>
 
             <Dialog open={addOpen || !!editTarget} onOpenChange={(open) => { if (!open) closeDialogs(); }}>
                 <DialogContent className="max-w-md">
