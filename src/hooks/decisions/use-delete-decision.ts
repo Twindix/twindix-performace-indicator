@@ -1,26 +1,20 @@
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { decisionsConstants } from "@/constants";
-import { getErrorMessage } from "@/lib/error";
 import { decisionsService } from "@/services";
 
+import { useMutationAction } from "../shared";
+
 export const useDeleteDecision = () => {
-    const [isLoading, setIsLoading] = useState(false);
-
-    const deleteHandler = async (id: string): Promise<boolean> => {
-        setIsLoading(true);
-        try {
+    const { mutate, isLoading } = useMutationAction(
+        async (id: string): Promise<true> => {
             await decisionsService.deleteHandler(id);
-            toast.success(decisionsConstants.messages.deleteSuccess);
             return true;
-        } catch (err) {
-            toast.error(getErrorMessage(err, decisionsConstants.errors.deleteFailed));
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        },
+        {
+            successMessage: decisionsConstants.messages.deleteSuccess,
+            errorFallback: decisionsConstants.errors.deleteFailed,
+            context: "decisions.delete",
+        },
+    );
 
-    return { deleteHandler, isLoading };
+    return { deleteHandler: mutate, isLoading };
 };

@@ -1,29 +1,21 @@
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
-
 import { decisionsConstants } from "@/constants";
 import type { DecisionsAnalyticsInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { decisionsService } from "@/services";
 
+import { useQueryAction } from "../shared";
+
 export const useDecisionsAnalytics = (sprintId: string) => {
-    const [analytics, setAnalytics] = useState<DecisionsAnalyticsInterface | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const { data, isLoading, refetch } = useQueryAction<DecisionsAnalyticsInterface | null>(
+        async () => (sprintId ? await decisionsService.analyticsHandler(sprintId) : null),
+        [sprintId],
+        {
+            enabled: !!sprintId,
+            silent: true,
+            errorFallback: decisionsConstants.errors.fetchAnalyticsFailed,
+            initialData: null,
+            context: "decisions.analytics",
+        },
+    );
 
-    const fetch = useCallback(async () => {
-        if (!sprintId) { setAnalytics(null); setIsLoading(false); return; }
-        setIsLoading(true);
-        try {
-            const res = await decisionsService.analyticsHandler(sprintId);
-            setAnalytics(res);
-        } catch (err) {
-            toast.error(getErrorMessage(err, decisionsConstants.errors.fetchAnalyticsFailed));
-        } finally {
-            setIsLoading(false);
-        }
-    }, [sprintId]);
-
-    useEffect(() => { fetch(); }, [fetch]);
-
-    return { analytics, isLoading, refetch: fetch };
+    return { analytics: data ?? null, isLoading, refetch };
 };

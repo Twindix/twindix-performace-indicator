@@ -1,26 +1,20 @@
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
-
 import { decisionsConstants } from "@/constants";
 import type { DecisionInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { decisionsService } from "@/services";
 
-export const useGetDecision = () => {
-    const [isLoading, setIsLoading] = useState(false);
+import { useMutationAction } from "../shared";
 
-    const getHandler = useCallback(async (id: string): Promise<DecisionInterface | null> => {
-        setIsLoading(true);
-        try {
+export const useGetDecision = () => {
+    const { mutate, isLoading } = useMutationAction(
+        async (id: string): Promise<DecisionInterface> => {
             const res = await decisionsService.detailHandler(id);
             return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, decisionsConstants.errors.fetchDetailFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+        },
+        {
+            errorFallback: decisionsConstants.errors.fetchDetailFailed,
+            context: "decisions.detail",
+        },
+    );
 
-    return { getHandler, isLoading };
+    return { getHandler: mutate, isLoading };
 };
