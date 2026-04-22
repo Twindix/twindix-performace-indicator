@@ -1,28 +1,24 @@
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { commentsConstants } from "@/constants";
 import type { CommentInterface, CreateCommentPayloadInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { commentsService } from "@/services";
 
-export const useCreateComment = () => {
-    const [isLoading, setIsLoading] = useState(false);
+import { useMutationAction, type FieldErrors } from "../shared";
 
-    const createHandler = async (sprintId: string, payload: CreateCommentPayloadInterface): Promise<CommentInterface | null> => {
-        if (!navigator.onLine) throw new Error(commentsConstants.errors.genericError);
-        setIsLoading(true);
-        try {
-            const res = await commentsService.createHandler(sprintId, payload);
-            toast.success(commentsConstants.messages.createSuccess);
-            return res;
-        } catch (err) {
-            toast.error(getErrorMessage(err, commentsConstants.errors.createFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+export interface UseCreateCommentOptions {
+    onFieldErrors?: (errors: FieldErrors) => void;
+}
 
-    return { createHandler, isLoading };
+export const useCreateComment = ({ onFieldErrors }: UseCreateCommentOptions = {}) => {
+    const { mutate, isLoading } = useMutationAction(
+        (sprintId: string, payload: CreateCommentPayloadInterface): Promise<CommentInterface> =>
+            commentsService.createHandler(sprintId, payload),
+        {
+            successMessage: commentsConstants.messages.createSuccess,
+            errorFallback: commentsConstants.errors.createFailed,
+            onFieldErrors,
+            context: "comments.create",
+        },
+    );
+
+    return { createHandler: mutate, isLoading };
 };
