@@ -17,7 +17,7 @@ export const SprintsView = () => {
     const { setFieldErrors, clearError, clear: clearFieldErrors, getError } = useFormErrors();
     const { createHandler, isLoading: isCreating } = useCreateSprint({ onFieldErrors: setFieldErrors });
     const { updateHandler, isLoading: isUpdating } = useUpdateSprint({ onFieldErrors: setFieldErrors });
-    const { deleteHandler } = useDeleteSprint();
+    const { deleteHandler, isLoading: isDeleting } = useDeleteSprint();
     const { activateHandler } = useActivateSprint();
 
     const isSubmitting = isCreating || isUpdating;
@@ -154,8 +154,8 @@ export const SprintsView = () => {
                         <DialogClose asChild>
                             <Button variant="outline" disabled={isSubmitting}>{t("Cancel")}</Button>
                         </DialogClose>
-                        <Button onClick={editTarget ? handleSubmitEdit : handleSubmitAdd} disabled={isSubmitting || !form.name.trim() || !form.start_date || !form.end_date}>
-                            {isSubmitting ? t("Saving...") : editTarget ? t("Save Changes") : t("Create Sprint")}
+                        <Button onClick={editTarget ? handleSubmitEdit : handleSubmitAdd} loading={isSubmitting} disabled={!form.name.trim() || !form.start_date || !form.end_date}>
+                            {editTarget ? t("Save Changes") : t("Create Sprint")}
                         </Button>
                     </div>
                 </DialogContent>
@@ -168,8 +168,8 @@ export const SprintsView = () => {
                         {t("Are you sure you want to delete")} <strong className="text-text-dark">{deleteTarget?.name}</strong>? {t("This action cannot be undone.")}
                     </p>
                     <div className="flex justify-end gap-2 mt-4">
-                        <DialogClose asChild><Button variant="outline">{t("Cancel")}</Button></DialogClose>
-                        <Button variant="destructive" onClick={handleDelete}>{t("Delete")}</Button>
+                        <DialogClose asChild><Button variant="outline" disabled={isDeleting}>{t("Cancel")}</Button></DialogClose>
+                        <Button variant="destructive" onClick={handleDelete} loading={isDeleting}>{t("Delete")}</Button>
                     </div>
                 </DialogContent>
             </Dialog>
