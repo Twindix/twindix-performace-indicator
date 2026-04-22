@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Activity, AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Circle, ClipboardList, Layers, ListChecks, Pencil, Plus, Tag, Trash2, User, X } from "lucide-react";
+import { Activity, AlertCircle, ArrowRight, CheckCircle2, Circle, ClipboardList, Flag, Layers, ListChecks, Pencil, Plus, Tag, Trash2, User, X } from "lucide-react";
 
 import { Badge, Button, Input, Skeleton } from "@/atoms";
 import { BlockerStatus, TaskPriority, TaskPhase } from "@/enums";
-import { t, useCreateRequirement, useDeleteRequirement, useDeleteTask, useGetRequirement, useTaskTags, useToggleRequirement, useUpdateRequirement } from "@/hooks";
+import { t, useCreateRequirement, useDeleteRequirement, useDeleteTask, useGetRequirement, useMarkTaskComplete, useTaskTags, useToggleRequirement, useUpdateRequirement } from "@/hooks";
 import type { TaskInterface, UserInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
 import { Avatar, AvatarFallback, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
 import { cn, formatDate } from "@/utils";
@@ -63,6 +63,7 @@ export const TaskDetailDialog = ({
     removeTaskLocal,
 }: TaskDetailDialogProps) => {
     const { deleteHandler: deleteTaskHandler, isLoading: isDeletingTask } = useDeleteTask();
+    const { markCompleteHandler, isLoading: isMarkingComplete } = useMarkTaskComplete();
     const { addHandler: addTagHandler, removeHandler: removeTagHandler } = useTaskTags();
     const { getAllHandler: getRequirementsHandler } = useGetRequirement();
     const { createHandler: createRequirementHandler, isLoading: isAddingReq } = useCreateRequirement();
@@ -95,8 +96,13 @@ export const TaskDetailDialog = ({
 
     const colIndex = COLUMNS.findIndex((c) => c.status === (task.status ?? "backlog"));
     const effectiveIndex = colIndex === -1 ? 0 : colIndex;
-    const prevCol = effectiveIndex > 0 ? COLUMNS[effectiveIndex - 1] : null;
     const nextCol = effectiveIndex < COLUMNS.length - 1 ? COLUMNS[effectiveIndex + 1] : null;
+    const taskRequirements = task.requirements ?? [];
+    const allReqsApproved = taskRequirements.length > 0 && taskRequirements.every((r) => r.is_done);
+    const isAssignee = !!authUser && task.assignee?.id === authUser.id;
+    const isPendingApproval = task.pending_approval === true;
+    const isDone = (task.status ?? "backlog") === "done";
+    const showFinish = isAssignee && !isDone && !isPendingApproval && !allReqsApproved;
 
     const handleAddTag = async () => {
         const v = tagInput.trim();
@@ -150,20 +156,33 @@ export const TaskDetailDialog = ({
 
                 {/* Phase navigation */}
                 <div className="flex items-center justify-between gap-3 mt-3 p-3 rounded-xl bg-muted">
-                    {prevCol
-                        ? <Button variant="secondary" size="sm" onClick={() => { onOpenChange(false); onMoveRequest(task, prevCol.status as TaskPhase); }} className="gap-1.5">
-                            <ArrowLeft className="h-3.5 w-3.5" />{t(prevCol.label)}
-                          </Button>
-                        : <div />}
                     <div className="flex items-center gap-2">
                         <div className={cn("h-2.5 w-2.5 rounded-full", COLUMN_COLORS[task.status ?? "backlog"] ?? "bg-text-muted")} />
                         <span className="text-sm font-semibold text-text-dark">{t(statusLabel(task.status ?? "backlog"))}</span>
+                        {isPendingApproval && <Badge variant="warning" className="ms-1">{t("Awaiting Approval")}</Badge>}
                     </div>
-                    {nextCol
-                        ? <Button size="sm" onClick={() => { onOpenChange(false); onMoveRequest(task, nextCol.status as TaskPhase); }} className="gap-1.5">
-                            {t(nextCol.label)}<ArrowRight className="h-3.5 w-3.5" />
-                          </Button>
-                        : <Badge variant="success" className="px-3 py-1.5">{t("Completed")}</Badge>}
+                    <div className="flex items-center gap-2">
+                        {showFinish && (
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                loading={isMarkingComplete}
+                                onClick={async () => {
+                                    const res = await markCompleteHandler(task.id);
+                                    if (res) patchTaskLocal(task.id, { pending_approval: true });
+                                }}
+                                className="gap-1.5"
+                            >
+                                {!isMarkingComplete && <Flag className="h-3.5 w-3.5" />}
+                                {t("Finish")}
+                            </Button>
+                        )}
+                        {nextCol
+                            ? <Button size="sm" disabled={showFinish || isPendingApproval || isMarkingComplete} onClick={() => { onOpenChange(false); onMoveRequest(task, nextCol.status as TaskPhase); }} className="gap-1.5">
+                                {t(nextCol.label)}<ArrowRight className="h-3.5 w-3.5" />
+                              </Button>
+                            : <Badge variant="success" className="px-3 py-1.5">{t("Completed")}</Badge>}
+                    </div>
                 </div>
 
                 {/* Meta grid */}

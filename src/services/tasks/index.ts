@@ -98,4 +98,9 @@ export const tasksService = {
         );
         return data;
     },
+
+    markCompleteHandler: async (taskId: string): Promise<TaskInterface> => {
+        const { data } = await apiClient.post<{ task: TaskInterface } | TaskInterface>(apisData.tasks.markComplete(taskId));
+        return (data && typeof data === "object" && "task" in data ? data.task : data) as TaskInterface;
+    },
 };

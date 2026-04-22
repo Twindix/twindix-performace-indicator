@@ -43,6 +43,7 @@ export const apisData = {
         deleteAttachment: (id: string, attachmentId: string) => `/tasks/${id}/attachments/${attachmentId}`,
         removeAttachment: (id: string, attachmentId: string) => `/tasks/${id}/attachments/${attachmentId}`,
         transitionCriteria: (id: string) => `/tasks/${id}/transition-criteria`,
+        markComplete: (id: string) => `/tasks/${id}/mark-complete`,
     },
     requirements: {
         list: (taskId: string) => `/tasks/${taskId}/requirements`,

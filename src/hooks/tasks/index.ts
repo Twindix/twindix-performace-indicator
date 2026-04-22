@@ -11,3 +11,4 @@ export { useTaskTags } from "./use-task-tags";
 export { useTaskViews } from "./use-task-views";
 export { useTaskAttachments } from "./use-task-attachments";
 export { useTasksList, type TasksListFilters } from "./use-tasks-list";
+export { useMarkTaskComplete } from "./use-mark-task-complete";

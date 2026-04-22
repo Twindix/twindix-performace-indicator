@@ -61,6 +61,7 @@ export interface TaskInterface {
     rework_count?: string | null;
     is_blocked?: boolean | null;
     is_overdue?: boolean | null;
+    pending_approval?: boolean | null;
     created_at?: string;
     assignee?: TaskUserInterface | null;
     tags: TaskTag[];
