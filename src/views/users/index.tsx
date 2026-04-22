@@ -8,7 +8,7 @@ import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { UsersSkeleton } from "@/components/skeletons";
 import { usersConstants } from "@/constants";
 import type { RoleTier } from "@/constants/permissions";
-import { t } from "@/hooks";
+import { t, usePermissions } from "@/hooks";
 import type { UserInterface } from "@/interfaces";
 import { useUsersList, useUsersCreate, useUsersUpdate } from "@/hooks/users";
 import {
@@ -40,6 +40,7 @@ type FormErrors = Partial<Record<keyof FormState, string>>;
 
 export const UsersView = () => {
     const navigate = useNavigate();
+    const p = usePermissions();
     const { users, isLoading, refetch, patchUserLocal } = useUsersList();
 
     const [errors, setErrors] = useState<FormErrors>({});
@@ -111,12 +112,14 @@ export const UsersView = () => {
         <div>
             <Header title={t("User Management")} description={t("Manage team members and view individual performance analytics")} />
 
-            <div className="flex justify-end mb-6">
-                <Button onClick={() => { setForm(emptyForm); setErrors({}); setAddOpen(true); }} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    {t("Add User")}
-                </Button>
-            </div>
+            {p.users.create() && (
+                <div className="flex justify-end mb-6">
+                    <Button onClick={() => { setForm(emptyForm); setErrors({}); setAddOpen(true); }} className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        {t("Add User")}
+                    </Button>
+                </div>
+            )}
 
             <QueryBoundary
                 isLoading={isLoading}
@@ -145,42 +148,44 @@ export const UsersView = () => {
                                             <p className="text-xs text-text-muted mt-0.5">{member.email}</p>
                                         </div>
                                         <div className="flex items-center gap-1 shrink-0">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <button className="p-1.5 rounded-md text-text-muted hover:text-text-dark hover:bg-accent transition-colors cursor-pointer">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-44">
-                                                    <DropdownMenuItem
-                                                        className="gap-2 cursor-pointer"
-                                                        onClick={async () => {
-                                                            const next = isInactive ? "active" : "inactive";
-                                                            const optimistic = { ...member, account_status: next as UserInterface["account_status"] };
-                                                            patchUserLocal(optimistic);
-                                                            const res = await updateUser(member.id, { account_status: next });
-                                                            if (res) {
-                                                                patchUserLocal(res as UserInterface);
-                                                                toast.success(t(isInactive ? "User activated" : "User deactivated"));
-                                                            } else {
-                                                                patchUserLocal(member);
+                                            {p.users.edit() && (
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <button className="p-1.5 rounded-md text-text-muted hover:text-text-dark hover:bg-accent transition-colors cursor-pointer">
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-44">
+                                                        <DropdownMenuItem
+                                                            className="gap-2 cursor-pointer"
+                                                            onClick={async () => {
+                                                                const next = isInactive ? "active" : "inactive";
+                                                                const optimistic = { ...member, account_status: next as UserInterface["account_status"] };
+                                                                patchUserLocal(optimistic);
+                                                                const res = await updateUser(member.id, { account_status: next });
+                                                                if (res) {
+                                                                    patchUserLocal(res as UserInterface);
+                                                                    toast.success(t(isInactive ? "User activated" : "User deactivated"));
+                                                                } else {
+                                                                    patchUserLocal(member);
+                                                                }
+                                                            }}
+                                                        >
+                                                            {isInactive
+                                                                ? <><Zap className="h-4 w-4 text-success" />{t("Activate")}</>
+                                                                : <><PowerOff className="h-4 w-4 text-warning" />{t("Deactivate")}</>
                                                             }
-                                                        }}
-                                                    >
-                                                        {isInactive
-                                                            ? <><Zap className="h-4 w-4 text-success" />{t("Activate")}</>
-                                                            : <><PowerOff className="h-4 w-4 text-warning" />{t("Deactivate")}</>
-                                                        }
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem
-                                                        className="gap-2 text-error focus:text-error cursor-pointer"
-                                                        onClick={() => setDeleteTarget(member)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />{t("Delete")}
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem
+                                                            className="gap-2 text-error focus:text-error cursor-pointer"
+                                                            onClick={() => setDeleteTarget(member)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />{t("Delete")}
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            )}
                                             <button
                                                 onClick={() => navigate(`/users/${member.id}`)}
                                                 className="p-1.5 rounded-md text-text-muted hover:text-primary hover:bg-primary-lighter transition-colors cursor-pointer"
