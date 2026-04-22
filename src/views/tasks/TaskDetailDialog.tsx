@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Activity, AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Circle, ClipboardList, Layers, ListChecks, Pencil, Plus, Tag, Trash2, User, X } from "lucide-react";
 
-import { Badge, Button, Input } from "@/atoms";
+import { Badge, Button, Input, Skeleton } from "@/atoms";
 import { BlockerStatus, TaskPriority, TaskPhase } from "@/enums";
 import { t, useCreateRequirement, useDeleteRequirement, useDeleteTask, useGetRequirement, useTaskTags, useToggleRequirement, useUpdateRequirement } from "@/hooks";
 import type { TaskInterface, UserInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
@@ -80,11 +80,14 @@ export const TaskDetailDialog = ({
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [reqInput, setReqInput] = useState("");
     const [showReqInput, setShowReqInput] = useState(false);
+    const [isFetchingReqs, setIsFetchingReqs] = useState(false);
 
     useEffect(() => {
         if (!open || !task) return;
+        setIsFetchingReqs(true);
         getRequirementsHandler(task.id).then((res) => {
             if (res) patchTaskLocal(task.id, { requirements: res });
+            setIsFetchingReqs(false);
         });
     }, [open, task?.id, getRequirementsHandler]);
 
@@ -287,6 +290,14 @@ export const TaskDetailDialog = ({
                         )}
                     </div>
                     <div className="space-y-2">
+                        {isFetchingReqs && requirements.length === 0 && (
+                            [...Array(2)].map((_, i) => (
+                                <div key={i} className="flex items-center gap-3 rounded-lg px-3 py-2 bg-muted">
+                                    <Skeleton className="h-4 w-4 rounded shrink-0" />
+                                    <Skeleton className="h-3 flex-1 max-w-xs" />
+                                </div>
+                            ))
+                        )}
                         {requirements.map((req) => (
                             <div key={req.id} className={cn("flex items-center gap-3 rounded-lg px-3 py-2 group", req.is_done ? "bg-success-light/50" : "bg-muted")}>
                                 {editingReqId === req.id ? (
@@ -387,7 +398,7 @@ export const TaskDetailDialog = ({
                                 </div>
                             );
                         })()}
-                        {requirements.length === 0 && !showReqInput && (
+                        {!isFetchingReqs && requirements.length === 0 && !showReqInput && (
                             <p className="text-xs text-text-muted italic">{t("No requirements yet")}</p>
                         )}
                     </div>

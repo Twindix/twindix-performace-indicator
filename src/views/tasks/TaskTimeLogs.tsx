@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Check, Clock, Pencil, Trash2, X } from "lucide-react";
 
-import { Button, Input } from "@/atoms";
+import { Button, Input, Skeleton } from "@/atoms";
 import { t, useCreateTimeLog, useDeleteTimeLog, useGetTimeLog, useUpdateTimeLog } from "@/hooks";
 import type { TaskInterface, TimeLogInterface, UserInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
@@ -23,6 +23,7 @@ export const TaskTimeLogs = ({ task, members, patchTaskLocal }: Props) => {
     const currentUserId = authUser?.id ?? "";
 
     const [logs, setLogs] = useState<TimeLogInterface[]>([]);
+    const [isFetching, setIsFetching] = useState(true);
     const [logHours, setLogHours] = useState("");
     const [logNote, setLogNote] = useState("");
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -30,8 +31,10 @@ export const TaskTimeLogs = ({ task, members, patchTaskLocal }: Props) => {
     const [editNote, setEditNote] = useState("");
 
     const fetchLogs = useCallback(async () => {
+        setIsFetching(true);
         const res = await getByTaskHandler(task.id);
         if (res) setLogs(res);
+        setIsFetching(false);
     }, [task.id, getByTaskHandler]);
 
     useEffect(() => { fetchLogs(); }, [fetchLogs]);
@@ -98,7 +101,21 @@ export const TaskTimeLogs = ({ task, members, patchTaskLocal }: Props) => {
                 )}
             </div>
 
-            {logs.length > 0 && (
+            {isFetching && logs.length === 0 && (
+                <div className="flex flex-col gap-2 mb-3">
+                    {[...Array(2)].map((_, i) => (
+                        <div key={i} className="flex gap-2.5 items-start p-2.5 rounded-lg bg-muted">
+                            <Skeleton className="h-6 w-6 rounded-full shrink-0" />
+                            <div className="flex-1 space-y-1.5">
+                                <Skeleton className="h-3 w-32" />
+                                <Skeleton className="h-3 w-full max-w-xs" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {!isFetching && logs.length > 0 && (
                 <div className="flex flex-col gap-2 mb-3">
                     {logs.map((log) => {
                         const author = getMember(log.user?.id ?? "");
@@ -146,7 +163,7 @@ export const TaskTimeLogs = ({ task, members, patchTaskLocal }: Props) => {
                 </div>
             )}
 
-            {logs.length === 0 && (
+            {!isFetching && logs.length === 0 && (
                 <p className="text-xs text-text-muted italic mb-3">{t("No time logs yet")}</p>
             )}
 

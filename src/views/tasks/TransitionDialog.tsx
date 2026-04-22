@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ShieldCheck, Lock, CheckCircle2, AlertCircle, Clock, Undo2 } from "lucide-react";
-import { Badge, Button, Input, Textarea } from "@/atoms";
+import { Badge, Button, Input, Skeleton, Textarea } from "@/atoms";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
 import { cn } from "@/utils";
 import { t, useTaskViews } from "@/hooks";
@@ -174,7 +174,7 @@ export const TransitionDialog = ({
                 {isFetching || !result ? (
                     <div className="mt-4 flex flex-col gap-2">
                         {[...Array(3)].map((_, i) => (
-                            <div key={i} className="h-9 rounded-lg bg-muted animate-pulse" />
+                            <Skeleton key={i} className="h-9 rounded-lg" />
                         ))}
                     </div>
                 ) : (
