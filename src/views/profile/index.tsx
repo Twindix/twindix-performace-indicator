@@ -49,7 +49,7 @@ export const ProfileView = () => {
                                     }}
                                     className="text-xl font-bold text-center h-9"
                                 />
-                                <Button size="sm" onClick={handleSaveName} disabled={!editedName.trim() || isSaving}>{t("Save")}</Button>
+                                <Button size="sm" onClick={handleSaveName} loading={isSaving} disabled={!editedName.trim()}>{t("Save")}</Button>
                                 <Button size="sm" variant="outline" onClick={() => { setEditedName(user.full_name ?? ""); setIsEditingName(false); }}>{t("Cancel")}</Button>
                             </div>
                         ) : (
