@@ -5,7 +5,7 @@ import { Badge, Button, Input, Skeleton } from "@/atoms";
 import { BlockerStatus, TaskPriority, TaskPhase } from "@/enums";
 import { t, useCreateRequirement, useDeleteRequirement, useDeleteTask, useGetRequirement, useMarkTaskComplete, useTaskTags, useToggleRequirement, useUpdateRequirement } from "@/hooks";
 import type { TaskInterface, UserLiteInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
-import { Avatar, AvatarFallback, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
+import { Avatar, AvatarFallback, Checkbox, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
 import { cn, formatDate } from "@/utils";
 import { useAuthStore } from "@/store";
 import { TaskAttachments } from "./TaskAttachments";
@@ -94,15 +94,18 @@ export const TaskDetailDialog = ({
 
     if (!task) return null;
 
-    const colIndex = COLUMNS.findIndex((c) => c.status === (task.status ?? "backlog"));
-    const effectiveIndex = colIndex === -1 ? 0 : colIndex;
-    const nextCol = effectiveIndex < COLUMNS.length - 1 ? COLUMNS[effectiveIndex + 1] : null;
+    const nextStatus = task.phase_navigation?.next ?? null;
+    const nextLabel = nextStatus
+        ? (COLUMNS.find((c) => c.status === nextStatus)?.label ?? nextStatus.replace(/_/g, " "))
+        : null;
     const taskRequirements = task.requirements ?? [];
     const allReqsApproved = taskRequirements.length > 0 && taskRequirements.every((r) => r.is_done);
     const isAssignee = !!authUser && task.assignee?.id === authUser.id;
+    const isManager = authUser?.role_tier === "admin" || authUser?.role_tier === "manager";
+    const canFinish = isAssignee || isManager;
     const isPendingApproval = task.pending_approval === true;
     const isDone = (task.status ?? "backlog") === "done";
-    const showFinish = isAssignee && !isDone && !isPendingApproval && !allReqsApproved;
+    const showFinish = canFinish && !isDone && !isPendingApproval && !allReqsApproved;
 
     const handleAddTag = async () => {
         const v = tagInput.trim();
@@ -177,12 +180,12 @@ export const TaskDetailDialog = ({
                                 {t("Finish")}
                             </Button>
                         )}
-                        {nextCol && !showFinish && !isPendingApproval && (
-                            <Button size="sm" disabled={isMarkingComplete} onClick={() => { onOpenChange(false); onMoveRequest(task, nextCol.status as TaskPhase); }} className="gap-1.5">
-                                {t(nextCol.label)}<ArrowRight className="h-3.5 w-3.5" />
+                        {nextStatus && !showFinish && !isPendingApproval && (
+                            <Button size="sm" disabled={isMarkingComplete} onClick={() => { onOpenChange(false); onMoveRequest(task, nextStatus as TaskPhase); }} className="gap-1.5">
+                                {t(nextLabel ?? "")}<ArrowRight className="h-3.5 w-3.5" />
                             </Button>
                         )}
-                        {!nextCol && <Badge variant="success" className="px-3 py-1.5">{t("Completed")}</Badge>}
+                        {!nextStatus && <Badge variant="success" className="px-3 py-1.5">{t("Completed")}</Badge>}
                     </div>
                 </div>
 
@@ -352,9 +355,10 @@ export const TaskDetailDialog = ({
                                     </>
                                 ) : (
                                     <>
-                                        <button
-                                            type="button"
-                                            onClick={async () => {
+                                        <Checkbox
+                                            id={`req-${req.id}`}
+                                            checked={!!req.is_done}
+                                            onCheckedChange={async () => {
                                                 const optimisticDone = !req.is_done;
                                                 patchTaskLocal(task.id, { requirements: requirements.map((r) => r.id === req.id ? { ...r, is_done: optimisticDone } : r) });
                                                 const res = await toggleRequirementHandler(req.id);
@@ -364,15 +368,13 @@ export const TaskDetailDialog = ({
                                                     patchTaskLocal(task.id, { requirements: requirements.map((r) => r.id === req.id ? { ...r, is_done: req.is_done } : r) });
                                                 }
                                             }}
-                                            className="flex items-center gap-3 flex-1 text-start cursor-pointer hover:opacity-80"
+                                        />
+                                        <label
+                                            htmlFor={`req-${req.id}`}
+                                            className={cn("text-sm flex-1 cursor-pointer", req.is_done ? "line-through text-text-muted" : "text-text-dark")}
                                         >
-                                            {req.is_done
-                                                ? <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                                                : <AlertCircle className="h-4 w-4 text-text-muted shrink-0" />}
-                                            <span className={cn("text-sm", req.is_done ? "line-through text-text-muted" : "text-text-dark")}>
-                                                {req.content}
-                                            </span>
-                                        </button>
+                                            {req.content}
+                                        </label>
                                         <button
                                             onClick={() => { setEditingReqId(req.id); setEditingReqLabel(req.content ?? ""); }}
                                             className="text-text-muted hover:text-primary transition-colors cursor-pointer"
