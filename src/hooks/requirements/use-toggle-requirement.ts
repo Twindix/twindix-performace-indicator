@@ -1,27 +1,21 @@
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { requirementsConstants } from "@/constants/requirements";
 import type { RequirementInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { requirementsService } from "@/services";
 
+import { useMutationAction } from "../shared";
+
 export const useToggleRequirement = () => {
-    const [isLoading, setIsLoading] = useState(false);
-
-    const toggleHandler = async (id: string): Promise<RequirementInterface | null> => {
-        setIsLoading(true);
-        try {
+    const { mutate, isLoading } = useMutationAction(
+        async (id: string): Promise<RequirementInterface> => {
             const res = await requirementsService.toggleHandler(id);
-            toast.success(requirementsConstants.messages.toggleSuccess);
             return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, requirementsConstants.errors.toggleFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        },
+        {
+            successMessage: requirementsConstants.messages.toggleSuccess,
+            errorFallback: requirementsConstants.errors.toggleFailed,
+            context: "requirements.toggle",
+        },
+    );
 
-    return { toggleHandler, isLoading };
+    return { toggleHandler: mutate, isLoading };
 };
