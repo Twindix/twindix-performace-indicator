@@ -4,7 +4,7 @@ import { Calendar, Edit, MoreHorizontal, Plus, Target, Trash2, Zap } from "lucid
 import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
 import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { SprintsSkeleton } from "@/components/skeletons";
-import { t, useActivateSprint, useCreateSprint, useDeleteSprint, useFormErrors, useSprintsList, useUpdateSprint } from "@/hooks";
+import { t, useActivateSprint, useCreateSprint, useDeleteSprint, useFormErrors, usePermissions, useSprintsList, useUpdateSprint } from "@/hooks";
 import type { CreateSprintPayloadInterface, SprintInterface } from "@/interfaces";
 import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
@@ -14,6 +14,7 @@ import {
 const emptyForm: CreateSprintPayloadInterface = { name: "", start_date: "", end_date: "" };
 
 export const SprintsView = () => {
+    const p = usePermissions();
     const { sprints, isLoading, patchSprintLocal, removeSprintLocal } = useSprintsList();
     const { setFieldErrors, clearError, clear: clearFieldErrors, getError } = useFormErrors();
     const { createHandler, isLoading: isCreating } = useCreateSprint({ onFieldErrors: setFieldErrors });
@@ -74,10 +75,12 @@ export const SprintsView = () => {
                 title={t("Sprints")}
                 description={t("Manage sprints and activate the current one.")}
                 actions={
-                    <Button size="sm" className="gap-1.5" onClick={openAdd}>
-                        <Plus className="h-4 w-4" />
-                        {t("Add Sprint")}
-                    </Button>
+                    p.sprints.create() ? (
+                        <Button size="sm" className="gap-1.5" onClick={openAdd}>
+                            <Plus className="h-4 w-4" />
+                            {t("Add Sprint")}
+                        </Button>
+                    ) : null
                 }
             />
 
@@ -96,29 +99,35 @@ export const SprintsView = () => {
                                         <h3 className="text-base font-semibold text-text-dark truncate">{s.name}</h3>
                                         <div className="mt-1">{statusBadge(s.status)}</div>
                                     </div>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <button className="p-1.5 rounded hover:bg-muted text-text-muted hover:text-text-dark cursor-pointer">
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            {s.status !== "active" && (
-                                                <>
-                                                    <DropdownMenuItem onClick={() => handleActivate(s)} className="gap-2 cursor-pointer">
-                                                        <Zap className="h-4 w-4" />{t("Activate")}
+                                    {(p.sprints.edit() || p.sprints.activate() || p.sprints.delete()) && (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <button className="p-1.5 rounded hover:bg-muted text-text-muted hover:text-text-dark cursor-pointer">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                {s.status !== "active" && p.sprints.activate() && (
+                                                    <>
+                                                        <DropdownMenuItem onClick={() => handleActivate(s)} className="gap-2 cursor-pointer">
+                                                            <Zap className="h-4 w-4" />{t("Activate")}
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                    </>
+                                                )}
+                                                {p.sprints.edit() && (
+                                                    <DropdownMenuItem onClick={() => openEdit(s)} className="gap-2 cursor-pointer">
+                                                        <Edit className="h-4 w-4" />{t("Edit")}
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                </>
-                                            )}
-                                            <DropdownMenuItem onClick={() => openEdit(s)} className="gap-2 cursor-pointer">
-                                                <Edit className="h-4 w-4" />{t("Edit")}
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setDeleteTarget(s)} className="gap-2 text-error focus:text-error cursor-pointer">
-                                                <Trash2 className="h-4 w-4" />{t("Delete")}
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                                )}
+                                                {p.sprints.delete() && (
+                                                    <DropdownMenuItem onClick={() => setDeleteTarget(s)} className="gap-2 text-error focus:text-error cursor-pointer">
+                                                        <Trash2 className="h-4 w-4" />{t("Delete")}
+                                                    </DropdownMenuItem>
+                                                )}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    )}
                                 </div>
                                 <div className="flex items-center gap-2 text-xs text-text-muted">
                                     <Calendar className="h-3.5 w-3.5" />
