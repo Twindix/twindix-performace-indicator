@@ -19,6 +19,9 @@ export const apisData = {
         list: "/teams",
         listLite: "/teams/list",
         create: "/teams",
+        detail: (id: string) => `/teams/${id}`,
+        update: (id: string) => `/teams/${id}`,
+        delete: (id: string) => `/teams/${id}`,
     },
     sprints: {
         list: "/sprints",

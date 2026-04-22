@@ -16,6 +16,8 @@ export interface CreateTeamPayloadInterface {
     description?: string;
 }
 
+export interface UpdateTeamPayloadInterface extends Partial<CreateTeamPayloadInterface> {}
+
 export interface TeamLiteInterface {
     id: string;
     name: string;

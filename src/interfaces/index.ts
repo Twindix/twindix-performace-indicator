@@ -7,7 +7,7 @@ export type { CommentInterface, CommentUserInterface, CommentsListResponseInterf
 export type { RedFlagInterface, RedFlagReporterInterface, RedFlagsListResponseInterface, RedFlagDetailResponseInterface, RedFlagsCountInterface, CreateRedFlagPayloadInterface, UpdateRedFlagPayloadInterface } from "./red-flags";
 export type { AlertInterface, AlertCreatorInterface, AlertsListResponseInterface, AlertDetailResponseInterface, AlertsCountInterface, CreateAlertPayloadInterface, UpdateAlertPayloadInterface } from "./alerts";
 export type { DashboardInterface, HealthScoreInterface, DashboardMetricsInterface, DashboardSubScoreInterface, DashboardActiveBlockerInterface, DashboardSummaryInterface } from "./dashboard";
-export type { TeamInterface, TeamsListResponseInterface, TeamDetailResponseInterface, CreateTeamPayloadInterface, TeamLiteInterface } from "./teams";
+export type { TeamInterface, TeamsListResponseInterface, TeamDetailResponseInterface, CreateTeamPayloadInterface, UpdateTeamPayloadInterface, TeamLiteInterface } from "./teams";
 export type { UserListParamsInterface, UserListResponseInterface, CreateUserPayloadInterface, UpdateUserPayloadInterface, UserAnalyticsInterface, UserLiteInterface } from "./users";
 export type { AttachmentInterface, AddTaskFormState, AddTaskDialogProps, RequirementDraftInterface } from "./tasks-dialog";
 export type { CommunicationInterface, CommunicationChannel, CommunicationStatus } from "./communications";
