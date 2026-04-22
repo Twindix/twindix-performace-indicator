@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Button, Input, Label } from "@/atoms";
 import { routesData } from "@/data";
-import { useAuth, useProjectsListLite, useSprintsList, useTheme, t, useSettings, usePresence, useUpdateSprint, type PresenceStatus } from "@/hooks";
+import { useAuth, useProjectsListLite, useSprintsList, useTheme, t, useSettings, usePermissions, usePresence, useUpdateSprint, type PresenceStatus } from "@/hooks";
 import type { SprintInterface } from "@/interfaces";
 import { useProjectStore, useSprintStore } from "@/store";
 import { MobileNav } from "./mobile-nav";
@@ -47,7 +47,9 @@ export const Topbar = () => {
     const { sprints, refetch: refetchSprints } = useSprintsList();
     const { updateHandler: updateSprintHandler, isLoading: isSaving } = useUpdateSprint();
     const navigate = useNavigate();
-    const { status, updateStatus } = usePresence(user?.id);
+    const p = usePermissions();
+    const canEditProfile = p.auth.editProfile();
+    const { status, updateStatus } = usePresence(user?.id, !canEditProfile);
 
     const [editOpen, setEditOpen] = useState(false);
     const [form, setForm] = useState({ name: "", start_date: "", end_date: "" });
@@ -179,7 +181,7 @@ export const Topbar = () => {
                         </div>
                         <DropdownMenuSeparator />
 
-                        {(["active", "offline"] as PresenceStatus[]).map((s) => (
+                        {canEditProfile && (["active", "offline"] as PresenceStatus[]).map((s) => (
                             <DropdownMenuItem key={s} onClick={() => updateStatus(s)} className="gap-2 cursor-pointer">
                                 <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${presenceConfig[s].dot}`} />
                                 {t(presenceConfig[s].label)}
@@ -187,7 +189,7 @@ export const Topbar = () => {
                             </DropdownMenuItem>
                         ))}
 
-                        <DropdownMenuSeparator />
+                        {canEditProfile && <DropdownMenuSeparator />}
 
                         <DropdownMenuItem onClick={() => navigate(routesData.profile)} className="gap-2 cursor-pointer">
                             <User className="h-4 w-4" />
