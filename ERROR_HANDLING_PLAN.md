@@ -24,6 +24,25 @@ The goal is to **centralize all error routing behind one reusable primitive** so
 
 ## 3. Proposed Central/Reusable Architecture
 
+### 3.0 Core principle — **backend message has first priority**
+
+Every user-facing error string is resolved in this order, for every status, in every module:
+
+| Priority | Source | When it's used |
+|---|---|---|
+| **1** | Backend `data.message` | **Always wins when the backend sent one.** |
+| 2 | Status-specific default (403/429) **or** per-call `errorFallback` from the domain's constants | Backend sent no message |
+| 3 | Generic `"Something went wrong. Please try again."` | Neither backend nor the call supplied a fallback |
+| Exception | Hardcoded `"Network issue — please try again."` | Pure network failure (no HTTP status — backend unreachable) |
+
+Implications that shape the whole plan:
+- The `errors.*` strings in `src/constants/<domain>/index.ts` are **pure safety nets** — a user only sees them when the backend literally didn't send a message. They are never the "real" copy.
+- Implementation enforcement lives in **two places only**:
+  1. `src/lib/axios.ts` — the interceptor stores `data.message` on `ApiError.message` if present, otherwise leaves it empty.
+  2. `src/lib/handle-action.ts` — `runAction` reads `apiError.message` first and only falls back when it is empty.
+- 422 is an exception to "toast the message": backend field errors go **inline under each field** via `useFormErrors`. The 422 body-level `message` is not toasted (the field errors already speak).
+- The axios transport-layer message (`"Request failed with status code 500"`, `"Network Error"`, `"timeout of 30000ms exceeded"`) is only surfaced when there is no HTTP status — i.e. connection failed before reaching the server. In all other cases the empty-message fallback kicks in.
+
 ### 3.1 Extend `ApiError` to carry field-level validation errors
 
 ```
@@ -53,20 +72,20 @@ runAction(fn, {
 })
 ```
 
-Responsibilities routed by `statusCode`:
+Responsibilities routed by `statusCode` (all toast text follows the priority from §3.0 — backend message first):
 
-| Status | Default treatment |
-|---|---|
-| 2xx | Return data; show `successMessage` toast if provided |
-| 401 | Silent — interceptor already dispatches `AUTH_UNAUTHORIZED_EVENT` |
-| 403 | Toast: "You don't have permission to do this." |
-| 404 | Return `null`; toast only if not a detail/list query (configurable) |
-| 408 / network / offline | Toast: "Network issue — please try again." Also push to `useNetworkErrorStore`. |
-| 422 | Call `onFieldErrors(err.fieldErrors)` if provided **instead of** toast; otherwise toast `err.message` |
-| 409 | Toast backend `message` (conflict — e.g. stale edit) |
-| 429 | Toast: "You're going too fast — try again in a moment." |
-| 5xx | Toast `errorFallback`; dev-only `console.error(context, err)` |
-| default | Toast `err.message || errorFallback` |
+| Status | Behavior | Fallback copy (only if backend sent no message) |
+|---|---|---|
+| 2xx | Return data; show `successMessage` toast if provided | n/a |
+| 401 | Silent — interceptor already dispatches `AUTH_UNAUTHORIZED_EVENT` | n/a |
+| 403 | Toast | `"You don't have permission to do this."` |
+| 404 | Return `null`; toast only if not a detail/list query (configurable) | `errorFallback` |
+| 408 / network / offline | Toast + push to `useNetworkErrorStore` | `"Network issue — please try again."` (hardcoded — backend can't respond) |
+| 422 | Call `onFieldErrors(err.fieldErrors)` if provided — inline only, **no toast**. If no handler, toast. | `errorFallback` |
+| 409 | Toast | `errorFallback` |
+| 429 | Toast | `"You're going too fast — try again in a moment."` |
+| 5xx | Toast; dev-only `console.error(context, err)` | `errorFallback` |
+| default | Toast | `errorFallback` |
 
 ### 3.3 Add ONE new hook: `src/hooks/shared/use-form-errors.ts`
 
@@ -395,13 +414,14 @@ Each task in this phase is mechanical: replace try/catch with `runAction`, drop 
 
 ## 7. Best Practices (codify in AGENTS.md after Task 5.2)
 
-1. **Never handle errors in a component** — always in a hook via `runAction`. Components only consume `{ data, isLoading, error?, submit, fieldErrors }`.
-2. **Toasts are for events, inline errors are for forms.** Never both for the same error.
-3. **Never swallow an error silently** unless it's a background side-effect (heartbeat, presence, analytics). Use `silent: true` explicitly — makes the intent auditable.
-4. **Never `console.error` in app code** — `runAction` does it in dev mode only.
-5. **Constants per domain.** Every hook pulls its message from `constants/<domain>/index.ts` — never inline a string in a hook.
-6. **401 is global.** No hook handles it; the interceptor does. Don't toast unauthorized.
-7. **Optimistic updates must revert on error.** For `toggle`, `status change`, `drag-drop` — snapshot before, restore in the `catch` inside `runAction`'s `onError`.
-8. **Don't re-throw unless the caller needs to branch** (login navigate, blocker resolve refreshes list, etc.). Default is catch-and-toast.
-9. **One place maps HTTP status → UX.** If you need to change "what 403 looks like", you change it in `runAction` — nowhere else.
-10. **Form closes iff the handler returns truthy.** Never call `closeDialog()` unconditionally after `await submit()`.
+1. **Backend message always has first priority.** Constants in `src/constants/<domain>/errors` are **fallbacks**, not the real copy — a user only sees them when the backend literally sent no message. Never write a toast/inline string in a component or hook that overrides the backend.
+2. **Never handle errors in a component** — always in a hook via `runAction`. Components only consume `{ data, isLoading, error?, submit, fieldErrors }`.
+3. **Toasts are for events, inline errors are for forms.** Never both for the same error.
+4. **Never swallow an error silently** unless it's a background side-effect (heartbeat, presence, analytics). Use `silent: true` explicitly — makes the intent auditable.
+5. **Never `console.error` in app code** — `runAction` does it in dev mode only.
+6. **Fallback constants per domain.** Every hook pulls its fallback message from `constants/<domain>/index.ts` — but remember (rule #1) the backend message wins whenever present.
+7. **401 is global.** No hook handles it; the interceptor does. Don't toast unauthorized.
+8. **Optimistic updates must revert on error.** For `toggle`, `status change`, `drag-drop` — snapshot before, restore in the `catch` inside `runAction`'s `onError`.
+9. **Don't re-throw unless the caller needs to branch** (login navigate, blocker resolve refreshes list, etc.). Default is catch-and-toast.
+10. **One place maps HTTP status → UX.** If you need to change "what 403 looks like", you change it in `runAction` — nowhere else.
+11. **Form closes iff the handler returns truthy.** Never call `closeDialog()` unconditionally after `await submit()`.

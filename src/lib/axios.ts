@@ -68,15 +68,18 @@ apiClient.interceptors.response.use(
             | { message?: string; errors?: Record<string, string[]>; code?: string }
             | undefined;
 
-        const errorMessage =
-            body?.message ||
-            message ||
-            "Something went wrong. Please try again.";
-
+        const backendMessage = body?.message ?? "";
+        const transportMessage = !status ? message : "";
         const fieldErrors = status === 422 ? body?.errors : undefined;
 
         return Promise.reject(
-            new ApiError(status ?? 500, errorMessage, data, fieldErrors, body?.code),
+            new ApiError(
+                status ?? 500,
+                backendMessage || transportMessage,
+                data,
+                fieldErrors,
+                body?.code,
+            ),
         );
     },
 );

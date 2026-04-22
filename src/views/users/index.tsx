@@ -37,14 +37,21 @@ type FormErrors = Partial<Record<keyof FormState, string>>;
 export const UsersView = () => {
     const navigate = useNavigate();
     const { users, isLoading, refetch } = useUsersList();
-    const { create, isLoading: isCreating } = useUsersCreate();
-    const { update: updateUser } = useUsersUpdate();
+
+    const [errors, setErrors] = useState<FormErrors>({});
+    const mapFieldErrors = (fe: Record<string, string[]>) => {
+        const mapped: FormErrors = {};
+        for (const key of Object.keys(fe)) mapped[key as keyof FormState] = fe[key]?.[0];
+        setErrors(mapped);
+    };
+
+    const { create, isLoading: isCreating } = useUsersCreate({ onFieldErrors: mapFieldErrors });
+    const { update: updateUser } = useUsersUpdate({ onFieldErrors: mapFieldErrors });
 
     const [teams, setTeams] = useState<TeamOption[]>([]);
     const [addOpen, setAddOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<UserInterface | null>(null);
     const [form, setForm] = useState<FormState>(emptyForm);
-    const [errors, setErrors] = useState<FormErrors>({});
 
     useEffect(() => {
         apiClient.get<{ data: TeamOption[] }>(apisData.teams.list)
@@ -52,7 +59,15 @@ export const UsersView = () => {
             .catch(() => {});
     }, []);
 
-    const set = (field: keyof FormState, value: string) => setForm((prev) => ({ ...prev, [field]: value }));
+    const set = (field: keyof FormState, value: string) => {
+        setForm((prev) => ({ ...prev, [field]: value }));
+        setErrors((prev) => {
+            if (!(field in prev)) return prev;
+            const next = { ...prev };
+            delete next[field];
+            return next;
+        });
+    };
 
     const validate = (): boolean => {
         const e: FormErrors = {};
@@ -81,9 +96,9 @@ export const UsersView = () => {
         });
 
         if (created) {
-            toast.success(t("User created successfully"));
             setAddOpen(false);
             setForm(emptyForm);
+            setErrors({});
             refetch();
         }
     };
@@ -144,8 +159,6 @@ export const UsersView = () => {
                                                             if (res) {
                                                                 toast.success(t(isInactive ? "User activated" : "User deactivated"));
                                                                 refetch();
-                                                            } else {
-                                                                toast.error(t("Failed to update user status"));
                                                             }
                                                         }}
                                                     >

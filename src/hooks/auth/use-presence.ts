@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { AUTH_UNAUTHORIZED_EVENT } from "@/lib/axios";
+import { runAction } from "@/lib/handle-action";
 import { authService } from "@/services";
 
 export type PresenceStatus = "active" | "offline";
@@ -12,7 +13,10 @@ export const usePresence = (userId: string | undefined) => {
     const updateStatus = (next: PresenceStatus) => {
         if (!userId || stoppedRef.current) return;
         setStatus(next);
-        authService.updateMeHandler({ presence_status: next }).catch(() => null);
+        runAction(() => authService.updateMeHandler({ presence_status: next }), {
+            silent: true,
+            context: "auth.presence",
+        });
     };
 
     useEffect(() => {

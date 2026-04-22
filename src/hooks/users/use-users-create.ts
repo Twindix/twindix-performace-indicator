@@ -1,27 +1,24 @@
-import { useCallback, useState } from "react";
-
+import { usersConstants } from "@/constants";
 import type { UserInterface } from "@/interfaces/common";
 import type { CreateUserPayloadInterface } from "@/interfaces/users";
 import { usersService } from "@/services/users";
 
-export const useUsersCreate = () => {
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+import { useMutationAction, type FieldErrors } from "../shared";
 
-    const create = useCallback(async (payload: CreateUserPayloadInterface): Promise<UserInterface | null> => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const user = await usersService.createHandler(payload);
-            return user;
-        } catch (err: unknown) {
-            const msg = (err as { message?: string })?.message ?? "Failed to create user";
-            setError(msg);
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+export interface UseUsersCreateOptions {
+    onFieldErrors?: (errors: FieldErrors) => void;
+}
 
-    return { create, isLoading, error };
+export const useUsersCreate = ({ onFieldErrors }: UseUsersCreateOptions = {}) => {
+    const { mutate, isLoading } = useMutationAction(
+        (payload: CreateUserPayloadInterface): Promise<UserInterface> => usersService.createHandler(payload),
+        {
+            successMessage: usersConstants.messages.createSuccess,
+            errorFallback: usersConstants.errors.createFailed,
+            onFieldErrors,
+            context: "users.create",
+        },
+    );
+
+    return { create: mutate, isLoading };
 };

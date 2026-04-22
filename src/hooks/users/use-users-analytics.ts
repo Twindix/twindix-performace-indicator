@@ -1,32 +1,19 @@
-import { useEffect, useState } from "react";
-
 import type { UserAnalyticsInterface } from "@/interfaces/users";
 import { usersService } from "@/services/users";
 
-interface UsersAnalyticsState {
-    analytics: UserAnalyticsInterface | null;
-    isLoading: boolean;
-    error: string | null;
-}
+import { useQueryAction } from "../shared";
 
 export const useUsersAnalytics = (id: string | undefined, sprintId?: string) => {
-    const [state, setState] = useState<UsersAnalyticsState>({
-        analytics: null,
-        isLoading: true,
-        error: null,
-    });
+    const { data, isLoading, refetch } = useQueryAction<UserAnalyticsInterface | null>(
+        async () => (id ? await usersService.analyticsHandler(id) : null),
+        [id, sprintId],
+        {
+            enabled: !!id,
+            silent: true,
+            initialData: null,
+            context: "users.analytics",
+        },
+    );
 
-    useEffect(() => {
-        if (!id) {
-            setState({ analytics: null, isLoading: false, error: null });
-            return;
-        }
-        setState((prev) => ({ ...prev, isLoading: true, error: null }));
-        usersService
-            .analyticsHandler(id)
-            .then((analytics) => setState({ analytics, isLoading: false, error: null }))
-            .catch(() => setState({ analytics: null, isLoading: false, error: "Analytics unavailable" }));
-    }, [id, sprintId]);
-
-    return state;
+    return { analytics: data ?? null, isLoading, refetch };
 };

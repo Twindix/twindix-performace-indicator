@@ -78,12 +78,12 @@ export const runAction = async <T>(
         }
 
         if (!silent) {
-            let message: string;
-            if (status === 403) message = FORBIDDEN_MESSAGE;
-            else if (status === 429) message = RATE_LIMIT_MESSAGE;
-            else if (status !== undefined && status >= 500) message = errorFallback ?? GENERIC_MESSAGE;
-            else message = getErrorMessage(err, errorFallback);
-            toast.error(message);
+            const backendMessage = apiError?.message || null;
+            let statusFallback: string;
+            if (status === 403) statusFallback = FORBIDDEN_MESSAGE;
+            else if (status === 429) statusFallback = RATE_LIMIT_MESSAGE;
+            else statusFallback = errorFallback ?? GENERIC_MESSAGE;
+            toast.error(backendMessage || getErrorMessage(err, statusFallback));
         }
 
         devLog(context, err);

@@ -32,7 +32,7 @@ const PHASE_LABELS: Record<string, string> = {
 export const UserDetailView = () => {
     const { userId } = useParams<{ userId: string }>();
     const navigate = useNavigate();
-    const { analytics, isLoading, error } = useUsersAnalytics(userId);
+    const { analytics, isLoading } = useUsersAnalytics(userId);
 
     if (isLoading) {
         return (
@@ -47,13 +47,13 @@ export const UserDetailView = () => {
         );
     }
 
-    if (error || !analytics) {
+    if (!analytics) {
         return (
             <div>
                 <Button variant="outline" onClick={() => navigate("/users")} className="gap-2 mb-6">
                     <ArrowLeft className="h-4 w-4" />{t("Back to Users")}
                 </Button>
-                <p className="text-text-muted">{t(error ?? "User not found")}</p>
+                <p className="text-text-muted">{t("User not found")}</p>
             </div>
         );
     }
