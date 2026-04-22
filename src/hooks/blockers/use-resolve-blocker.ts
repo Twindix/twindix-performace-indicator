@@ -1,28 +1,21 @@
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { blockersConstants } from "@/constants";
 import type { BlockerInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { blockersService } from "@/services";
 
+import { useMutationAction } from "../shared";
+
 export const useResolveBlocker = () => {
-    const [isLoading, setIsLoading] = useState(false);
-
-    const resolveHandler = async (id: string): Promise<BlockerInterface | null> => {
-        if (!navigator.onLine) throw new Error(blockersConstants.errors.genericError);
-        setIsLoading(true);
-        try {
+    const { mutate, isLoading } = useMutationAction(
+        async (id: string): Promise<BlockerInterface> => {
             const res = await blockersService.resolveHandler(id);
-            toast.success(blockersConstants.messages.resolveSuccess);
             return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, blockersConstants.errors.resolveFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        },
+        {
+            successMessage: blockersConstants.messages.resolveSuccess,
+            errorFallback: blockersConstants.errors.resolveFailed,
+            context: "blockers.resolve",
+        },
+    );
 
-    return { resolveHandler, isLoading };
+    return { resolveHandler: mutate, isLoading };
 };

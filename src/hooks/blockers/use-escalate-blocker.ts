@@ -1,28 +1,21 @@
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { blockersConstants } from "@/constants";
 import type { BlockerInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { blockersService } from "@/services";
 
+import { useMutationAction } from "../shared";
+
 export const useEscalateBlocker = () => {
-    const [isLoading, setIsLoading] = useState(false);
-
-    const escalateHandler = async (id: string): Promise<BlockerInterface | null> => {
-        if (!navigator.onLine) throw new Error(blockersConstants.errors.genericError);
-        setIsLoading(true);
-        try {
+    const { mutate, isLoading } = useMutationAction(
+        async (id: string): Promise<BlockerInterface> => {
             const res = await blockersService.escalateHandler(id);
-            toast.success(blockersConstants.messages.escalateSuccess);
             return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, blockersConstants.errors.escalateFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        },
+        {
+            successMessage: blockersConstants.messages.escalateSuccess,
+            errorFallback: blockersConstants.errors.escalateFailed,
+            context: "blockers.escalate",
+        },
+    );
 
-    return { escalateHandler, isLoading };
+    return { escalateHandler: mutate, isLoading };
 };

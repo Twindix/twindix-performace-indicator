@@ -1,27 +1,20 @@
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { blockersConstants } from "@/constants";
-import { getErrorMessage } from "@/lib/error";
 import { blockersService } from "@/services";
 
+import { useMutationAction } from "../shared";
+
 export const useDeleteBlocker = () => {
-    const [isLoading, setIsLoading] = useState(false);
-
-    const deleteHandler = async (id: string): Promise<boolean> => {
-        if (!navigator.onLine) throw new Error(blockersConstants.errors.genericError);
-        setIsLoading(true);
-        try {
+    const { mutate, isLoading } = useMutationAction(
+        async (id: string): Promise<true> => {
             await blockersService.deleteHandler(id);
-            toast.success(blockersConstants.messages.deleteSuccess);
             return true;
-        } catch (err) {
-            toast.error(getErrorMessage(err, blockersConstants.errors.deleteFailed));
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        },
+        {
+            successMessage: blockersConstants.messages.deleteSuccess,
+            errorFallback: blockersConstants.errors.deleteFailed,
+            context: "blockers.delete",
+        },
+    );
 
-    return { deleteHandler, isLoading };
+    return { deleteHandler: mutate, isLoading };
 };
