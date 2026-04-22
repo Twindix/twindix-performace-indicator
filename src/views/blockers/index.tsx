@@ -5,7 +5,7 @@ import { Badge, Button, Card, CardContent } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { BlockersSkeleton } from "@/components/skeletons";
 import { BlockerType } from "@/enums";
-import { t, useBlockersList, useSettings, usePageLoader, useUsersList } from "@/hooks";
+import { t, useBlockersList, usePermissions, useSettings, usePageLoader, useUsersList } from "@/hooks";
 import type { BlockerInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
@@ -41,6 +41,7 @@ export const BlockerView = () => {
     const [settings] = useSettings();
     const compact = settings.compactView;
     const { activeSprintId } = useSprintStore();
+    const p = usePermissions();
 
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -86,10 +87,12 @@ export const BlockerView = () => {
                 title={t("Blocker Tracker")}
                 description={t("Track and manage blockers affecting sprint delivery")}
                 actions={
-                    <Button size="sm" className="gap-1.5" onClick={() => setAddOpen(true)}>
-                        <Plus className="h-4 w-4" />
-                        {t("Add Blocker")}
-                    </Button>
+                    p.blockers.create() ? (
+                        <Button size="sm" className="gap-1.5" onClick={() => setAddOpen(true)}>
+                            <Plus className="h-4 w-4" />
+                            {t("Add Blocker")}
+                        </Button>
+                    ) : null
                 }
             />
 
