@@ -1,33 +1,25 @@
 import { Briefcase, Calendar, Mail, Pencil, Shield, Users } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { Badge, Button, Card, CardContent, Input } from "@/atoms";
 import { Header } from "@/components/shared";
 import { ProfileSkeleton } from "@/components/skeletons";
-import { t, useAuth, usePageLoader } from "@/hooks";
-import { handleApiError } from "@/lib/error";
-import { authService } from "@/services";
+import { t, useAuth, usePageLoader, useUpdateMe } from "@/hooks";
 import { Avatar, AvatarFallback } from "@/ui";
 
 export const ProfileView = () => {
     const isLoading = usePageLoader();
     const { user, onUpdateUser } = useAuth();
+    const { updateHandler, isLoading: isSaving } = useUpdateMe();
     const [isEditingName, setIsEditingName] = useState(false);
     const [editedName, setEditedName] = useState(user?.full_name ?? "");
-    const [isSaving, setIsSaving] = useState(false);
 
     const handleSaveName = async () => {
         if (!editedName.trim()) return;
-        setIsSaving(true);
-        try {
-            const updated = await authService.updateMeHandler({ full_name: editedName.trim() });
+        const updated = await updateHandler({ full_name: editedName.trim() });
+        if (updated) {
             onUpdateUser(updated);
             setIsEditingName(false);
-        } catch (err) {
-            toast.error(handleApiError(err).message);
-        } finally {
-            setIsSaving(false);
         }
     };
 

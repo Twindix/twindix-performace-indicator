@@ -1,4 +1,4 @@
-export { useAuth, usePresence, type PresenceStatus } from "./auth";
+export { useAuth, usePresence, useUpdateMe, type PresenceStatus } from "./auth";
 export { useTheme, useLocalStorage, useSettings, t, defaultSettings, saveSettings, type AppSettings, useCountUp, useOnlineStatus, usePageLoader, useFormErrors, type FieldErrors, useMutationAction, useQueryAction, type UseQueryActionOptions } from "./shared";
 export * from "./sprints";
 export * from "./tasks";
