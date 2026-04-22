@@ -318,9 +318,9 @@ export const CommentsLogView = () => {
                                         <div className="flex items-center gap-1.5">
                                             <User className="h-3.5 w-3.5 text-text-muted" />
                                             <Avatar className="h-5 w-5">
-                                                <AvatarFallback className="text-[8px]">{author.avatar_initials}</AvatarFallback>
+                                                <AvatarFallback className="text-[8px]">{comment.author.avatar_initials}</AvatarFallback>
                                             </Avatar>
-                                            <span className="text-xs text-text-secondary">{author.full_name}</span>
+                                            <span className="text-xs text-text-secondary">{comment.author.full_name}</span>
                                         </div>
 
                                         {/* Mentions */}

@@ -4,7 +4,6 @@ import { MessageCircle, Send, Trash2, Pencil, Check, X } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/ui";
 import { t, useCreateTaskComment, useDeleteComment, usePermissions, useUpdateComment } from "@/hooks";
 import type { TaskInterface, TaskCommentInterface, UserLiteInterface } from "@/interfaces";
-import { useAuthStore } from "@/store";
 
 interface Props {
     task: TaskInterface;
@@ -50,8 +49,6 @@ const renderBody = (body: string, mentioned: { id: string; full_name: string }[]
 };
 
 export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
-    const { user: authUser } = useAuthStore();
-    const currentUserId = authUser?.id ?? "";
     const p = usePermissions();
 
     const { createOnTaskHandler, isLoading: isSending } = useCreateTaskComment();
@@ -227,7 +224,6 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
             {comments.length > 0 && (
                 <div className="flex flex-col gap-3 mb-4">
                     {comments.map((c) => {
-                        const isAuthor = c.author.id === currentUserId;
                         const isEditing = editingId === c.id;
                         return (
                             <div key={c.id} className="flex gap-2.5 group">

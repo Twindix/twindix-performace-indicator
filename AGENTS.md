@@ -413,6 +413,57 @@ Loading UX is the sibling of error handling: every API-calling hook already expo
 | `src/hooks/shared/use-query-action.ts` | Owns `isLoading` for on-mount queries |
 | `src/hooks/shared/use-page-loader.ts` | (Optional) drives the top-bar progress bar |
 
+## Permissions & roles
+
+Every view gates mutation UI through one primitive — `usePermissions()` — which binds the current user's `role_tier` against declarative policies in `src/lib/permissions/*.policy.ts`. Plan and matrix live in `PERMISSIONS_PLAN.md`; the doc source is `Twindix API Updates V0.4 — User Roles & Permissions`.
+
+### The 5 role tiers
+
+`admin | manager | tester | member | viewer` — centralized as `RoleTier` union in `src/constants/permissions/index.ts`. Every role `<Select>` reads `usersConstants.roleTiers`; adding a tier only changes that constant.
+
+### Priority rules (apply everywhere)
+
+1. **Never compare `role_tier` literals in a view.** Always go through `usePermissions()` or `<Can>`. A grep for `role_tier ===` outside `src/lib/permissions/` must return nothing.
+2. **Policy file per module.** One flat object of predicates in `src/lib/permissions/<module>.policy.ts` — no React, no hooks. Every predicate takes `(ctx, resource?)` and returns `boolean`.
+3. **Hide, don't disable** — create / delete / management buttons render `null` when the role lacks permission. Disable (`disabled={!p.x()}`) only when the control is part of a form the user legitimately views (e.g. viewer on own profile save).
+4. **Own vs any is resource-scoped, not role-scoped.** A tester/member's `p.tasks.edit(task)` depends on `task.assignee.id === user.id`. Policies that mix ownership read the resource; policies that don't (e.g. `tasks.delete`) take only `ctx`.
+5. **Backend is the source of truth.** Frontend gates hide UI; backend returns 403. `runAction` already toasts `"You don't have permission to do this."` and logs under `permissions` context. Use `expectAuthorized: false` on speculative calls to silence the toast.
+6. **One source for ownership field per module.** Task = `assignee.id`, blocker = `reporter.id` (edit) or `owner.id` (resolve/escalate/link), comment = `author.id`, red-flag = `reporter.id`, alert = `creator.id`, decision = `created_by.id`, time-log = `user_id`.
+7. **Asymmetric rules are asymmetric on purpose.** Decisions create allows `admin|manager|member` — **not** tester. Red-flag edit others is admin-only — **not** manager. Viewer can acknowledge alerts — their only write action. Do not collapse these to shared helpers.
+8. **Viewer cannot `PUT /me` name/presence.** `usePresence` takes a `disabled` flag wired to `p.auth.editProfile()`; topbar hides presence switcher when false.
+9. **Role label ≠ role tier.** `role_label` is display only (e.g. "Sr. Frontend Engineer"). Never read it in a policy.
+
+### Primitives you will touch
+
+| File | Purpose |
+|---|---|
+| `src/constants/permissions/index.ts` | `ROLE_TIERS`, `RoleTier`, `ROLE_TIER_LABELS`, `PERMISSION_MESSAGES`, `roleTierOptions()` |
+| `src/lib/permissions/helpers.ts` | `Ctx`, `inRoles`, `isViewer`, `ownerOf` |
+| `src/lib/permissions/<module>.policy.ts` | One per domain; exports flat predicate object |
+| `src/lib/permissions/index.ts` | Aggregator + `policies` bundle |
+| `src/hooks/shared/use-permissions.ts` | Binds policies to current user once per user change |
+| `src/components/shared/can.tsx` | `<Can check={(p)=>p.x.y(resource)} fallback={…}>…</Can>` |
+| `src/components/shared/can-route.tsx` | `<CanRoute allow={["admin"]} redirectTo="/dashboard">` |
+| `src/lib/handle-action.ts` | `expectAuthorized` option — default `true` toasts 403, `false` silences it |
+
+### Gating a new action
+
+```ts
+// 1. Add predicate to the module policy (one line, declarative):
+export const tasksPolicy = {
+  archive: (ctx: Ctx, task: TaskInterface) =>
+    inRoles(ctx, "admin", "manager") ||
+    (inRoles(ctx, "tester", "member") && task.assignee?.id === ctx.userId),
+  // …existing predicates
+};
+
+// 2. Gate the UI in the view:
+const p = usePermissions();
+{p.tasks.archive(task) && <ArchiveButton />}
+
+// 3. Don't remove the handler. Backend still validates — 403 is surfaced by runAction.
+```
+
 ## Branch strategy
 
 | Branch | Purpose |
