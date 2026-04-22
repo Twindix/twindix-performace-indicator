@@ -1,28 +1,26 @@
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
-
 import { alertsConstants } from "@/constants";
 import type { AlertInterface, UpdateAlertPayloadInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { alertsService } from "@/services";
 
-export const useUpdateAlert = () => {
-    const [isLoading, setIsLoading] = useState(false);
+import { useMutationAction, type FieldErrors } from "../shared";
 
-    const updateHandler = useCallback(async (id: string, payload: UpdateAlertPayloadInterface): Promise<AlertInterface | null> => {
-        setIsLoading(true);
-        try {
+export interface UseUpdateAlertOptions {
+    onFieldErrors?: (errors: FieldErrors) => void;
+}
+
+export const useUpdateAlert = ({ onFieldErrors }: UseUpdateAlertOptions = {}) => {
+    const { mutate, isLoading } = useMutationAction(
+        async (id: string, payload: UpdateAlertPayloadInterface): Promise<AlertInterface> => {
             const res = await alertsService.updateHandler(id, payload);
-            toast.success(alertsConstants.messages.updateSuccess);
             return (res as unknown as { data?: AlertInterface }).data ?? (res as unknown as AlertInterface);
-        } catch (err) {
-            console.error(err);
-            toast.error(getErrorMessage(err, alertsConstants.errors.updateFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+        },
+        {
+            successMessage: alertsConstants.messages.updateSuccess,
+            errorFallback: alertsConstants.errors.updateFailed,
+            onFieldErrors,
+            context: "alerts.update",
+        },
+    );
 
-    return { updateHandler, isLoading };
+    return { updateHandler: mutate, isLoading };
 };

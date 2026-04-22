@@ -1,43 +1,36 @@
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useCallback } from "react";
 
 import { alertsConstants } from "@/constants";
 import type { AlertInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { alertsService } from "@/services";
 
+import { useQueryAction } from "../shared";
+
 export const useAlertsList = (sprintId: string) => {
-    const [alerts, setAlerts] = useState<AlertInterface[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    const fetch = useCallback(async () => {
-        if (!sprintId) return;
-        setIsLoading(true);
-        try {
-            const res = await alertsService.listHandler(sprintId);
-            setAlerts(res.data);
-        } catch (err) {
-            console.error(err);
-            toast.error(getErrorMessage(err, alertsConstants.errors.fetchFailed));
-        } finally {
-            setIsLoading(false);
-        }
-    }, [sprintId]);
-
-    useEffect(() => { fetch(); }, [fetch]);
+    const { data, isLoading, refetch, setData } = useQueryAction<AlertInterface[]>(
+        async () => (sprintId ? (await alertsService.listHandler(sprintId)).data : []),
+        [sprintId],
+        {
+            enabled: !!sprintId,
+            errorFallback: alertsConstants.errors.fetchFailed,
+            initialData: [],
+            context: "alerts.list",
+        },
+    );
 
     const patchAlertLocal = useCallback((alert: AlertInterface) => {
-        setAlerts((prev) => {
-            const exists = prev.some((a) => a.id === alert.id);
+        setData((prev) => {
+            const arr = prev ?? [];
+            const exists = arr.some((a) => a.id === alert.id);
             return exists
-                ? prev.map((a) => a.id === alert.id ? { ...a, ...alert } : a)
-                : [alert, ...prev];
+                ? arr.map((a) => (a.id === alert.id ? { ...a, ...alert } : a))
+                : [alert, ...arr];
         });
-    }, []);
+    }, [setData]);
 
     const removeAlertLocal = useCallback((id: string) => {
-        setAlerts((prev) => prev.filter((a) => a.id !== id));
-    }, []);
+        setData((prev) => (prev ?? []).filter((a) => a.id !== id));
+    }, [setData]);
 
-    return { alerts, isLoading, refetch: fetch, patchAlertLocal, removeAlertLocal };
+    return { alerts: data ?? [], isLoading, refetch, patchAlertLocal, removeAlertLocal };
 };

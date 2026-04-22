@@ -1,27 +1,20 @@
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
-
 import { alertsConstants } from "@/constants";
-import { getErrorMessage } from "@/lib/error";
 import { alertsService } from "@/services";
 
+import { useMutationAction } from "../shared";
+
 export const useDeleteAlert = () => {
-    const [isLoading, setIsLoading] = useState(false);
-
-    const deleteHandler = useCallback(async (id: string): Promise<boolean> => {
-        setIsLoading(true);
-        try {
+    const { mutate, isLoading } = useMutationAction(
+        async (id: string): Promise<true> => {
             await alertsService.deleteHandler(id);
-            toast.success(alertsConstants.messages.deleteSuccess);
             return true;
-        } catch (err) {
-            console.error(err);
-            toast.error(getErrorMessage(err, alertsConstants.errors.deleteFailed));
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+        },
+        {
+            successMessage: alertsConstants.messages.deleteSuccess,
+            errorFallback: alertsConstants.errors.deleteFailed,
+            context: "alerts.delete",
+        },
+    );
 
-    return { deleteHandler, isLoading };
+    return { deleteHandler: mutate, isLoading };
 };
