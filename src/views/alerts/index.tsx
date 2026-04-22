@@ -109,15 +109,16 @@ export const AlertsView = () => {
     const { alerts, isLoading, patchAlertLocal, removeAlertLocal } = useAlertsList(activeSprintId);
     const { createHandler, isLoading: isCreating } = useCreateAlert();
     const { updateHandler, isLoading: isUpdating } = useUpdateAlert();
-    const { deleteHandler } = useDeleteAlert();
-    const { acknowledgeHandler } = useAcknowledgeAlert();
-    const { doneHandler } = useDoneAlert();
+    const { deleteHandler, isLoading: isDeleting } = useDeleteAlert();
+    const { acknowledgeHandler, isLoading: isAcknowledging } = useAcknowledgeAlert();
+    const { doneHandler, isLoading: isMarkingDone } = useDoneAlert();
     const { users } = useUsersList();
 
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<AlertInterface | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<AlertInterface | null>(null);
     const [form, setForm] = useState(emptyForm);
+    const [actingId, setActingId] = useState<string | null>(null);
 
     const openEdit = (a: AlertInterface) => {
         setForm({
@@ -148,13 +149,17 @@ export const AlertsView = () => {
     };
 
     const handleAcknowledge = async (id: string) => {
+        setActingId(id);
         const res = await acknowledgeHandler(id);
         if (res) patchAlertLocal(res);
+        setActingId(null);
     };
 
     const handleDone = async (id: string) => {
+        setActingId(id);
         const res = await doneHandler(id);
         if (res) patchAlertLocal(res);
+        setActingId(null);
     };
 
     const handleDelete = async () => {
@@ -213,11 +218,11 @@ export const AlertsView = () => {
                         {t("Acknowledged")}: {alert.acknowledgment_count}/{alert.total_targets}
                     </span>
                     <div className="flex gap-1.5 ml-auto">
-                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleAcknowledge(alert.id)}>
-                            <Check className="h-3 w-3" /> {t("Acknowledge")}
+                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleAcknowledge(alert.id)} loading={actingId === alert.id && isAcknowledging}>
+                            {!(actingId === alert.id && isAcknowledging) && <Check className="h-3 w-3" />} {t("Acknowledge")}
                         </Button>
-                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleDone(alert.id)}>
-                            <CheckCheck className="h-3 w-3" /> {t("Done")}
+                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleDone(alert.id)} loading={actingId === alert.id && isMarkingDone}>
+                            {!(actingId === alert.id && isMarkingDone) && <CheckCheck className="h-3 w-3" />} {t("Done")}
                         </Button>
                     </div>
                 </div>
@@ -292,8 +297,8 @@ export const AlertsView = () => {
                     </div>
                     <div className="flex justify-end gap-2 mt-4">
                         <DialogClose asChild><Button variant="outline">{t("Cancel")}</Button></DialogClose>
-                        <Button onClick={editTarget ? handleEdit : handleAdd} disabled={isCreating || isUpdating || !form.title.trim()}>
-                            {(isCreating || isUpdating) ? t("Saving...") : editTarget ? t("Save") : t("Create")}
+                        <Button onClick={editTarget ? handleEdit : handleAdd} loading={isCreating || isUpdating} disabled={!form.title.trim()}>
+                            {editTarget ? t("Save") : t("Create")}
                         </Button>
                     </div>
                 </DialogContent>
@@ -305,8 +310,8 @@ export const AlertsView = () => {
                     <DialogHeader><DialogTitle>{t("Delete Alert")}</DialogTitle></DialogHeader>
                     <p className="text-sm text-text-secondary py-2">{t("Are you sure?")}</p>
                     <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setDeleteTarget(null)}>{t("Cancel")}</Button>
-                        <Button variant="destructive" onClick={handleDelete}>{t("Delete")}</Button>
+                        <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>{t("Cancel")}</Button>
+                        <Button variant="destructive" onClick={handleDelete} loading={isDeleting}>{t("Delete")}</Button>
                     </div>
                 </DialogContent>
             </Dialog>
