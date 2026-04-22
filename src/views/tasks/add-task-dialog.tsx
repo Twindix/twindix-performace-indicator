@@ -7,6 +7,7 @@ import type { AddTaskDialogProps, AddTaskFormState } from "@/interfaces";
 import type { TaskInterface } from "@/interfaces";
 import type { UserInterface } from "@/interfaces";
 import { t, useCreateTask, useFormErrors, useTasksList } from "@/hooks";
+import { runAction } from "@/lib/handle-action";
 import { requirementsService, tasksService } from "@/services";
 import { useSprintStore } from "@/store";
 import { Checkbox } from "@/ui";
@@ -263,11 +264,20 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
         if (created) {
             if (addTaskLocal) addTaskLocal(created);
 
-            await Promise.all([
-                ...formState.requirements.map((req) => requirementsService.createHandler(created.id, { content: req.label })),
-                ...(formState.tags.length ? [tasksService.addTagsHandler(created.id, formState.tags)] : []),
-                ...formState.files.map((file) => tasksService.addAttachmentHandler(created.id, file)),
-            ]);
+            const hasExtras = formState.requirements.length > 0 || formState.tags.length > 0 || formState.files.length > 0;
+            if (hasExtras) {
+                await runAction(
+                    () => Promise.all([
+                        ...formState.requirements.map((req) => requirementsService.createHandler(created.id, { content: req.label })),
+                        ...(formState.tags.length ? [tasksService.addTagsHandler(created.id, formState.tags)] : []),
+                        ...formState.files.map((file) => tasksService.addAttachmentHandler(created.id, file)),
+                    ]),
+                    {
+                        errorFallback: t("Task created, but some extras (requirements/tags/attachments) failed."),
+                        context: "tasks.create-extras",
+                    },
+                );
+            }
 
             handleOpenChange(false);
         }

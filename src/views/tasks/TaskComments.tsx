@@ -1,13 +1,10 @@
 import { useState, useRef, useMemo } from "react";
 import { MessageCircle, Send, Trash2, Pencil, Check, X } from "lucide-react";
-import { toast } from "sonner";
 
 import { Avatar, AvatarFallback } from "@/ui";
-import { t } from "@/hooks";
+import { t, useCreateTaskComment, useDeleteComment, useUpdateComment } from "@/hooks";
 import type { TaskInterface, TaskCommentInterface, UserInterface } from "@/interfaces";
-import { commentsService } from "@/services";
 import { useAuthStore } from "@/store";
-import { tasksConstants } from "@/constants/tasks";
 
 interface Props {
     task: TaskInterface;
@@ -56,11 +53,14 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
     const { user: authUser } = useAuthStore();
     const currentUserId = authUser?.id ?? "";
 
+    const { createOnTaskHandler, isLoading: isSending } = useCreateTaskComment();
+    const { updateHandler: updateCommentHandler, isLoading: isSavingEdit } = useUpdateComment();
+    const { deleteHandler: deleteCommentHandler } = useDeleteComment();
+
     const [comments, setComments] = useState<TaskCommentInterface[]>(task.comments ?? []);
 
     // New comment state
     const [commentText, setCommentText] = useState("");
-    const [isSending, setIsSending] = useState(false);
     const [mentionActive, setMentionActive] = useState(false);
     const [mentionQuery, setMentionQuery] = useState("");
     const [mentionIndex, setMentionIndex] = useState(0);
@@ -70,7 +70,6 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
     // Edit state
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editText, setEditText] = useState("");
-    const [isSavingEdit, setIsSavingEdit] = useState(false);
     const [editMentionActive, setEditMentionActive] = useState(false);
     const [editMentionQuery, setEditMentionQuery] = useState("");
     const [editMentionIndex, setEditMentionIndex] = useState(0);
@@ -121,22 +120,17 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
 
     const submit = async () => {
         if (!commentText.trim() || isSending) return;
-        setIsSending(true);
         setMentionActive(false);
-        try {
-            const created = await commentsService.createOnTaskHandler(task.id, {
-                body: commentText.trim(),
-                ...(mentionedUserIds.length > 0 && { mentioned_user_ids: mentionedUserIds }),
-            }) as unknown as TaskCommentInterface;
+        const created = await createOnTaskHandler(task.id, {
+            body: commentText.trim(),
+            ...(mentionedUserIds.length > 0 && { mentioned_user_ids: mentionedUserIds }),
+        }) as unknown as TaskCommentInterface | null;
+        if (created) {
             const next = [...comments, created];
             setComments(next);
             onUpdateComments?.(task.id, next);
             setCommentText("");
             setMentionedUserIds([]);
-        } catch {
-            toast.error(t(tasksConstants.errors.commentAddFailed));
-        } finally {
-            setIsSending(false);
         }
     };
 
@@ -189,34 +183,27 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
 
     const saveEdit = async (id: string) => {
         if (!editText.trim() || isSavingEdit) return;
-        setIsSavingEdit(true);
         setEditMentionActive(false);
-        try {
-            const updated = await commentsService.updateHandler(id, {
-                body: editText.trim(),
-                mentioned_user_ids: editMentionedUserIds,
-            }) as unknown as TaskCommentInterface;
+        const updated = await updateCommentHandler(id, {
+            body: editText.trim(),
+            mentioned_user_ids: editMentionedUserIds,
+        }) as unknown as TaskCommentInterface | null;
+        if (updated) {
             const next = comments.map((c) => (c.id === id ? updated : c));
             setComments(next);
             onUpdateComments?.(task.id, next);
             setEditingId(null);
             setEditText("");
             setEditMentionedUserIds([]);
-        } catch {
-            toast.error(t(tasksConstants.errors.commentUpdateFailed));
-        } finally {
-            setIsSavingEdit(false);
         }
     };
 
     const deleteComment = async (id: string) => {
-        try {
-            await commentsService.deleteHandler(id);
+        const ok = await deleteCommentHandler(id);
+        if (ok) {
             const next = comments.filter((c) => c.id !== id);
             setComments(next);
             onUpdateComments?.(task.id, next);
-        } catch {
-            toast.error(t(tasksConstants.errors.commentDeleteFailed));
         }
     };
 

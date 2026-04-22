@@ -11,18 +11,6 @@ export class ApiError extends Error {
     }
 }
 
-export const handleApiError = (error: unknown): ApiError => {
-    if (error instanceof ApiError) {
-        return error;
-    }
-
-    if (error instanceof Error) {
-        return new ApiError(500, error.message);
-    }
-
-    return new ApiError(500, "An unexpected error occurred");
-};
-
 export const getErrorMessage = (error: unknown, fallback?: string): string => {
     if (error instanceof ApiError && error.message) return error.message;
     if (error instanceof Error && error.message) return error.message;
