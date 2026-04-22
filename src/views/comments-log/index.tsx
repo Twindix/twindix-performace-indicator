@@ -4,7 +4,7 @@ import { AtSign, MessageCircle, CheckCircle2, Clock, User, Plus, Pencil, Trash2,
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { CommentsLogSkeleton } from "@/components/skeletons";
-import { t, useAuth, useCommentsList, useSettings, usePageLoader, useCreateComment, useUpdateComment, useDeleteComment, useRespondComment, useUsersList } from "@/hooks";
+import { t, useCommentsList, useSettings, usePageLoader, useCreateComment, useUpdateComment, useDeleteComment, usePermissions, useRespondComment, useUsersList } from "@/hooks";
 import type { CommentInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
@@ -15,7 +15,7 @@ const emptyForm = { body: "", task_title: "", mentioned_user_ids: [] as string[]
 export const CommentsLogView = () => {
     const pageLoading = usePageLoader();
     const [settings] = useSettings();
-    const { user } = useAuth();
+    const p = usePermissions();
     const { activeSprintId } = useSprintStore();
     const compact = settings.compactView;
 
@@ -98,12 +98,12 @@ export const CommentsLogView = () => {
 
     if (pageLoading || isFetching) return <CommentsLogSkeleton />;
 
-    const headerActions = (
+    const headerActions = p.comments.add() ? (
         <Button onClick={() => { setForm(emptyForm); setAddOpen(true); }} className="gap-2" disabled={!activeSprintId}>
             <Plus className="h-4 w-4" />
             {t("Add Comment")}
         </Button>
-    );
+    ) : null;
 
     const renderFormDialog = () => (
         <Dialog open={addOpen || !!editTarget} onOpenChange={(open) => { if (!open) { setAddOpen(false); setEditTarget(null); setForm(emptyForm); } }}>
@@ -278,9 +278,7 @@ export const CommentsLogView = () => {
             ) : (
                 <div className="flex flex-col gap-3">
                     {comments.map((comment) => {
-                        const author = comment.author;
                         const hasResponse = !!comment.responded_at;
-                        const isOwner = user?.id === author.id;
 
                         return (
                             <Card key={comment.id} className="hover:shadow-md transition-shadow">
@@ -293,20 +291,20 @@ export const CommentsLogView = () => {
                                             </Badge>
                                         ) : <span />}
                                         <div className="flex items-center gap-1 shrink-0">
-                                            {!hasResponse && (
+                                            {!hasResponse && p.comments.respond() && (
                                                 <button onClick={() => handleRespond(comment.id)} className="p-1.5 rounded hover:bg-success-light text-text-muted hover:text-success cursor-pointer" title={t("Respond")}>
                                                     <Reply className="h-3.5 w-3.5" />
                                                 </button>
                                             )}
-                                            {isOwner && (
-                                                <>
-                                                    <button onClick={() => openEdit(comment)} className="p-1.5 rounded hover:bg-muted text-text-muted hover:text-primary cursor-pointer" title={t("Edit")}>
-                                                        <Pencil className="h-3.5 w-3.5" />
-                                                    </button>
-                                                    <button onClick={() => setDeleteTarget(comment)} className="p-1.5 rounded hover:bg-error-light text-text-muted hover:text-error cursor-pointer" title={t("Delete")}>
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                    </button>
-                                                </>
+                                            {p.comments.edit(comment) && (
+                                                <button onClick={() => openEdit(comment)} className="p-1.5 rounded hover:bg-muted text-text-muted hover:text-primary cursor-pointer" title={t("Edit")}>
+                                                    <Pencil className="h-3.5 w-3.5" />
+                                                </button>
+                                            )}
+                                            {p.comments.delete(comment) && (
+                                                <button onClick={() => setDeleteTarget(comment)} className="p-1.5 rounded hover:bg-error-light text-text-muted hover:text-error cursor-pointer" title={t("Delete")}>
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </button>
                                             )}
                                         </div>
                                     </div>
