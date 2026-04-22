@@ -1,28 +1,26 @@
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
-
 import { sprintsConstants } from "@/constants";
 import type { SprintInterface, UpdateSprintPayloadInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { sprintsService } from "@/services";
 
-export const useUpdateSprint = () => {
-    const [isLoading, setIsLoading] = useState(false);
+import { useMutationAction, type FieldErrors } from "../shared";
 
-    const updateHandler = useCallback(async (id: string, payload: UpdateSprintPayloadInterface): Promise<SprintInterface | null> => {
-        setIsLoading(true);
-        try {
+export interface UseUpdateSprintOptions {
+    onFieldErrors?: (errors: FieldErrors) => void;
+}
+
+export const useUpdateSprint = ({ onFieldErrors }: UseUpdateSprintOptions = {}) => {
+    const { mutate, isLoading } = useMutationAction(
+        async (id: string, payload: UpdateSprintPayloadInterface): Promise<SprintInterface> => {
             const res = await sprintsService.updateHandler(id, payload);
-            toast.success(sprintsConstants.messages.updateSuccess);
             return res.data;
-        } catch (err) {
-            console.error(err);
-            toast.error(getErrorMessage(err, sprintsConstants.errors.updateFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+        },
+        {
+            successMessage: sprintsConstants.messages.updateSuccess,
+            errorFallback: sprintsConstants.errors.updateFailed,
+            onFieldErrors,
+            context: "sprint.update",
+        },
+    );
 
-    return { updateHandler, isLoading };
+    return { updateHandler: mutate, isLoading };
 };

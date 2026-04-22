@@ -1,28 +1,21 @@
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
-
 import { sprintsConstants } from "@/constants";
 import type { SprintInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { sprintsService } from "@/services";
 
+import { useMutationAction } from "../shared";
+
 export const useActivateSprint = () => {
-    const [isLoading, setIsLoading] = useState(false);
-
-    const activateHandler = useCallback(async (id: string): Promise<SprintInterface | null> => {
-        setIsLoading(true);
-        try {
+    const { mutate, isLoading } = useMutationAction(
+        async (id: string): Promise<SprintInterface> => {
             const res = await sprintsService.activateHandler(id);
-            toast.success(sprintsConstants.messages.activateSuccess);
             return res.data;
-        } catch (err) {
-            console.error(err);
-            toast.error(getErrorMessage(err, sprintsConstants.errors.activateFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+        },
+        {
+            successMessage: sprintsConstants.messages.activateSuccess,
+            errorFallback: sprintsConstants.errors.activateFailed,
+            context: "sprint.activate",
+        },
+    );
 
-    return { activateHandler, isLoading };
+    return { activateHandler: mutate, isLoading };
 };

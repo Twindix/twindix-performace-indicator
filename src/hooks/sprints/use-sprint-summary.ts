@@ -1,29 +1,20 @@
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
-
 import { sprintsConstants } from "@/constants";
 import type { SprintSummaryInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { sprintsService } from "@/services";
 
+import { useQueryAction } from "../shared";
+
 export const useSprintSummary = (id: string | undefined) => {
-    const [summary, setSummary] = useState<SprintSummaryInterface | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const { data, isLoading, refetch } = useQueryAction<SprintSummaryInterface | null>(
+        async () => (id ? await sprintsService.summaryHandler(id) : null),
+        [id],
+        {
+            enabled: !!id,
+            errorFallback: sprintsConstants.errors.summaryFailed,
+            initialData: null,
+            context: "sprints.summary",
+        },
+    );
 
-    const fetch = useCallback(async () => {
-        if (!id) return;
-        setIsLoading(true);
-        try {
-            const res = await sprintsService.summaryHandler(id);
-            setSummary(res);
-        } catch (err) {
-            toast.error(getErrorMessage(err, sprintsConstants.errors.summaryFailed));
-        } finally {
-            setIsLoading(false);
-        }
-    }, [id]);
-
-    useEffect(() => { fetch(); }, [fetch]);
-
-    return { summary, isLoading, refetch: fetch };
+    return { summary: data ?? null, isLoading, refetch };
 };
