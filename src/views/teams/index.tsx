@@ -134,8 +134,8 @@ export const TeamsView = () => {
                         <DialogClose asChild>
                             <Button variant="outline" disabled={isSubmitting}>{t("Cancel")}</Button>
                         </DialogClose>
-                        <Button onClick={handleSubmit} disabled={isSubmitting || !name.trim()}>
-                            {editTarget ? t("Save Changes") : isSubmitting ? t("Creating...") : t("Create Team")}
+                        <Button onClick={handleSubmit} loading={isSubmitting} disabled={!name.trim()}>
+                            {editTarget ? t("Save Changes") : t("Create Team")}
                         </Button>
                     </div>
                 </DialogContent>
