@@ -177,11 +177,12 @@ export const TaskDetailDialog = ({
                                 {t("Finish")}
                             </Button>
                         )}
-                        {nextCol
-                            ? <Button size="sm" disabled={showFinish || isPendingApproval || isMarkingComplete} onClick={() => { onOpenChange(false); onMoveRequest(task, nextCol.status as TaskPhase); }} className="gap-1.5">
+                        {nextCol && !showFinish && !isPendingApproval && (
+                            <Button size="sm" disabled={isMarkingComplete} onClick={() => { onOpenChange(false); onMoveRequest(task, nextCol.status as TaskPhase); }} className="gap-1.5">
                                 {t(nextCol.label)}<ArrowRight className="h-3.5 w-3.5" />
-                              </Button>
-                            : <Badge variant="success" className="px-3 py-1.5">{t("Completed")}</Badge>}
+                            </Button>
+                        )}
+                        {!nextCol && <Badge variant="success" className="px-3 py-1.5">{t("Completed")}</Badge>}
                     </div>
                 </div>
 
