@@ -258,9 +258,7 @@ export const UsersView = () => {
 
                     <div className="flex justify-end gap-2 mt-2">
                         <DialogClose asChild><Button variant="outline" disabled={isCreating}>{t("Cancel")}</Button></DialogClose>
-                        <Button onClick={handleAdd} disabled={isCreating}>
-                            {isCreating ? t("Creating…") : t("Add Member")}
-                        </Button>
+                        <Button onClick={handleAdd} loading={isCreating}>{t("Add Member")}</Button>
                     </div>
                 </DialogContent>
             </Dialog>
