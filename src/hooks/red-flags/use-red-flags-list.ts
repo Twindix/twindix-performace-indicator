@@ -1,43 +1,36 @@
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useCallback } from "react";
 
 import { redFlagsConstants } from "@/constants";
 import type { RedFlagInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { redFlagsService } from "@/services";
 
+import { useQueryAction } from "../shared";
+
 export const useRedFlagsList = (sprintId: string) => {
-    const [redFlags, setRedFlags] = useState<RedFlagInterface[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    const fetch = useCallback(async () => {
-        if (!sprintId) return;
-        setIsLoading(true);
-        try {
-            const res = await redFlagsService.listHandler(sprintId);
-            setRedFlags(res.data);
-        } catch (err) {
-            console.error(err);
-            toast.error(getErrorMessage(err, redFlagsConstants.errors.fetchFailed));
-        } finally {
-            setIsLoading(false);
-        }
-    }, [sprintId]);
-
-    useEffect(() => { fetch(); }, [fetch]);
+    const { data, isLoading, refetch, setData } = useQueryAction<RedFlagInterface[]>(
+        async () => (sprintId ? (await redFlagsService.listHandler(sprintId)).data : []),
+        [sprintId],
+        {
+            enabled: !!sprintId,
+            errorFallback: redFlagsConstants.errors.fetchFailed,
+            initialData: [],
+            context: "red-flags.list",
+        },
+    );
 
     const patchRedFlagLocal = useCallback((flag: RedFlagInterface) => {
-        setRedFlags((prev) => {
-            const exists = prev.some((f) => f.id === flag.id);
+        setData((prev) => {
+            const arr = prev ?? [];
+            const exists = arr.some((f) => f.id === flag.id);
             return exists
-                ? prev.map((f) => f.id === flag.id ? { ...f, ...flag } : f)
-                : [flag, ...prev];
+                ? arr.map((f) => (f.id === flag.id ? { ...f, ...flag } : f))
+                : [flag, ...arr];
         });
-    }, []);
+    }, [setData]);
 
     const removeRedFlagLocal = useCallback((id: string) => {
-        setRedFlags((prev) => prev.filter((f) => f.id !== id));
-    }, []);
+        setData((prev) => (prev ?? []).filter((f) => f.id !== id));
+    }, [setData]);
 
-    return { redFlags, isLoading, refetch: fetch, patchRedFlagLocal, removeRedFlagLocal };
+    return { redFlags: data ?? [], isLoading, refetch, patchRedFlagLocal, removeRedFlagLocal };
 };

@@ -1,27 +1,20 @@
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
-
 import { redFlagsConstants } from "@/constants";
-import { getErrorMessage } from "@/lib/error";
 import { redFlagsService } from "@/services";
 
+import { useMutationAction } from "../shared";
+
 export const useDeleteRedFlag = () => {
-    const [isLoading, setIsLoading] = useState(false);
-
-    const deleteHandler = useCallback(async (id: string): Promise<boolean> => {
-        setIsLoading(true);
-        try {
+    const { mutate, isLoading } = useMutationAction(
+        async (id: string): Promise<true> => {
             await redFlagsService.deleteHandler(id);
-            toast.success(redFlagsConstants.messages.deleteSuccess);
             return true;
-        } catch (err) {
-            console.error(err);
-            toast.error(getErrorMessage(err, redFlagsConstants.errors.deleteFailed));
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+        },
+        {
+            successMessage: redFlagsConstants.messages.deleteSuccess,
+            errorFallback: redFlagsConstants.errors.deleteFailed,
+            context: "red-flags.delete",
+        },
+    );
 
-    return { deleteHandler, isLoading };
+    return { deleteHandler: mutate, isLoading };
 };
