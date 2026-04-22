@@ -81,8 +81,8 @@ export const LoginView = () => {
 
                     {error && <p className="text-sm text-error font-medium">{error}</p>}
 
-                    <Button type="submit" disabled={isSubmitting} className="w-full mt-2 h-11 text-base font-semibold">
-                        {isSubmitting ? t("Signing in...") : t("Sign In")}
+                    <Button type="submit" loading={isSubmitting} className="w-full mt-2 h-11 text-base font-semibold">
+                        {t("Sign In")}
                     </Button>
                 </form>
 
