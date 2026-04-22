@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
 import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { UsersSkeleton } from "@/components/skeletons";
+import { usersConstants } from "@/constants";
 import { t } from "@/hooks";
 import type { UserInterface } from "@/interfaces";
 import { useUsersList, useUsersCreate, useUsersUpdate } from "@/hooks/users";
@@ -20,7 +21,8 @@ import { apiClient } from "@/lib/axios";
 
 interface TeamOption { id: string; name: string; }
 
-const ROLE_TIERS = ["admin", "manager", "member"] as const;
+const ROLE_TIERS = usersConstants.roleTiers;
+const ROLE_TIER_LABELS = usersConstants.roleTierLabels;
 
 const emptyForm = {
     full_name: "",
@@ -234,7 +236,7 @@ export const UsersView = () => {
                                 <Select value={form.role_tier} onValueChange={(v) => set("role_tier", v)}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        {ROLE_TIERS.map((r) => <SelectItem key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</SelectItem>)}
+                                        {ROLE_TIERS.map((r) => <SelectItem key={r} value={r}>{t(ROLE_TIER_LABELS[r])}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>

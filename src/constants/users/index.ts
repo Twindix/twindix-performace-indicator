@@ -1,6 +1,12 @@
 export const usersConstants = {
     defaultPerPage: 20,
-    roleTiers: ["admin", "manager", "member"] as const,
+    roleTiers: ["admin", "manager", "member", "viewer"] as const,
+    roleTierLabels: {
+        admin: "Admin",
+        manager: "Manager",
+        member: "Member",
+        viewer: "Viewer",
+    } as const,
     errors: {
         fetchFailed: "Failed to load users.",
         detailFetchFailed: "Failed to load user.",
