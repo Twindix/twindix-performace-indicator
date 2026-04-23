@@ -8,6 +8,7 @@ export const apisData = {
     },
     users: {
         list: "/users",
+        listLite: "/users/list",
         create: "/users",
         detail: (id: string) => `/users/${id}`,
         update: (id: string) => `/users/${id}`,
@@ -16,7 +17,11 @@ export const apisData = {
     },
     teams: {
         list: "/teams",
+        listLite: "/teams/list",
         create: "/teams",
+        detail: (id: string) => `/teams/${id}`,
+        update: (id: string) => `/teams/${id}`,
+        delete: (id: string) => `/teams/${id}`,
     },
     sprints: {
         list: "/sprints",
@@ -26,6 +31,15 @@ export const apisData = {
         delete: (id: string) => `/sprints/${id}`,
         activate: (id: string) => `/sprints/${id}/activate`,
         summary: (id: string) => `/sprints/${id}/summary`,
+    },
+    projects: {
+        list: "/projects",
+        listLite: "/projects/list",
+        create: "/projects",
+        detail: (id: string) => `/projects/${id}`,
+        update: (id: string) => `/projects/${id}`,
+        delete: (id: string) => `/projects/${id}`,
+        sprints: (id: string) => `/projects/${id}/sprints`,
     },
     tasks: {
         list: (sprintId: string) => `/sprints/${sprintId}/tasks`,
@@ -43,6 +57,8 @@ export const apisData = {
         deleteAttachment: (id: string, attachmentId: string) => `/tasks/${id}/attachments/${attachmentId}`,
         removeAttachment: (id: string, attachmentId: string) => `/tasks/${id}/attachments/${attachmentId}`,
         transitionCriteria: (id: string) => `/tasks/${id}/transition-criteria`,
+        markComplete: (id: string) => `/tasks/${id}/mark-complete`,
+        listLite: "/tasks/list",
     },
     requirements: {
         list: (taskId: string) => `/tasks/${taskId}/requirements`,

@@ -1,53 +1,49 @@
-import { useState } from "react";
-import { toast } from "sonner";
+import { useCallback, useState } from "react";
 
 import { commentsConstants } from "@/constants";
 import type { CommentInterface, CommentsAnalyticsInterface, CommentsListFiltersInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
+import { runAction } from "@/lib/handle-action";
 import { commentsService } from "@/services";
 
 export const useGetComment = () => {
     const [isLoading, setIsLoading] = useState(false);
 
-    const getHandler = async (id: string): Promise<CommentInterface | null> => {
-        if (!navigator.onLine) throw new Error(commentsConstants.errors.genericError);
+    const getHandler = useCallback(async (id: string): Promise<CommentInterface | null> => {
         setIsLoading(true);
         try {
-            return await commentsService.detailHandler(id);
-        } catch (err) {
-            toast.error(getErrorMessage(err, commentsConstants.errors.fetchDetailFailed));
-            return null;
+            return await runAction(() => commentsService.detailHandler(id), {
+                errorFallback: commentsConstants.errors.fetchDetailFailed,
+                context: "comments.detail",
+            });
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
-    const getAllHandler = async (sprintId: string, filters?: CommentsListFiltersInterface): Promise<CommentInterface[] | null> => {
-        if (!navigator.onLine) throw new Error(commentsConstants.errors.genericError);
+    const getAllHandler = useCallback(async (sprintId: string, filters?: CommentsListFiltersInterface): Promise<CommentInterface[] | null> => {
         setIsLoading(true);
         try {
-            const res = await commentsService.listHandler(sprintId, filters);
-            return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, commentsConstants.errors.fetchFailed));
-            return null;
+            const res = await runAction(() => commentsService.listHandler(sprintId, filters), {
+                errorFallback: commentsConstants.errors.fetchFailed,
+                context: "comments.list-call",
+            });
+            return res?.data ?? null;
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
-    const getAnalyticsHandler = async (sprintId: string): Promise<CommentsAnalyticsInterface | null> => {
-        if (!navigator.onLine) throw new Error(commentsConstants.errors.genericError);
+    const getAnalyticsHandler = useCallback(async (sprintId: string): Promise<CommentsAnalyticsInterface | null> => {
         setIsLoading(true);
         try {
-            return await commentsService.analyticsHandler(sprintId);
-        } catch (err) {
-            toast.error(getErrorMessage(err, commentsConstants.errors.analyticsFailed));
-            return null;
+            return await runAction(() => commentsService.analyticsHandler(sprintId), {
+                silent: true,
+                context: "comments.analytics-call",
+            });
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     return { getHandler, getAllHandler, getAnalyticsHandler, isLoading };
 };

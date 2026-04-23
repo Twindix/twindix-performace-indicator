@@ -1,28 +1,26 @@
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { blockersConstants } from "@/constants";
 import type { BlockerInterface, UpdateBlockerPayloadInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { blockersService } from "@/services";
 
-export const useUpdateBlocker = () => {
-    const [isLoading, setIsLoading] = useState(false);
+import { useMutationAction, type FieldErrors } from "../shared";
 
-    const updateHandler = async (id: string, payload: UpdateBlockerPayloadInterface): Promise<BlockerInterface | null> => {
-        if (!navigator.onLine) throw new Error(blockersConstants.errors.genericError);
-        setIsLoading(true);
-        try {
+export interface UseUpdateBlockerOptions {
+    onFieldErrors?: (errors: FieldErrors) => void;
+}
+
+export const useUpdateBlocker = ({ onFieldErrors }: UseUpdateBlockerOptions = {}) => {
+    const { mutate, isLoading } = useMutationAction(
+        async (id: string, payload: UpdateBlockerPayloadInterface): Promise<BlockerInterface> => {
             const res = await blockersService.updateHandler(id, payload);
-            toast.success(blockersConstants.messages.updateSuccess);
             return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, blockersConstants.errors.updateFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        },
+        {
+            successMessage: blockersConstants.messages.updateSuccess,
+            errorFallback: blockersConstants.errors.updateFailed,
+            onFieldErrors,
+            context: "blockers.update",
+        },
+    );
 
-    return { updateHandler, isLoading };
+    return { updateHandler: mutate, isLoading };
 };

@@ -1,27 +1,26 @@
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { requirementsConstants } from "@/constants/requirements";
 import type { CreateRequirementPayloadInterface, RequirementInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { requirementsService } from "@/services";
 
-export const useCreateRequirement = () => {
-    const [isLoading, setIsLoading] = useState(false);
+import { useMutationAction, type FieldErrors } from "../shared";
 
-    const createHandler = async (taskId: string, payload: CreateRequirementPayloadInterface): Promise<RequirementInterface | null> => {
-        setIsLoading(true);
-        try {
+export interface UseCreateRequirementOptions {
+    onFieldErrors?: (errors: FieldErrors) => void;
+}
+
+export const useCreateRequirement = ({ onFieldErrors }: UseCreateRequirementOptions = {}) => {
+    const { mutate, isLoading } = useMutationAction(
+        async (taskId: string, payload: CreateRequirementPayloadInterface): Promise<RequirementInterface> => {
             const res = await requirementsService.createHandler(taskId, payload);
-            toast.success(requirementsConstants.messages.createSuccess);
             return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, requirementsConstants.errors.createFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        },
+        {
+            successMessage: requirementsConstants.messages.createSuccess,
+            errorFallback: requirementsConstants.errors.createFailed,
+            onFieldErrors,
+            context: "requirements.create",
+        },
+    );
 
-    return { createHandler, isLoading };
+    return { createHandler: mutate, isLoading };
 };

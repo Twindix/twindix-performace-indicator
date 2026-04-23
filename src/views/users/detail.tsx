@@ -1,7 +1,7 @@
 import { ArrowLeft, Bell, Flag, ListChecks, MessageCircle, MessageSquare, TrendingUp } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Skeleton } from "@/atoms";
 import { AnimatedNumber, Header } from "@/components/shared";
 import { t, useUsersAnalytics } from "@/hooks";
 import { Avatar, AvatarFallback } from "@/ui";
@@ -32,7 +32,7 @@ const PHASE_LABELS: Record<string, string> = {
 export const UserDetailView = () => {
     const { userId } = useParams<{ userId: string }>();
     const navigate = useNavigate();
-    const { analytics, isLoading, error } = useUsersAnalytics(userId);
+    const { analytics, isLoading } = useUsersAnalytics(userId);
 
     if (isLoading) {
         return (
@@ -41,19 +41,19 @@ export const UserDetailView = () => {
                     <ArrowLeft className="h-4 w-4" />{t("Back")}
                 </Button>
                 <div className="flex flex-col gap-4">
-                    {[...Array(4)].map((_, i) => <div key={i} className="h-24 animate-pulse bg-muted rounded-xl" />)}
+                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
                 </div>
             </div>
         );
     }
 
-    if (error || !analytics) {
+    if (!analytics) {
         return (
             <div>
                 <Button variant="outline" onClick={() => navigate("/users")} className="gap-2 mb-6">
                     <ArrowLeft className="h-4 w-4" />{t("Back to Users")}
                 </Button>
-                <p className="text-text-muted">{t(error ?? "User not found")}</p>
+                <p className="text-text-muted">{t("User not found")}</p>
             </div>
         );
     }

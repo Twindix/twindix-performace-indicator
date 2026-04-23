@@ -1,18 +1,14 @@
 import { useState, useRef, useMemo } from "react";
 import { MessageCircle, Send, Trash2, Pencil, Check, X } from "lucide-react";
-import { toast } from "sonner";
 
 import { Avatar, AvatarFallback } from "@/ui";
-import { t } from "@/hooks";
-import type { TaskInterface, TaskCommentInterface, UserInterface } from "@/interfaces";
-import { commentsService } from "@/services";
-import { useAuthStore } from "@/store";
-import { tasksConstants } from "@/constants/tasks";
+import { t, useCreateTaskComment, useDeleteComment, usePermissions, useUpdateComment } from "@/hooks";
+import type { TaskInterface, TaskCommentInterface, UserLiteInterface } from "@/interfaces";
 
 interface Props {
     task: TaskInterface;
     currentUserId: string;
-    members: UserInterface[];
+    members: UserLiteInterface[];
     onUpdateComments?: (taskId: string, comments: TaskCommentInterface[]) => void;
 }
 
@@ -23,7 +19,7 @@ const getMentionQuery = (text: string, cursor: number): string | null => {
 };
 
 // Replace @query with @Full Name and return new text + cursor
-const applyMention = (text: string, cursor: number, user: UserInterface) => {
+const applyMention = (text: string, cursor: number, user: UserLiteInterface) => {
     const match = text.slice(0, cursor).match(/@(\w*)$/);
     if (!match) return { text, cursor };
     const start = cursor - match[0].length;
@@ -53,14 +49,16 @@ const renderBody = (body: string, mentioned: { id: string; full_name: string }[]
 };
 
 export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
-    const { user: authUser } = useAuthStore();
-    const currentUserId = authUser?.id ?? "";
+    const p = usePermissions();
+
+    const { createOnTaskHandler, isLoading: isSending } = useCreateTaskComment();
+    const { updateHandler: updateCommentHandler, isLoading: isSavingEdit } = useUpdateComment();
+    const { deleteHandler: deleteCommentHandler } = useDeleteComment();
 
     const [comments, setComments] = useState<TaskCommentInterface[]>(task.comments ?? []);
 
     // New comment state
     const [commentText, setCommentText] = useState("");
-    const [isSending, setIsSending] = useState(false);
     const [mentionActive, setMentionActive] = useState(false);
     const [mentionQuery, setMentionQuery] = useState("");
     const [mentionIndex, setMentionIndex] = useState(0);
@@ -70,7 +68,6 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
     // Edit state
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editText, setEditText] = useState("");
-    const [isSavingEdit, setIsSavingEdit] = useState(false);
     const [editMentionActive, setEditMentionActive] = useState(false);
     const [editMentionQuery, setEditMentionQuery] = useState("");
     const [editMentionIndex, setEditMentionIndex] = useState(0);
@@ -96,7 +93,7 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
         else setMentionActive(false);
     };
 
-    const selectMention = (user: UserInterface) => {
+    const selectMention = (user: UserLiteInterface) => {
         const cursor = textareaRef.current?.selectionStart ?? commentText.length;
         const result = applyMention(commentText, cursor, user);
         setCommentText(result.text);
@@ -121,22 +118,17 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
 
     const submit = async () => {
         if (!commentText.trim() || isSending) return;
-        setIsSending(true);
         setMentionActive(false);
-        try {
-            const created = await commentsService.createOnTaskHandler(task.id, {
-                body: commentText.trim(),
-                ...(mentionedUserIds.length > 0 && { mentioned_user_ids: mentionedUserIds }),
-            }) as unknown as TaskCommentInterface;
+        const created = await createOnTaskHandler(task.id, {
+            body: commentText.trim(),
+            ...(mentionedUserIds.length > 0 && { mentioned_user_ids: mentionedUserIds }),
+        }) as unknown as TaskCommentInterface | null;
+        if (created) {
             const next = [...comments, created];
             setComments(next);
             onUpdateComments?.(task.id, next);
             setCommentText("");
             setMentionedUserIds([]);
-        } catch {
-            toast.error(t(tasksConstants.errors.commentAddFailed));
-        } finally {
-            setIsSending(false);
         }
     };
 
@@ -163,7 +155,7 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
         else setEditMentionActive(false);
     };
 
-    const selectEditMention = (user: UserInterface) => {
+    const selectEditMention = (user: UserLiteInterface) => {
         const cursor = editTextareaRef.current?.selectionStart ?? editText.length;
         const result = applyMention(editText, cursor, user);
         setEditText(result.text);
@@ -189,34 +181,27 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
 
     const saveEdit = async (id: string) => {
         if (!editText.trim() || isSavingEdit) return;
-        setIsSavingEdit(true);
         setEditMentionActive(false);
-        try {
-            const updated = await commentsService.updateHandler(id, {
-                body: editText.trim(),
-                mentioned_user_ids: editMentionedUserIds,
-            }) as unknown as TaskCommentInterface;
+        const updated = await updateCommentHandler(id, {
+            body: editText.trim(),
+            mentioned_user_ids: editMentionedUserIds,
+        }) as unknown as TaskCommentInterface | null;
+        if (updated) {
             const next = comments.map((c) => (c.id === id ? updated : c));
             setComments(next);
             onUpdateComments?.(task.id, next);
             setEditingId(null);
             setEditText("");
             setEditMentionedUserIds([]);
-        } catch {
-            toast.error(t(tasksConstants.errors.commentUpdateFailed));
-        } finally {
-            setIsSavingEdit(false);
         }
     };
 
     const deleteComment = async (id: string) => {
-        try {
-            await commentsService.deleteHandler(id);
+        const ok = await deleteCommentHandler(id);
+        if (ok) {
             const next = comments.filter((c) => c.id !== id);
             setComments(next);
             onUpdateComments?.(task.id, next);
-        } catch {
-            toast.error(t(tasksConstants.errors.commentDeleteFailed));
         }
     };
 
@@ -239,7 +224,6 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
             {comments.length > 0 && (
                 <div className="flex flex-col gap-3 mb-4">
                     {comments.map((c) => {
-                        const isAuthor = c.author.id === currentUserId;
                         const isEditing = editingId === c.id;
                         return (
                             <div key={c.id} className="flex gap-2.5 group">
@@ -252,15 +236,15 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
                                         <span className="text-[10px] text-text-muted ms-auto">
                                             {new Date(c.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                                         </span>
-                                        {isAuthor && !isEditing && (
-                                            <>
-                                                <button onClick={() => startEdit(c)} className="p-1.5 rounded text-text-muted hover:text-primary hover:bg-primary-lighter transition-colors cursor-pointer">
-                                                    <Pencil className="h-3 w-3" />
-                                                </button>
-                                                <button onClick={() => deleteComment(c.id)} className="p-1.5 rounded text-text-muted hover:text-error hover:bg-error-light transition-colors cursor-pointer">
-                                                    <Trash2 className="h-3 w-3" />
-                                                </button>
-                                            </>
+                                        {!isEditing && p.comments.edit(c) && (
+                                            <button onClick={() => startEdit(c)} className="p-1.5 rounded text-text-muted hover:text-primary hover:bg-primary-lighter transition-colors cursor-pointer">
+                                                <Pencil className="h-3 w-3" />
+                                            </button>
+                                        )}
+                                        {!isEditing && p.comments.delete(c) && (
+                                            <button onClick={() => deleteComment(c.id)} className="p-1.5 rounded text-text-muted hover:text-error hover:bg-error-light transition-colors cursor-pointer">
+                                                <Trash2 className="h-3 w-3" />
+                                            </button>
                                         )}
                                     </div>
 
@@ -300,35 +284,37 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
             )}
 
             {/* New comment input */}
-            <div className="relative">
-                {mentionActive && mentionMembers.length > 0 && (
-                    <MentionDropdown members={mentionMembers} activeIndex={mentionIndex} onSelect={selectMention} />
-                )}
-                <textarea
-                    ref={textareaRef}
-                    value={commentText}
-                    onChange={handleCommentChange}
-                    onKeyDown={handleCommentKeyDown}
-                    placeholder={t("Write a comment… type @ to mention")}
-                    rows={2}
-                    className="w-full rounded-xl border border-input bg-surface px-3 py-2 pe-10 text-sm text-text-dark placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-ring resize-none transition-colors"
-                />
-                <button
-                    onClick={submit}
-                    disabled={!commentText.trim() || isSending}
-                    className="absolute bottom-2 end-2 p-1.5 rounded-md text-primary hover:bg-primary-lighter disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                >
-                    <Send className="h-4 w-4" />
-                </button>
-            </div>
+            {p.comments.add() && (
+                <div className="relative">
+                    {mentionActive && mentionMembers.length > 0 && (
+                        <MentionDropdown members={mentionMembers} activeIndex={mentionIndex} onSelect={selectMention} />
+                    )}
+                    <textarea
+                        ref={textareaRef}
+                        value={commentText}
+                        onChange={handleCommentChange}
+                        onKeyDown={handleCommentKeyDown}
+                        placeholder={t("Write a comment… type @ to mention")}
+                        rows={2}
+                        className="w-full rounded-xl border border-input bg-surface px-3 py-2 pe-10 text-sm text-text-dark placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-ring resize-none transition-colors"
+                    />
+                    <button
+                        onClick={submit}
+                        disabled={!commentText.trim() || isSending}
+                        className="absolute bottom-2 end-2 p-1.5 rounded-md text-primary hover:bg-primary-lighter disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    >
+                        <Send className="h-4 w-4" />
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
 
 interface MentionDropdownProps {
-    members: UserInterface[];
+    members: UserLiteInterface[];
     activeIndex: number;
-    onSelect: (user: UserInterface) => void;
+    onSelect: (user: UserLiteInterface) => void;
 }
 
 const MentionDropdown = ({ members, activeIndex, onSelect }: MentionDropdownProps) => (
@@ -345,7 +331,7 @@ const MentionDropdown = ({ members, activeIndex, onSelect }: MentionDropdownProp
                 </Avatar>
                 <div className="min-w-0">
                     <p className={`text-xs font-medium truncate ${i === activeIndex ? "text-primary" : "text-text-dark"}`}>{m.full_name}</p>
-                    <p className="text-[10px] text-text-muted truncate">{m.role_label}</p>
+                    {m.role_label && <p className="text-[10px] text-text-muted truncate">{m.role_label}</p>}
                 </div>
             </button>
         ))}

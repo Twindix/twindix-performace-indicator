@@ -1,40 +1,32 @@
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
-
 import { tasksConstants } from "@/constants/tasks";
-import { getErrorMessage } from "@/lib/error";
 import { tasksService } from "@/services";
 
+import { useMutationAction } from "../shared";
+
 export const useTaskTags = () => {
-    const [isLoading, setIsLoading] = useState(false);
-
-    const addHandler = useCallback(async (taskId: string, tag: string): Promise<boolean> => {
-        setIsLoading(true);
-        try {
+    const { mutate: addHandler, isLoading: isAdding } = useMutationAction(
+        async (taskId: string, tag: string): Promise<true> => {
             await tasksService.addTagsHandler(taskId, [tag]);
-            toast.success(tasksConstants.messages.tagAddSuccess);
             return true;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.tagAddFailed));
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+        },
+        {
+            successMessage: tasksConstants.messages.tagAddSuccess,
+            errorFallback: tasksConstants.errors.tagAddFailed,
+            context: "tasks.tags.add",
+        },
+    );
 
-    const removeHandler = useCallback(async (taskId: string, tag: string): Promise<boolean> => {
-        setIsLoading(true);
-        try {
+    const { mutate: removeHandler, isLoading: isRemoving } = useMutationAction(
+        async (taskId: string, tag: string): Promise<true> => {
             await tasksService.removeTagHandler(taskId, tag);
-            toast.success(tasksConstants.messages.tagRemoveSuccess);
             return true;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.tagRemoveFailed));
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+        },
+        {
+            successMessage: tasksConstants.messages.tagRemoveSuccess,
+            errorFallback: tasksConstants.errors.tagRemoveFailed,
+            context: "tasks.tags.remove",
+        },
+    );
 
-    return { addHandler, removeHandler, isLoading };
+    return { addHandler, removeHandler, isLoading: isAdding || isRemoving };
 };

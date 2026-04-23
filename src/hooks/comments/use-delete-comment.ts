@@ -1,27 +1,20 @@
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { commentsConstants } from "@/constants";
-import { getErrorMessage } from "@/lib/error";
 import { commentsService } from "@/services";
 
+import { useMutationAction } from "../shared";
+
 export const useDeleteComment = () => {
-    const [isLoading, setIsLoading] = useState(false);
-
-    const deleteHandler = async (id: string): Promise<boolean> => {
-        if (!navigator.onLine) throw new Error(commentsConstants.errors.genericError);
-        setIsLoading(true);
-        try {
+    const { mutate, isLoading } = useMutationAction(
+        async (id: string): Promise<true> => {
             await commentsService.deleteHandler(id);
-            toast.success(commentsConstants.messages.deleteSuccess);
             return true;
-        } catch (err) {
-            toast.error(getErrorMessage(err, commentsConstants.errors.deleteFailed));
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        },
+        {
+            successMessage: commentsConstants.messages.deleteSuccess,
+            errorFallback: commentsConstants.errors.deleteFailed,
+            context: "comments.delete",
+        },
+    );
 
-    return { deleteHandler, isLoading };
+    return { deleteHandler: mutate, isLoading };
 };

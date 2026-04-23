@@ -71,6 +71,9 @@ importers:
       tailwind-merge:
         specifier: ^3.4.0
         version: 3.5.0
+      workbox-window:
+        specifier: ^7.4.0
+        version: 7.4.0
       yup:
         specifier: ^1.7.1
         version: 1.7.1

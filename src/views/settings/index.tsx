@@ -1,29 +1,23 @@
 import { Calendar, Globe, Info, Minimize2, Moon, Sun } from "lucide-react";
-import { toast } from "sonner";
 
 import { Card, CardContent } from "@/atoms";
 import type { UserSettingsInterface } from "@/interfaces";
 import { Header } from "@/components/shared";
 import { SettingsSkeleton } from "@/components/skeletons";
-import { useAuth, useTheme, t, usePageLoader, type AppSettings } from "@/hooks";
-import { handleApiError } from "@/lib/error";
-import { authService } from "@/services";
+import { useAuth, useTheme, t, usePageLoader, useUpdateMe, type AppSettings } from "@/hooks";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 
 export const SettingsView = () => {
     const isLoading = usePageLoader();
     const { user, onUpdateUser } = useAuth();
     const { isDarkMode, onToggleTheme } = useTheme();
+    const { updateHandler } = useUpdateMe();
 
     const updateSetting = async (patch: Partial<NonNullable<typeof user>["settings"]>) => {
         if (!user) return;
         const updated = { ...(user!.settings ?? {}), ...patch } as UserSettingsInterface;
-        try {
-            const result = await authService.updateMeHandler({ settings: updated });
-            onUpdateUser(result);
-        } catch (err) {
-            toast.error(handleApiError(err).message);
-        }
+        const result = await updateHandler({ settings: updated });
+        if (result) onUpdateUser(result);
     };
 
     if (!user) return null;

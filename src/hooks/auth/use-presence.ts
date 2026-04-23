@@ -1,22 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 
 import { AUTH_UNAUTHORIZED_EVENT } from "@/lib/axios";
+import { runAction } from "@/lib/handle-action";
 import { authService } from "@/services";
 
 export type PresenceStatus = "active" | "offline";
 
-export const usePresence = (userId: string | undefined) => {
+export const usePresence = (userId: string | undefined, disabled = false) => {
     const [status, setStatus] = useState<PresenceStatus>("offline");
     const stoppedRef = useRef(false);
 
     const updateStatus = (next: PresenceStatus) => {
-        if (!userId || stoppedRef.current) return;
+        if (!userId || stoppedRef.current || disabled) return;
         setStatus(next);
-        authService.updateMeHandler({ presence_status: next }).catch(() => null);
+        runAction(() => authService.updateMeHandler({ presence_status: next }), {
+            silent: true,
+            context: "auth.presence",
+        });
     };
 
     useEffect(() => {
-        if (!userId) return;
+        if (!userId || disabled) return;
         stoppedRef.current = false;
 
         updateStatus("active");
@@ -43,7 +47,7 @@ export const usePresence = (userId: string | undefined) => {
             window.removeEventListener("beforeunload", handleBeforeUnload);
             window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, stop);
         };
-    }, [userId]);
+    }, [userId, disabled]);
 
     return { status, updateStatus };
 };

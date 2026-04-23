@@ -156,9 +156,9 @@ export const BlockerFormDialog = ({ open, onOpenChange, sprintId, initial, users
                     <DialogClose asChild>
                         <Button variant="outline" disabled={isSubmitting}>{t("Cancel")}</Button>
                     </DialogClose>
-                    <Button onClick={handleSubmit} disabled={!canSubmit || isSubmitting} className="gap-2">
-                        {!isEdit && <Plus className="h-4 w-4" />}
-                        {isSubmitting ? t("Saving...") : isEdit ? t("Save Changes") : t("Create Blocker")}
+                    <Button onClick={handleSubmit} loading={isSubmitting} disabled={!canSubmit} className="gap-2">
+                        {!isEdit && !isSubmitting && <Plus className="h-4 w-4" />}
+                        {isEdit ? t("Save Changes") : t("Create Blocker")}
                     </Button>
                 </div>
             </DialogContent>

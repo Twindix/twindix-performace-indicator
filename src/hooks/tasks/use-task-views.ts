@@ -1,9 +1,8 @@
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
 
 import { tasksConstants } from "@/constants/tasks";
 import type { KanbanBoardInterface, TaskInterface, TaskStatsInterface, TransitionCriteriaResponseInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
+import { runAction } from "@/lib/handle-action";
 import { tasksService } from "@/services";
 
 export const useTaskViews = () => {
@@ -12,11 +11,10 @@ export const useTaskViews = () => {
     const kanbanHandler = useCallback(async (sprintId: string): Promise<KanbanBoardInterface | null> => {
         setIsLoading(true);
         try {
-            const res = await tasksService.kanbanHandler(sprintId);
-            return res;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
-            return null;
+            return await runAction(() => tasksService.kanbanHandler(sprintId), {
+                errorFallback: tasksConstants.errors.fetchFailed,
+                context: "tasks.views.kanban",
+            });
         } finally {
             setIsLoading(false);
         }
@@ -25,11 +23,10 @@ export const useTaskViews = () => {
     const pipelineHandler = useCallback(async (sprintId: string): Promise<Record<string, TaskInterface[]> | null> => {
         setIsLoading(true);
         try {
-            const res = await tasksService.pipelineHandler(sprintId);
-            return res;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
-            return null;
+            return await runAction(() => tasksService.pipelineHandler(sprintId), {
+                errorFallback: tasksConstants.errors.fetchFailed,
+                context: "tasks.views.pipeline",
+            });
         } finally {
             setIsLoading(false);
         }
@@ -38,11 +35,10 @@ export const useTaskViews = () => {
     const statsHandler = useCallback(async (sprintId: string): Promise<TaskStatsInterface | null> => {
         setIsLoading(true);
         try {
-            const res = await tasksService.statsHandler(sprintId);
-            return res;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
-            return null;
+            return await runAction(() => tasksService.statsHandler(sprintId), {
+                silent: true,
+                context: "tasks.views.stats",
+            });
         } finally {
             setIsLoading(false);
         }
@@ -51,11 +47,10 @@ export const useTaskViews = () => {
     const transitionCriteriaHandler = useCallback(async (taskId: string, targetPhase: string): Promise<TransitionCriteriaResponseInterface | null> => {
         setIsLoading(true);
         try {
-            const res = await tasksService.transitionCriteriaHandler(taskId, targetPhase);
-            return res;
-        } catch (err) {
-            toast.error(getErrorMessage(err, tasksConstants.errors.fetchFailed));
-            return null;
+            return await runAction(() => tasksService.transitionCriteriaHandler(taskId, targetPhase), {
+                errorFallback: tasksConstants.errors.fetchFailed,
+                context: "tasks.views.transition",
+            });
         } finally {
             setIsLoading(false);
         }
@@ -68,4 +63,4 @@ export const useTaskViews = () => {
         transitionCriteriaHandler,
         isLoading,
     };
-};
+};

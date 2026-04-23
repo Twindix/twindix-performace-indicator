@@ -1,28 +1,26 @@
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { blockersConstants } from "@/constants";
 import type { BlockerInterface, CreateBlockerPayloadInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { blockersService } from "@/services";
 
-export const useCreateBlocker = () => {
-    const [isLoading, setIsLoading] = useState(false);
+import { useMutationAction, type FieldErrors } from "../shared";
 
-    const createHandler = async (sprintId: string, payload: CreateBlockerPayloadInterface): Promise<BlockerInterface | null> => {
-        if (!navigator.onLine) throw new Error(blockersConstants.errors.genericError);
-        setIsLoading(true);
-        try {
+export interface UseCreateBlockerOptions {
+    onFieldErrors?: (errors: FieldErrors) => void;
+}
+
+export const useCreateBlocker = ({ onFieldErrors }: UseCreateBlockerOptions = {}) => {
+    const { mutate, isLoading } = useMutationAction(
+        async (sprintId: string, payload: CreateBlockerPayloadInterface): Promise<BlockerInterface> => {
             const res = await blockersService.createHandler(sprintId, payload);
-            toast.success(blockersConstants.messages.createSuccess);
             return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, blockersConstants.errors.createFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        },
+        {
+            successMessage: blockersConstants.messages.createSuccess,
+            errorFallback: blockersConstants.errors.createFailed,
+            onFieldErrors,
+            context: "blockers.create",
+        },
+    );
 
-    return { createHandler, isLoading };
+    return { createHandler: mutate, isLoading };
 };

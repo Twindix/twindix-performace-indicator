@@ -1,26 +1,22 @@
-import { useCallback, useEffect, useState } from "react";
-
-import { apisData } from "@/data";
+import { usersConstants } from "@/constants";
 import type { UserInterface } from "@/interfaces";
-import { apiClient } from "@/lib/axios";
+import { usersService } from "@/services/users";
+
+import { useQueryAction } from "../shared";
 
 export const useUsersList = () => {
-    const [users, setUsers] = useState<UserInterface[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const { data, isLoading, refetch, setData } = useQueryAction<UserInterface[]>(
+        () => usersService.listHandler(),
+        [],
+        {
+            errorFallback: usersConstants.errors.fetchFailed,
+            initialData: [],
+            context: "users.list",
+        },
+    );
 
-    const fetch = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const { data } = await apiClient.get<{ data: UserInterface[] }>(apisData.users.list);
-            setUsers(data.data);
-        } catch {
-            // silent — users list is a UI helper
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+    const patchUserLocal = (updated: UserInterface) =>
+        setData((prev) => (prev ?? []).map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
 
-    useEffect(() => { fetch(); }, [fetch]);
-
-    return { users, isLoading, refetch: fetch };
+    return { users: data ?? [], isLoading, refetch, patchUserLocal };
 };

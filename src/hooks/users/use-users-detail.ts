@@ -1,32 +1,20 @@
-import { useEffect, useState } from "react";
-
+import { usersConstants } from "@/constants";
 import type { UserInterface } from "@/interfaces/common";
 import { usersService } from "@/services/users";
 
-interface UsersDetailState {
-    user: UserInterface | null;
-    isLoading: boolean;
-    error: string | null;
-}
+import { useQueryAction } from "../shared";
 
 export const useUsersDetail = (id: string | undefined) => {
-    const [state, setState] = useState<UsersDetailState>({
-        user: null,
-        isLoading: true,
-        error: null,
-    });
+    const { data, isLoading, refetch } = useQueryAction<UserInterface | null>(
+        async () => (id ? await usersService.detailHandler(id) : null),
+        [id],
+        {
+            enabled: !!id,
+            errorFallback: usersConstants.errors.detailFetchFailed,
+            initialData: null,
+            context: "users.detail",
+        },
+    );
 
-    useEffect(() => {
-        if (!id) {
-            setState({ user: null, isLoading: false, error: null });
-            return;
-        }
-        setState((prev) => ({ ...prev, isLoading: true, error: null }));
-        usersService
-            .detailHandler(id)
-            .then((user) => setState({ user, isLoading: false, error: null }))
-            .catch(() => setState({ user: null, isLoading: false, error: "User not found" }));
-    }, [id]);
-
-    return state;
+    return { user: data ?? null, isLoading, refetch };
 };

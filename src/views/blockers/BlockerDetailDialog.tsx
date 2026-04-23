@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { AlertCircle, Calendar, CheckCircle2, Clock, Edit, Layers, ShieldAlert, Trash2, TrendingUp, User } from "lucide-react";
 
 import { Badge, Button } from "@/atoms";
-import { t, useDeleteBlocker, useEscalateBlocker, useGetBlocker, useResolveBlocker } from "@/hooks";
+import { t, useDeleteBlocker, useEscalateBlocker, useGetBlocker, usePermissions, useResolveBlocker } from "@/hooks";
 import type { BlockerInterface } from "@/interfaces";
 import { Avatar, AvatarFallback, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/ui";
-import { cn, formatDate } from "@/utils";
+import { formatDate } from "@/utils";
 
 interface Props {
     blocker: BlockerInterface | null;
@@ -25,6 +25,7 @@ const statusVariant = (status: string | null): "error" | "success" | "warning" |
 };
 
 export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPatch, onDelete, refetchAnalytics }: Props) => {
+    const p = usePermissions();
     const { getHandler: getBlockerHandler } = useGetBlocker();
     const { resolveHandler: resolveBlockerHandler, isLoading: isResolving } = useResolveBlocker();
     const { escalateHandler: escalateBlockerHandler, isLoading: isEscalating } = useEscalateBlocker();
@@ -94,14 +95,18 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPat
                         <Badge variant="outline">{t(current.type)}</Badge>
                         <Badge variant="secondary">{t(current.severity.charAt(0).toUpperCase() + current.severity.slice(1))}</Badge>
                         <div className="ms-auto flex items-center gap-1.5 me-8">
-                            <Button variant="ghost" size="sm" onClick={() => onEdit(current)} className="h-7 gap-1.5 text-xs">
-                                <Edit className="h-3.5 w-3.5" />
-                                {t("Edit")}
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={handleDelete} disabled={isDeleting} className="h-7 gap-1.5 text-xs text-error hover:text-error hover:bg-error-light">
-                                <Trash2 className="h-3.5 w-3.5" />
-                                {isDeleting ? t("Deleting...") : t("Delete")}
-                            </Button>
+                            {p.blockers.edit(current) && (
+                                <Button variant="ghost" size="sm" onClick={() => onEdit(current)} className="h-7 gap-1.5 text-xs">
+                                    <Edit className="h-3.5 w-3.5" />
+                                    {t("Edit")}
+                                </Button>
+                            )}
+                            {p.blockers.delete() && (
+                                <Button variant="ghost" size="sm" onClick={handleDelete} loading={isDeleting} className="h-7 gap-1.5 text-xs text-error hover:text-error hover:bg-error-light">
+                                    {!isDeleting && <Trash2 className="h-3.5 w-3.5" />}
+                                    {t("Delete")}
+                                </Button>
+                            )}
                         </div>
                     </div>
                     <DialogTitle className="text-xl">{current.title}</DialogTitle>
@@ -174,14 +179,16 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPat
                 <div className="flex items-center gap-2 mt-4">
                     {!isResolved ? (
                         <>
-                            <Button onClick={handleResolve} disabled={isResolving} className="gap-1.5">
-                                <CheckCircle2 className={cn("h-4 w-4", isResolving && "animate-spin")} />
-                                {isResolving ? t("Resolving...") : t("Mark as Resolved")}
-                            </Button>
-                            {!isEscalated && (
-                                <Button variant="outline" onClick={handleEscalate} disabled={isEscalating} className="gap-1.5 border-warning text-warning hover:bg-warning-light">
-                                    <TrendingUp className="h-4 w-4" />
-                                    {isEscalating ? t("Escalating...") : t("Escalate")}
+                            {p.blockers.resolve(current) && (
+                                <Button onClick={handleResolve} loading={isResolving} className="gap-1.5">
+                                    {!isResolving && <CheckCircle2 className="h-4 w-4" />}
+                                    {t("Mark as Resolved")}
+                                </Button>
+                            )}
+                            {!isEscalated && p.blockers.escalate(current) && (
+                                <Button variant="outline" onClick={handleEscalate} loading={isEscalating} className="gap-1.5 border-warning text-warning hover:bg-warning-light">
+                                    {!isEscalating && <TrendingUp className="h-4 w-4" />}
+                                    {t("Escalate")}
                                 </Button>
                             )}
                         </>

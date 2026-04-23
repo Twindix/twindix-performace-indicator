@@ -1,27 +1,26 @@
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { decisionsConstants } from "@/constants";
 import type { DecisionInterface, UpdateDecisionPayloadInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { decisionsService } from "@/services";
 
-export const useUpdateDecision = () => {
-    const [isLoading, setIsLoading] = useState(false);
+import { useMutationAction, type FieldErrors } from "../shared";
 
-    const updateHandler = async (id: string, payload: UpdateDecisionPayloadInterface): Promise<DecisionInterface | null> => {
-        setIsLoading(true);
-        try {
+export interface UseUpdateDecisionOptions {
+    onFieldErrors?: (errors: FieldErrors) => void;
+}
+
+export const useUpdateDecision = ({ onFieldErrors }: UseUpdateDecisionOptions = {}) => {
+    const { mutate, isLoading } = useMutationAction(
+        async (id: string, payload: UpdateDecisionPayloadInterface): Promise<DecisionInterface> => {
             const res = await decisionsService.updateHandler(id, payload);
-            toast.success(decisionsConstants.messages.updateSuccess);
             return res.data;
-        } catch (err) {
-            toast.error(getErrorMessage(err, decisionsConstants.errors.updateFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        },
+        {
+            successMessage: decisionsConstants.messages.updateSuccess,
+            errorFallback: decisionsConstants.errors.updateFailed,
+            onFieldErrors,
+            context: "decisions.update",
+        },
+    );
 
-    return { updateHandler, isLoading };
+    return { updateHandler: mutate, isLoading };
 };

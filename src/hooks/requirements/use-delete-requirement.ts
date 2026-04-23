@@ -1,26 +1,20 @@
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { requirementsConstants } from "@/constants/requirements";
-import { getErrorMessage } from "@/lib/error";
 import { requirementsService } from "@/services";
 
+import { useMutationAction } from "../shared";
+
 export const useDeleteRequirement = () => {
-    const [isLoading, setIsLoading] = useState(false);
-
-    const deleteHandler = async (id: string): Promise<boolean> => {
-        setIsLoading(true);
-        try {
+    const { mutate, isLoading } = useMutationAction(
+        async (id: string): Promise<true> => {
             await requirementsService.deleteHandler(id);
-            toast.success(requirementsConstants.messages.deleteSuccess);
             return true;
-        } catch (err) {
-            toast.error(getErrorMessage(err, requirementsConstants.errors.deleteFailed));
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        },
+        {
+            successMessage: requirementsConstants.messages.deleteSuccess,
+            errorFallback: requirementsConstants.errors.deleteFailed,
+            context: "requirements.delete",
+        },
+    );
 
-    return { deleteHandler, isLoading };
+    return { deleteHandler: mutate, isLoading };
 };

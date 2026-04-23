@@ -1,13 +1,16 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { Plus, X, Clock, User, AlertCircle, FileText, ListChecks, Tag, Paperclip, CalendarClock } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button, Input, Label, Textarea } from "@/atoms";
 import { TaskPriority } from "@/enums";
 import type { AddTaskDialogProps, AddTaskFormState } from "@/interfaces";
-import { t, useCreateTask } from "@/hooks";
+import type { TaskInterface } from "@/interfaces";
+import type { UserLiteInterface } from "@/interfaces";
+import { t, useCreateTask, useFormErrors, useTasksListLite } from "@/hooks";
+import { runAction } from "@/lib/handle-action";
 import { requirementsService, tasksService } from "@/services";
 import { useSprintStore } from "@/store";
+import { Checkbox } from "@/ui";
 import {
     Dialog,
     DialogContent,
@@ -28,6 +31,117 @@ const PRIORITY_OPTIONS = [
     { value: TaskPriority.Critical, label: "Critical", color: "text-red-500" },
 ];
 
+interface TaskAutocompleteProps {
+    tasks: Pick<TaskInterface, "id" | "title">[];
+    value: string;
+    onChange: (id: string) => void;
+    placeholder?: string;
+}
+
+const TaskAutocomplete = ({ tasks, value, onChange, placeholder }: TaskAutocompleteProps) => {
+    const [query, setQuery] = useState("");
+    const [open, setOpen] = useState(false);
+    const selected = tasks.find((task) => task.id === value) ?? null;
+    const effectiveQuery = selected ? selected.title : query;
+    const filtered = useMemo(() => {
+        const q = query.trim().toLowerCase();
+        return tasks.filter((task) => !q || task.title.toLowerCase().includes(q)).slice(0, 8);
+    }, [tasks, query]);
+
+    return (
+        <div className="relative">
+            <div className="flex items-center gap-2">
+                <Input
+                    placeholder={placeholder ?? t("Search tasks...")}
+                    value={effectiveQuery}
+                    onChange={(e) => { setQuery(e.target.value); if (selected) onChange(""); setOpen(true); }}
+                    onFocus={() => setOpen(true)}
+                    onBlur={() => setTimeout(() => setOpen(false), 120)}
+                />
+                {selected && (
+                    <button type="button" onClick={() => { onChange(""); setQuery(""); }} className="p-1.5 rounded-md text-text-muted hover:text-error hover:bg-muted shrink-0">
+                        <X className="h-4 w-4" />
+                    </button>
+                )}
+            </div>
+            {open && filtered.length > 0 && (
+                <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-auto">
+                    {filtered.map((task) => (
+                        <button key={task.id} type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => { onChange(task.id); setQuery(""); setOpen(false); }}
+                            className={`w-full px-3 py-2 text-left text-sm hover:bg-muted cursor-pointer ${task.id === value ? "bg-muted" : ""}`}>
+                            {task.title}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+interface UsersAutocompleteProps {
+    members: UserLiteInterface[];
+    values: string[];
+    onChange: (ids: string[]) => void;
+    placeholder?: string;
+}
+
+const UsersAutocomplete = ({ members, values, onChange, placeholder }: UsersAutocompleteProps) => {
+    const [query, setQuery] = useState("");
+    const [open, setOpen] = useState(false);
+    const selected = members.filter((m) => values.includes(m.id));
+    const filtered = useMemo(() => {
+        const q = query.trim().toLowerCase();
+        return members.filter((m) =>
+            !values.includes(m.id) && (!q || m.full_name.toLowerCase().includes(q) || (m.email ?? "").toLowerCase().includes(q)),
+        ).slice(0, 8);
+    }, [members, values, query]);
+
+    const addUser = (id: string) => { onChange([...values, id]); setQuery(""); };
+    const removeUser = (id: string) => onChange(values.filter((v) => v !== id));
+
+    return (
+        <div className="flex flex-col gap-2">
+            {selected.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                    {selected.map((m) => (
+                        <span key={m.id} className="flex items-center gap-1 text-xs font-medium bg-primary/10 text-primary rounded-full pl-2 pr-1 py-0.5">
+                            {m.full_name}
+                            <button type="button" onClick={() => removeUser(m.id)} className="hover:text-error transition-colors">
+                                <X className="h-3 w-3" />
+                            </button>
+                        </span>
+                    ))}
+                </div>
+            )}
+            <div className="relative">
+                <Input
+                    placeholder={placeholder ?? t("Search users...")}
+                    value={query}
+                    onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+                    onFocus={() => setOpen(true)}
+                    onBlur={() => setTimeout(() => setOpen(false), 120)}
+                />
+                {open && filtered.length > 0 && (
+                    <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-auto">
+                        {filtered.map((m) => (
+                            <button key={m.id} type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => addUser(m.id)}
+                                className="w-full px-3 py-2 text-left text-sm hover:bg-muted cursor-pointer flex items-center gap-2">
+                                <span className="text-xs font-medium bg-muted rounded-full h-5 w-5 flex items-center justify-center shrink-0">{m.avatar_initials}</span>
+                                <span className="flex-1 truncate">{m.full_name}</span>
+                                {m.email && <span className="text-xs text-text-muted truncate">{m.email}</span>}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
 const INITIAL_FORM_STATE: AddTaskFormState = {
     title: "",
     description: "",
@@ -42,20 +156,27 @@ const INITIAL_FORM_STATE: AddTaskFormState = {
 
 export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: AddTaskDialogProps) => {
     const { activeSprintId } = useSprintStore();
-    const { createHandler: createTaskHandler, isLoading: isSubmitting } = useCreateTask();
+    const { setFieldErrors, clearError, clear: clearFieldErrors, getError } = useFormErrors();
+    const { createHandler: createTaskHandler, isLoading: isSubmitting } = useCreateTask({ onFieldErrors: setFieldErrors });
     const [formState, setFormState] = useState<AddTaskFormState>(INITIAL_FORM_STATE);
     const [requirementInput, setRequirementInput] = useState("");
     const [tagInput, setTagInput] = useState("");
     const [deadline, setDeadline] = useState("");
-    const [taskType, setTaskType] = useState<"stand_alone" | "compound">("stand_alone");
-    const [compoundRule, setCompoundRule] = useState<"none" | "start_after_other" | "notify_on_done">("none");
+    const [taskType, setTaskType] = useState<"standalone" | "compound">("standalone");
+    const [startAfterEnabled, setStartAfterEnabled] = useState(false);
+    const [startAfterTaskId, setStartAfterTaskId] = useState("");
+    const [notifyEnabled, setNotifyEnabled] = useState(false);
+    const [notifyUserIds, setNotifyUserIds] = useState<string[]>([]);
+    const { tasks: sprintTasks } = useTasksListLite({ sprint_id: activeSprintId ?? undefined, exclude_done: true });
     const requirementInputRef = useRef<HTMLInputElement>(null);
     const tagInputRef = useRef<HTMLInputElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const submittingRef = useRef(false);
 
-    const updateField = <K extends keyof AddTaskFormState>(field: K, value: AddTaskFormState[K]) =>
+    const updateField = <K extends keyof AddTaskFormState>(field: K, value: AddTaskFormState[K]) => {
         setFormState((prev) => ({ ...prev, [field]: value }));
+        clearError(field);
+    };
 
     const handleOpenChange = useCallback((newOpen: boolean) => {
         if (!newOpen) {
@@ -63,11 +184,15 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
             setRequirementInput("");
             setTagInput("");
             setDeadline("");
-            setTaskType("stand_alone");
-            setCompoundRule("none");
+            setTaskType("standalone");
+            setStartAfterEnabled(false);
+            setStartAfterTaskId("");
+            setNotifyEnabled(false);
+            setNotifyUserIds([]);
+            clearFieldErrors();
         }
         onOpenChange(newOpen);
-    }, [onOpenChange]);
+    }, [onOpenChange, clearFieldErrors]);
 
     const addRequirement = useCallback(() => {
         const label = requirementInput.trim();
@@ -117,9 +242,14 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
         e.preventDefault();
         if (submittingRef.current) return;
 
-        if (!formState.title.trim()) { toast.error(t("Title is required")); return; }
-        if (!formState.assigned_to) { toast.error(t("Assignee is required")); return; }
-        if (!formState.estimatedHours || formState.estimatedHours <= 0) { toast.error(t("Estimated hours is required")); return; }
+        const clientErrors: Record<string, string[]> = {};
+        if (!formState.title.trim()) clientErrors.title = [t("Title is required")];
+        if (!formState.assigned_to) clientErrors.assigned_to = [t("Assignee is required")];
+        if (!formState.estimatedHours || formState.estimatedHours <= 0) clientErrors.estimated_hours = [t("Estimated hours is required")];
+        if (Object.keys(clientErrors).length > 0) {
+            setFieldErrors(clientErrors);
+            return;
+        }
         if (!activeSprintId) return;
 
         submittingRef.current = true;
@@ -129,21 +259,34 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
             assigned_to: formState.assigned_to,
             priority: formState.priority,
             estimated_hours: formState.estimatedHours,
+            dead_time: deadline || null,
+            task_type: taskType,
+            depends_on_task: taskType === "compound" && startAfterEnabled && startAfterTaskId ? startAfterTaskId : null,
+            notify_on_done: taskType === "compound" && notifyEnabled,
         });
 
         if (created) {
             if (addTaskLocal) addTaskLocal(created);
 
-            await Promise.all([
-                ...formState.requirements.map((req) => requirementsService.createHandler(created.id, { content: req.label })),
-                ...(formState.tags.length ? [tasksService.addTagsHandler(created.id, formState.tags)] : []),
-                ...formState.files.map((file) => tasksService.addAttachmentHandler(created.id, file)),
-            ]);
+            const hasExtras = formState.requirements.length > 0 || formState.tags.length > 0 || formState.files.length > 0;
+            if (hasExtras) {
+                await runAction(
+                    () => Promise.all([
+                        ...formState.requirements.map((req) => requirementsService.createHandler(created.id, { content: req.label })),
+                        ...(formState.tags.length ? [tasksService.addTagsHandler(created.id, formState.tags)] : []),
+                        ...formState.files.map((file) => tasksService.addAttachmentHandler(created.id, file)),
+                    ]),
+                    {
+                        errorFallback: t("Task created, but some extras (requirements/tags/attachments) failed."),
+                        context: "tasks.create-extras",
+                    },
+                );
+            }
 
             handleOpenChange(false);
         }
         submittingRef.current = false;
-    }, [formState, activeSprintId, createTaskHandler, handleOpenChange, addTaskLocal]);
+    }, [formState, activeSprintId, createTaskHandler, handleOpenChange, addTaskLocal, deadline, taskType, startAfterEnabled, startAfterTaskId, notifyEnabled, setFieldErrors]);
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -168,6 +311,7 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                             value={formState.title}
                             onChange={(e) => updateField("title", e.target.value)}
                         />
+                        {getError("title") && <p className="text-xs text-error">{getError("title")}</p>}
                     </div>
 
                     <div className="space-y-2">
@@ -182,6 +326,7 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                             onChange={(e) => updateField("description", e.target.value)}
                             rows={3}
                         />
+                        {getError("description") && <p className="text-xs text-error">{getError("description")}</p>}
                     </div>
 
                     <div className="space-y-2">
@@ -299,6 +444,7 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                                     ))}
                                 </SelectContent>
                             </Select>
+                            {getError("assigned_to") && <p className="text-xs text-error">{getError("assigned_to")}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -318,6 +464,7 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                                     ))}
                                 </SelectContent>
                             </Select>
+                            {getError("priority") && <p className="text-xs text-error">{getError("priority")}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -334,6 +481,7 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                                 value={formState.estimatedHours || ""}
                                 onChange={(e) => updateField("estimatedHours", parseFloat(e.target.value) || 0)}
                             />
+                            {getError("estimated_hours") && <p className="text-xs text-error">{getError("estimated_hours")}</p>}
                         </div>
                     </div>
 
@@ -347,8 +495,9 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                                 id="deadline"
                                 type="datetime-local"
                                 value={deadline}
-                                onChange={(e) => setDeadline(e.target.value)}
+                                onChange={(e) => { setDeadline(e.target.value); clearError("dead_time"); }}
                             />
+                            {getError("dead_time") && <p className="text-xs text-error">{getError("dead_time")}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -356,12 +505,12 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                                 <ListChecks className="h-4 w-4 text-text-muted" />
                                 {t("Task Type")}
                             </Label>
-                            <Select value={taskType} onValueChange={(v) => setTaskType(v as "stand_alone" | "compound")}>
+                            <Select value={taskType} onValueChange={(v) => setTaskType(v as "standalone" | "compound")}>
                                 <SelectTrigger id="taskType" className="w-full">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="stand_alone">{t("Stand-alone")}</SelectItem>
+                                    <SelectItem value="standalone">{t("Stand-alone")}</SelectItem>
                                     <SelectItem value="compound">{t("Compound")}</SelectItem>
                                 </SelectContent>
                             </Select>
@@ -369,27 +518,49 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                     </div>
 
                     {taskType === "compound" && (
-                        <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted/50 p-3">
-                            <label className="flex items-center gap-2 text-sm text-text-dark cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="compoundRule"
-                                    className="h-4 w-4 accent-primary cursor-pointer"
-                                    checked={compoundRule === "start_after_other"}
-                                    onChange={() => setCompoundRule("start_after_other")}
-                                />
-                                {t("Start only if other task done")}
-                            </label>
-                            <label className="flex items-center gap-2 text-sm text-text-dark cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="compoundRule"
-                                    className="h-4 w-4 accent-primary cursor-pointer"
-                                    checked={compoundRule === "notify_on_done"}
-                                    onChange={() => setCompoundRule("notify_on_done")}
-                                />
-                                {t("Notify others when done")}
-                            </label>
+                        <div className="flex flex-col gap-4 rounded-lg border border-border bg-muted/50 p-3">
+                            <div className="flex flex-col gap-2">
+                                <label className="flex items-center gap-2 text-sm text-text-dark cursor-pointer">
+                                    <Checkbox
+                                        checked={startAfterEnabled}
+                                        onCheckedChange={(v) => {
+                                            const enabled = v === true;
+                                            setStartAfterEnabled(enabled);
+                                            if (!enabled) setStartAfterTaskId("");
+                                        }}
+                                    />
+                                    {t("Start only if other task done")}
+                                </label>
+                                {startAfterEnabled && (
+                                    <TaskAutocomplete
+                                        tasks={sprintTasks}
+                                        value={startAfterTaskId}
+                                        onChange={setStartAfterTaskId}
+                                        placeholder={t("Search tasks in this sprint...")}
+                                    />
+                                )}
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="flex items-center gap-2 text-sm text-text-dark cursor-pointer">
+                                    <Checkbox
+                                        checked={notifyEnabled}
+                                        onCheckedChange={(v) => {
+                                            const enabled = v === true;
+                                            setNotifyEnabled(enabled);
+                                            if (!enabled) setNotifyUserIds([]);
+                                        }}
+                                    />
+                                    {t("Notify others when done")}
+                                </label>
+                                {notifyEnabled && (
+                                    <UsersAutocomplete
+                                        members={members}
+                                        values={notifyUserIds}
+                                        onChange={setNotifyUserIds}
+                                        placeholder={t("Search users to notify...")}
+                                    />
+                                )}
+                            </div>
                         </div>
                     )}
 
@@ -397,18 +568,9 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                         <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting}>
                             {t("Cancel")}
                         </Button>
-                        <Button type="submit" disabled={isSubmitting} className="gap-2">
-                            {isSubmitting ? (
-                                <>
-                                    <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                    {t("Creating...")}
-                                </>
-                            ) : (
-                                <>
-                                    <Plus className="h-4 w-4" />
-                                    {t("Create Task")}
-                                </>
-                            )}
+                        <Button type="submit" loading={isSubmitting} className="gap-2">
+                            {!isSubmitting && <Plus className="h-4 w-4" />}
+                            {t("Create Task")}
                         </Button>
                     </div>
                 </form>

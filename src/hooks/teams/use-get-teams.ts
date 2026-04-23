@@ -1,39 +1,33 @@
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useCallback } from "react";
 
 import { teamsConstants } from "@/constants";
 import type { TeamInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { teamsService } from "@/services";
 
+import { useQueryAction } from "../shared";
+
 export const useGetTeams = () => {
-    const [teams, setTeams] = useState<TeamInterface[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    const fetch = useCallback(async () => {
-        if (!navigator.onLine) {
-            toast.error(teamsConstants.errors.genericError);
-            return;
-        }
-        setIsLoading(true);
-        try {
-            const res = await teamsService.listHandler();
-            setTeams(res.data);
-        } catch (err) {
-            toast.error(getErrorMessage(err, teamsConstants.errors.fetchFailed));
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    useEffect(() => { fetch(); }, [fetch]);
+    const { data, isLoading, refetch, setData } = useQueryAction<TeamInterface[]>(
+        async () => (await teamsService.listHandler()).data,
+        [],
+        {
+            errorFallback: teamsConstants.errors.fetchFailed,
+            initialData: [],
+            context: "teams.list",
+        },
+    );
 
     const patchTeamLocal = useCallback((team: TeamInterface) => {
-        setTeams((prev) => {
-            const exists = prev.some((t) => t.id === team.id);
-            return exists ? prev.map((t) => t.id === team.id ? team : t) : [...prev, team];
+        setData((prev) => {
+            const arr = prev ?? [];
+            const exists = arr.some((t) => t.id === team.id);
+            return exists ? arr.map((t) => (t.id === team.id ? team : t)) : [...arr, team];
         });
-    }, []);
+    }, [setData]);
 
-    return { teams, isLoading, refetch: fetch, patchTeamLocal };
+    const removeTeamLocal = useCallback((id: string) => {
+        setData((prev) => (prev ?? []).filter((t) => t.id !== id));
+    }, [setData]);
+
+    return { teams: data ?? [], isLoading, refetch, patchTeamLocal, removeTeamLocal };
 };

@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowRightLeft, BarChart3, Users } from "lucide-react";
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { WorkloadSkeleton } from "@/components/skeletons";
+import { usersConstants } from "@/constants";
 import { t, useSettings, usePageLoader } from "@/hooks";
 import type { TeamMemberWorkloadInterface, UserInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
@@ -117,7 +118,7 @@ export const WorkloadView = () => {
                                         </Avatar>
                                         <div className="min-w-0 flex-1">
                                             <p className="text-sm font-semibold text-text-dark truncate">{member?.full_name ?? "Unknown"}</p>
-                                            <p className="text-xs text-text-muted truncate">{member?.role_tier?.replace(/_/g, " ")}</p>
+                                            <p className="text-xs text-text-muted truncate">{member?.role_tier ? usersConstants.roleTierLabels[member.role_tier] : ""}</p>
                                         </div>
                                         {isOverloaded && (
                                             <Badge variant="error" className="shrink-0 md:hidden">

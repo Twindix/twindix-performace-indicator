@@ -1,28 +1,26 @@
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { teamsConstants } from "@/constants";
 import type { CreateTeamPayloadInterface, TeamInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { teamsService } from "@/services";
 
-export const useCreateTeam = () => {
-    const [isLoading, setIsLoading] = useState(false);
+import { useMutationAction, type FieldErrors } from "../shared";
 
-    const createHandler = async (payload: CreateTeamPayloadInterface): Promise<TeamInterface | null> => {
-        if (!navigator.onLine) throw new Error(teamsConstants.errors.genericError);
-        setIsLoading(true);
-        try {
+export interface UseCreateTeamOptions {
+    onFieldErrors?: (errors: FieldErrors) => void;
+}
+
+export const useCreateTeam = ({ onFieldErrors }: UseCreateTeamOptions = {}) => {
+    const { mutate, isLoading } = useMutationAction(
+        async (payload: CreateTeamPayloadInterface): Promise<TeamInterface> => {
             const res = await teamsService.createHandler(payload);
-            toast.success(teamsConstants.messages.createSuccess);
-            return (res as unknown as { data?: TeamInterface }).data ?? (res as unknown as TeamInterface);
-        } catch (err) {
-            toast.error(getErrorMessage(err, teamsConstants.errors.createFailed));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+            return res.data;
+        },
+        {
+            successMessage: teamsConstants.messages.createSuccess,
+            errorFallback: teamsConstants.errors.createFailed,
+            onFieldErrors,
+            context: "team.create",
+        },
+    );
 
-    return { createHandler, isLoading };
+    return { createHandler: mutate, isLoading };
 };

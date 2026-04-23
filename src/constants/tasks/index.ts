@@ -11,6 +11,7 @@ export const tasksConstants = {
         commentAddFailed: "Failed to add comment.",
         commentUpdateFailed: "Failed to update comment.",
         commentDeleteFailed: "Failed to delete comment.",
+        markCompleteFailed: "Failed to send for approval.",
     },
     messages: {
         createSuccess: "Task created.",
@@ -23,5 +24,6 @@ export const tasksConstants = {
         commentAddSuccess: "Comment added.",
         commentUpdateSuccess: "Comment updated.",
         commentDeleteSuccess: "Comment deleted.",
+        markCompleteSuccess: "Sent for manager approval.",
     },
 };

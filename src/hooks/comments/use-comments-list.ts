@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useCallback } from "react";
 
 import { commentsConstants } from "@/constants";
 import type { CommentInterface, CommentsAnalyticsInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { commentsService } from "@/services";
+
+import { useQueryAction } from "../shared";
 
 interface UseCommentsListOptions {
     status?: string;
@@ -15,53 +15,62 @@ interface UseCommentsListOptions {
 export const useCommentsList = (sprintId: string, options: UseCommentsListOptions = {}) => {
     const { status, mention, per_page } = options;
 
-    const [comments, setComments] = useState<CommentInterface[]>([]);
-    const [analytics, setAnalytics] = useState<CommentsAnalyticsInterface | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-
-    const refetch = useCallback(async () => {
-        if (!sprintId) { setComments([]); setIsLoading(false); return; }
-        setIsLoading(true);
-        try {
+    const {
+        data: comments,
+        isLoading,
+        refetch,
+        setData,
+    } = useQueryAction<CommentInterface[]>(
+        async () => {
+            if (!sprintId) return [];
             const res = await commentsService.listHandler(sprintId, { status, mention, per_page });
-            setComments(res.data);
-        } catch (err) {
-            toast.error(getErrorMessage(err, commentsConstants.errors.fetchFailed));
-        } finally {
-            setIsLoading(false);
-        }
-    }, [sprintId, status, mention, per_page]);
+            return res.data;
+        },
+        [sprintId, status, mention, per_page],
+        {
+            enabled: !!sprintId,
+            errorFallback: commentsConstants.errors.fetchFailed,
+            initialData: [],
+            context: "comments.list",
+        },
+    );
 
-    const refetchAnalytics = useCallback(async () => {
-        if (!sprintId) { setAnalytics(null); return; }
-        try {
-            const res = await commentsService.analyticsHandler(sprintId);
-            setAnalytics(res);
-        } catch (err) {
-            toast.error(getErrorMessage(err, commentsConstants.errors.analyticsFailed));
-        }
-    }, [sprintId]);
-
-    useEffect(() => {
-        refetch();
-    }, [refetch]);
-
-    useEffect(() => {
-        refetchAnalytics();
-    }, [refetchAnalytics]);
+    const {
+        data: analytics,
+        refetch: refetchAnalytics,
+    } = useQueryAction<CommentsAnalyticsInterface | null>(
+        async () => (sprintId ? await commentsService.analyticsHandler(sprintId) : null),
+        [sprintId],
+        {
+            enabled: !!sprintId,
+            silent: true,
+            errorFallback: commentsConstants.errors.analyticsFailed,
+            initialData: null,
+            context: "comments.analytics",
+        },
+    );
 
     const patchCommentLocal = useCallback((comment: CommentInterface) => {
-        setComments((prev) => {
-            const exists = prev.some((c) => c.id === comment.id);
+        setData((prev) => {
+            const arr = prev ?? [];
+            const exists = arr.some((c) => c.id === comment.id);
             return exists
-                ? prev.map((c) => c.id === comment.id ? { ...c, ...comment } : c)
-                : [comment, ...prev];
+                ? arr.map((c) => (c.id === comment.id ? { ...c, ...comment } : c))
+                : [comment, ...arr];
         });
-    }, []);
+    }, [setData]);
 
     const removeCommentLocal = useCallback((id: string) => {
-        setComments((prev) => prev.filter((c) => c.id !== id));
-    }, []);
+        setData((prev) => (prev ?? []).filter((c) => c.id !== id));
+    }, [setData]);
 
-    return { comments, analytics, isLoading, refetch, refetchAnalytics, patchCommentLocal, removeCommentLocal };
+    return {
+        comments: comments ?? [],
+        analytics: analytics ?? null,
+        isLoading,
+        refetch,
+        refetchAnalytics,
+        patchCommentLocal,
+        removeCommentLocal,
+    };
 };

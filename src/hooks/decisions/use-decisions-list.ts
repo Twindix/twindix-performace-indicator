@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useCallback } from "react";
 
 import { decisionsConstants } from "@/constants";
 import type { DecisionCategory, DecisionStatus } from "@/enums";
 import type { DecisionInterface } from "@/interfaces";
-import { getErrorMessage } from "@/lib/error";
 import { decisionsService } from "@/services";
+
+import { useQueryAction } from "../shared";
 
 interface UseDecisionsListOptions {
     status?: DecisionStatus;
@@ -16,34 +16,32 @@ interface UseDecisionsListOptions {
 export const useDecisionsList = (sprintId: string, options: UseDecisionsListOptions = {}) => {
     const { status, category, per_page } = options;
 
-    const [decisions, setDecisions] = useState<DecisionInterface[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    const fetch = useCallback(async () => {
-        if (!sprintId) { setDecisions([]); setIsLoading(false); return; }
-        setIsLoading(true);
-        try {
+    const { data, isLoading, refetch, setData } = useQueryAction<DecisionInterface[]>(
+        async () => {
+            if (!sprintId) return [];
             const res = await decisionsService.listHandler(sprintId, { status, category, per_page });
-            setDecisions(res.data);
-        } catch (err) {
-            toast.error(getErrorMessage(err, decisionsConstants.errors.fetchFailed));
-        } finally {
-            setIsLoading(false);
-        }
-    }, [sprintId, status, category, per_page]);
-
-    useEffect(() => { fetch(); }, [fetch]);
+            return res.data;
+        },
+        [sprintId, status, category, per_page],
+        {
+            enabled: !!sprintId,
+            errorFallback: decisionsConstants.errors.fetchFailed,
+            initialData: [],
+            context: "decisions.list",
+        },
+    );
 
     const patchDecisionLocal = useCallback((decision: DecisionInterface) => {
-        setDecisions((prev) => {
-            const exists = prev.some((d) => d.id === decision.id);
-            return exists ? prev.map((d) => d.id === decision.id ? decision : d) : [decision, ...prev];
+        setData((prev) => {
+            const arr = prev ?? [];
+            const exists = arr.some((d) => d.id === decision.id);
+            return exists ? arr.map((d) => (d.id === decision.id ? decision : d)) : [decision, ...arr];
         });
-    }, []);
+    }, [setData]);
 
     const removeDecisionLocal = useCallback((id: string) => {
-        setDecisions((prev) => prev.filter((d) => d.id !== id));
-    }, []);
+        setData((prev) => (prev ?? []).filter((d) => d.id !== id));
+    }, [setData]);
 
-    return { decisions, isLoading, refetch: fetch, patchDecisionLocal, removeDecisionLocal };
+    return { decisions: data ?? [], isLoading, refetch, patchDecisionLocal, removeDecisionLocal };
 };
