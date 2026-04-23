@@ -1,5 +1,5 @@
 import type { TaskPriority } from "@/enums";
-import type { TaskInterface, UserInterface } from "@/interfaces";
+import type { TaskInterface, UserLiteInterface } from "@/interfaces";
 
 export interface RequirementDraftInterface {
     id: string;
@@ -28,7 +28,7 @@ export interface AddTaskFormState {
 export interface AddTaskDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    members: UserInterface[];
+    members: UserLiteInterface[];
     sprintId: string;
     onAddTask?: (task: TaskInterface) => void;
     addTaskLocal?: (task: TaskInterface) => void;

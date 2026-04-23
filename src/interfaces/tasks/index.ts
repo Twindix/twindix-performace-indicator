@@ -45,6 +45,14 @@ export interface TaskPhaseNavigationInterface {
     next: string | null;
 }
 
+export interface TaskDependencyInterface {
+    id: string;
+    code?: string;
+    title: string;
+    status?: string;
+    phase?: string;
+}
+
 export interface TaskInterface {
     id: string;
     task_number?: string;
@@ -61,6 +69,13 @@ export interface TaskInterface {
     rework_count?: string | null;
     is_blocked?: boolean | null;
     is_overdue?: boolean | null;
+    pending_approval?: boolean | null;
+    dead_time?: string | null;
+    dead_time_status?: "approaching" | "overdue" | null;
+    task_type?: "standalone" | "compound" | null;
+    depends_on_task?: TaskDependencyInterface | null;
+    notify_on_done?: boolean | null;
+    is_blocked_by_dependency?: boolean | null;
     created_at?: string;
     assignee?: TaskUserInterface | null;
     tags: TaskTag[];
@@ -92,6 +107,12 @@ export interface TaskAttachmentInterface {
     uploaded_at?: string;
     uploadedAt?: string; // Alternative property name expected by the code
     dataUrl?: string; // Expected by the code
+}
+
+export interface TaskLiteInterface {
+    id: string;
+    code?: string;
+    title: string;
 }
 
 export interface RequirementInterface {
@@ -183,6 +204,10 @@ export interface CreateTaskPayloadInterface {
     estimated_hours: number;
     assigneeIds?: string[]; // Additional property expected by the code
     tags?: TaskTag[]; // Additional property expected by the code
+    dead_time?: string | null;
+    task_type?: "standalone" | "compound";
+    depends_on_task?: string | null;
+    notify_on_done?: boolean;
 }
 
 export interface UpdateTaskPayloadInterface {
@@ -193,6 +218,10 @@ export interface UpdateTaskPayloadInterface {
     story_points?: number;
     estimated_hours?: number;
     phase?: string; // Additional property expected by the code
+    dead_time?: string | null;
+    task_type?: "standalone" | "compound";
+    depends_on_task?: string | null;
+    notify_on_done?: boolean;
 }
 
 export interface UpdateTaskStatusPayloadInterface {

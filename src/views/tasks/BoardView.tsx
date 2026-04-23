@@ -1,5 +1,4 @@
-import type { DragEvent } from "react";
-import { Circle, GripVertical, Lock } from "lucide-react";
+import { Circle, Clock, Link2, Lock } from "lucide-react";
 
 import { Badge } from "@/atoms";
 import { TaskPriority } from "@/enums";
@@ -34,26 +33,12 @@ const PRIORITY_VARIANT: Record<string, "error" | "warning" | "default" | "second
 
 export interface BoardViewProps {
     kanban: KanbanBoardInterface;
-    draggedTask: TaskInterface | null;
-    dragOverStatus: string | null;
-    handleDragStart: (e: DragEvent<HTMLDivElement>, task: TaskInterface) => void;
-    handleDragOver: (e: DragEvent<HTMLDivElement>) => void;
-    handleDragEnter: (e: DragEvent<HTMLDivElement>, status: string) => void;
-    handleDragLeave: (e: DragEvent<HTMLDivElement>) => void;
-    handleDrop: (e: DragEvent<HTMLDivElement>, targetStatus: string) => void;
     setSelectedTask: (task: TaskInterface) => void;
     setDialogOpen: (open: boolean) => void;
 }
 
 export const BoardView = ({
     kanban,
-    draggedTask,
-    dragOverStatus,
-    handleDragStart,
-    handleDragOver,
-    handleDragEnter,
-    handleDragLeave,
-    handleDrop,
     setSelectedTask,
     setDialogOpen,
 }: BoardViewProps) => {
@@ -65,14 +50,7 @@ export const BoardView = ({
                 return (
                     <div
                         key={status}
-                        className={cn(
-                            "flex flex-col w-80 shrink-0 bg-surface rounded-xl overflow-hidden border transition-colors",
-                            dragOverStatus === status ? "border-primary bg-primary-lighter/10" : "border-border"
-                        )}
-                        onDragOver={handleDragOver}
-                        onDragEnter={(e) => handleDragEnter(e, status)}
-                        onDragLeave={handleDragLeave}
-                        onDrop={(e) => handleDrop(e, status)}
+                        className="flex flex-col w-80 shrink-0 bg-surface rounded-xl overflow-hidden border border-border"
                     >
                         <div className="p-3 bg-muted/50 border-b border-border flex items-center justify-between sticky top-0 z-10 hidden-scrollbar">
                             <h3 className="text-sm font-bold text-text-dark flex items-center gap-2">
@@ -87,30 +65,31 @@ export const BoardView = ({
                         <div className="flex-1 p-2 overflow-y-auto space-y-2 relative pointer-events-auto">
                             {columnTasks.length === 0 && (
                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <p className="text-xs text-text-muted italic">{t("Drop tasks here")}</p>
+                                    <p className="text-xs text-text-muted italic">{t("No tasks")}</p>
                                 </div>
                             )}
 
-                            {columnTasks.map((task) => (
+                            {columnTasks.map((task) => {
+                                const blockedByDep = task.is_blocked_by_dependency === true;
+                                return (
                                 <div
                                     key={task.id}
-                                    draggable
                                     className={cn(
-                                        "bg-surface rounded-lg p-3 border cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-all z-20 pointer-events-auto relative",
-                                        task.is_blocked ? "border-error bg-error/5" : "border-border",
-                                        draggedTask?.id === task.id ? "opacity-50 scale-95" : (!task.is_blocked && "hover:border-primary"),
-                                        dragOverStatus === status ? "pointer-events-none" : ""
+                                        "bg-surface rounded-lg p-3 border shadow-sm hover:shadow-md transition-all z-20 pointer-events-auto relative cursor-pointer",
+                                        task.is_blocked || blockedByDep ? "border-error bg-error/5" : "border-border",
+                                        !task.is_blocked && !blockedByDep && "hover:border-primary"
                                     )}
-                                    onDragStart={(e) => handleDragStart(e, task)}
                                     onClick={() => { setSelectedTask(task); setDialogOpen(true); }}
                                 >
                                     <div className="flex items-start justify-between mb-2">
                                         <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                                            <GripVertical className="h-4 w-4 text-text-muted shrink-0 cursor-grab" />
                                             <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0", COLUMN_COLORS[task.status ?? "backlog"], "text-white")}>
                                                 {task.task_number ?? task.id}
                                             </span>
                                             {task.is_blocked && <Lock className="h-3 w-3 text-error shrink-0" />}
+                                            {blockedByDep && <Link2 className="h-3 w-3 text-error shrink-0" aria-label={t("Blocked by dependency")} />}
+                                            {task.dead_time_status === "approaching" && <Clock className="h-3 w-3 text-warning shrink-0" aria-label={t("Approaching deadline")} />}
+                                            {task.dead_time_status === "overdue" && <Clock className="h-3 w-3 text-error shrink-0" aria-label={t("Overdue")} />}
                                         </div>
                                     </div>
 
@@ -142,7 +121,8 @@ export const BoardView = ({
                                         )}
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 );

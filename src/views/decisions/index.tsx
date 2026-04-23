@@ -7,13 +7,13 @@ import { DecisionsSkeleton } from "@/components/skeletons";
 import { DecisionCategory, DecisionStatus } from "@/enums";
 import {
     t,
-    useAuth,
     useCreateDecision,
     useDecisionsAnalytics,
     useDecisionsList,
     useDeleteDecision,
     useGetDecision,
     usePageLoader,
+    usePermissions,
     useSettings,
     useUpdateDecision,
 } from "@/hooks";
@@ -56,7 +56,7 @@ export const DecisionsView = () => {
     const [settings] = useSettings();
     const compact = settings.compactView;
     const { activeSprintId } = useSprintStore();
-    const { user } = useAuth();
+    const p = usePermissions();
 
     const [statusFilter, setStatusFilter] = useState<DecisionStatus | "all">("all");
     const [categoryFilter, setCategoryFilter] = useState<DecisionCategory | "all">("all");
@@ -76,8 +76,6 @@ export const DecisionsView = () => {
     const [errors, setErrors] = useState<Partial<typeof emptyForm>>({});
 
     const [viewTarget, setViewTarget] = useState<DecisionInterface | null>(null);
-
-    const isPM = user?.role_tier === "manager";
 
     const validate = () => {
         const e: Partial<typeof emptyForm> = {};
@@ -149,10 +147,12 @@ export const DecisionsView = () => {
                 title={t("Decision Log")}
                 description={t("Document and track important project decisions")}
                 actions={
-                    <Button onClick={() => { setForm(emptyForm); setErrors({}); setAddOpen(true); }} className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        {t("Add Decision")}
-                    </Button>
+                    p.decisions.create() ? (
+                        <Button onClick={() => { setForm(emptyForm); setErrors({}); setAddOpen(true); }} className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            {t("Add Decision")}
+                        </Button>
+                    ) : null
                 }
             />
 
@@ -293,7 +293,7 @@ export const DecisionsView = () => {
                                     )}
 
                                     {/* PM approve / reject actions */}
-                                    {isPM && isPending && (
+                                    {p.decisions.setStatus() && isPending && (
                                         <div className="mt-3 pt-3 border-t border-border flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                             <span className="text-xs text-text-muted flex-1">{t("Awaiting PM approval")}</span>
                                             <Button
@@ -342,33 +342,35 @@ export const DecisionsView = () => {
                                     {isLoadingDetail && <span className="text-xs text-text-muted">{t("Refreshing...")}</span>}
                                 </div>
 
-                                <div className="flex gap-2 mt-2 flex-wrap">
-                                    {viewTarget.status !== DecisionStatus.Approved && (
-                                        <Button size="sm" className="gap-1" onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Approved)}>
-                                            <Check className="h-3.5 w-3.5" /> {t("Approve")}
-                                        </Button>
-                                    )}
-                                    {viewTarget.status !== DecisionStatus.Rejected && (
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="gap-1 border-error text-error hover:bg-error-light"
-                                            onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Rejected)}
-                                        >
-                                            <X className="h-3.5 w-3.5" /> {t("Reject")}
-                                        </Button>
-                                    )}
-                                    {viewTarget.status !== DecisionStatus.Pending && (
-                                        <Button size="sm" variant="outline" className="gap-1" onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Pending)}>
-                                            {t("Set Pending")}
-                                        </Button>
-                                    )}
-                                    {viewTarget.status !== DecisionStatus.Deferred && (
-                                        <Button size="sm" variant="outline" className="gap-1" onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Deferred)}>
-                                            {t("Defer")}
-                                        </Button>
-                                    )}
-                                </div>
+                                {p.decisions.setStatus() && (
+                                    <div className="flex gap-2 mt-2 flex-wrap">
+                                        {viewTarget.status !== DecisionStatus.Approved && (
+                                            <Button size="sm" className="gap-1" onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Approved)}>
+                                                <Check className="h-3.5 w-3.5" /> {t("Approve")}
+                                            </Button>
+                                        )}
+                                        {viewTarget.status !== DecisionStatus.Rejected && (
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="gap-1 border-error text-error hover:bg-error-light"
+                                                onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Rejected)}
+                                            >
+                                                <X className="h-3.5 w-3.5" /> {t("Reject")}
+                                            </Button>
+                                        )}
+                                        {viewTarget.status !== DecisionStatus.Pending && (
+                                            <Button size="sm" variant="outline" className="gap-1" onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Pending)}>
+                                                {t("Set Pending")}
+                                            </Button>
+                                        )}
+                                        {viewTarget.status !== DecisionStatus.Deferred && (
+                                            <Button size="sm" variant="outline" className="gap-1" onClick={() => handleSetStatus(viewTarget.id, DecisionStatus.Deferred)}>
+                                                {t("Defer")}
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div className="mt-4 space-y-4">
                                     {viewTarget.description && (
@@ -410,7 +412,7 @@ export const DecisionsView = () => {
                                     </div>
                                 </div>
 
-                                {isPM && (
+                                {p.decisions.delete() && (
                                     <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border">
                                         <Button
                                             variant="outline"

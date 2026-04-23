@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Bell, Check, CheckCheck, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Bell, Check, CheckCheck, Clock, ExternalLink, Link2, Pencil, Plus, Search, ShieldCheck, Trash2, X } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { AlertsSkeleton } from "@/components/skeletons";
-import { t, useAcknowledgeAlert, useAlertsList, useCreateAlert, useDeleteAlert, useDoneAlert, useUpdateAlert, useUsersList } from "@/hooks";
+import { t, useAcknowledgeAlert, useAlertsList, useCreateAlert, useDeleteAlert, useDoneAlert, usePermissions, useUpdateAlert, useUsersList } from "@/hooks";
 import type { AlertInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import {
@@ -106,8 +107,10 @@ const UserMultiSelect = ({
 };
 
 export const AlertsView = () => {
+    const p = usePermissions();
     const { activeSprintId } = useSprintStore();
-    const { alerts, isLoading, patchAlertLocal, removeAlertLocal } = useAlertsList(activeSprintId);
+    const [typeFilter, setTypeFilter] = useState<string>("");
+    const { alerts, isLoading, patchAlertLocal, removeAlertLocal } = useAlertsList(activeSprintId, typeFilter ? { type: typeFilter } : {});
     const { createHandler, isLoading: isCreating } = useCreateAlert();
     const { updateHandler, isLoading: isUpdating } = useUpdateAlert();
     const { deleteHandler, isLoading: isDeleting } = useDeleteAlert();
@@ -172,31 +175,62 @@ export const AlertsView = () => {
     const pendingAlerts = alerts.filter((a) => a.status !== "done");
     const doneAlerts = alerts.filter((a) => a.status === "done");
 
+    const navigate = useNavigate();
+
+    const typeIcon = (type?: string) => {
+        if (type === "auto_alarm") return <Clock className="h-3.5 w-3.5 text-warning shrink-0" aria-label={t("Auto deadline alarm")} />;
+        if (type === "dependency_resolved") return <Link2 className="h-3.5 w-3.5 text-success shrink-0" aria-label={t("Dependency resolved")} />;
+        if (type === "task_completion_review") return <ShieldCheck className="h-3.5 w-3.5 text-primary shrink-0" aria-label={t("Task completion review")} />;
+        if (type === "requirements_approved") return <Check className="h-3.5 w-3.5 text-success shrink-0" aria-label={t("Requirements approved")} />;
+        return <Bell className="h-3.5 w-3.5 text-text-muted shrink-0" />;
+    };
+
     const renderCard = (alert: AlertInterface) => (
         <Card key={alert.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-text-dark">{alert.title}</h3>
+                        <h3 className="text-sm font-semibold text-text-dark flex items-center gap-1.5">
+                            {typeIcon(alert.type)}
+                            <span className="truncate">{alert.title}</span>
+                        </h3>
                         {alert.body && <p className="text-xs text-text-secondary mt-1 line-clamp-2">{alert.body}</p>}
+                        {alert.source_task && (
+                            <button
+                                type="button"
+                                onClick={() => navigate(`/tasks?taskId=${alert.source_task!.id}`)}
+                                className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-primary hover:underline cursor-pointer"
+                            >
+                                <ExternalLink className="h-3 w-3" />
+                                {alert.source_task.code ?? alert.source_task.title}
+                            </button>
+                        )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                        <button onClick={() => openEdit(alert)} className="p-1.5 rounded hover:bg-muted text-text-muted hover:text-primary cursor-pointer">
-                            <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                        <button onClick={() => setDeleteTarget(alert)} className="p-1.5 rounded hover:bg-error-light text-text-muted hover:text-error cursor-pointer">
-                            <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        {p.alerts.edit(alert) && (
+                            <button onClick={() => openEdit(alert)} className="p-1.5 rounded hover:bg-muted text-text-muted hover:text-primary cursor-pointer">
+                                <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                        )}
+                        {p.alerts.delete(alert) && (
+                            <button onClick={() => setDeleteTarget(alert)} className="p-1.5 rounded hover:bg-error-light text-text-muted hover:text-error cursor-pointer">
+                                <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                        )}
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3 flex-wrap text-xs text-text-muted">
-                    <div className="flex items-center gap-1.5">
-                        <Avatar className="h-5 w-5">
-                            <AvatarFallback className="text-[8px]">{alert.creator.avatar_initials}</AvatarFallback>
-                        </Avatar>
-                        <span>{alert.creator.full_name}</span>
-                    </div>
+                    {alert.creator ? (
+                        <div className="flex items-center gap-1.5">
+                            <Avatar className="h-5 w-5">
+                                <AvatarFallback className="text-[8px]">{alert.creator.avatar_initials}</AvatarFallback>
+                            </Avatar>
+                            <span>{alert.creator.full_name}</span>
+                        </div>
+                    ) : (
+                        <span className="italic">{t("System")}</span>
+                    )}
                     <Badge variant="outline" className="text-[10px]">{alert.target}</Badge>
                     <span className="ml-auto">{formatDateTime(alert.created_at)}</span>
                 </div>
@@ -219,12 +253,25 @@ export const AlertsView = () => {
                         {t("Acknowledged")}: {alert.acknowledgment_count}/{alert.total_targets}
                     </span>
                     <div className="flex gap-1.5 ml-auto">
-                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleAcknowledge(alert.id)} loading={actingId === alert.id && isAcknowledging}>
-                            {!(actingId === alert.id && isAcknowledging) && <Check className="h-3 w-3" />} {t("Acknowledge")}
-                        </Button>
-                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleDone(alert.id)} loading={actingId === alert.id && isMarkingDone}>
-                            {!(actingId === alert.id && isMarkingDone) && <CheckCheck className="h-3 w-3" />} {t("Done")}
-                        </Button>
+                        {alert.title === "Task Completion Review Required" && p.alerts.goToTask() && (
+                            <Button
+                                size="sm"
+                                className="h-7 text-xs gap-1"
+                                onClick={() => navigate(alert.source_task?.id ? `/tasks?taskId=${alert.source_task.id}` : "/tasks")}
+                            >
+                                <ExternalLink className="h-3 w-3" /> {t("Go to task")}
+                            </Button>
+                        )}
+                        {p.alerts.acknowledge(alert) && (
+                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleAcknowledge(alert.id)} loading={actingId === alert.id && isAcknowledging}>
+                                {!(actingId === alert.id && isAcknowledging) && <Check className="h-3 w-3" />} {t("Acknowledge")}
+                            </Button>
+                        )}
+                        {p.alerts.markDone() && (
+                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleDone(alert.id)} loading={actingId === alert.id && isMarkingDone}>
+                                {!(actingId === alert.id && isMarkingDone) && <CheckCheck className="h-3 w-3" />} {t("Done")}
+                            </Button>
+                        )}
                     </div>
                 </div>
             </CardContent>
@@ -237,12 +284,34 @@ export const AlertsView = () => {
                 title={t("Alerts")}
                 description={t("Create announcements and track acknowledgements.")}
                 actions={
-                    <Button onClick={() => { setForm(emptyForm); setAddOpen(true); }} className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        {t("Create Alert")}
-                    </Button>
+                    p.alerts.create() ? (
+                        <Button onClick={() => { setForm(emptyForm); setAddOpen(true); }} className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            {t("Create Alert")}
+                        </Button>
+                    ) : null
                 }
             />
+
+            <div className="flex flex-wrap gap-2 mb-4">
+                {[
+                    { value: "", label: "All" },
+                    { value: "manual", label: "Manual" },
+                    { value: "auto_alarm", label: "Deadline" },
+                    { value: "dependency_resolved", label: "Dependency" },
+                    { value: "task_completion_review", label: "Review" },
+                    { value: "requirements_approved", label: "Approved" },
+                ].map((chip) => (
+                    <button
+                        key={chip.value || "all"}
+                        type="button"
+                        onClick={() => setTypeFilter(chip.value)}
+                        className={`text-xs px-3 py-1 rounded-full border transition-colors cursor-pointer ${typeFilter === chip.value ? "bg-primary text-primary-foreground border-primary" : "bg-surface text-text-muted border-border hover:bg-muted"}`}
+                    >
+                        {t(chip.label)}
+                    </button>
+                ))}
+            </div>
 
             <Tabs defaultValue="pending">
                 <TabsList>

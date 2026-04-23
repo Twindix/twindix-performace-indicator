@@ -4,13 +4,23 @@ export interface AlertCreatorInterface {
     avatar_initials: string;
 }
 
+export type AlertType = "manual" | "auto_alarm" | "dependency_resolved" | "task_completion_review" | "requirements_approved";
+
+export interface AlertSourceTaskInterface {
+    id: string;
+    code?: string;
+    title: string;
+}
+
 export interface AlertInterface {
     id: string;
     title: string;
     body: string;
     status: string;
     target: string;
-    creator: AlertCreatorInterface;
+    type?: AlertType;
+    source_task?: AlertSourceTaskInterface | null;
+    creator: AlertCreatorInterface | null;
     mentioned_users: AlertCreatorInterface[];
     acknowledgment_count: number;
     total_targets: number;
