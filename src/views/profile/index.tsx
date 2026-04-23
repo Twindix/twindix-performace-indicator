@@ -4,11 +4,13 @@ import { useState } from "react";
 import { Badge, Button, Card, CardContent, Input } from "@/atoms";
 import { Header } from "@/components/shared";
 import { ProfileSkeleton } from "@/components/skeletons";
-import { t, useAuth, usePageLoader, useUpdateMe } from "@/hooks";
+import { t, useAuth, usePageLoader, usePermissions, useUpdateMe } from "@/hooks";
 import { Avatar, AvatarFallback } from "@/ui";
 
 export const ProfileView = () => {
     const isLoading = usePageLoader();
+    const p = usePermissions();
+    const canEditProfile = p.auth.editProfile();
     const { user, onUpdateUser } = useAuth();
     const { updateHandler, isLoading: isSaving } = useUpdateMe();
     const [isEditingName, setIsEditingName] = useState(false);
@@ -49,15 +51,17 @@ export const ProfileView = () => {
                                     }}
                                     className="text-xl font-bold text-center h-9"
                                 />
-                                <Button size="sm" onClick={handleSaveName} disabled={!editedName.trim() || isSaving}>{t("Save")}</Button>
+                                <Button size="sm" onClick={handleSaveName} loading={isSaving} disabled={!editedName.trim()}>{t("Save")}</Button>
                                 <Button size="sm" variant="outline" onClick={() => { setEditedName(user.full_name ?? ""); setIsEditingName(false); }}>{t("Cancel")}</Button>
                             </div>
                         ) : (
                             <div className="flex items-center gap-2">
                                 <h2 className="text-xl font-bold text-text-dark">{user.full_name}</h2>
-                                <button onClick={() => { setEditedName(user.full_name ?? ""); setIsEditingName(true); }} className="text-text-muted hover:text-text-dark transition-colors cursor-pointer" aria-label="Edit name">
-                                    <Pencil className="h-4 w-4" />
-                                </button>
+                                {canEditProfile && (
+                                    <button onClick={() => { setEditedName(user.full_name ?? ""); setIsEditingName(true); }} className="text-text-muted hover:text-text-dark transition-colors cursor-pointer" aria-label="Edit name">
+                                        <Pencil className="h-4 w-4" />
+                                    </button>
+                                )}
                             </div>
                         )}
 

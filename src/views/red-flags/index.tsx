@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Edit, Flag, Plus, Trash2 } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
-import { EmptyState, Header } from "@/components/shared";
-import { t, useCreateRedFlag, useDeleteRedFlag, useRedFlagsList, useUpdateRedFlag } from "@/hooks";
+import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { RedFlagsSkeleton } from "@/components/skeletons";
+import { t, useCreateRedFlag, useDeleteRedFlag, usePermissions, useRedFlagsList, useUpdateRedFlag } from "@/hooks";
 import type { RedFlagInterface, CreateRedFlagPayloadInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import {
@@ -23,11 +24,12 @@ const severityVariant: Record<string, "error" | "warning" | "secondary" | "outli
 };
 
 export const RedFlagsView = () => {
+    const p = usePermissions();
     const { activeSprintId } = useSprintStore();
     const { redFlags, isLoading, patchRedFlagLocal, removeRedFlagLocal } = useRedFlagsList(activeSprintId);
     const { createHandler, isLoading: isCreating } = useCreateRedFlag();
     const { updateHandler, isLoading: isUpdating } = useUpdateRedFlag();
-    const { deleteHandler } = useDeleteRedFlag();
+    const { deleteHandler, isLoading: isDeleting } = useDeleteRedFlag();
 
     const isSubmitting = isCreating || isUpdating;
 
@@ -67,15 +69,20 @@ export const RedFlagsView = () => {
                 title={t("Red Flags")}
                 description={t("Track and manage sprint risk indicators.")}
                 actions={
-                    <Button size="sm" className="gap-1.5" onClick={() => { setForm(emptyForm); setAddOpen(true); }}>
-                        <Plus className="h-4 w-4" />{t("Add Red Flag")}
-                    </Button>
+                    p.redFlags.create() ? (
+                        <Button size="sm" className="gap-1.5" onClick={() => { setForm(emptyForm); setAddOpen(true); }}>
+                            <Plus className="h-4 w-4" />{t("Add Red Flag")}
+                        </Button>
+                    ) : null
                 }
             />
 
-            {isLoading ? null : redFlags.length === 0 ? (
-                <EmptyState icon={Flag} title={t("No red flags")} description={t("No risks identified for this sprint.")} />
-            ) : (
+            <QueryBoundary
+                isLoading={isLoading}
+                skeleton={<RedFlagsSkeleton />}
+                empty={redFlags.length === 0}
+                emptyState={<EmptyState icon={Flag} title={t("No red flags")} description={t("No risks identified for this sprint.")} />}
+            >
                 <div className="flex flex-col gap-3">
                     {redFlags.map((f) => (
                         <Card key={f.id} className="hover:shadow-md transition-shadow">
@@ -92,12 +99,16 @@ export const RedFlagsView = () => {
                                         {f.description && <p className="text-xs text-text-secondary mt-1 line-clamp-2">{f.description}</p>}
                                     </div>
                                     <div className="flex items-center gap-1 shrink-0">
-                                        <button onClick={() => openEdit(f)} className="p-1.5 rounded hover:bg-muted text-text-muted hover:text-primary cursor-pointer">
-                                            <Edit className="h-3.5 w-3.5" />
-                                        </button>
-                                        <button onClick={() => setDeleteTarget(f)} className="p-1.5 rounded hover:bg-error-light text-text-muted hover:text-error cursor-pointer">
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                        </button>
+                                        {p.redFlags.edit(f) && (
+                                            <button onClick={() => openEdit(f)} className="p-1.5 rounded hover:bg-muted text-text-muted hover:text-primary cursor-pointer">
+                                                <Edit className="h-3.5 w-3.5" />
+                                            </button>
+                                        )}
+                                        {p.redFlags.delete(f) && (
+                                            <button onClick={() => setDeleteTarget(f)} className="p-1.5 rounded hover:bg-error-light text-text-muted hover:text-error cursor-pointer">
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
@@ -112,7 +123,7 @@ export const RedFlagsView = () => {
                         </Card>
                     ))}
                 </div>
-            )}
+            </QueryBoundary>
 
             <Dialog open={addOpen || !!editTarget} onOpenChange={(open) => { if (!open) closeDialogs(); }}>
                 <DialogContent className="max-w-md">
@@ -142,8 +153,8 @@ export const RedFlagsView = () => {
                     </div>
                     <div className="flex justify-end gap-2 mt-4">
                         <DialogClose asChild><Button variant="outline" disabled={isSubmitting}>{t("Cancel")}</Button></DialogClose>
-                        <Button onClick={editTarget ? handleEdit : handleAdd} disabled={isSubmitting || !form.title.trim()}>
-                            {isSubmitting ? t("Saving...") : editTarget ? t("Save Changes") : t("Create")}
+                        <Button onClick={editTarget ? handleEdit : handleAdd} loading={isSubmitting} disabled={!form.title.trim()}>
+                            {editTarget ? t("Save Changes") : t("Create")}
                         </Button>
                     </div>
                 </DialogContent>
@@ -154,8 +165,8 @@ export const RedFlagsView = () => {
                     <DialogHeader><DialogTitle>{t("Delete Red Flag")}</DialogTitle></DialogHeader>
                     <p className="text-sm text-text-secondary py-2">{t("Are you sure?")}</p>
                     <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setDeleteTarget(null)}>{t("Cancel")}</Button>
-                        <Button variant="destructive" onClick={handleDelete}>{t("Delete")}</Button>
+                        <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>{t("Cancel")}</Button>
+                        <Button variant="destructive" onClick={handleDelete} loading={isDeleting}>{t("Delete")}</Button>
                     </div>
                 </DialogContent>
             </Dialog>

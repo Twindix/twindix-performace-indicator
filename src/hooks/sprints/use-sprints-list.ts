@@ -2,14 +2,19 @@ import { useCallback } from "react";
 
 import { sprintsConstants } from "@/constants";
 import type { SprintInterface } from "@/interfaces";
-import { sprintsService } from "@/services";
+import { projectsService, sprintsService } from "@/services";
+import { useProjectStore } from "@/store";
 
 import { useQueryAction } from "../shared";
 
 export const useSprintsList = () => {
+    const activeProjectId = useProjectStore((s) => s.activeProjectId);
     const { data, isLoading, refetch, setData } = useQueryAction<SprintInterface[]>(
-        async () => (await sprintsService.listHandler()).data,
-        [],
+        async () => {
+            if (activeProjectId) return projectsService.sprintsHandler(activeProjectId);
+            return (await sprintsService.listHandler()).data;
+        },
+        [activeProjectId],
         {
             errorFallback: sprintsConstants.errors.fetchFailed,
             initialData: [],

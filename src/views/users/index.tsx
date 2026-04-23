@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, MoreHorizontal, Plus, PowerOff, Trash2, UserCog, Zap } from "lucide-react";
+import { ArrowRight, MoreHorizontal, Plus, PowerOff, UserCog, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
-import { EmptyState, Header } from "@/components/shared";
-import { t } from "@/hooks";
+import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { UsersSkeleton } from "@/components/skeletons";
+import { usersConstants } from "@/constants";
+import type { RoleTier } from "@/constants/permissions";
+import { t, usePermissions } from "@/hooks";
 import type { UserInterface } from "@/interfaces";
 import { useUsersList, useUsersCreate, useUsersUpdate } from "@/hooks/users";
 import {
@@ -19,14 +22,15 @@ import { apiClient } from "@/lib/axios";
 
 interface TeamOption { id: string; name: string; }
 
-const ROLE_TIERS = ["admin", "manager", "member"] as const;
+const ROLE_TIERS = usersConstants.roleTiers;
+const ROLE_TIER_LABELS = usersConstants.roleTierLabels;
 
 const emptyForm = {
     full_name: "",
     email: "",
     password: "",
     role_label: "",
-    role_tier: "member" as string,
+    role_tier: "member" as RoleTier,
     team_id: "",
     avatar_initials: "",
 };
@@ -36,7 +40,8 @@ type FormErrors = Partial<Record<keyof FormState, string>>;
 
 export const UsersView = () => {
     const navigate = useNavigate();
-    const { users, isLoading, refetch } = useUsersList();
+    const p = usePermissions();
+    const { users, isLoading, refetch, patchUserLocal } = useUsersList();
 
     const [errors, setErrors] = useState<FormErrors>({});
     const mapFieldErrors = (fe: Record<string, string[]>) => {
@@ -50,7 +55,6 @@ export const UsersView = () => {
 
     const [teams, setTeams] = useState<TeamOption[]>([]);
     const [addOpen, setAddOpen] = useState(false);
-    const [deleteTarget, setDeleteTarget] = useState<UserInterface | null>(null);
     const [form, setForm] = useState<FormState>(emptyForm);
 
     useEffect(() => {
@@ -107,22 +111,21 @@ export const UsersView = () => {
         <div>
             <Header title={t("User Management")} description={t("Manage team members and view individual performance analytics")} />
 
-            <div className="flex justify-end mb-6">
-                <Button onClick={() => { setForm(emptyForm); setErrors({}); setAddOpen(true); }} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    {t("Add User")}
-                </Button>
-            </div>
-
-            {isLoading ? (
-                <div className="flex flex-col gap-3">
-                    {[...Array(4)].map((_, i) => (
-                        <Card key={i}><CardContent className="p-4 h-16 animate-pulse bg-muted rounded-xl" /></Card>
-                    ))}
+            {p.users.create() && (
+                <div className="flex justify-end mb-6">
+                    <Button onClick={() => { setForm(emptyForm); setErrors({}); setAddOpen(true); }} className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        {t("Add User")}
+                    </Button>
                 </div>
-            ) : users.length === 0 ? (
-                <EmptyState icon={UserCog} title={t("No Users")} description={t("Add team members to get started")} />
-            ) : (
+            )}
+
+            <QueryBoundary
+                isLoading={isLoading}
+                skeleton={<UsersSkeleton />}
+                empty={users.length === 0}
+                emptyState={<EmptyState icon={UserCog} title={t("No Users")} description={t("Add team members to get started")} />}
+            >
                 <div className="flex flex-col gap-3">
                     {users.map((member) => {
                         const isInactive = member.account_status === "inactive";
@@ -144,38 +147,38 @@ export const UsersView = () => {
                                             <p className="text-xs text-text-muted mt-0.5">{member.email}</p>
                                         </div>
                                         <div className="flex items-center gap-1 shrink-0">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <button className="p-1.5 rounded-md text-text-muted hover:text-text-dark hover:bg-accent transition-colors cursor-pointer">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-44">
-                                                    <DropdownMenuItem
-                                                        className="gap-2 cursor-pointer"
-                                                        onClick={async () => {
-                                                            const next = isInactive ? "active" : "inactive";
-                                                            const res = await updateUser(member.id, { account_status: next });
-                                                            if (res) {
-                                                                toast.success(t(isInactive ? "User activated" : "User deactivated"));
-                                                                refetch();
+                                            {p.users.edit() && (
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <button className="p-1.5 rounded-md text-text-muted hover:text-text-dark hover:bg-accent transition-colors cursor-pointer">
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-44">
+                                                        <DropdownMenuItem
+                                                            className="gap-2 cursor-pointer"
+                                                            onClick={async () => {
+                                                                const next = isInactive ? "active" : "inactive";
+                                                                const optimistic = { ...member, account_status: next as UserInterface["account_status"] };
+                                                                patchUserLocal(optimistic);
+                                                                const res = await updateUser(member.id, { account_status: next });
+                                                                if (res) {
+                                                                    patchUserLocal(res as UserInterface);
+                                                                    toast.success(t(isInactive ? "User activated" : "User deactivated"));
+                                                                } else {
+                                                                    patchUserLocal(member);
+                                                                }
+                                                            }}
+                                                        >
+                                                            {isInactive
+                                                                ? <><Zap className="h-4 w-4 text-success" />{t("Activate")}</>
+                                                                : <><PowerOff className="h-4 w-4 text-warning" />{t("Deactivate")}</>
                                                             }
-                                                        }}
-                                                    >
-                                                        {isInactive
-                                                            ? <><Zap className="h-4 w-4 text-success" />{t("Activate")}</>
-                                                            : <><PowerOff className="h-4 w-4 text-warning" />{t("Deactivate")}</>
-                                                        }
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem
-                                                        className="gap-2 text-error focus:text-error cursor-pointer"
-                                                        onClick={() => setDeleteTarget(member)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />{t("Delete")}
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            )}
                                             <button
                                                 onClick={() => navigate(`/users/${member.id}`)}
                                                 className="p-1.5 rounded-md text-text-muted hover:text-primary hover:bg-primary-lighter transition-colors cursor-pointer"
@@ -189,7 +192,7 @@ export const UsersView = () => {
                         );
                     })}
                 </div>
-            )}
+            </QueryBoundary>
 
             {/* ── Add User Dialog ── */}
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
@@ -232,7 +235,7 @@ export const UsersView = () => {
                                 <Select value={form.role_tier} onValueChange={(v) => set("role_tier", v)}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        {ROLE_TIERS.map((r) => <SelectItem key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</SelectItem>)}
+                                        {ROLE_TIERS.map((r) => <SelectItem key={r} value={r}>{t(ROLE_TIER_LABELS[r])}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -258,23 +261,7 @@ export const UsersView = () => {
 
                     <div className="flex justify-end gap-2 mt-2">
                         <DialogClose asChild><Button variant="outline" disabled={isCreating}>{t("Cancel")}</Button></DialogClose>
-                        <Button onClick={handleAdd} disabled={isCreating}>
-                            {isCreating ? t("Creating…") : t("Add Member")}
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            {/* ── Delete Confirm ── */}
-            <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-                <DialogContent className="max-w-sm">
-                    <DialogHeader><DialogTitle className="text-error">{t("Remove User")}</DialogTitle></DialogHeader>
-                    <p className="text-sm text-text-secondary py-2">
-                        {t("Are you sure you want to remove")} <span className="font-semibold text-text-dark">{deleteTarget?.full_name}</span>? {t("This cannot be undone.")}
-                    </p>
-                    <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setDeleteTarget(null)}>{t("Cancel")}</Button>
-                        <Button variant="destructive" onClick={() => setDeleteTarget(null)}>{t("Remove")}</Button>
+                        <Button onClick={handleAdd} loading={isCreating}>{t("Add Member")}</Button>
                     </div>
                 </DialogContent>
             </Dialog>

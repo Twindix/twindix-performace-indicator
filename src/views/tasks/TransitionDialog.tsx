@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ShieldCheck, Lock, CheckCircle2, AlertCircle, Clock, Undo2 } from "lucide-react";
-import { Badge, Button, Input, Textarea } from "@/atoms";
+import { Badge, Button, Input, Skeleton, Textarea } from "@/atoms";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
 import { cn } from "@/utils";
 import { t, useTaskViews } from "@/hooks";
@@ -21,6 +21,7 @@ interface TransitionDialogProps {
     targetPhase: TaskPhase | null;
     onConfirm: (payload?: { loggedHours?: number; note?: string; reason?: string }) => void;
     isAssignee?: boolean;
+    isSubmitting?: boolean;
 }
 
 export const TransitionDialog = ({
@@ -30,6 +31,7 @@ export const TransitionDialog = ({
     targetPhase,
     onConfirm,
     isAssignee = false,
+    isSubmitting = false,
 }: TransitionDialogProps) => {
     const { transitionCriteriaHandler } = useTaskViews();
     const [result, setResult] = useState<TransitionResult | null>(null);
@@ -132,8 +134,8 @@ export const TransitionDialog = ({
                     </div>
 
                     <div className="flex justify-end gap-2 mt-4">
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>{t("Cancel")}</Button>
-                        <Button onClick={handleConfirmBackward} disabled={!canSubmit}>{t("Request Move Back")}</Button>
+                        <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>{t("Cancel")}</Button>
+                        <Button onClick={handleConfirmBackward} loading={isSubmitting} disabled={!canSubmit}>{t("Request Move Back")}</Button>
                     </div>
                 </DialogContent>
             </Dialog>
@@ -172,7 +174,7 @@ export const TransitionDialog = ({
                 {isFetching || !result ? (
                     <div className="mt-4 flex flex-col gap-2">
                         {[...Array(3)].map((_, i) => (
-                            <div key={i} className="h-9 rounded-lg bg-muted animate-pulse" />
+                            <Skeleton key={i} className="h-9 rounded-lg" />
                         ))}
                     </div>
                 ) : (
@@ -229,9 +231,9 @@ export const TransitionDialog = ({
                 )}
 
                 <div className="flex justify-end gap-2 mt-4">
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>{t("Cancel")}</Button>
+                    <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>{t("Cancel")}</Button>
                     {!isFetching && result?.allowed && (
-                        <Button onClick={handleConfirmForward}>{t("Move Forward")}</Button>
+                        <Button onClick={handleConfirmForward} loading={isSubmitting}>{t("Move Forward")}</Button>
                     )}
                 </div>
             </DialogContent>

@@ -6,10 +6,10 @@ import { alertsService } from "@/services";
 
 import { useQueryAction } from "../shared";
 
-export const useAlertsList = (sprintId: string) => {
+export const useAlertsList = (sprintId: string, params: { type?: string } = {}) => {
     const { data, isLoading, refetch, setData } = useQueryAction<AlertInterface[]>(
-        async () => (sprintId ? (await alertsService.listHandler(sprintId)).data : []),
-        [sprintId],
+        async () => (sprintId ? (await alertsService.listHandler(sprintId, params)).data : []),
+        [sprintId, params.type],
         {
             enabled: !!sprintId,
             errorFallback: alertsConstants.errors.fetchFailed,

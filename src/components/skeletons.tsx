@@ -589,6 +589,169 @@ export const CommentsLogSkeleton = () => (
     </div>
 );
 
+/* -------------------------------------------------------------------------- */
+/*  Sprints (grid of cards)                                                    */
+/* -------------------------------------------------------------------------- */
+
+export const SprintsSkeleton = () => (
+    <div>
+        <HeaderSk />
+        <div className="flex items-center justify-between mb-6">
+            <Skeleton className="h-10 w-64 max-w-full" />
+            <Skeleton className="h-9 w-32 rounded-md" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+                <Card key={i}>
+                    <CardContent className="p-5 space-y-3">
+                        <div className="flex items-start justify-between">
+                            <Skeleton className="h-5 w-40" />
+                            <Skeleton className="h-5 w-16 rounded-full" />
+                        </div>
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-3/4" />
+                        <div className="flex items-center gap-3 pt-2">
+                            <Skeleton className="h-3 w-20" />
+                            <Skeleton className="h-3 w-20" />
+                        </div>
+                        <Skeleton className="h-2 w-full rounded-full" />
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    </div>
+);
+
+/* -------------------------------------------------------------------------- */
+/*  Projects (grid)                                                            */
+/* -------------------------------------------------------------------------- */
+
+export const ProjectsSkeleton = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[...Array(6)].map((_, i) => (
+            <Card key={i}>
+                <CardContent className="p-5 space-y-3">
+                    <div className="flex items-start gap-3">
+                        <Skeleton className="h-10 w-10 rounded-lg" />
+                        <div className="flex-1 space-y-2">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-4 w-16 rounded-full" />
+                        </div>
+                    </div>
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-3/4" />
+                    <div className="flex items-center justify-between pt-2 border-t border-border">
+                        <Skeleton className="h-3 w-16" />
+                        <Skeleton className="h-3 w-10" />
+                    </div>
+                </CardContent>
+            </Card>
+        ))}
+    </div>
+);
+
+/* -------------------------------------------------------------------------- */
+/*  Sprint Summary (detail page)                                               */
+/* -------------------------------------------------------------------------- */
+
+export const SprintSummarySkeleton = () => (
+    <div>
+        <HeaderSk />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            {[...Array(4)].map((_, i) => <StatCard key={i} />)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <Card className="lg:col-span-2">
+                <CardHeader><Skeleton className="h-5 w-32" /></CardHeader>
+                <CardContent className="space-y-4">
+                    {[...Array(4)].map((_, i) => (
+                        <div key={i} className="space-y-1.5">
+                            <div className="flex justify-between"><Skeleton className="h-3 w-28" /><Skeleton className="h-3 w-10" /></div>
+                            <Skeleton className="h-2 w-full rounded-full" />
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader><Skeleton className="h-5 w-28" /></CardHeader>
+                <CardContent className="flex flex-col items-center gap-3">
+                    <Skeleton className="h-32 w-32 rounded-full" />
+                    <Skeleton className="h-5 w-16" />
+                </CardContent>
+            </Card>
+        </div>
+        <Card>
+            <CardHeader><Skeleton className="h-5 w-36" /></CardHeader>
+            <CardContent className="space-y-3">
+                {[...Array(4)].map((_, i) => <ListItem key={i} wide />)}
+            </CardContent>
+        </Card>
+    </div>
+);
+
+/* -------------------------------------------------------------------------- */
+/*  Users                                                                      */
+/* -------------------------------------------------------------------------- */
+
+export const UsersSkeleton = () => (
+    <div>
+        <HeaderSk />
+        <div className="flex items-center justify-between mb-6 gap-3">
+            <Skeleton className="h-10 flex-1 max-w-xs" />
+            <Skeleton className="h-9 w-28 rounded-md" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+                <Card key={i}>
+                    <CardContent className="p-5 flex items-start gap-3">
+                        <Skeleton className="h-12 w-12 rounded-full shrink-0" />
+                        <div className="flex-1 space-y-2">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-3 w-40" />
+                            <div className="flex gap-2 pt-1">
+                                <Skeleton className="h-5 w-16 rounded-full" />
+                                <Skeleton className="h-5 w-14 rounded-full" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    </div>
+);
+
+/* -------------------------------------------------------------------------- */
+/*  Teams                                                                      */
+/* -------------------------------------------------------------------------- */
+
+export const TeamsSkeleton = () => (
+    <div>
+        <HeaderSk />
+        <div className="flex items-center justify-between mb-6">
+            <Skeleton className="h-10 w-64 max-w-full" />
+            <Skeleton className="h-9 w-28 rounded-md" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(4)].map((_, i) => (
+                <Card key={i}>
+                    <CardContent className="p-5 space-y-3">
+                        <div className="flex items-center gap-3">
+                            <Skeleton className="h-10 w-10 rounded-lg" />
+                            <div className="flex-1 space-y-1.5">
+                                <Skeleton className="h-4 w-32" />
+                                <Skeleton className="h-3 w-24" />
+                            </div>
+                        </div>
+                        <div className="flex -space-x-2 pt-1">
+                            {[...Array(4)].map((_, j) => <Skeleton key={j} className="h-7 w-7 rounded-full border-2 border-background" />)}
+                        </div>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    </div>
+);
+
 export const SettingsSkeleton = () => (
     <div>
         <HeaderSk />

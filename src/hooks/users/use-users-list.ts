@@ -5,7 +5,7 @@ import { usersService } from "@/services/users";
 import { useQueryAction } from "../shared";
 
 export const useUsersList = () => {
-    const { data, isLoading, refetch } = useQueryAction<UserInterface[]>(
+    const { data, isLoading, refetch, setData } = useQueryAction<UserInterface[]>(
         () => usersService.listHandler(),
         [],
         {
@@ -15,5 +15,8 @@ export const useUsersList = () => {
         },
     );
 
-    return { users: data ?? [], isLoading, refetch };
+    const patchUserLocal = (updated: UserInterface) =>
+        setData((prev) => (prev ?? []).map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
+
+    return { users: data ?? [], isLoading, refetch, patchUserLocal };
 };

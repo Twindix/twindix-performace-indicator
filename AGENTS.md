@@ -170,6 +170,7 @@ Base URL: `VITE_API_URL` env variable. All routes defined in `src/data/apis.ts`.
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/users` | List (filters: per_page, page, role_tier, team_id) |
+| GET | `/users/list` | Lite list for dropdowns (id, full_name, avatar_initials) |
 | POST | `/users` | Create |
 | GET | `/users/:id` | Detail |
 | PUT | `/users/:id` | Update |
@@ -182,8 +183,23 @@ Base URL: `VITE_API_URL` env variable. All routes defined in `src/data/apis.ts`.
 ### Teams
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/teams` | List |
-| POST | `/teams` | Create |
+| GET | `/teams` | List with member_count + members[] |
+| GET | `/teams/list` | Lite list for dropdowns (id, name) |
+| GET | `/teams/:id` | Detail (members, created_at) |
+| POST | `/teams` | Create — admin only |
+| PUT | `/teams/:id` | Update — admin only |
+| DELETE | `/teams/:id` | Delete — admin only |
+
+### Projects
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/projects` | List (filterable by status) |
+| GET | `/projects/list` | Lite list for dropdowns (id, name, status) |
+| GET | `/projects/:id` | Detail (sprint_count, member_count) |
+| POST | `/projects` | Create — admin/manager |
+| PUT | `/projects/:id` | Update — admin/manager |
+| DELETE | `/projects/:id` | Soft-delete — admin only |
+| GET | `/projects/:id/sprints` | List sprints in project (used by topbar Sprint selector when project active) |
 
 ### Sprints
 | Method | Path | Purpose |
@@ -204,11 +220,13 @@ Base URL: `VITE_API_URL` env variable. All routes defined in `src/data/apis.ts`.
 | GET | `/sprints/:sprintId/tasks/pipeline-counts` | Pipeline stage counts |
 | GET | `/sprints/:sprintId/tasks/stats` | Statistics |
 | GET | `/sprints/:sprintId/tasks` | List |
+| GET | `/tasks/list` | Lite list for dropdowns (sprint_id, status, exclude_done filters) |
 | POST | `/sprints/:sprintId/tasks` | Create |
 | GET | `/tasks/:taskId` | Detail |
 | PUT | `/tasks/:taskId` | Update |
 | DELETE | `/tasks/:taskId` | Delete |
 | PATCH | `/tasks/:taskId/status` | Update status |
+| POST | `/tasks/:taskId/mark-complete` | Assignee/manager triggers approval workflow (sets pending_approval=true) |
 | POST | `/tasks/:taskId/tags` | Add tag |
 | DELETE | `/tasks/:taskId/tags/:tag` | Remove tag |
 | POST | `/tasks/:taskId/attachments` | Add attachment |
@@ -316,6 +334,7 @@ Every API call goes through `runAction` in `src/lib/handle-action.ts`. Hooks nev
 9. **Don't re-throw unless the caller needs to branch** (login navigate, etc.). Default is catch-and-toast via `runAction`; use `rethrow: true` only when the view needs the exception (e.g. to skip `navigate(dashboard)` on failed login).
 10. **One place maps HTTP status → UX.** If you need to change "what 403 looks like", you change it in `runAction` — nowhere else.
 11. **Form closes iff the handler returns truthy.** Never `closeDialog()` unconditionally after `await submit()`. On 422 the dialog stays open with inline errors; on other errors it stays open with a toast.
+12. **403 = permission denied.** By default `runAction` toasts the forbidden message and logs under the `permissions` context — the UI should have gated the action, so a 403 means the role changed mid-session. For speculative calls where 403 is an expected outcome (e.g. probing), pass `expectAuthorized: false` to silence the toast.
 
 ### Files you will touch
 
@@ -366,6 +385,85 @@ const handleSubmit = async () => {
 {getError("name") && <p className="text-xs text-error">{getError("name")}</p>}
 ```
 
+## Loading handling
+
+Loading UX is the sibling of error handling: every API-calling hook already exposes `isLoading` via `useMutationAction` / `useQueryAction` — this section locks down **what the user sees while that flag is true**. Full implementation plan lives in `LOADING_HANDLING_PLAN.md`.
+
+### Priority rules (apply everywhere)
+
+1. **`isLoading` comes from the hook, never from view state.** Don't add a parallel `useState<boolean>("loading")` next to a hook call — you'll desync them.
+2. **Never render the string `"Loading..."`.** Page-level waits render a skeleton from `src/components/skeletons.tsx`. Button-level waits use `<Button loading>`.
+3. **One skeleton per page view.** `components/skeletons.tsx` already holds compositions for every view — reuse; don't invent inline spinners.
+4. **Buttons use `<Button loading={isLoading}>`.** The atom renders an inline spinner, preserves width (no layout shift), and auto-sets `disabled`. No hand-rolled `<span className="animate-spin" />` inside buttons.
+5. **Wrap list/detail queries in `<QueryBoundary>`.** Declarative ternary for `(isLoading, data, empty)` — stops each view reinventing the pattern.
+6. **Optimistic mutations show nothing.** If the UI is updated locally (toggle, drag-drop), don't also flash a spinner — the spinner implies "waiting" and the user isn't.
+7. **Background mutations are silent.** Presence, heartbeat, analytics, secondary widgets — never flicker a button or toast. Pair with `silent: true` on `runAction`.
+8. **Route transitions use the global top-bar (optional).** If flicker becomes visible, enable a thin top-bar progress driven by in-flight queries — not per-page spinners.
+9. **No global `isLoading` context.** Every call owns its own flag. Stacking contexts hides the source and causes whole-page flashes.
+10. **Loading state flips back on error too.** `useMutationAction`/`useQueryAction` already wrap `runAction` in `try/finally` — never re-implement loading state in a hook; always delegate.
+
+### Primitives you will touch
+
+| File | Purpose |
+|---|---|
+| `src/atoms/button.tsx` | Add `loading?: boolean` → inline spinner + `disabled` when true |
+| `src/components/shared/query-boundary.tsx` | `<QueryBoundary isLoading skeleton empty emptyState>children</QueryBoundary>` — one declarative wrapper |
+| `src/components/skeletons.tsx` | Per-view skeleton compositions (already exists for 14 views) |
+| `src/hooks/shared/use-mutation-action.ts` | Owns `isLoading` for one-shot calls |
+| `src/hooks/shared/use-query-action.ts` | Owns `isLoading` for on-mount queries |
+| `src/hooks/shared/use-page-loader.ts` | (Optional) drives the top-bar progress bar |
+
+## Permissions & roles
+
+Every view gates mutation UI through one primitive — `usePermissions()` — which binds the current user's `role_tier` against declarative policies in `src/lib/permissions/*.policy.ts`. Plan and matrix live in `PERMISSIONS_PLAN.md`; the doc source is `Twindix API Updates V0.4 — User Roles & Permissions`.
+
+### The 5 role tiers
+
+`admin | manager | tester | member | viewer` — centralized as `RoleTier` union in `src/constants/permissions/index.ts`. Every role `<Select>` reads `usersConstants.roleTiers`; adding a tier only changes that constant.
+
+### Priority rules (apply everywhere)
+
+1. **Never compare `role_tier` literals in a view.** Always go through `usePermissions()` or `<Can>`. A grep for `role_tier ===` outside `src/lib/permissions/` must return nothing.
+2. **Policy file per module.** One flat object of predicates in `src/lib/permissions/<module>.policy.ts` — no React, no hooks. Every predicate takes `(ctx, resource?)` and returns `boolean`.
+3. **Hide, don't disable** — create / delete / management buttons render `null` when the role lacks permission. Disable (`disabled={!p.x()}`) only when the control is part of a form the user legitimately views (e.g. viewer on own profile save).
+4. **Own vs any is resource-scoped, not role-scoped.** A tester/member's `p.tasks.edit(task)` depends on `task.assignee.id === user.id`. Policies that mix ownership read the resource; policies that don't (e.g. `tasks.delete`) take only `ctx`.
+5. **Backend is the source of truth.** Frontend gates hide UI; backend returns 403. `runAction` already toasts `"You don't have permission to do this."` and logs under `permissions` context. Use `expectAuthorized: false` on speculative calls to silence the toast.
+6. **One source for ownership field per module.** Task = `assignee.id`, blocker = `reporter.id` (edit) or `owner.id` (resolve/escalate/link), comment = `author.id`, red-flag = `reporter.id`, alert = `creator.id`, decision = `created_by.id`, time-log = `user_id`.
+7. **Asymmetric rules are asymmetric on purpose.** Decisions create allows `admin|manager|member` — **not** tester. Red-flag edit others is admin-only — **not** manager. Viewer can acknowledge alerts — their only write action. Do not collapse these to shared helpers.
+8. **Viewer cannot `PUT /me` name/presence.** `usePresence` takes a `disabled` flag wired to `p.auth.editProfile()`; topbar hides presence switcher when false.
+9. **Role label ≠ role tier.** `role_label` is display only (e.g. "Sr. Frontend Engineer"). Never read it in a policy.
+
+### Primitives you will touch
+
+| File | Purpose |
+|---|---|
+| `src/constants/permissions/index.ts` | `ROLE_TIERS`, `RoleTier`, `ROLE_TIER_LABELS`, `PERMISSION_MESSAGES`, `roleTierOptions()` |
+| `src/lib/permissions/helpers.ts` | `Ctx`, `inRoles`, `isViewer`, `ownerOf` |
+| `src/lib/permissions/<module>.policy.ts` | One per domain; exports flat predicate object |
+| `src/lib/permissions/index.ts` | Aggregator + `policies` bundle |
+| `src/hooks/shared/use-permissions.ts` | Binds policies to current user once per user change |
+| `src/components/shared/can.tsx` | `<Can check={(p)=>p.x.y(resource)} fallback={…}>…</Can>` |
+| `src/components/shared/can-route.tsx` | `<CanRoute allow={["admin"]} redirectTo="/dashboard">` |
+| `src/lib/handle-action.ts` | `expectAuthorized` option — default `true` toasts 403, `false` silences it |
+
+### Gating a new action
+
+```ts
+// 1. Add predicate to the module policy (one line, declarative):
+export const tasksPolicy = {
+  archive: (ctx: Ctx, task: TaskInterface) =>
+    inRoles(ctx, "admin", "manager") ||
+    (inRoles(ctx, "tester", "member") && task.assignee?.id === ctx.userId),
+  // …existing predicates
+};
+
+// 2. Gate the UI in the view:
+const p = usePermissions();
+{p.tasks.archive(task) && <ArchiveButton />}
+
+// 3. Don't remove the handler. Backend still validates — 403 is surfaced by runAction.
+```
+
 ## Branch strategy
 
 | Branch | Purpose |
@@ -375,7 +473,4 @@ const handleSubmit = async () => {
 | `test2` | Secondary testing branch |
 | `feat/integrate-*` | Per-feature API integration branches (auth, sprints, tasks, blockers, alerts, red-flags, decisions, comments, dashboard, requirements, teams, users) |
 | `feat/integration-core` | Core integration work merged across features |
-
-**Current branch:** `bug/error-handling`
-
-**Recent work:** Centralized error handling across all 13 domains (68 hooks). Introduced `runAction` primitive in `src/lib/handle-action.ts` plus `useMutationAction` / `useQueryAction` wrappers and `useFormErrors` for inline 422 display. Every domain (auth, users, teams, sprints, tasks, requirements, time-logs, blockers, alerts, red-flags, decisions, comments, dashboard) now routes through `runAction` — no more `try/catch + toast` in hooks, no `console.error`, no `navigator.onLine` checks scattered in views. Backend `data.message` is first priority everywhere; per-domain `errors`/`messages` constants are fallback-only. 422 `fieldErrors` surface inline via `useFormErrors`, never as a toast. 401 is handled globally in the axios interceptor (`AUTH_UNAUTHORIZED_EVENT`). Also fixed two infinite refetch loops by making hook return values reference-stable via `useRef`, refactored `TransitionDialog` so it owns the criteria fetch (and shows a reason textarea when moving backward), rebuilt the compound task type in `add-task-dialog.tsx` (dual checkboxes + inline task / users autocomplete), and kept sprint activate on PATCH with interceptor-injected empty body. See `ERROR_HANDLING_PLAN.md` for the full task list.
+| `bug/error-handling` | Centralized error handling across all 13 domains via `runAction` primitive |

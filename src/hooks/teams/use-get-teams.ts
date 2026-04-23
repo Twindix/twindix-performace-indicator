@@ -25,5 +25,9 @@ export const useGetTeams = () => {
         });
     }, [setData]);
 
-    return { teams: data ?? [], isLoading, refetch, patchTeamLocal };
+    const removeTeamLocal = useCallback((id: string) => {
+        setData((prev) => (prev ?? []).filter((t) => t.id !== id));
+    }, [setData]);
+
+    return { teams: data ?? [], isLoading, refetch, patchTeamLocal, removeTeamLocal };
 };

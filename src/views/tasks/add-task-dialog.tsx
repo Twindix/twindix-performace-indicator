@@ -5,8 +5,8 @@ import { Button, Input, Label, Textarea } from "@/atoms";
 import { TaskPriority } from "@/enums";
 import type { AddTaskDialogProps, AddTaskFormState } from "@/interfaces";
 import type { TaskInterface } from "@/interfaces";
-import type { UserInterface } from "@/interfaces";
-import { t, useCreateTask, useFormErrors, useTasksList } from "@/hooks";
+import type { UserLiteInterface } from "@/interfaces";
+import { t, useCreateTask, useFormErrors, useTasksListLite } from "@/hooks";
 import { runAction } from "@/lib/handle-action";
 import { requirementsService, tasksService } from "@/services";
 import { useSprintStore } from "@/store";
@@ -81,7 +81,7 @@ const TaskAutocomplete = ({ tasks, value, onChange, placeholder }: TaskAutocompl
 };
 
 interface UsersAutocompleteProps {
-    members: UserInterface[];
+    members: UserLiteInterface[];
     values: string[];
     onChange: (ids: string[]) => void;
     placeholder?: string;
@@ -94,7 +94,7 @@ const UsersAutocomplete = ({ members, values, onChange, placeholder }: UsersAuto
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
         return members.filter((m) =>
-            !values.includes(m.id) && (!q || m.full_name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q)),
+            !values.includes(m.id) && (!q || m.full_name.toLowerCase().includes(q) || (m.email ?? "").toLowerCase().includes(q)),
         ).slice(0, 8);
     }, [members, values, query]);
 
@@ -132,7 +132,7 @@ const UsersAutocomplete = ({ members, values, onChange, placeholder }: UsersAuto
                                 className="w-full px-3 py-2 text-left text-sm hover:bg-muted cursor-pointer flex items-center gap-2">
                                 <span className="text-xs font-medium bg-muted rounded-full h-5 w-5 flex items-center justify-center shrink-0">{m.avatar_initials}</span>
                                 <span className="flex-1 truncate">{m.full_name}</span>
-                                <span className="text-xs text-text-muted truncate">{m.email}</span>
+                                {m.email && <span className="text-xs text-text-muted truncate">{m.email}</span>}
                             </button>
                         ))}
                     </div>
@@ -162,12 +162,12 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
     const [requirementInput, setRequirementInput] = useState("");
     const [tagInput, setTagInput] = useState("");
     const [deadline, setDeadline] = useState("");
-    const [taskType, setTaskType] = useState<"stand_alone" | "compound">("stand_alone");
+    const [taskType, setTaskType] = useState<"standalone" | "compound">("standalone");
     const [startAfterEnabled, setStartAfterEnabled] = useState(false);
     const [startAfterTaskId, setStartAfterTaskId] = useState("");
     const [notifyEnabled, setNotifyEnabled] = useState(false);
     const [notifyUserIds, setNotifyUserIds] = useState<string[]>([]);
-    const { tasks: sprintTasks } = useTasksList(activeSprintId ?? "");
+    const { tasks: sprintTasks } = useTasksListLite({ sprint_id: activeSprintId ?? undefined, exclude_done: true });
     const requirementInputRef = useRef<HTMLInputElement>(null);
     const tagInputRef = useRef<HTMLInputElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -184,7 +184,7 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
             setRequirementInput("");
             setTagInput("");
             setDeadline("");
-            setTaskType("stand_alone");
+            setTaskType("standalone");
             setStartAfterEnabled(false);
             setStartAfterTaskId("");
             setNotifyEnabled(false);
@@ -259,6 +259,10 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
             assigned_to: formState.assigned_to,
             priority: formState.priority,
             estimated_hours: formState.estimatedHours,
+            dead_time: deadline || null,
+            task_type: taskType,
+            depends_on_task: taskType === "compound" && startAfterEnabled && startAfterTaskId ? startAfterTaskId : null,
+            notify_on_done: taskType === "compound" && notifyEnabled,
         });
 
         if (created) {
@@ -282,7 +286,7 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
             handleOpenChange(false);
         }
         submittingRef.current = false;
-    }, [formState, activeSprintId, createTaskHandler, handleOpenChange, addTaskLocal]);
+    }, [formState, activeSprintId, createTaskHandler, handleOpenChange, addTaskLocal, deadline, taskType, startAfterEnabled, startAfterTaskId, notifyEnabled, setFieldErrors]);
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -491,9 +495,9 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                                 id="deadline"
                                 type="datetime-local"
                                 value={deadline}
-                                onChange={(e) => { setDeadline(e.target.value); clearError("deadline"); }}
+                                onChange={(e) => { setDeadline(e.target.value); clearError("dead_time"); }}
                             />
-                            {getError("deadline") && <p className="text-xs text-error">{getError("deadline")}</p>}
+                            {getError("dead_time") && <p className="text-xs text-error">{getError("dead_time")}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -501,12 +505,12 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                                 <ListChecks className="h-4 w-4 text-text-muted" />
                                 {t("Task Type")}
                             </Label>
-                            <Select value={taskType} onValueChange={(v) => setTaskType(v as "stand_alone" | "compound")}>
+                            <Select value={taskType} onValueChange={(v) => setTaskType(v as "standalone" | "compound")}>
                                 <SelectTrigger id="taskType" className="w-full">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="stand_alone">{t("Stand-alone")}</SelectItem>
+                                    <SelectItem value="standalone">{t("Stand-alone")}</SelectItem>
                                     <SelectItem value="compound">{t("Compound")}</SelectItem>
                                 </SelectContent>
                             </Select>
@@ -564,18 +568,9 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                         <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting}>
                             {t("Cancel")}
                         </Button>
-                        <Button type="submit" disabled={isSubmitting} className="gap-2">
-                            {isSubmitting ? (
-                                <>
-                                    <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                    {t("Creating...")}
-                                </>
-                            ) : (
-                                <>
-                                    <Plus className="h-4 w-4" />
-                                    {t("Create Task")}
-                                </>
-                            )}
+                        <Button type="submit" loading={isSubmitting} className="gap-2">
+                            {!isSubmitting && <Plus className="h-4 w-4" />}
+                            {t("Create Task")}
                         </Button>
                     </div>
                 </form>

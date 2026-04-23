@@ -1,3 +1,5 @@
+import type { RoleTier } from "@/constants/permissions";
+
 export interface ApiSuccessResponse<T> {
     data: T;
     isSuccess?: boolean;
@@ -21,7 +23,7 @@ export interface UserInterface {
     full_name: string;
     email: string;
     role_label: string | null;
-    role_tier: string;
+    role_tier: RoleTier;
     team: UserTeamInterface;
     avatar_initials: string;
     account_status: string | null;
