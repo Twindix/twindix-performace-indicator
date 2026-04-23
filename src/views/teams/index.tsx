@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { Edit, MoreHorizontal, Plus, Trash2, Users } from "lucide-react";
+import { Edit, LineChart, MoreHorizontal, Plus, Trash2, Users } from "lucide-react";
 
 import { Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { TeamsSkeleton } from "@/components/skeletons";
+import { analyticsSeed } from "@/data";
 import { t, useCreateTeam, useDeleteTeam, useFormErrors, useGetTeams, usePermissions, useUpdateTeam } from "@/hooks";
 import type { TeamInterface } from "@/interfaces";
 import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/ui";
+import { TeamAnalyticsView } from "./TeamAnalyticsView";
 import { TeamDetailDialog } from "./TeamDetailDialog";
 
 export const TeamsView = () => {
@@ -25,6 +27,7 @@ export const TeamsView = () => {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [detailTeamId, setDetailTeamId] = useState<string | null>(null);
+    const [analyticsTeam, setAnalyticsTeam] = useState<TeamInterface | null>(null);
 
     const isSubmitting = isCreating || isUpdating;
 
@@ -63,6 +66,19 @@ export const TeamsView = () => {
 
     const closeDialog = () => { setAddOpen(false); setEditTarget(null); setName(""); setDescription(""); clearFieldErrors(); };
 
+    if (analyticsTeam) {
+        return (
+            <TeamAnalyticsView
+                team={analyticsTeam}
+                onBack={() => setAnalyticsTeam(null)}
+                onViewMembers={() => {
+                    setDetailTeamId(analyticsTeam.id);
+                    setAnalyticsTeam(null);
+                }}
+            />
+        );
+    }
+
     return (
         <div>
             <Header
@@ -85,9 +101,12 @@ export const TeamsView = () => {
                 emptyState={<EmptyState icon={Users} title={t("No teams yet")} description={t("Create your first team to group members.")} />}
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {teams.filter((team) => team.id !== deleteTarget?.id).map((team) => (
-                        <Card key={team.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setDetailTeamId(team.id)}>
-                            <CardContent className="p-5">
+                    {teams.filter((team) => team.id !== deleteTarget?.id).map((team) => {
+                        const a = analyticsSeed.teams[team.id] ?? analyticsSeed.fallback.team;
+                        const completion = Math.round((a.tasks_done / Math.max(a.tasks_total, 1)) * 100);
+                        return (
+                        <Card key={team.id} className="hover:shadow-md transition-shadow">
+                            <CardContent className="p-5 space-y-3">
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-lighter text-primary-medium shrink-0">
                                         <Users className="h-5 w-5" />
@@ -96,25 +115,53 @@ export const TeamsView = () => {
                                     {p.teams.manage() && (
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEdit(team); }} className="gap-2 cursor-pointer">
+                                                <DropdownMenuItem onClick={() => openEdit(team)} className="gap-2 cursor-pointer">
                                                     <Edit className="h-4 w-4" /> {t("Edit")}
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setDeleteTarget(team); }} className="gap-2 text-error focus:text-error cursor-pointer">
+                                                <DropdownMenuItem onClick={() => setDeleteTarget(team)} className="gap-2 text-error focus:text-error cursor-pointer">
                                                     <Trash2 className="h-4 w-4" /> {t("Delete")}
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     )}
                                 </div>
+
+                                <div className="grid grid-cols-3 gap-2">
+                                    <TeamCardStat label={t("Members")} value={a.members_active} tone="primary" />
+                                    <TeamCardStat label={t("On-time")} value={`${a.on_time_rate}%`} tone="success" />
+                                    <TeamCardStat label={t("Completion")} value={`${completion}%`} tone="primary" />
+                                </div>
+
+                                <div>
+                                    <div className="flex items-center justify-between text-[11px] text-text-muted mb-1">
+                                        <span>{t("Tasks")}</span>
+                                        <span>{a.tasks_done} / {a.tasks_total}</span>
+                                    </div>
+                                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                                        <div className="h-full bg-primary-medium" style={{ width: `${completion}%` }} />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 pt-1">
+                                    <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => setAnalyticsTeam(team)}>
+                                        <LineChart className="h-3.5 w-3.5" />
+                                        {t("Analytics")}
+                                    </Button>
+                                    <Button size="sm" className="flex-1 gap-1.5" onClick={() => setDetailTeamId(team.id)}>
+                                        <Users className="h-3.5 w-3.5" />
+                                        {t("Members")}
+                                    </Button>
+                                </div>
                             </CardContent>
                         </Card>
-                    ))}
+                        );
+                    })}
                 </div>
             </QueryBoundary>
 
@@ -170,6 +217,27 @@ export const TeamsView = () => {
                 open={detailTeamId !== null}
                 onOpenChange={(open) => { if (!open) setDetailTeamId(null); }}
             />
+        </div>
+    );
+};
+
+interface TeamCardStatProps {
+    label: string;
+    value: string | number;
+    tone: "primary" | "success" | "error" | "muted";
+}
+
+const TeamCardStat = ({ label, value, tone }: TeamCardStatProps) => {
+    const toneClass = {
+        primary: "text-primary-medium",
+        success: "text-success",
+        error: "text-error",
+        muted: "text-text-muted",
+    }[tone];
+    return (
+        <div className="rounded-md bg-muted/40 px-2 py-1.5 text-center">
+            <p className="text-[10px] uppercase tracking-wide text-text-muted">{label}</p>
+            <p className={`text-sm font-bold ${toneClass}`}>{value}</p>
         </div>
     );
 };

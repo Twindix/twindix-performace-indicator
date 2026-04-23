@@ -13,3 +13,4 @@ export { BoundaryErrorClass, NetworkError, IndicatorNetworkError, StackError } f
 export { QueryBoundary } from "./query-boundary";
 export { Can, type CanProps } from "./can";
 export { CanRoute, type CanRouteProps } from "./can-route";
+export { AreaTrend, BarSeries, BurnChart, ChartCard, DonutBreakdown, RadialProgress, StackedBreakdownBars } from "./charts";
