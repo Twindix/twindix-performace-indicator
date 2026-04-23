@@ -253,7 +253,7 @@ export const AlertsView = () => {
                         {t("Acknowledged")}: {alert.acknowledgment_count}/{alert.total_targets}
                     </span>
                     <div className="flex gap-1.5 ml-auto">
-                        {alert.title === "Task Completion Review Required" && (
+                        {alert.title === "Task Completion Review Required" && p.alerts.goToTask() && (
                             <Button
                                 size="sm"
                                 className="h-7 text-xs gap-1"
@@ -262,7 +262,7 @@ export const AlertsView = () => {
                                 <ExternalLink className="h-3 w-3" /> {t("Go to task")}
                             </Button>
                         )}
-                        {p.alerts.acknowledge() && (
+                        {p.alerts.acknowledge(alert) && (
                             <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleAcknowledge(alert.id)} loading={actingId === alert.id && isAcknowledging}>
                                 {!(actingId === alert.id && isAcknowledging) && <Check className="h-3 w-3" />} {t("Acknowledge")}
                             </Button>
