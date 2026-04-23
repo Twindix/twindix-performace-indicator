@@ -1,14 +1,13 @@
-import { useState, useMemo, useCallback, useEffect, type DragEvent } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ClipboardList, Filter, Plus, Search } from "lucide-react";
-import { toast } from "sonner";
 
 import { Badge, Button, Card, CardContent, Input } from "@/atoms";
 import { EmptyState, Header } from "@/components/shared";
 import { TasksSkeleton } from "@/components/skeletons";
 import { TaskPhase, TaskPriority } from "@/enums";
 import type { TaskInterface, TaskStatsInterface } from "@/interfaces";
-import { t, useTasksList, usePipeline, useTaskStats, useUpdateTaskStatus, useUsersListLite, useGetTask } from "@/hooks";
+import { t, useTasksList, usePipeline, usePermissions, useTaskStats, useUpdateTaskStatus, useUsersListLite, useGetTask } from "@/hooks";
 import { useAuthStore, useSprintStore } from "@/store";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/ui";
 import { BoardView } from "./BoardView";
@@ -21,6 +20,7 @@ export const TasksView = () => <TasksViewInner />;
 
 const TasksViewInner = () => {
     const { activeSprintId } = useSprintStore();
+    const p = usePermissions();
 
     const [searchQuery, setSearchQuery] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -62,8 +62,6 @@ const TasksViewInner = () => {
     const [selectedTask, setSelectedTask] = useState<TaskInterface | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [addTaskDialogOpen, setAddTaskDialogOpen] = useState(false);
-    const [draggedTask, setDraggedTask] = useState<TaskInterface | null>(null);
-    const [dragOverStatus, setDragOverStatus] = useState<string | null>(null);
 
     const [transitionOpen, setTransitionOpen] = useState(false);
     const [transitionTask, setTransitionTask] = useState<TaskInterface | null>(null);
@@ -143,34 +141,6 @@ const TasksViewInner = () => {
         ? Object.values(kanban).reduce((sum, arr) => sum + arr.length, 0)
         : Object.values(filteredPipeline).reduce((sum, arr) => sum + arr.length, 0);
 
-    const handleDragStart = useCallback((_e: DragEvent<HTMLDivElement>, task: TaskInterface) => setDraggedTask(task), []);
-    const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => e.preventDefault(), []);
-    const handleDragEnter = useCallback((_e: DragEvent<HTMLDivElement>, status: string) => setDragOverStatus(status), []);
-    const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverStatus(null);
-    }, []);
-    const handleDrop = useCallback(async (e: DragEvent<HTMLDivElement>, targetStatus: string) => {
-        e.preventDefault();
-        setDragOverStatus(null);
-        if (!draggedTask || draggedTask.status === targetStatus) { setDraggedTask(null); return; }
-        if (draggedTask.is_blocked_by_dependency) {
-            const dep = draggedTask.depends_on_task;
-            toast.error(dep ? `${t("Blocked by dependency")}: ${dep.code ?? dep.title}` : t("Blocked by dependency"));
-            setDraggedTask(null);
-            return;
-        }
-        const snapshot = draggedTask;
-        patchTaskLocal({ ...snapshot, status: targetStatus } as TaskInterface);
-        setDraggedTask(null);
-        const updated = await updateStatusHandler(snapshot.id, targetStatus);
-        if (updated && typeof updated === "object") {
-            patchTaskLocal(updated as TaskInterface);
-            toast.success(`${t("Task moved to")} ${targetStatus.replace(/_/g, " ")}`);
-        } else {
-            patchTaskLocal(snapshot);
-        }
-    }, [draggedTask, updateStatusHandler, patchTaskLocal]);
-
     const isLoading = tasksLoading || (viewMode === "pipeline" && pipelineLoading);
     const totalTasks = stats?.total_tasks ?? tasks.length;
     const donePoints = stats?.story_points.used ?? 0;
@@ -183,13 +153,15 @@ const TasksViewInner = () => {
         <div>
             <Header
                 title={t("Task Management")}
-                description={t("Drag tasks between columns to change their status.")}
+                description={t("Use the task detail dialog to move tasks between phases.")}
                 actions={
                     tasks.length === 0 && !searchQuery && statusFilter === "all" && priorityFilter === "all" && assigneeFilter === "all" && typeFilter === "all" ? (
-                        <Button size="sm" className="gap-1.5" onClick={() => setAddTaskDialogOpen(true)}>
-                            <Plus className="h-4 w-4" />
-                            {t("Add Task")}
-                        </Button>
+                        p.tasks.create() ? (
+                            <Button size="sm" className="gap-1.5" onClick={() => setAddTaskDialogOpen(true)}>
+                                <Plus className="h-4 w-4" />
+                                {t("Add Task")}
+                            </Button>
+                        ) : null
                     ) : (
                         <div className="flex items-center gap-2 text-sm text-text-secondary">
                             <span><strong className="text-text-dark">{totalTasks}</strong> {t("tasks")}</span>
@@ -283,10 +255,12 @@ const TasksViewInner = () => {
                                 </button>
                             )}
 
-                            <Button size="sm" className="gap-1.5 shrink-0" onClick={() => setAddTaskDialogOpen(true)}>
-                                <Plus className="h-4 w-4" />
-                                {t("Add Task")}
-                            </Button>
+                            {p.tasks.create() && (
+                                <Button size="sm" className="gap-1.5 shrink-0" onClick={() => setAddTaskDialogOpen(true)}>
+                                    <Plus className="h-4 w-4" />
+                                    {t("Add Task")}
+                                </Button>
+                            )}
                         </div>
 
                         <div className="flex items-center bg-muted p-1 rounded-lg ml-auto">
@@ -310,13 +284,6 @@ const TasksViewInner = () => {
             ) : viewMode === "board" ? (
                 <BoardView
                     kanban={kanban}
-                    draggedTask={draggedTask}
-                    dragOverStatus={dragOverStatus}
-                    handleDragStart={handleDragStart}
-                    handleDragOver={handleDragOver}
-                    handleDragEnter={handleDragEnter}
-                    handleDragLeave={handleDragLeave}
-                    handleDrop={handleDrop}
                     setSelectedTask={setSelectedTask}
                     setDialogOpen={setDialogOpen}
                 />

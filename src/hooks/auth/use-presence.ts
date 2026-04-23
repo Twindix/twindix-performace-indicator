@@ -6,12 +6,12 @@ import { authService } from "@/services";
 
 export type PresenceStatus = "active" | "offline";
 
-export const usePresence = (userId: string | undefined) => {
+export const usePresence = (userId: string | undefined, disabled = false) => {
     const [status, setStatus] = useState<PresenceStatus>("offline");
     const stoppedRef = useRef(false);
 
     const updateStatus = (next: PresenceStatus) => {
-        if (!userId || stoppedRef.current) return;
+        if (!userId || stoppedRef.current || disabled) return;
         setStatus(next);
         runAction(() => authService.updateMeHandler({ presence_status: next }), {
             silent: true,
@@ -20,7 +20,7 @@ export const usePresence = (userId: string | undefined) => {
     };
 
     useEffect(() => {
-        if (!userId) return;
+        if (!userId || disabled) return;
         stoppedRef.current = false;
 
         updateStatus("active");
@@ -47,7 +47,7 @@ export const usePresence = (userId: string | undefined) => {
             window.removeEventListener("beforeunload", handleBeforeUnload);
             window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, stop);
         };
-    }, [userId]);
+    }, [userId, disabled]);
 
     return { status, updateStatus };
 };

@@ -4,7 +4,7 @@ import { Edit, MoreHorizontal, Plus, Trash2, Users } from "lucide-react";
 import { Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { TeamsSkeleton } from "@/components/skeletons";
-import { t, useAuth, useCreateTeam, useDeleteTeam, useFormErrors, useGetTeams, useUpdateTeam } from "@/hooks";
+import { t, useCreateTeam, useDeleteTeam, useFormErrors, useGetTeams, usePermissions, useUpdateTeam } from "@/hooks";
 import type { TeamInterface } from "@/interfaces";
 import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
@@ -13,8 +13,7 @@ import {
 import { TeamDetailDialog } from "./TeamDetailDialog";
 
 export const TeamsView = () => {
-    const { user } = useAuth();
-    const isAdmin = user?.role_tier === "admin";
+    const p = usePermissions();
     const { teams, isLoading, patchTeamLocal, removeTeamLocal } = useGetTeams();
     const { setFieldErrors, clearError, clear: clearFieldErrors, getError } = useFormErrors();
     const { createHandler, isLoading: isCreating } = useCreateTeam({ onFieldErrors: setFieldErrors });
@@ -70,7 +69,7 @@ export const TeamsView = () => {
                 title={t("Teams")}
                 description={t("Organize members into teams.")}
                 actions={
-                    isAdmin ? (
+                    p.teams.create() ? (
                         <Button size="sm" className="gap-1.5" onClick={() => { clearFieldErrors(); setAddOpen(true); }}>
                             <Plus className="h-4 w-4" />
                             {t("Add Team")}
@@ -94,7 +93,7 @@ export const TeamsView = () => {
                                         <Users className="h-5 w-5" />
                                     </div>
                                     <h3 className="text-base font-semibold text-text-dark truncate flex-1">{team.name}</h3>
-                                    {isAdmin && (
+                                    {p.teams.manage() && (
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => e.stopPropagation()}>

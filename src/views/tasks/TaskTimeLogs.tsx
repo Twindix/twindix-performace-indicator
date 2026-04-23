@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, Clock, Pencil, Trash2, X } from "lucide-react";
 
 import { Button, Input, Skeleton } from "@/atoms";
-import { t, useCreateTimeLog, useDeleteTimeLog, useGetTimeLog, useUpdateTimeLog } from "@/hooks";
+import { t, useCreateTimeLog, useDeleteTimeLog, useGetTimeLog, usePermissions, useUpdateTimeLog } from "@/hooks";
 import type { TaskInterface, TimeLogInterface, UserLiteInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
 import { useAuthStore } from "@/store";
@@ -14,6 +14,8 @@ interface Props {
 }
 
 export const TaskTimeLogs = ({ task, members, patchTaskLocal }: Props) => {
+    const p = usePermissions();
+    const canLog = p.tasks.logTime(task);
     const { getByTaskHandler } = useGetTimeLog();
     const { createHandler: createTimeLogHandler, isLoading: isCreating } = useCreateTimeLog();
     const { updateHandler: updateTimeLogHandler } = useUpdateTimeLog();
@@ -167,11 +169,13 @@ export const TaskTimeLogs = ({ task, members, patchTaskLocal }: Props) => {
                 <p className="text-xs text-text-muted italic mb-3">{t("No time logs yet")}</p>
             )}
 
-                    <div className="flex gap-2 items-center bg-surface border border-border rounded-xl p-2">
-                <Input type="number" min="0.5" step="0.5" placeholder={t("Hrs")} value={logHours} onChange={(e) => setLogHours(e.target.value)} className="w-20 h-8 text-sm bg-muted" />
-                <Input placeholder={t("What did you work on? (optional)")} value={logNote} onChange={(e) => setLogNote(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submitLog(); }} className="flex-1 h-8 text-sm bg-muted" />
-                <Button size="sm" onClick={submitLog} loading={isCreating} disabled={!logHours || parseFloat(logHours) <= 0} className="h-8 shrink-0">{t("Log")}</Button>
-            </div>
+            {canLog && (
+                <div className="flex gap-2 items-center bg-surface border border-border rounded-xl p-2">
+                    <Input type="number" min="0.5" step="0.5" placeholder={t("Hrs")} value={logHours} onChange={(e) => setLogHours(e.target.value)} className="w-20 h-8 text-sm bg-muted" />
+                    <Input placeholder={t("What did you work on? (optional)")} value={logNote} onChange={(e) => setLogNote(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submitLog(); }} className="flex-1 h-8 text-sm bg-muted" />
+                    <Button size="sm" onClick={submitLog} loading={isCreating} disabled={!logHours || parseFloat(logHours) <= 0} className="h-8 shrink-0">{t("Log")}</Button>
+                </div>
+            )}
         </div>
     );
 };

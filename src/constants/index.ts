@@ -14,3 +14,5 @@ export { commentsConstants } from "./comments";
 export { dashboardConstants } from "./dashboard";
 export { usersConstants } from "./users";
 export { projectsConstants } from "./projects";
+export { permissionsConstants, ROLE_TIERS, ROLE_TIER_LABELS, roleTierOptions } from "./permissions";
+export type { RoleTier } from "./permissions";

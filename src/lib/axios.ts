@@ -49,7 +49,29 @@ export const resetAuthState = () => {
 };
 
 apiClient.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        const body = response.data as
+            | { success?: boolean; message?: string; errors?: Record<string, string[]>; code?: string }
+            | undefined;
+
+        // Some backend endpoints return 200 OK with { success: false, ... } on
+        // business-level failures (e.g. duplicate email). Treat those as errors
+        // so the shared runAction pipeline (toast + field-error mapping) fires.
+        if (body && body.success === false) {
+            const fieldErrors = body.errors && Object.keys(body.errors).length > 0 ? body.errors : undefined;
+            return Promise.reject(
+                new ApiError(
+                    fieldErrors ? 422 : 400,
+                    body.message ?? "",
+                    body,
+                    fieldErrors,
+                    body.code,
+                ),
+            );
+        }
+
+        return response;
+    },
     (error: AxiosError) => {
         const { message, response } = error;
         const status = response?.status;

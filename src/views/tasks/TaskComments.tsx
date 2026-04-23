@@ -2,9 +2,8 @@ import { useState, useRef, useMemo } from "react";
 import { MessageCircle, Send, Trash2, Pencil, Check, X } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/ui";
-import { t, useCreateTaskComment, useDeleteComment, useUpdateComment } from "@/hooks";
+import { t, useCreateTaskComment, useDeleteComment, usePermissions, useUpdateComment } from "@/hooks";
 import type { TaskInterface, TaskCommentInterface, UserLiteInterface } from "@/interfaces";
-import { useAuthStore } from "@/store";
 
 interface Props {
     task: TaskInterface;
@@ -50,8 +49,7 @@ const renderBody = (body: string, mentioned: { id: string; full_name: string }[]
 };
 
 export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
-    const { user: authUser } = useAuthStore();
-    const currentUserId = authUser?.id ?? "";
+    const p = usePermissions();
 
     const { createOnTaskHandler, isLoading: isSending } = useCreateTaskComment();
     const { updateHandler: updateCommentHandler, isLoading: isSavingEdit } = useUpdateComment();
@@ -226,7 +224,6 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
             {comments.length > 0 && (
                 <div className="flex flex-col gap-3 mb-4">
                     {comments.map((c) => {
-                        const isAuthor = c.author.id === currentUserId;
                         const isEditing = editingId === c.id;
                         return (
                             <div key={c.id} className="flex gap-2.5 group">
@@ -239,15 +236,15 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
                                         <span className="text-[10px] text-text-muted ms-auto">
                                             {new Date(c.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                                         </span>
-                                        {isAuthor && !isEditing && (
-                                            <>
-                                                <button onClick={() => startEdit(c)} className="p-1.5 rounded text-text-muted hover:text-primary hover:bg-primary-lighter transition-colors cursor-pointer">
-                                                    <Pencil className="h-3 w-3" />
-                                                </button>
-                                                <button onClick={() => deleteComment(c.id)} className="p-1.5 rounded text-text-muted hover:text-error hover:bg-error-light transition-colors cursor-pointer">
-                                                    <Trash2 className="h-3 w-3" />
-                                                </button>
-                                            </>
+                                        {!isEditing && p.comments.edit(c) && (
+                                            <button onClick={() => startEdit(c)} className="p-1.5 rounded text-text-muted hover:text-primary hover:bg-primary-lighter transition-colors cursor-pointer">
+                                                <Pencil className="h-3 w-3" />
+                                            </button>
+                                        )}
+                                        {!isEditing && p.comments.delete(c) && (
+                                            <button onClick={() => deleteComment(c.id)} className="p-1.5 rounded text-text-muted hover:text-error hover:bg-error-light transition-colors cursor-pointer">
+                                                <Trash2 className="h-3 w-3" />
+                                            </button>
                                         )}
                                     </div>
 
@@ -287,27 +284,29 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
             )}
 
             {/* New comment input */}
-            <div className="relative">
-                {mentionActive && mentionMembers.length > 0 && (
-                    <MentionDropdown members={mentionMembers} activeIndex={mentionIndex} onSelect={selectMention} />
-                )}
-                <textarea
-                    ref={textareaRef}
-                    value={commentText}
-                    onChange={handleCommentChange}
-                    onKeyDown={handleCommentKeyDown}
-                    placeholder={t("Write a comment… type @ to mention")}
-                    rows={2}
-                    className="w-full rounded-xl border border-input bg-surface px-3 py-2 pe-10 text-sm text-text-dark placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-ring resize-none transition-colors"
-                />
-                <button
-                    onClick={submit}
-                    disabled={!commentText.trim() || isSending}
-                    className="absolute bottom-2 end-2 p-1.5 rounded-md text-primary hover:bg-primary-lighter disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                >
-                    <Send className="h-4 w-4" />
-                </button>
-            </div>
+            {p.comments.add() && (
+                <div className="relative">
+                    {mentionActive && mentionMembers.length > 0 && (
+                        <MentionDropdown members={mentionMembers} activeIndex={mentionIndex} onSelect={selectMention} />
+                    )}
+                    <textarea
+                        ref={textareaRef}
+                        value={commentText}
+                        onChange={handleCommentChange}
+                        onKeyDown={handleCommentKeyDown}
+                        placeholder={t("Write a comment… type @ to mention")}
+                        rows={2}
+                        className="w-full rounded-xl border border-input bg-surface px-3 py-2 pe-10 text-sm text-text-dark placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-ring resize-none transition-colors"
+                    />
+                    <button
+                        onClick={submit}
+                        disabled={!commentText.trim() || isSending}
+                        className="absolute bottom-2 end-2 p-1.5 rounded-md text-primary hover:bg-primary-lighter disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    >
+                        <Send className="h-4 w-4" />
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

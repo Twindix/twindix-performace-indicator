@@ -4,7 +4,7 @@ import { Edit, Flag, Plus, Trash2 } from "lucide-react";
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { RedFlagsSkeleton } from "@/components/skeletons";
-import { t, useCreateRedFlag, useDeleteRedFlag, useRedFlagsList, useUpdateRedFlag } from "@/hooks";
+import { t, useCreateRedFlag, useDeleteRedFlag, usePermissions, useRedFlagsList, useUpdateRedFlag } from "@/hooks";
 import type { RedFlagInterface, CreateRedFlagPayloadInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import {
@@ -24,6 +24,7 @@ const severityVariant: Record<string, "error" | "warning" | "secondary" | "outli
 };
 
 export const RedFlagsView = () => {
+    const p = usePermissions();
     const { activeSprintId } = useSprintStore();
     const { redFlags, isLoading, patchRedFlagLocal, removeRedFlagLocal } = useRedFlagsList(activeSprintId);
     const { createHandler, isLoading: isCreating } = useCreateRedFlag();
@@ -68,9 +69,11 @@ export const RedFlagsView = () => {
                 title={t("Red Flags")}
                 description={t("Track and manage sprint risk indicators.")}
                 actions={
-                    <Button size="sm" className="gap-1.5" onClick={() => { setForm(emptyForm); setAddOpen(true); }}>
-                        <Plus className="h-4 w-4" />{t("Add Red Flag")}
-                    </Button>
+                    p.redFlags.create() ? (
+                        <Button size="sm" className="gap-1.5" onClick={() => { setForm(emptyForm); setAddOpen(true); }}>
+                            <Plus className="h-4 w-4" />{t("Add Red Flag")}
+                        </Button>
+                    ) : null
                 }
             />
 
@@ -96,12 +99,16 @@ export const RedFlagsView = () => {
                                         {f.description && <p className="text-xs text-text-secondary mt-1 line-clamp-2">{f.description}</p>}
                                     </div>
                                     <div className="flex items-center gap-1 shrink-0">
-                                        <button onClick={() => openEdit(f)} className="p-1.5 rounded hover:bg-muted text-text-muted hover:text-primary cursor-pointer">
-                                            <Edit className="h-3.5 w-3.5" />
-                                        </button>
-                                        <button onClick={() => setDeleteTarget(f)} className="p-1.5 rounded hover:bg-error-light text-text-muted hover:text-error cursor-pointer">
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                        </button>
+                                        {p.redFlags.edit(f) && (
+                                            <button onClick={() => openEdit(f)} className="p-1.5 rounded hover:bg-muted text-text-muted hover:text-primary cursor-pointer">
+                                                <Edit className="h-3.5 w-3.5" />
+                                            </button>
+                                        )}
+                                        {p.redFlags.delete(f) && (
+                                            <button onClick={() => setDeleteTarget(f)} className="p-1.5 rounded hover:bg-error-light text-text-muted hover:text-error cursor-pointer">
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
