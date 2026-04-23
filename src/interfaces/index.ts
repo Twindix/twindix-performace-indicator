@@ -20,3 +20,4 @@ export type { GanttTaskInterface, GanttProjectLiteInterface, GanttAssigneeInterf
 export type { TimeProjectInterface, TimeSprintInterface, TimeTeamInterface, TimeMemberInterface, TimeTaskInterface, TimeEntryInterface, TimeSeedInterface, TimeEntityKind, TimeLogEntryRow, CreateTimeEntryPayloadInterface } from "./time";
 export type { MeetingInterface, MeetingAttendeeInterface, MeetingTimeSlotInterface, MeetingCommentInterface, MeetingAttachmentInterface, MeetingUserInterface, MeetingSeedInterface, RequestMeetingPayloadInterface } from "./meetings";
 export type { ProjectAnalyticsInterface, SprintAnalyticsInterface, TeamAnalyticsInterface, DeliveryAnalyticsInterface, AnalyticsSeedInterface, MetricPointInterface, DualMetricPointInterface, BreakdownSliceInterface, MemberContributionInterface } from "./analytics";
+export type { AuthorshipEntryInterface, AuthorshipSeedInterface } from "./authorship";

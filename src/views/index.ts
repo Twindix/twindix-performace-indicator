@@ -20,6 +20,7 @@ export { GanttView } from "./gantt";
 export { TimeView } from "./time";
 export { MeetingsView } from "./meetings";
 export { DeliveryAnalyticsView } from "./delivery-analytics";
+export { ReportsView } from "./reports";
 export { RedFlagsView } from "./red-flags";
 export { AlertsView } from "./alerts";
 export { TeamsView } from "./teams";

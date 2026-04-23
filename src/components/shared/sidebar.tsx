@@ -2,7 +2,7 @@ import { Activity, ChevronLeft } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 import { cn } from "@/utils";
-import { sidebarSections, type SidebarItemInterface } from "@/data";
+import { sidebarItems, sidebarNewItems, type SidebarItemInterface } from "@/data";
 import { t, useSettings } from "@/hooks";
 import { useSidebarStore } from "@/store";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui";
@@ -76,22 +76,13 @@ export const Sidebar = () => {
 
             <nav className="flex-1 overflow-y-auto p-2 scrollbar-thin">
                 <TooltipProvider delayDuration={0}>
-                    <div className="flex flex-col gap-4">
-                        {sidebarSections.map((section, index) => (
-                            <div key={section.title} className="flex flex-col gap-1">
-                                {isOpen ? (
-                                    <p className="px-3 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-                                        {t(section.title)}
-                                    </p>
-                                ) : (
-                                    index > 0 && <div className="mx-2 my-1 border-t border-border" aria-hidden />
-                                )}
-                                <ul className="flex flex-col gap-1">
-                                    {section.items.map(renderItem)}
-                                </ul>
-                            </div>
-                        ))}
-                    </div>
+                    <ul className="flex flex-col gap-1">
+                        {sidebarItems.map(renderItem)}
+                    </ul>
+                    <div className="my-3 mx-2 border-t border-border" aria-hidden />
+                    <ul className="flex flex-col gap-1">
+                        {sidebarNewItems.map(renderItem)}
+                    </ul>
                 </TooltipProvider>
             </nav>
 

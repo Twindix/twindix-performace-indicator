@@ -1,26 +1,20 @@
-import { useMemo } from "react";
-import { AlertTriangle, ArrowRight, Clock, FileText, GitBranch, Lightbulb, MessageSquare, Shield, TrendingDown, TrendingUp, Users } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowRight, Download, FileSpreadsheet, Lightbulb, Users } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/atoms";
-import { AnimatedNumber, Header, MetricCard, ScoreGauge, StatusBadge } from "@/components/shared";
-import { ReportsSkeleton } from "@/components/skeletons";
-import { BlockerStatus, MetricStatus, TaskPhase } from "@/enums";
-import { t, useSettings, usePageLoader } from "@/hooks";
-import type { BlockerInterface, SprintInterface, SprintMetricsInterface, TaskInterface } from "@/interfaces";
-import { useSprintStore } from "@/store";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
-import { cn, td, formatDate } from "@/utils";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
+import { AnimatedNumber, Header, ScoreGauge, StatusBadge } from "@/components/shared";
+import { analyticsSeed, authorshipSeed, handoffsSeed, timeSeed, workloadSeed } from "@/data";
+import { MetricStatus } from "@/enums";
+import { t } from "@/hooks";
+import type { BreakdownSliceInterface } from "@/interfaces";
+import { cn, formatDate } from "@/utils";
+
+import { downloadSectionAsExcel, downloadSectionAsPdf, type ReportSection } from "./report-export";
 
 const getScoreStatus = (score: number): MetricStatus => {
     if (score >= 80) return MetricStatus.Healthy;
     if (score >= 60) return MetricStatus.Warning;
     return MetricStatus.Critical;
-};
-
-const getScoreColor = (score: number): string => {
-    if (score >= 80) return "text-success";
-    if (score >= 60) return "text-warning";
-    return "text-error";
 };
 
 const getBarColor = (score: number): string => {
@@ -29,367 +23,460 @@ const getBarColor = (score: number): string => {
     return "bg-error";
 };
 
-const frictionAreaConfig = [
-    {
-        key: "poorRequirements" as const,
-        labelKey: "Poor Requirements",
-        icon: AlertTriangle,
-        color: "text-friction-requirements",
-        bgColor: "bg-friction-requirements",
-        description: (score: number) =>
-            score >= 80
-                ? "Requirements are well-defined. The team has clear acceptance criteria and minimal rework due to ambiguity."
-                : score >= 60
-                  ? "Some requirements lack clarity. Occasional rework happens because acceptance criteria or edge cases are not fully defined before development starts."
-                  : "Requirements are frequently unclear or incomplete. The team is spending significant time on rework and clarification, slowing down delivery.",
-        metricsFilter: ["Task Readiness Rate", "Story Quality Score", "Requirement Completeness"],
-    },
-    {
-        key: "communicationGaps" as const,
-        labelKey: "Communication Gaps",
-        icon: MessageSquare,
-        color: "text-friction-communication",
-        bgColor: "bg-friction-communication",
-        description: (score: number) =>
-            score >= 80
-                ? "Team communication is strong. Information flows freely across roles, and decisions are shared promptly."
-                : score >= 60
-                  ? "Some communication gaps exist. Important updates occasionally get missed, leading to misalignment or duplicated work."
-                  : "Communication is a major friction point. Critical information is not reaching the right people, causing delays and misunderstandings.",
-        metricsFilter: ["Communication Frequency", "Info Flow Score", "Response Time"],
-    },
-    {
-        key: "weakOwnership" as const,
-        labelKey: "Weak Ownership",
-        icon: Shield,
-        color: "text-friction-ownership",
-        bgColor: "bg-friction-ownership",
-        description: (score: number) =>
-            score >= 80
-                ? "Strong ownership culture. Team members take clear accountability for their tasks and follow through reliably."
-                : score >= 60
-                  ? "Ownership could improve. Some tasks lack a clear single owner, leading to ambiguity about who is responsible for driving them to completion."
-                  : "Ownership is a significant problem. Many tasks are orphaned or have unclear ownership, resulting in dropped balls and slow progress.",
-        metricsFilter: ["Ownership Clarity", "Task Accountability", "Follow-through Rate"],
-    },
-    {
-        key: "dependencyBlockers" as const,
-        labelKey: "Dependency Blockers",
-        icon: GitBranch,
-        color: "text-friction-dependencies",
-        bgColor: "bg-friction-dependencies",
-        description: (score: number) =>
-            score >= 80
-                ? "Dependencies are well-managed. Blockers are rare and resolved quickly when they occur."
-                : score >= 60
-                  ? "Some dependency issues are causing delays. A few blockers are taking longer than expected to resolve."
-                  : "Dependencies are severely impacting delivery. Multiple long-standing blockers are preventing the team from making progress on critical work.",
-        metricsFilter: ["Blocker Resolution Time", "Dependency Count", "Blocked Task Rate"],
-    },
-    {
-        key: "processGaps" as const,
-        labelKey: "Process Gaps",
-        icon: Clock,
-        color: "text-friction-process",
-        bgColor: "bg-friction-process",
-        description: (score: number) =>
-            score >= 80
-                ? "Processes are mature and effective. Handoffs are smooth and the team follows consistent workflows."
-                : score >= 60
-                  ? "Some process gaps exist. Handoffs between phases are not always smooth, causing delays in the pipeline."
-                  : "Processes need significant improvement. Handoffs are frequently incomplete or delayed, and there is no consistent workflow the team follows.",
-        metricsFilter: ["Handoff Completion Rate", "Process Compliance", "Cycle Time"],
-    },
-    {
-        key: "teamCulture" as const,
-        labelKey: "Team & Culture",
-        icon: Users,
-        color: "text-friction-team",
-        bgColor: "bg-friction-team",
-        description: (score: number) =>
-            score >= 80
-                ? "Team dynamics are excellent. Workload is balanced, decisions are collaborative, and morale is high."
-                : score >= 60
-                  ? "Team dynamics are adequate but could improve. Some workload imbalances or decision-making delays are visible."
-                  : "Team dynamics need attention. Significant workload imbalances, slow decision-making, or low engagement are impacting delivery.",
-        metricsFilter: ["Decision Log Coverage", "Workload Balance", "Team Engagement"],
-    },
-];
+const SectionCard = ({
+    title,
+    description,
+    children,
+    onDownloadPdf,
+    onDownloadExcel,
+}: {
+    title: string;
+    description?: string;
+    children: React.ReactNode;
+    onDownloadPdf: () => void;
+    onDownloadExcel: () => void;
+}) => (
+    <Card className="mb-6">
+        <CardHeader>
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div>
+                    <CardTitle className="text-lg">{t(title)}</CardTitle>
+                    {description && <p className="text-xs text-text-muted mt-1">{t(description)}</p>}
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" onClick={onDownloadPdf} className="gap-1.5">
+                        <Download className="h-3.5 w-3.5" />
+                        {t("PDF")}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={onDownloadExcel} className="gap-1.5">
+                        <FileSpreadsheet className="h-3.5 w-3.5" />
+                        {t("Excel")}
+                    </Button>
+                </div>
+            </div>
+        </CardHeader>
+        <CardContent>{children}</CardContent>
+    </Card>
+);
 
 export const ReportsView = () => {
-    const isLoading = usePageLoader();
-    const [settings] = useSettings();
-    const isRTL = settings.language === "ar";
-    const { activeSprintId } = useSprintStore();
+    const [selectedProjectId, setSelectedProjectId] = useState<string>(timeSeed.projects[0]?.id ?? "");
 
-    const sprints: SprintInterface[] = [];
-    const sprint = sprints.find((s) => s.id === activeSprintId);
-    const sprintMetrics = undefined as SprintMetricsInterface | undefined;
-    const tasks: TaskInterface[] = [];
-    const blockers: BlockerInterface[] = [];
+    const project = timeSeed.projects.find((p) => p.id === selectedProjectId);
+    const projectSprints = timeSeed.sprints.filter((s) => s.project_id === selectedProjectId);
+    const sprintIds = new Set(projectSprints.map((s) => s.id));
+    const projectWorkload = workloadSeed.filter((w) => sprintIds.has(w.sprintId));
+    const projectHandoffs = handoffsSeed.filter((h) => sprintIds.has(h.sprintId));
+    const projectAuthorship = authorshipSeed.filter((a) => a.project_id === selectedProjectId);
+    const analytics = analyticsSeed.projects[selectedProjectId] ?? analyticsSeed.fallback.project;
 
-    const taskStats = useMemo(() => {
-        const total = tasks.length;
-        const completed = tasks.filter((t) => t.phase === TaskPhase.Done).length;
-        const blocked = tasks.filter((t) => t.hasBlocker).length;
-        const completionPct = total > 0 ? Math.round((completed / total) * 100) : 0;
-        return { total, completed, blocked, completionPct };
-    }, [tasks]);
+    const projectName = project?.name ?? "—";
 
-    const activeBlockerCount = blockers.filter((b) => b.status === BlockerStatus.Active || b.status === BlockerStatus.Escalated).length;
+    const workloadMetrics = useMemo(() => {
+        const memberIds = new Set(projectWorkload.map((w) => w.memberId));
+        const assigned = projectWorkload.reduce((acc, w) => acc + w.assignedPoints, 0);
+        const completed = projectWorkload.reduce((acc, w) => acc + w.completedPoints, 0);
+        const capacity = projectWorkload.reduce((acc, w) => acc + w.capacity, 0);
+        const avgUtil = projectWorkload.length > 0
+            ? Math.round(projectWorkload.reduce((acc, w) => acc + (w.assignedPoints / Math.max(w.capacity, 1)) * 100, 0) / projectWorkload.length)
+            : 0;
+        const overloaded = projectWorkload.filter((w) => w.assignedPoints > w.capacity).length;
+        return { teamSize: memberIds.size, assigned, completed, capacity, avgUtil, overloaded };
+    }, [projectWorkload]);
 
-    const keyFindings = useMemo(() => {
-        if (!sprintMetrics?.metrics.length) return { best: [], worst: [] };
-        const sorted = [...sprintMetrics.metrics].sort((a, b) => b.value - a.value);
-        const best = sorted.filter((m) => m.status === MetricStatus.Healthy).slice(0, 3);
-        const worst = [...sprintMetrics.metrics]
-            .filter((m) => m.status === MetricStatus.Critical || m.status === MetricStatus.Warning)
-            .sort((a, b) => a.value - b.value)
-            .slice(0, 3);
-        return { best, worst };
-    }, [sprintMetrics]);
+    const handoffStats = useMemo(() => {
+        const total = projectHandoffs.length;
+        const avg = total > 0 ? Math.round(projectHandoffs.reduce((s, h) => s + h.completionRate, 0) / total) : 0;
+        const full = projectHandoffs.filter((h) => h.completionRate >= 100).length;
+        const below = projectHandoffs.filter((h) => h.completionRate < 80).length;
+        return { total, avg, full, below };
+    }, [projectHandoffs]);
 
     const recommendations = useMemo(() => {
         const recs: string[] = [];
-        if (!sprintMetrics) return recs;
-
-        const { frictionScores } = sprintMetrics;
-
-        if (frictionScores.poorRequirements < 60) recs.push(td("Invest in a requirements review checklist before sprint planning to reduce rework and improve task readiness."));
-        if (frictionScores.communicationGaps < 60) recs.push(td("Introduce a daily async standup or structured check-in to close communication gaps across the team."));
-        if (frictionScores.weakOwnership < 60) recs.push(td("Assign a single clear owner to every task and blocker. Consider a RACI matrix for cross-functional work."));
-        if (frictionScores.dependencyBlockers < 60) recs.push(td("Prioritize blocker resolution in daily standups. Escalate blockers older than 2 days to leadership."));
-        if (frictionScores.processGaps < 60) recs.push(td("Standardize handoff criteria between phases. Create definition-of-done checklists for each transition."));
-        if (frictionScores.teamCulture < 60) recs.push(td("Review workload distribution to prevent burnout. Ensure decisions are documented and shared transparently."));
-
-        if (taskStats.completionPct < 50) recs.push(td("Sprint completion is below 50%. Consider reducing scope or breaking tasks into smaller deliverables."));
-        if (activeBlockerCount > 3) recs.push(td("There are active blockers. Schedule a dedicated blocker-busting session to unblock the team.").replace("5", String(activeBlockerCount)));
-
-        if (recs.length === 0) recs.push(td("The sprint is performing well across all areas. Continue current practices and look for incremental improvements."));
-
+        if (analytics.completion_rate < 50) recs.push("Project completion is below 50%. Cut scope or break large stories into smaller deliverables.");
+        if (analytics.open_blockers >= 3) recs.push("Multiple open blockers are compounding delivery risk. Run a focused blocker-busting session this week.");
+        if (analytics.on_time_rate < 70) recs.push("On-time rate has slipped. Review the last three sprints to identify repeat causes of slippage.");
+        if (workloadMetrics.overloaded > 0) recs.push("Some team members are over capacity. Rebalance commitments before planning the next sprint.");
+        if (handoffStats.below > 0) recs.push("Handoffs are landing below the 80% completion threshold. Tighten definition-of-done checklists at phase transitions.");
+        if (recs.length === 0) recs.push("Project is tracking well across delivery, capacity, and handoff signals. Keep investing in the current cadence.");
         return recs;
-    }, [sprintMetrics, taskStats, activeBlockerCount]);
+    }, [analytics, workloadMetrics, handoffStats]);
 
-    if (isLoading) return <ReportsSkeleton />;
+    // Section builders (narrative + tabular + summary data for downloads)
+    const overviewSection = (): ReportSection => ({
+        title: "Overview",
+        subtitle: project ? `${project.team_name}` : "",
+        narrative: [
+            project
+                ? `This overview covers ${project.name} (${project.status}) delivered by ${project.team_name}. The project spans ${projectSprints.length} sprint${projectSprints.length === 1 ? "" : "s"} with an overall progress of ${project.progress}%.`
+                : "No project selected.",
+            `At the time of export, the project has ${projectAuthorship.length} authored item${projectAuthorship.length === 1 ? "" : "s"} (${projectAuthorship.filter((a) => a.kind === "feature").length} features and ${projectAuthorship.filter((a) => a.kind === "task").length} tasks) contributed by ${new Set(projectAuthorship.map((a) => a.creator_id)).size} people.`,
+            `Delivery signals combine completion (${analytics.completion_rate}%), on-time rate (${analytics.on_time_rate}%), and ${analytics.open_blockers} open blocker${analytics.open_blockers === 1 ? "" : "s"}.`,
+        ],
+        tableHeaders: ["Sprint", "Start", "End", "Status"],
+        tableRows: projectSprints.map((s) => [s.name, formatDate(s.start_date), formatDate(s.end_date), s.status]),
+        summary: [
+            { label: "Sprints", value: projectSprints.length },
+            { label: "Completion", value: `${analytics.completion_rate}%` },
+            { label: "On-time Rate", value: `${analytics.on_time_rate}%` },
+            { label: "Open Blockers", value: analytics.open_blockers },
+        ],
+    });
 
-    const getMetricsForArea = (metricsFilter: string[]) => {
-        if (!sprintMetrics?.metrics) return [];
-        return sprintMetrics.metrics.filter((m) => metricsFilter.some((f) => m.name.toLowerCase().includes(f.toLowerCase()))).slice(0, 3);
+    const deliverySection = (): ReportSection => ({
+        title: "Delivery Progress",
+        subtitle: projectName,
+        narrative: [
+            `Velocity has moved through ${analytics.velocity_trend.length} sprints, ranging from ${Math.min(...analytics.velocity_trend.map((p) => p.value))} to ${Math.max(...analytics.velocity_trend.map((p) => p.value))} story points.`,
+            `Tasks delivered stand at ${analytics.tasks_done} of ${analytics.tasks_total} (${Math.round((analytics.tasks_done / Math.max(analytics.tasks_total, 1)) * 100)}%).`,
+            `Active sprints in this project: ${analytics.sprints_active}. Total sprints scoped: ${analytics.sprints_total}.`,
+        ],
+        tableHeaders: ["Sprint", "Velocity"],
+        tableRows: analytics.velocity_trend.map((p) => [p.label, p.value]),
+        summary: [
+            { label: "Completion", value: `${analytics.completion_rate}%` },
+            { label: "Tasks Done", value: `${analytics.tasks_done} / ${analytics.tasks_total}` },
+            { label: "Sprints Active", value: analytics.sprints_active },
+            { label: "Open Blockers", value: analytics.open_blockers },
+        ],
+    });
+
+    const workloadSection = (): ReportSection => ({
+        title: "Team Workload",
+        subtitle: projectName,
+        narrative: [
+            `The project currently engages ${workloadMetrics.teamSize} contributor${workloadMetrics.teamSize === 1 ? "" : "s"} across its sprints.`,
+            `Average utilization across assignments is ${workloadMetrics.avgUtil}% of capacity, with ${workloadMetrics.overloaded} member${workloadMetrics.overloaded === 1 ? "" : "s"} currently above 100%.`,
+            `Of ${workloadMetrics.assigned} assigned points, ${workloadMetrics.completed} have been completed against a total capacity of ${workloadMetrics.capacity} points.`,
+        ],
+        tableHeaders: ["Member", "Sprint", "Assigned", "Completed", "Capacity", "Utilization"],
+        tableRows: projectWorkload.map((w) => {
+            const m = timeSeed.members.find((mm) => mm.id === w.memberId);
+            const s = projectSprints.find((ss) => ss.id === w.sprintId);
+            const util = Math.round((w.assignedPoints / Math.max(w.capacity, 1)) * 100);
+            return [m?.full_name ?? w.memberId, s?.name ?? w.sprintId, w.assignedPoints, w.completedPoints, w.capacity, `${util}%`];
+        }),
+        summary: [
+            { label: "Team Size", value: workloadMetrics.teamSize },
+            { label: "Avg Utilization", value: `${workloadMetrics.avgUtil}%` },
+            { label: "Overloaded", value: workloadMetrics.overloaded },
+            { label: "Completed Points", value: workloadMetrics.completed },
+        ],
+    });
+
+    const handoffSection = (): ReportSection => ({
+        title: "Handoff Quality",
+        subtitle: projectName,
+        narrative: [
+            handoffStats.total === 0
+                ? "No handoffs have been recorded for this project yet."
+                : `Across ${handoffStats.total} tracked handoff${handoffStats.total === 1 ? "" : "s"}, the average completion rate is ${handoffStats.avg}%.`,
+            handoffStats.full > 0
+                ? `${handoffStats.full} handoff${handoffStats.full === 1 ? " has" : "s have"} hit 100%, indicating clean phase transitions on those stories.`
+                : "No handoff has reached 100% completion yet.",
+            handoffStats.below > 0
+                ? `${handoffStats.below} handoff${handoffStats.below === 1 ? " is" : "s are"} below the 80% threshold — tighten definition-of-done at those phase boundaries.`
+                : "All handoffs are meeting the 80% completion threshold.",
+        ],
+        tableHeaders: ["From", "To", "Task", "Sprint", "Completion"],
+        tableRows: projectHandoffs.map((h) => {
+            const s = projectSprints.find((ss) => ss.id === h.sprintId);
+            return [h.fromPhase, h.toPhase, h.taskId, s?.name ?? h.sprintId, `${h.completionRate}%`];
+        }),
+        summary: [
+            { label: "Total", value: handoffStats.total },
+            { label: "Avg Completion", value: `${handoffStats.avg}%` },
+            { label: "Fully Completed", value: handoffStats.full },
+            { label: "Below Threshold", value: handoffStats.below },
+        ],
+    });
+
+    const authorshipSection = (): ReportSection => ({
+        title: "Authorship",
+        subtitle: projectName,
+        narrative: [
+            projectAuthorship.length === 0
+                ? "No authored features or tasks are recorded for this project."
+                : `${projectAuthorship.length} item${projectAuthorship.length === 1 ? "" : "s"} have been authored — ${projectAuthorship.filter((a) => a.kind === "feature").length} features and ${projectAuthorship.filter((a) => a.kind === "task").length} tasks.`,
+            `Contributions come from ${new Set(projectAuthorship.map((a) => a.creator_id)).size} distinct author${new Set(projectAuthorship.map((a) => a.creator_id)).size === 1 ? "" : "s"}. Use the Ownership page to drill into any individual's feed.`,
+        ],
+        tableHeaders: ["Type", "Name", "Creator", "Status", "Updated"],
+        tableRows: projectAuthorship.map((a) => {
+            const creator = timeSeed.members.find((m) => m.id === a.creator_id);
+            return [a.kind, a.name, creator?.full_name ?? a.creator_id, a.status, formatDate(a.updated_at)];
+        }),
+        summary: [
+            { label: "Items", value: projectAuthorship.length },
+            { label: "Features", value: projectAuthorship.filter((a) => a.kind === "feature").length },
+            { label: "Tasks", value: projectAuthorship.filter((a) => a.kind === "task").length },
+            { label: "Contributors", value: new Set(projectAuthorship.map((a) => a.creator_id)).size },
+        ],
+    });
+
+    const frictionSection = (): ReportSection => ({
+        title: "Friction Sources",
+        subtitle: projectName,
+        narrative: [
+            `Blocker sources are classified into six areas. Totals reflect where friction is currently concentrated across this project.`,
+            `The largest source this period is ${[...analytics.blocker_breakdown].sort((a, b) => b.value - a.value)[0]?.name ?? "n/a"} with ${[...analytics.blocker_breakdown].sort((a, b) => b.value - a.value)[0]?.value ?? 0} issues. Targeting the top one or two sources typically reduces overall friction the fastest.`,
+        ],
+        tableHeaders: ["Source", "Count"],
+        tableRows: analytics.blocker_breakdown.map((b: BreakdownSliceInterface) => [b.name, b.value]),
+        summary: analytics.blocker_breakdown.map((b: BreakdownSliceInterface) => ({ label: b.name, value: b.value })),
+    });
+
+    const recommendationsSection = (): ReportSection => ({
+        title: "Recommendations",
+        subtitle: projectName,
+        narrative: [
+            "Recommendations are generated from completion rate, blocker count, on-time rate, workload utilization, and handoff quality.",
+            "Treat each item as a testable hypothesis for the next planning cycle — review the outcome at the next retrospective.",
+        ],
+        tableHeaders: ["#", "Recommendation"],
+        tableRows: recommendations.map((r, i) => [i + 1, r]),
+    });
+
+    const handleDownload = (format: "pdf" | "excel", builder: () => ReportSection) => {
+        const section = builder();
+        if (format === "pdf") downloadSectionAsPdf(section, projectName);
+        else downloadSectionAsExcel(section, projectName);
     };
+
+    if (!project) {
+        return (
+            <div>
+                <Header title={t("Reports")} description={t("Downloadable analytics per project")} />
+                <Card><CardContent className="p-6 text-center text-text-muted">{t("No projects available to report on.")}</CardContent></Card>
+            </div>
+        );
+    }
 
     return (
         <div>
-            <Header title={t("Reports")} />
+            <Header title={t("Reports")} description={t("Downloadable analytics per project. Every section exports to PDF or Excel.")} />
 
-            <Tabs defaultValue="summary">
-                <TabsList className="mb-6">
-                    <TabsTrigger value="summary">
-                        <FileText className="h-4 w-4 me-1.5" />
-                        {t("Executive Summary")}
-                    </TabsTrigger>
-                    <TabsTrigger value="friction">
-                        <AlertTriangle className="h-4 w-4 me-1.5" />
-                        {t("Friction Analysis")}
-                    </TabsTrigger>
-                </TabsList>
-
-                {/* Tab 1: Executive Summary */}
-                <TabsContent value="summary">
-                    <div className="space-y-8">
-                        {/* Sprint Header */}
-                        <div className="text-center pb-6 border-b border-border">
-                            <h2 className="text-xl sm:text-3xl font-bold text-text-dark">{sprint?.name ?? t("Current Sprint")}</h2>
-                            {sprint && (
-                                <p className="text-base text-text-secondary mt-2">
-                                    {formatDate(sprint.startDate ?? "")} - {formatDate(sprint.endDate ?? "")}
-                                </p>
-                            )}
+            <Card className="mb-6">
+                <CardContent className="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div>
+                        <p className="text-[10px] uppercase tracking-wide text-text-muted">{t("Project")}</p>
+                        <select
+                            value={selectedProjectId}
+                            onChange={(e) => setSelectedProjectId(e.target.value)}
+                            className="mt-1 h-9 rounded-md border border-input bg-transparent px-3 text-sm font-semibold"
+                        >
+                            {timeSeed.projects.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                        </select>
+                        <p className="text-xs text-text-muted mt-2">{project.team_name}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-md border border-border px-3 py-2">
+                            <p className="text-[10px] uppercase tracking-wide text-text-muted">{t("Status")}</p>
+                            <Badge variant={project.status === "active" ? "success" : project.status === "planning" ? "warning" : "secondary"}>
+                                {t(project.status)}
+                            </Badge>
                         </div>
-
-                        {/* Health Score */}
-                        <div className="flex flex-col items-center gap-4">
-                            <h3 className="text-lg font-semibold text-text-dark">{t("Overall Sprint Health")}</h3>
-                            <ScoreGauge score={sprintMetrics?.healthScore ?? 0} size="lg" label={t("Health Score")} />
-                            <StatusBadge status={getScoreStatus(sprintMetrics?.healthScore ?? 0)} />
+                        <div className="rounded-md border border-border px-3 py-2">
+                            <p className="text-[10px] uppercase tracking-wide text-text-muted">{t("Progress")}</p>
+                            <p className="text-sm font-semibold text-text-dark">{project.progress}%</p>
                         </div>
+                    </div>
+                </CardContent>
+            </Card>
 
-                        {/* Sprint Progress Summary */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">{t("Sprint Progress")}</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
-                                    <div className="text-center">
-                                        <p className="text-2xl sm:text-4xl font-bold text-text-dark"><AnimatedNumber value={taskStats.total} /></p>
-                                        <p className="text-xs sm:text-sm text-text-muted mt-1">{t("Total Tasks")}</p>
-                                    </div>
-                                    <div className="text-center">
-                                        <p className="text-2xl sm:text-4xl font-bold text-success"><AnimatedNumber value={taskStats.completed} /></p>
-                                        <p className="text-xs sm:text-sm text-text-muted mt-1">{t("Completed")}</p>
-                                    </div>
-                                    <div className="text-center">
-                                        <p className="text-2xl sm:text-4xl font-bold text-error"><AnimatedNumber value={taskStats.blocked} /></p>
-                                        <p className="text-xs sm:text-sm text-text-muted mt-1">{t("Blocked")}</p>
-                                    </div>
-                                    <div className="text-center">
-                                        <p className={cn("text-2xl sm:text-4xl font-bold", taskStats.completionPct >= 70 ? "text-success" : taskStats.completionPct >= 40 ? "text-warning" : "text-error")}>
-                                            <AnimatedNumber value={taskStats.completionPct} suffix="%" />
-                                        </p>
-                                        <p className="text-xs sm:text-sm text-text-muted mt-1">{t("Completion")}</p>
-                                    </div>
+            {/* Overview */}
+            <SectionCard
+                title="Overview"
+                description="Project charter, team, and sprint roster."
+                onDownloadPdf={() => handleDownload("pdf", overviewSection)}
+                onDownloadExcel={() => handleDownload("excel", overviewSection)}
+            >
+                <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 items-center">
+                    <ScoreGauge score={analytics.completion_rate} size="md" label={t("Completion")} />
+                    <div className="flex flex-col gap-3">
+                        <p className="text-sm text-text-secondary leading-relaxed">
+                            {t("Overall project progress rolled up from delivered tasks, story points, and active sprints.")}
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <InfoTile label={t("Sprints")} value={projectSprints.length} />
+                            <InfoTile label={t("Tasks")} value={`${analytics.tasks_done} / ${analytics.tasks_total}`} />
+                            <InfoTile label={t("On-time")} value={`${analytics.on_time_rate}%`} />
+                            <InfoTile label={t("Team")} value={project.team_name} />
+                        </div>
+                        <StatusBadge status={getScoreStatus(analytics.completion_rate)} />
+                    </div>
+                </div>
+            </SectionCard>
+
+            {/* Delivery Progress */}
+            <SectionCard
+                title="Delivery Progress"
+                description="Completion, on-time rate, and velocity across the project's sprints."
+                onDownloadPdf={() => handleDownload("pdf", deliverySection)}
+                onDownloadExcel={() => handleDownload("excel", deliverySection)}
+            >
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+                    <Stat label={t("Completion")} value={<AnimatedNumber value={analytics.completion_rate} suffix="%" />} tone={analytics.completion_rate >= 70 ? "success" : analytics.completion_rate >= 40 ? "warning" : "error"} />
+                    <Stat label={t("Tasks Done")} value={`${analytics.tasks_done} / ${analytics.tasks_total}`} tone="default" />
+                    <Stat label={t("On-time Rate")} value={<AnimatedNumber value={analytics.on_time_rate} suffix="%" />} tone="success" />
+                    <Stat label={t("Open Blockers")} value={<AnimatedNumber value={analytics.open_blockers} />} tone={analytics.open_blockers > 0 ? "error" : "success"} />
+                </div>
+                <div className="mt-4 h-3 rounded-full bg-muted overflow-hidden">
+                    <div className={cn("h-full rounded-full transition-all duration-700", getBarColor(analytics.completion_rate))} style={{ width: `${analytics.completion_rate}%` }} />
+                </div>
+            </SectionCard>
+
+            {/* Workload */}
+            <SectionCard
+                title="Team Workload"
+                description="Capacity and utilization across everyone contributing to this project."
+                onDownloadPdf={() => handleDownload("pdf", workloadSection)}
+                onDownloadExcel={() => handleDownload("excel", workloadSection)}
+            >
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <Stat label={t("Team Size")} value={<AnimatedNumber value={workloadMetrics.teamSize} />} icon={Users} tone="default" />
+                    <Stat label={t("Avg Utilization")} value={<AnimatedNumber value={workloadMetrics.avgUtil} suffix="%" />} tone={workloadMetrics.avgUtil > 100 ? "error" : workloadMetrics.avgUtil >= 85 ? "warning" : "success"} />
+                    <Stat label={t("Overloaded")} value={<AnimatedNumber value={workloadMetrics.overloaded} />} tone={workloadMetrics.overloaded > 0 ? "error" : "success"} />
+                    <Stat label={t("Points")} value={`${workloadMetrics.completed} / ${workloadMetrics.assigned}`} tone="default" />
+                </div>
+            </SectionCard>
+
+            {/* Handoff Quality */}
+            <SectionCard
+                title="Handoff Quality"
+                description="Phase transitions scored against entry and exit criteria."
+                onDownloadPdf={() => handleDownload("pdf", handoffSection)}
+                onDownloadExcel={() => handleDownload("excel", handoffSection)}
+            >
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <Stat label={t("Total Handoffs")} value={<AnimatedNumber value={handoffStats.total} />} tone="default" />
+                    <Stat label={t("Avg Completion")} value={<AnimatedNumber value={handoffStats.avg} suffix="%" />} tone="default" />
+                    <Stat label={t("Fully Completed")} value={<AnimatedNumber value={handoffStats.full} />} tone="success" />
+                    <Stat label={t("Below Threshold")} value={<AnimatedNumber value={handoffStats.below} />} tone={handoffStats.below > 0 ? "error" : "success"} />
+                </div>
+            </SectionCard>
+
+            {/* Authorship */}
+            <SectionCard
+                title="Authorship"
+                description="Who authored each feature and task inside the project."
+                onDownloadPdf={() => handleDownload("pdf", authorshipSection)}
+                onDownloadExcel={() => handleDownload("excel", authorshipSection)}
+            >
+                {projectAuthorship.length === 0 ? (
+                    <p className="text-sm text-text-muted">{t("No authored items recorded for this project yet.")}</p>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="text-left text-xs uppercase tracking-wide text-text-muted border-b border-border">
+                                    <th className="py-2 pr-3">{t("Name")}</th>
+                                    <th className="py-2 pr-3">{t("Type")}</th>
+                                    <th className="py-2 pr-3">{t("Creator")}</th>
+                                    <th className="py-2 pr-3">{t("Status")}</th>
+                                    <th className="py-2 pr-3">{t("Updated")}</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border">
+                                {projectAuthorship.map((a) => {
+                                    const creator = timeSeed.members.find((m) => m.id === a.creator_id);
+                                    return (
+                                        <tr key={a.id}>
+                                            <td className="py-2 pr-3 font-medium text-text-dark">{a.name}</td>
+                                            <td className="py-2 pr-3 text-text-muted">{t(a.kind)}</td>
+                                            <td className="py-2 pr-3 text-text-muted">{creator?.full_name ?? a.creator_id}</td>
+                                            <td className="py-2 pr-3">
+                                                <Badge variant={a.status === "shipped" ? "success" : a.status === "active" ? "default" : a.status === "draft" ? "warning" : "secondary"}>{t(a.status)}</Badge>
+                                            </td>
+                                            <td className="py-2 pr-3 text-text-muted">{formatDate(a.updated_at)}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </SectionCard>
+
+            {/* Friction Sources */}
+            <SectionCard
+                title="Friction Sources"
+                description="Where blockers and drag are coming from."
+                onDownloadPdf={() => handleDownload("pdf", frictionSection)}
+                onDownloadExcel={() => handleDownload("excel", frictionSection)}
+            >
+                <div className="flex flex-col gap-3">
+                    {analytics.blocker_breakdown.map((area) => {
+                        const max = Math.max(...analytics.blocker_breakdown.map((b) => b.value), 1);
+                        const width = Math.round((area.value / max) * 100);
+                        return (
+                            <div key={area.name}>
+                                <div className="flex justify-between text-xs mb-1">
+                                    <span className="text-text-dark">{area.name}</span>
+                                    <span className="text-text-muted">{area.value} {t("issues")}</span>
                                 </div>
-                                <div className="mt-4 h-3 rounded-full bg-muted overflow-hidden">
-                                    <div
-                                        className={cn("h-full rounded-full transition-all duration-700 progress-animated", getBarColor(taskStats.completionPct))}
-                                        style={{ width: `$<AnimatedNumber value={taskStats.completionPct} suffix="%" />` }}
-                                    />
+                                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                                    <div className="h-full bg-primary" style={{ width: `${width}%`, background: area.color }} />
                                 </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Key Findings */}
-                        <div>
-                            <h3 className="text-lg font-semibold text-text-dark mb-4">{t("Key Findings")}</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Strengths */}
-                                {keyFindings.best.map((metric) => (
-                                    <Card key={metric.id} className={isRTL ? "border-r-4 border-r-success" : "border-l-4 border-l-success"}>
-                                        <CardContent className="p-5">
-                                            <div className={cn("flex items-start gap-3", isRTL && "flex-row-reverse text-end")}>
-                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success-light">
-                                                    <TrendingUp className="h-5 w-5 text-success" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-semibold text-text-dark">{td(metric.name)}</p>
-                                                    <p className="text-2xl font-bold text-success mt-1">{metric.value}{metric.unit === "%" ? "%" : ` ${td(metric.unit)}`}</p>
-                                                    <p className="text-sm text-text-secondary mt-1">{td(metric.description)}</p>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
-
-                                {/* Concerns */}
-                                {keyFindings.worst.map((metric) => (
-                                    <Card key={metric.id} className={cn(isRTL ? "border-r-4" : "border-l-4", metric.status === MetricStatus.Critical ? (isRTL ? "border-r-error" : "border-l-error") : (isRTL ? "border-r-warning" : "border-l-warning"))}>
-                                        <CardContent className="p-5">
-                                            <div className={cn("flex items-start gap-3", isRTL && "flex-row-reverse text-end")}>
-                                                <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", metric.status === MetricStatus.Critical ? "bg-error-light" : "bg-warning-light")}>
-                                                    <TrendingDown className={cn("h-5 w-5", metric.status === MetricStatus.Critical ? "text-error" : "text-warning")} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-semibold text-text-dark">{td(metric.name)}</p>
-                                                    <p className={cn("text-2xl font-bold mt-1", metric.status === MetricStatus.Critical ? "text-error" : "text-warning")}>
-                                                        {metric.value}{metric.unit === "%" ? "%" : ` ${td(metric.unit)}`}
-                                                    </p>
-                                                    <p className="text-sm text-text-secondary mt-1">{td(metric.description)}</p>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
                             </div>
-                        </div>
+                        );
+                    })}
+                </div>
+            </SectionCard>
 
-                        {/* Recommendations */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className={cn("flex items-center gap-2 text-lg", isRTL && "flex-row-reverse")}>
-                                    <Lightbulb className="h-5 w-5 text-warning" />
-                                    {t("Recommendations")}
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <ul className="space-y-3">
-                                    {recommendations.map((rec, i) => (
-                                        <li key={i} className={cn("flex items-start gap-3", isRTL && "flex-row-reverse text-end")}>
-                                            <ArrowRight className={cn("h-4 w-4 text-primary mt-0.5 shrink-0", isRTL && "rotate-180")} />
-                                            <p className="text-sm text-text-secondary leading-relaxed">{rec}</p>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </TabsContent>
-
-                {/* Tab 2: Friction Analysis */}
-                <TabsContent value="friction">
-                    <div className="space-y-6">
-                        <div className="text-center pb-4 border-b border-border">
-                            <h2 className="text-2xl font-bold text-text-dark">{t("Friction Analysis")}</h2>
-                            <p className="text-sm text-text-secondary mt-1">
-                                {t("Detailed breakdown of the six friction areas impacting team delivery")}
-                            </p>
-                        </div>
-
-                        {frictionAreaConfig.map((area) => {
-                            const score = sprintMetrics?.frictionScores[area.key] ?? 0;
-                            const status = getScoreStatus(score);
-                            const areaMetrics = getMetricsForArea(area.metricsFilter);
-                            const AreaIcon = area.icon;
-
-                            return (
-                                <Card key={area.key}>
-                                    <CardContent className="p-6">
-                                        {/* Area Header */}
-                                        <div className={cn("flex items-start justify-between mb-4", isRTL && "flex-row-reverse")}>
-                                            <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
-                                                <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", score >= 80 ? "bg-success-light" : score >= 60 ? "bg-warning-light" : "bg-error-light")}>
-                                                    <AreaIcon className={cn("h-5 w-5", area.color)} />
-                                                </div>
-                                                <div className={cn(isRTL && "text-end")}>
-                                                    <h3 className="text-base font-semibold text-text-dark">{t(area.labelKey)}</h3>
-                                                    <div className={cn("flex items-center gap-2 mt-0.5", isRTL && "flex-row-reverse")}>
-                                                        <span className={cn("text-2xl font-bold", getScoreColor(score))}>{score}</span>
-                                                        <span className="text-sm text-text-muted">/ 100</span>
-                                                        <StatusBadge status={status} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Progress bar */}
-                                        <div className="h-3 rounded-full bg-muted overflow-hidden mb-4">
-                                            <div
-                                                className={cn("h-full rounded-full transition-all duration-700 progress-animated", getBarColor(score))}
-                                                style={{ width: `${score}%` }}
-                                            />
-                                        </div>
-
-                                        {/* Description */}
-                                        <p className={cn("text-sm text-text-secondary leading-relaxed mb-4", isRTL && "text-end")}>
-                                            {td(area.description(score))}
-                                        </p>
-
-                                        {/* Related Metrics */}
-                                        {areaMetrics.length > 0 && (
-                                            <div>
-                                                <p className={cn("text-xs font-medium text-text-muted uppercase tracking-wide mb-2", isRTL && "text-end")}>{t("Related Metrics")}</p>
-                                                <div className={cn("grid grid-cols-1 sm:grid-cols-3 gap-2", isRTL && "[direction:rtl]")}>
-                                                    {areaMetrics.map((m) => (
-                                                        <MetricCard
-                                                            key={m.id}
-                                                            name={m.name}
-                                                            value={m.value}
-                                                            unit={m.unit}
-                                                            status={m.status}
-                                                            trend={m.trend}
-                                                            trendPercent={m.trendPercent}
-                                                            compact
-                                                        />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
-                    </div>
-                </TabsContent>
-            </Tabs>
+            {/* Recommendations */}
+            <SectionCard
+                title="Recommendations"
+                description="Actions informed by completion, blockers, workload, and handoff signals."
+                onDownloadPdf={() => handleDownload("pdf", recommendationsSection)}
+                onDownloadExcel={() => handleDownload("excel", recommendationsSection)}
+            >
+                <div className="flex items-start gap-3 mb-3">
+                    <Lightbulb className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+                    <p className="text-sm text-text-secondary">
+                        {t("Treat each recommendation as a testable hypothesis for the next planning cycle.")}
+                    </p>
+                </div>
+                <ul className="space-y-2">
+                    {recommendations.map((rec, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                            <ArrowRight className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                            <p className="text-sm text-text-secondary leading-relaxed">{rec}</p>
+                        </li>
+                    ))}
+                </ul>
+            </SectionCard>
         </div>
     );
 };
+
+const Stat = ({ label, value, tone = "default", icon: Icon }: {
+    label: string;
+    value: React.ReactNode;
+    tone?: "default" | "success" | "warning" | "error";
+    icon?: typeof Users;
+}) => {
+    const toneClass = {
+        default: "text-text-dark",
+        success: "text-success",
+        warning: "text-warning",
+        error: "text-error",
+    }[tone];
+    return (
+        <div className="text-center rounded-md bg-muted/30 px-3 py-3">
+            {Icon && <Icon className="h-4 w-4 text-text-muted mx-auto mb-1" />}
+            <p className={cn("text-xl sm:text-2xl font-bold", toneClass)}>{value}</p>
+            <p className="text-xs text-text-muted mt-0.5">{label}</p>
+        </div>
+    );
+};
+
+const InfoTile = ({ label, value }: { label: string; value: string | number }) => (
+    <div className="rounded-md bg-muted/40 px-3 py-2">
+        <p className="text-[10px] uppercase tracking-wide text-text-muted">{label}</p>
+        <p className="text-sm font-bold text-text-dark">{value}</p>
+    </div>
+);
+
