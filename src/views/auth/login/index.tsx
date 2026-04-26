@@ -4,8 +4,9 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button, Input, Label } from "@/atoms";
-import { commonData, DEMO_USERS, routesData } from "@/data";
+import { apisData, commonData, DEMO_USERS, routesData } from "@/data";
 import { useAuth, useFormErrors, useSettings, useTheme, t } from "@/hooks";
+import { apiClient } from "@/lib/axios";
 import { setCookieHandler } from "@/lib/cookies";
 
 // TEMP: static token for endpoint testing — REMOVE before merge
@@ -25,9 +26,14 @@ export const LoginView = () => {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // TEMP: inject static token on mount so API endpoints can be tested without logging in. REMOVE before merge.
+    // TEMP: inject static token + fire 5 test requests (3 GET, 2 POST) on mount. REMOVE before merge.
     useEffect(() => {
         setCookieHandler(commonData.token.tokenKey, TEMP_TEST_TOKEN);
+        apiClient.get(apisData.auth.me).catch(() => {});
+        apiClient.get(apisData.users.listLite).catch(() => {});
+        apiClient.get(apisData.teams.listLite).catch(() => {});
+        apiClient.post(apisData.auth.refresh).catch(() => {});
+        apiClient.post(apisData.projects.create, { name: "twindix-test", code: "TWX-TEST" }).catch(() => {});
     }, []);
 
     const handleSubmit = async (e: FormEvent) => {
