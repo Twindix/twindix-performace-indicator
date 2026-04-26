@@ -1,11 +1,15 @@
 import { Activity, Eye, EyeOff, Globe, Moon, Sun } from "lucide-react";
 import { ApiError, getErrorMessage } from "@/lib/error";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button, Input, Label } from "@/atoms";
-import { DEMO_USERS, routesData } from "@/data";
+import { commonData, DEMO_USERS, routesData } from "@/data";
 import { useAuth, useFormErrors, useSettings, useTheme, t } from "@/hooks";
+import { setCookieHandler } from "@/lib/cookies";
+
+// TEMP: static token for endpoint testing — REMOVE before merge
+const TEMP_TEST_TOKEN = "66|1Xouq50HYjXckSLWIBC5AzatBVYsSSDiZCbda4QXc285ab24";
 
 export const LoginView = () => {
     const [email, setEmail] = useState("");
@@ -20,6 +24,11 @@ export const LoginView = () => {
     const isArabic = settings.language === "ar";
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // TEMP: inject static token on mount so API endpoints can be tested without logging in. REMOVE before merge.
+    useEffect(() => {
+        setCookieHandler(commonData.token.tokenKey, TEMP_TEST_TOKEN);
+    }, []);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
