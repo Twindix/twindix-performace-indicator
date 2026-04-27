@@ -204,6 +204,156 @@ export interface UseTasksDialogsReturnInterface {
     transition: TasksTransitionStateInterface;
 }
 
+// === Detail dialog types ===
+
+import type { TaskPhase } from "@/enums";
+import type {
+    BlockerInterface,
+    RequirementInterface,
+    TaskCommentInterface,
+} from "@/interfaces";
+
+export interface UseTaskDetailArgsInterface {
+    task: TaskInterface | null;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
+    removeTaskLocal: (id: string) => void;
+}
+
+export interface UseTaskDetailReturnInterface {
+    confirmDelete: boolean;
+    setConfirmDelete: Dispatch<SetStateAction<boolean>>;
+    isDeletingTask: boolean;
+    isMarkingComplete: boolean;
+    handleDelete: () => Promise<void>;
+    handleMarkComplete: () => Promise<void>;
+    isFetchingRequirements: boolean;
+}
+
+export interface UseTaskTagsFormArgsInterface {
+    task: TaskInterface;
+    patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
+}
+
+export interface UseTaskTagsFormReturnInterface {
+    tagInput: string;
+    setTagInput: Dispatch<SetStateAction<string>>;
+    showTagInput: boolean;
+    setShowTagInput: Dispatch<SetStateAction<boolean>>;
+    handleAddTag: () => Promise<void>;
+    handleRemoveTag: (tagId: string) => Promise<void>;
+}
+
+export interface UseTaskRequirementsFormArgsInterface {
+    task: TaskInterface;
+    patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
+}
+
+export interface UseTaskRequirementsFormReturnInterface {
+    reqInput: string;
+    setReqInput: Dispatch<SetStateAction<string>>;
+    showReqInput: boolean;
+    setShowReqInput: Dispatch<SetStateAction<boolean>>;
+    editingReqId: string | null;
+    setEditingReqId: Dispatch<SetStateAction<string | null>>;
+    editingReqLabel: string;
+    setEditingReqLabel: Dispatch<SetStateAction<string>>;
+    isAddingReq: boolean;
+    handleAdd: () => Promise<void>;
+    handleSaveEdit: (req: RequirementInterface) => Promise<void>;
+    handleToggle: (req: RequirementInterface) => Promise<void>;
+    handleDelete: (reqId: string) => Promise<void>;
+}
+
+export interface TaskDetailDialogPropsInterface {
+    task: TaskInterface | null;
+    members: UserLiteInterface[];
+    blocker: BlockerInterface | undefined;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onMoveRequest: (task: TaskInterface, targetPhase: TaskPhase) => void;
+    patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
+    removeTaskLocal: (id: string) => void;
+}
+
+export interface TaskDetailHeaderPropsInterface {
+    task: TaskInterface;
+    canDelete: boolean;
+    onRequestDelete: () => void;
+}
+
+export interface TaskPhaseNavigationPropsInterface {
+    task: TaskInterface;
+    canFinish: boolean;
+    canMove: boolean;
+    isMarkingComplete: boolean;
+    onMarkComplete: () => void;
+    onMoveNext: (target: TaskPhase) => void;
+}
+
+export interface TaskMetaGridPropsInterface {
+    task: TaskInterface;
+}
+
+export interface TaskTagsSectionPropsInterface {
+    task: TaskInterface;
+    canEdit: boolean;
+    patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
+}
+
+export interface TaskBlockerSectionPropsInterface {
+    blocker: BlockerInterface | undefined;
+    isBlocked: boolean;
+}
+
+export interface TaskRequirementsSectionPropsInterface {
+    task: TaskInterface;
+    canToggleRequirement: boolean;
+    isFetching: boolean;
+    patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
+}
+
+export interface TaskRequirementItemPropsInterface {
+    req: RequirementInterface;
+    canToggle: boolean;
+    onToggle: () => void;
+    onStartEdit: () => void;
+    onDelete: () => void;
+}
+
+export interface TaskAttachmentsSectionPropsInterface {
+    task: TaskInterface;
+    patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
+}
+
+export interface TaskTimeLogsSectionPropsInterface {
+    task: TaskInterface;
+    members: UserLiteInterface[];
+    patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
+}
+
+export interface TaskCommentsSectionPropsInterface {
+    task: TaskInterface;
+    currentUserId: string;
+    members: UserLiteInterface[];
+    onUpdateComments?: (taskId: string, comments: TaskCommentInterface[]) => void;
+}
+
+export interface MentionDropdownPropsInterface {
+    members: UserLiteInterface[];
+    activeIndex: number;
+    onSelect: (user: UserLiteInterface) => void;
+}
+
+export interface DeleteTaskConfirmDialogPropsInterface {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    taskTitle: string;
+    isDeleting: boolean;
+    onConfirm: () => void;
+}
+
 export interface UseTasksViewReturnInterface {
     permissions: import("@/hooks/shared/use-permissions").Permissions;
     activeSprintId: string;

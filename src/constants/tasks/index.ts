@@ -66,6 +66,8 @@ export const tasksConstants = {
         { value: "feature", label: "Feature" },
         { value: "bug", label: "Bug" },
     ],
+    deleteConfirmTitle: "Delete Task",
+    mentionMaxResults: 8,
     pipelineColumnColorClass: {
         backlog: "text-slate-400",
         ready: "text-primary",

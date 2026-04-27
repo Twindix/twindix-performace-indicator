@@ -3,17 +3,11 @@ import { Check, Clock, Pencil, Trash2, X } from "lucide-react";
 
 import { Button, Input, Skeleton } from "@/atoms";
 import { t, useCreateTimeLog, useDeleteTimeLog, useGetTimeLog, usePermissions, useUpdateTimeLog } from "@/hooks";
-import type { TaskInterface, TimeLogInterface, UserLiteInterface } from "@/interfaces";
-import { Avatar, AvatarFallback } from "@/ui";
+import type { TaskInterface, TaskTimeLogsSectionPropsInterface, TimeLogInterface } from "@/interfaces";
 import { useAuthStore } from "@/store";
+import { Avatar, AvatarFallback } from "@/ui";
 
-interface Props {
-    task: TaskInterface;
-    members: UserLiteInterface[];
-    patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
-}
-
-export const TaskTimeLogs = ({ task, members, patchTaskLocal }: Props) => {
+export const TaskTimeLogsSection = ({ task, members, patchTaskLocal }: TaskTimeLogsSectionPropsInterface) => {
     const p = usePermissions();
     const canLog = p.tasks.logTime(task);
     const { getByTaskHandler } = useGetTimeLog();
@@ -68,7 +62,7 @@ export const TaskTimeLogs = ({ task, members, patchTaskLocal }: Props) => {
             description: editNote.trim() || undefined,
         });
         if (res) {
-            const next = logs.map((l) => l.id === id ? res : l);
+            const next = logs.map((l) => (l.id === id ? res : l));
             setLogs(next);
             patchTaskLocal(task.id, { timeLogs: next as unknown as TaskInterface["timeLogs"] });
             setEditingId(null);

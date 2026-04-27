@@ -3,7 +3,9 @@ import { useTasksView } from "@/hooks";
 import { TaskPhase } from "@/enums";
 
 import { TasksContent, TasksFilters, TasksHeader } from "./components";
-import { TaskDetailDialog } from "./TaskDetailDialog";
+import type { TaskInterface } from "@/interfaces";
+
+import { TaskDetailDialog } from "./dialogs";
 import { AddTaskDialog } from "./add-task-dialog";
 import { TransitionDialog } from "./TransitionDialog";
 
@@ -55,12 +57,11 @@ export const TasksView = () => {
                 blocker={undefined}
                 open={view.dialogs.detailOpen}
                 onOpenChange={view.dialogs.setDetailOpen}
-                onMoveRequest={(task, targetPhase) => {
+                onMoveRequest={(task: TaskInterface, targetPhase: TaskPhase) => {
                     view.dialogs.setDetailOpen(false);
                     view.dialogs.transition.open(task, targetPhase);
                 }}
-                onUpdateRequirements={() => {}}
-                patchTaskLocal={(id, updates) => {
+                patchTaskLocal={(id: string, updates: Partial<TaskInterface>) => {
                     const existing = view.tasks.find((t) => t.id === id);
                     if (!existing) return;
                     const merged = { ...existing, ...updates };

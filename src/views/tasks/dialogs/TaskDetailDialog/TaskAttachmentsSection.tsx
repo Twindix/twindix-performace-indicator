@@ -1,17 +1,16 @@
 import { Paperclip, Trash2 } from "lucide-react";
 
 import { t, useGetTask, usePermissions, useTaskAttachments } from "@/hooks";
-import type { TaskInterface } from "@/interfaces";
-
-interface Props {
-    task: TaskInterface;
-    patchTaskLocal: (id: string, updates: Partial<TaskInterface>) => void;
-}
+import type { TaskAttachmentsSectionPropsInterface } from "@/interfaces";
 
 const formatSize = (bytes: number) =>
-    bytes < 1024 ? `${bytes} B` : bytes < 1048576 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
+    bytes < 1024
+        ? `${bytes} B`
+        : bytes < 1048576
+            ? `${(bytes / 1024).toFixed(1)} KB`
+            : `${(bytes / 1048576).toFixed(1)} MB`;
 
-export const TaskAttachments = ({ task, patchTaskLocal }: Props) => {
+export const TaskAttachmentsSection = ({ task, patchTaskLocal }: TaskAttachmentsSectionPropsInterface) => {
     const p = usePermissions();
     const canManage = p.tasks.manageAttachment(task);
     const { uploadHandler, deleteHandler } = useTaskAttachments();

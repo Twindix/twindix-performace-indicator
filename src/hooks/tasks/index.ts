@@ -16,3 +16,6 @@ export { useTasksListLite, type TasksListLiteParams } from "./use-tasks-list-lit
 export { useTasksFilters } from "./use-tasks-filters";
 export { useTasksDialogs } from "./use-tasks-dialogs";
 export { useTasksView } from "./use-tasks-view";
+export { useTaskDetail } from "./use-task-detail";
+export { useTaskTagsForm } from "./use-task-tags-form";
+export { useTaskRequirementsForm } from "./use-task-requirements-form";
