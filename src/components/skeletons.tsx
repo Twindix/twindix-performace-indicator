@@ -720,6 +720,55 @@ export const UsersSkeleton = () => (
     </div>
 );
 
+export const UserDetailSkeleton = () => (
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-1 flex flex-col gap-4">
+            <Card>
+                <CardContent className="p-6 flex flex-col items-center gap-3 text-center">
+                    <Skeleton className="h-20 w-20 rounded-full" />
+                    <div className="w-full space-y-2">
+                        <Skeleton className="h-4 w-32 mx-auto" />
+                        <Skeleton className="h-3 w-40 mx-auto" />
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                        <Skeleton className="h-5 w-20 rounded-full" />
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                    </div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader><Skeleton className="h-4 w-24" /></CardHeader>
+                <CardContent className="flex flex-col gap-4">
+                    {[...Array(3)].map((_, i) => (
+                        <div key={i} className="space-y-1.5">
+                            <div className="flex justify-between"><Skeleton className="h-3 w-20" /><Skeleton className="h-3 w-10" /></div>
+                            <Skeleton className="h-2 w-full rounded-full" />
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
+        </div>
+        <div className="lg:col-span-3 flex flex-col gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {[...Array(3)].map((_, i) => <StatCard key={i} />)}
+            </div>
+            {[...Array(4)].map((_, i) => (
+                <Card key={i}>
+                    <CardHeader><Skeleton className="h-5 w-40" /></CardHeader>
+                    <CardContent className="space-y-3">
+                        {[...Array(3)].map((_, j) => (
+                            <div key={j} className="space-y-1.5">
+                                <div className="flex justify-between"><Skeleton className="h-3 w-24" /><Skeleton className="h-3 w-10" /></div>
+                                <Skeleton className="h-2 w-full rounded-full" />
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    </div>
+);
+
 /* -------------------------------------------------------------------------- */
 /*  Teams                                                                      */
 /* -------------------------------------------------------------------------- */
