@@ -1,4 +1,47 @@
+import { TaskPhase, TaskPriority } from "@/enums";
+import type { ReadinessChecklistInterface } from "@/interfaces";
+
 export const tasksConstants = {
+    columns: [
+        { phase: TaskPhase.Backlog, label: "Backlog", index: 0 },
+        { phase: TaskPhase.Ready, label: "Ready", index: 1 },
+        { phase: TaskPhase.InProgress, label: "In Progress", index: 2 },
+        { phase: TaskPhase.Review, label: "Review", index: 3 },
+        { phase: TaskPhase.QA, label: "QA", index: 4 },
+        { phase: TaskPhase.Done, label: "Done", index: 5 },
+    ] as { phase: TaskPhase; label: string; index: number }[],
+    phaseIndex: {
+        [TaskPhase.Backlog]: 0,
+        [TaskPhase.Ready]: 1,
+        [TaskPhase.InProgress]: 2,
+        [TaskPhase.Review]: 3,
+        [TaskPhase.QA]: 4,
+        [TaskPhase.Done]: 5,
+    } as Record<TaskPhase, number>,
+    priorityVariants: {
+        [TaskPriority.Critical]: "error",
+        [TaskPriority.High]: "warning",
+        [TaskPriority.Medium]: "default",
+        [TaskPriority.Low]: "secondary",
+    } as Record<TaskPriority, "error" | "warning" | "default" | "secondary">,
+    readinessLabels: [
+        { key: "acceptanceCriteriaDefined", label: "Acceptance criteria defined" },
+        { key: "businessRulesClear", label: "Business rules clear" },
+        { key: "edgeCasesIdentified", label: "Edge cases identified" },
+        { key: "dependenciesMapped", label: "Dependencies mapped" },
+        { key: "designAvailable", label: "Design available" },
+        { key: "apiContractReady", label: "API contract ready" },
+        { key: "estimationDone", label: "Estimation done" },
+    ] as { key: keyof ReadinessChecklistInterface; label: string }[],
+    columnColors: {
+        [TaskPhase.Backlog]: "bg-text-muted",
+        [TaskPhase.Ready]: "bg-primary",
+        [TaskPhase.InProgress]: "bg-warning",
+        [TaskPhase.Review]: "bg-[#8b5cf6]",
+        [TaskPhase.QA]: "bg-[#ec4899]",
+        [TaskPhase.Done]: "bg-success",
+    } as Record<TaskPhase, string>,
+    readinessThreshold: 70,
     errors: {
         fetchFailed: "Failed to load tasks.",
         createFailed: "Failed to create task.",

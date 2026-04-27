@@ -3,16 +3,12 @@ import { ShieldCheck, Lock, CheckCircle2, AlertCircle, Clock, Undo2 } from "luci
 import { Badge, Button, Input, Skeleton, Textarea } from "@/atoms";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
 import { cn } from "@/utils";
-import { t, useTaskViews } from "@/hooks";
-import type { TaskInterface } from "@/interfaces";
+import { tasksConstants } from "@/constants";
 import { TaskPhase, TaskPriority } from "@/enums";
-import {
-    PHASE_INDEX,
-    PRIORITY_VARIANT,
-    phaseLabel,
-    capitalize,
-    type TransitionResult,
-} from "./constants";
+import { t, useTaskViews } from "@/hooks";
+import type { TaskInterface, TransitionResultInterface } from "@/interfaces";
+import { phaseLabel } from "@/lib/tasks";
+import { capitalize } from "@/utils";
 
 interface TransitionDialogProps {
     open: boolean;
@@ -34,14 +30,14 @@ export const TransitionDialog = ({
     isSubmitting = false,
 }: TransitionDialogProps) => {
     const { transitionCriteriaHandler } = useTaskViews();
-    const [result, setResult] = useState<TransitionResult | null>(null);
+    const [result, setResult] = useState<TransitionResultInterface | null>(null);
     const [isFetching, setIsFetching] = useState(false);
     const [hours, setHours] = useState("");
     const [note, setNote] = useState("");
     const [reason, setReason] = useState("");
 
     const isBackward = task && targetPhase
-        ? PHASE_INDEX[targetPhase as TaskPhase] < PHASE_INDEX[(task.status as TaskPhase) ?? TaskPhase.Backlog]
+        ? tasksConstants.phaseIndex[targetPhase as TaskPhase] < tasksConstants.phaseIndex[(task.status as TaskPhase) ?? TaskPhase.Backlog]
         : false;
 
     useEffect(() => {
@@ -112,7 +108,7 @@ export const TransitionDialog = ({
                     <div className="rounded-xl bg-muted p-3 mt-2">
                         <p className="text-sm font-semibold text-text-dark">{task.title}</p>
                         <div className="flex items-center gap-2 mt-1">
-                            <Badge variant={PRIORITY_VARIANT[task.priority as TaskPriority]} className="text-[10px]">{t(capitalize(task.priority))}</Badge>
+                            <Badge variant={tasksConstants.priorityVariants[task.priority as TaskPriority]} className="text-[10px]">{t(capitalize(task.priority))}</Badge>
                             <span className="text-xs text-text-muted">{task.storyPoints} {t("points")}</span>
                         </div>
                     </div>
@@ -166,7 +162,7 @@ export const TransitionDialog = ({
                 <div className="rounded-xl bg-muted p-3 mt-2">
                     <p className="text-sm font-semibold text-text-dark">{task.title}</p>
                     <div className="flex items-center gap-2 mt-1">
-                        <Badge variant={PRIORITY_VARIANT[task.priority as TaskPriority]} className="text-[10px]">{t(capitalize(task.priority))}</Badge>
+                        <Badge variant={tasksConstants.priorityVariants[task.priority as TaskPriority]} className="text-[10px]">{t(capitalize(task.priority))}</Badge>
                         <span className="text-xs text-text-muted">{task.storyPoints} {t("points")}</span>
                     </div>
                 </div>
