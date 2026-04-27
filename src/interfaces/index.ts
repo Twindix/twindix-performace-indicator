@@ -27,3 +27,21 @@ export type { MetricInterface, FrictionScoresInterface, SprintMetricsInterface }
 export type { OwnershipEntryInterface } from "./ownership";
 export type { HandoffInterface, CriterionInterface } from "./handoffs";
 export type { ProjectInterface, ProjectCreatorInterface, CreateProjectPayloadInterface, UpdateProjectPayloadInterface, ProjectLiteInterface } from "./projects";
+export type {
+    EditSprintFormStateInterface,
+    UserMenuPresenceInterface,
+    UserMenuActionsInterface,
+    ProjectSelectorPropsInterface,
+    SprintSelectorPropsInterface,
+    EditSprintButtonPropsInterface,
+    ThemeTogglePropsInterface,
+    UserMenuPropsInterface,
+    UserMenuTriggerPropsInterface,
+    UserMenuHeaderPropsInterface,
+    PresenceStatusMenuItemsPropsInterface,
+    UserMenuActionsPropsInterface,
+    EditSprintDialogPropsInterface,
+    UseEditSprintFormArgsInterface,
+    UseEditSprintFormReturnInterface,
+    UseAutoActiveSprintArgsInterface,
+} from "./topbar";
