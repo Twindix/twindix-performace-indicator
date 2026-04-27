@@ -4,3 +4,4 @@ export { useCreateTeam } from "./use-create-team";
 export { useUpdateTeam } from "./use-update-team";
 export { useDeleteTeam } from "./use-delete-team";
 export { useTeamsListLite } from "./use-teams-list-lite";
+export { useTeamsView } from "./use-teams-view";
