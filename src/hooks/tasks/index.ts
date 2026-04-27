@@ -13,3 +13,6 @@ export { useTaskAttachments } from "./use-task-attachments";
 export { useTasksList, type TasksListFilters } from "./use-tasks-list";
 export { useMarkTaskComplete } from "./use-mark-task-complete";
 export { useTasksListLite, type TasksListLiteParams } from "./use-tasks-list-lite";
+export { useTasksFilters } from "./use-tasks-filters";
+export { useTasksDialogs } from "./use-tasks-dialogs";
+export { useTasksView } from "./use-tasks-view";
