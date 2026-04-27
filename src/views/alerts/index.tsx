@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Bell, Check, CheckCheck, Clock, ExternalLink, Link2, Pencil, Plus, Search, ShieldCheck, Trash2, X } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
-import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { EmptyState, PageHeader, QueryBoundary } from "@/components/shared";
 import { AlertsSkeleton } from "@/components/skeletons";
 import { t, useAcknowledgeAlert, useAlertsList, useCreateAlert, useDeleteAlert, useDoneAlert, usePermissions, useUpdateAlert, useUsersList } from "@/hooks";
 import type { AlertInterface } from "@/interfaces";
@@ -280,18 +280,16 @@ export const AlertsView = () => {
 
     return (
         <div>
-            <Header
-                title={t("Alerts")}
-                description={t("Create announcements and track acknowledgements.")}
-                actions={
-                    p.alerts.create() ? (
+            <PageHeader title={t("Alerts")} description={t("Create announcements and track acknowledgements.")}>
+                {p.alerts.create() && (
+                    <PageHeader.Actions>
                         <Button onClick={() => { setForm(emptyForm); setAddOpen(true); }} className="gap-2">
                             <Plus className="h-4 w-4" />
                             {t("Create Alert")}
                         </Button>
-                    ) : null
-                }
-            />
+                    </PageHeader.Actions>
+                )}
+            </PageHeader>
 
             <div className="flex flex-wrap gap-2 mb-4">
                 {[

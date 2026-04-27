@@ -354,6 +354,194 @@ export interface DeleteTaskConfirmDialogPropsInterface {
     onConfirm: () => void;
 }
 
+// === AddTaskDialog types ===
+
+export interface UseAddTaskFormArgsInterface {
+    sprintId: string;
+    onClose: () => void;
+    addTaskLocal?: (task: TaskInterface) => void;
+}
+
+export interface AddTaskCompoundStateInterface {
+    taskType: "standalone" | "compound";
+    startAfterEnabled: boolean;
+    startAfterTaskId: string;
+    notifyEnabled: boolean;
+    notifyUserIds: string[];
+}
+
+export interface UseAddTaskFormReturnInterface {
+    formState: AddTaskFormState;
+    updateField: <K extends keyof AddTaskFormState>(field: K, value: AddTaskFormState[K]) => void;
+    requirementInput: string;
+    setRequirementInput: Dispatch<SetStateAction<string>>;
+    addRequirement: () => void;
+    removeRequirement: (id: string) => void;
+    requirementInputRef: React.RefObject<HTMLInputElement | null>;
+    tagInput: string;
+    setTagInput: Dispatch<SetStateAction<string>>;
+    addTag: () => void;
+    removeTag: (tag: string) => void;
+    tagInputRef: React.RefObject<HTMLInputElement | null>;
+    handleFileAdd: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    removeFile: (idx: number) => void;
+    deadline: string;
+    setDeadline: (value: string) => void;
+    compound: AddTaskCompoundStateInterface;
+    setTaskType: (value: "standalone" | "compound") => void;
+    setStartAfterEnabled: (value: boolean) => void;
+    setStartAfterTaskId: Dispatch<SetStateAction<string>>;
+    setNotifyEnabled: (value: boolean) => void;
+    setNotifyUserIds: Dispatch<SetStateAction<string[]>>;
+    isSubmitting: boolean;
+    handleSubmit: (e: React.FormEvent) => Promise<void>;
+    getError: (field: string) => string | undefined;
+    clearError: (field: string) => void;
+    resetForm: () => void;
+}
+
+export interface TaskAutocompletePropsInterface {
+    tasks: { id: string; title: string }[];
+    value: string;
+    onChange: (id: string) => void;
+    placeholder?: string;
+}
+
+export interface UsersAutocompletePropsInterface {
+    members: UserLiteInterface[];
+    values: string[];
+    onChange: (ids: string[]) => void;
+    placeholder?: string;
+}
+
+export interface AddTaskTitleFieldPropsInterface {
+    value: string;
+    onChange: (value: string) => void;
+    error: string | undefined;
+}
+
+export interface AddTaskDescriptionFieldPropsInterface {
+    value: string;
+    onChange: (value: string) => void;
+    error: string | undefined;
+}
+
+export interface AddTaskRequirementsSectionPropsInterface {
+    requirements: RequirementDraftInterface[];
+    input: string;
+    onInputChange: (value: string) => void;
+    onAdd: () => void;
+    onRemove: (id: string) => void;
+    inputRef: React.RefObject<HTMLInputElement | null>;
+}
+
+export interface AddTaskTagsSectionPropsInterface {
+    tags: string[];
+    input: string;
+    onInputChange: (value: string) => void;
+    onAdd: () => void;
+    onRemove: (tag: string) => void;
+    inputRef: React.RefObject<HTMLInputElement | null>;
+}
+
+export interface AddTaskAttachmentsSectionPropsInterface {
+    files: File[];
+    onFileAdd: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onRemove: (idx: number) => void;
+}
+
+export interface AddTaskMetaSectionPropsInterface {
+    formState: AddTaskFormState;
+    onChange: <K extends keyof AddTaskFormState>(field: K, value: AddTaskFormState[K]) => void;
+    getError: (field: string) => string | undefined;
+    members: UserLiteInterface[];
+}
+
+export interface AddTaskScheduleSectionPropsInterface {
+    deadline: string;
+    onDeadlineChange: (value: string) => void;
+    deadlineError: string | undefined;
+    taskType: "standalone" | "compound";
+    onTaskTypeChange: (value: "standalone" | "compound") => void;
+}
+
+export interface AddTaskCompoundSectionPropsInterface {
+    sprintTasks: { id: string; title: string }[];
+    members: UserLiteInterface[];
+    state: AddTaskCompoundStateInterface;
+    onStartAfterEnabledChange: (value: boolean) => void;
+    onStartAfterTaskIdChange: (id: string) => void;
+    onNotifyEnabledChange: (value: boolean) => void;
+    onNotifyUserIdsChange: (ids: string[]) => void;
+}
+
+// === TransitionDialog types ===
+
+export interface UseTransitionDialogArgsInterface {
+    open: boolean;
+    task: TaskInterface | null;
+    targetPhase: TaskPhase | null;
+    onClose: () => void;
+}
+
+export interface UseTransitionDialogReturnInterface {
+    isFetching: boolean;
+    result: TransitionResultInterface | null;
+    isBackward: boolean;
+    hours: string;
+    setHours: Dispatch<SetStateAction<string>>;
+    note: string;
+    setNote: Dispatch<SetStateAction<string>>;
+    reason: string;
+    setReason: Dispatch<SetStateAction<string>>;
+}
+
+export interface TransitionDialogPropsInterface {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    task: TaskInterface | null;
+    targetPhase: TaskPhase | null;
+    onConfirm: (payload?: { loggedHours?: number; note?: string; reason?: string }) => void;
+    isAssignee?: boolean;
+    isSubmitting?: boolean;
+}
+
+export interface TransitionTaskSummaryPropsInterface {
+    task: TaskInterface;
+}
+
+export interface TransitionCriteriaListPropsInterface {
+    criteria: TransitionCriterionResultInterface[];
+    allowed: boolean;
+    reason: string;
+}
+
+export interface TransitionTimeInputPropsInterface {
+    hours: string;
+    onHoursChange: (value: string) => void;
+    note: string;
+    onNoteChange: (value: string) => void;
+}
+
+export interface ForwardTransitionDialogPropsInterface {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    task: TaskInterface;
+    targetPhase: TaskPhase;
+    isAssignee: boolean;
+    isSubmitting: boolean;
+    onConfirm: (payload?: { loggedHours?: number; note?: string }) => void;
+}
+
+export interface BackwardTransitionDialogPropsInterface {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    task: TaskInterface;
+    targetPhase: TaskPhase;
+    isSubmitting: boolean;
+    onConfirm: (payload: { reason: string }) => void;
+}
+
 export interface UseTasksViewReturnInterface {
     permissions: import("@/hooks/shared/use-permissions").Permissions;
     activeSprintId: string;

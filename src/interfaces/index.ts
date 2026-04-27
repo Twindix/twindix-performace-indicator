@@ -1,4 +1,5 @@
 export type { UserInterface, UserTeamInterface, UserSettingsInterface, ThemeContextInterface, ApiSuccessResponse } from "./common";
+export type { SelectFieldOptionInterface, SelectFieldPropsInterface, PageHeaderRootPropsInterface, PageHeaderAnalyticItemInterface } from "./shared";
 export type { LoginResponseInterface, RefreshResponseInterface, MeResponseInterface } from "./auth";
 export type { SprintInterface, SprintsListResponseInterface, SprintDetailResponseInterface, SprintSummaryInterface, CreateSprintPayloadInterface, UpdateSprintPayloadInterface } from "./sprints";
 export type {
@@ -77,6 +78,27 @@ export type {
     TaskCommentsSectionPropsInterface,
     MentionDropdownPropsInterface,
     DeleteTaskConfirmDialogPropsInterface,
+    UseAddTaskFormArgsInterface,
+    UseAddTaskFormReturnInterface,
+    AddTaskCompoundStateInterface,
+    TaskAutocompletePropsInterface,
+    UsersAutocompletePropsInterface,
+    AddTaskTitleFieldPropsInterface,
+    AddTaskDescriptionFieldPropsInterface,
+    AddTaskRequirementsSectionPropsInterface,
+    AddTaskTagsSectionPropsInterface,
+    AddTaskAttachmentsSectionPropsInterface,
+    AddTaskMetaSectionPropsInterface,
+    AddTaskScheduleSectionPropsInterface,
+    AddTaskCompoundSectionPropsInterface,
+    UseTransitionDialogArgsInterface,
+    UseTransitionDialogReturnInterface,
+    TransitionDialogPropsInterface,
+    TransitionTaskSummaryPropsInterface,
+    TransitionCriteriaListPropsInterface,
+    TransitionTimeInputPropsInterface,
+    ForwardTransitionDialogPropsInterface,
+    BackwardTransitionDialogPropsInterface,
 } from "./tasks";
 export type { BlockerInterface, BlockerUserInterface, BlockerTaskInterface, BlockersListResponseInterface, BlockerDetailResponseInterface, BlockersAnalyticsInterface, CreateBlockerPayloadInterface, UpdateBlockerPayloadInterface, BlockersListFiltersInterface, LinkBlockerTasksPayloadInterface } from "./blockers";
 export type { DecisionInterface, DecisionCreatorInterface, DecisionsListResponseInterface, DecisionDetailResponseInterface, DecisionsAnalyticsInterface, CreateDecisionPayloadInterface, UpdateDecisionPayloadInterface, DecisionsListFiltersInterface } from "./decisions";

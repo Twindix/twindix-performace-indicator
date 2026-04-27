@@ -1,16 +1,17 @@
 import { Plus } from "lucide-react";
 
 import { Badge, Button } from "@/atoms";
-import { Header } from "@/components/shared";
+import { PageHeader } from "@/components/shared";
 import { t } from "@/hooks";
 import type { TasksHeaderPropsInterface } from "@/interfaces";
 
 export const TasksHeader = ({ actions }: TasksHeaderPropsInterface) => (
-    <Header
+    <PageHeader
         title={t("Task Management")}
         description={t("Use the task detail dialog to move tasks between phases.")}
-        actions={
-            !actions.hasFiltersOrTasks ? (
+    >
+        <PageHeader.Actions>
+            {!actions.hasFiltersOrTasks ? (
                 actions.canCreate ? (
                     <Button size="sm" className="gap-1.5" onClick={actions.onCreate}>
                         <Plus className="h-4 w-4" />
@@ -29,7 +30,7 @@ export const TasksHeader = ({ actions }: TasksHeaderPropsInterface) => (
                         </>
                     )}
                 </div>
-            )
-        }
-    />
+            )}
+        </PageHeader.Actions>
+    </PageHeader>
 );

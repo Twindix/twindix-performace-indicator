@@ -5,9 +5,7 @@ import { TaskPhase } from "@/enums";
 import { TasksContent, TasksFilters, TasksHeader } from "./components";
 import type { TaskInterface } from "@/interfaces";
 
-import { TaskDetailDialog } from "./dialogs";
-import { AddTaskDialog } from "./add-task-dialog";
-import { TransitionDialog } from "./TransitionDialog";
+import { AddTaskDialog, TaskDetailDialog, TransitionDialog } from "./dialogs";
 
 export const TasksView = () => {
     const view = useTasksView();
@@ -73,7 +71,7 @@ export const TasksView = () => {
 
             <AddTaskDialog
                 open={view.dialogs.addOpen}
-                onOpenChange={(open) => {
+                onOpenChange={(open: boolean) => {
                     if (!open) {
                         view.dialogs.closeAdd();
                         view.refetch();
@@ -88,7 +86,7 @@ export const TasksView = () => {
 
             <TransitionDialog
                 open={view.dialogs.transition.isOpen}
-                onOpenChange={(open) => { if (!open) view.dialogs.transition.close(); }}
+                onOpenChange={(open: boolean) => { if (!open) view.dialogs.transition.close(); }}
                 task={view.dialogs.transition.task}
                 targetPhase={view.dialogs.transition.targetPhase as TaskPhase | null}
                 onConfirm={view.onConfirmTransition}

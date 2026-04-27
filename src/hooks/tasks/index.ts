@@ -19,3 +19,5 @@ export { useTasksView } from "./use-tasks-view";
 export { useTaskDetail } from "./use-task-detail";
 export { useTaskTagsForm } from "./use-task-tags-form";
 export { useTaskRequirementsForm } from "./use-task-requirements-form";
+export { useAddTaskForm } from "./use-add-task-form";
+export { useTransitionDialog } from "./use-transition-dialog";

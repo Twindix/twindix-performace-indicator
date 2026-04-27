@@ -2,13 +2,13 @@ import { useState } from "react";
 import { AtSign, MessageCircle, CheckCircle2, Clock, User, Plus, Pencil, Trash2, Reply } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
-import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
+import { EmptyState, PageHeader } from "@/components/shared";
 import { CommentsLogSkeleton } from "@/components/skeletons";
 import { t, useCommentsList, useSettings, usePageLoader, useCreateComment, useUpdateComment, useDeleteComment, usePermissions, useRespondComment, useUsersList } from "@/hooks";
 import type { CommentInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
-import { cn, formatDate, formatDateTime } from "@/utils";
+import { formatDate, formatDateTime } from "@/utils";
 
 const emptyForm = { body: "", task_title: "", mentioned_user_ids: [] as string[] };
 
@@ -98,13 +98,6 @@ export const CommentsLogView = () => {
 
     if (pageLoading || isFetching) return <CommentsLogSkeleton />;
 
-    const headerActions = p.comments.add() ? (
-        <Button onClick={() => { setForm(emptyForm); setAddOpen(true); }} className="gap-2" disabled={!activeSprintId}>
-            <Plus className="h-4 w-4" />
-            {t("Add Comment")}
-        </Button>
-    ) : null;
-
     const renderFormDialog = () => (
         <Dialog open={addOpen || !!editTarget} onOpenChange={(open) => { if (!open) { setAddOpen(false); setEditTarget(null); setForm(emptyForm); } }}>
             <DialogContent className="max-w-lg">
@@ -160,7 +153,22 @@ export const CommentsLogView = () => {
     if (comments.length === 0 && mentionFilter === "all" && responseFilter === "all") {
         return (
             <div>
-                <Header title={t("Comments Log")} description={t("Track all task comments, mentions, and responses")} actions={headerActions} />
+                <PageHeader title={t("Comments Log")} description={t("Track all task comments, mentions, and responses")}>
+                    {p.comments.add() && (
+                        <PageHeader.Actions>
+                            <Button onClick={() => { setForm(emptyForm); setAddOpen(true); }} className="gap-2" disabled={!activeSprintId}>
+                                <Plus className="h-4 w-4" />
+                                {t("Add Comment")}
+                            </Button>
+                        </PageHeader.Actions>
+                    )}
+                    <PageHeader.Analytics items={[
+                        { icon: MessageCircle, value: stats.total, label: "Total Comments", iconWrapperClassName: "bg-primary-lighter", iconClassName: "text-primary" },
+                        { icon: AtSign, value: stats.withMention, label: "With Mention", iconWrapperClassName: "bg-primary-lighter", iconClassName: "text-primary" },
+                        { icon: CheckCircle2, value: stats.withResponse, label: "Responded", iconWrapperClassName: "bg-success-light", iconClassName: "text-success", valueClassName: "text-success" },
+                        { icon: Clock, value: stats.noResponse, label: "No Response", iconWrapperClassName: "bg-warning-light", iconClassName: "text-warning", valueClassName: "text-warning" },
+                    ]} />
+                </PageHeader>
                 <EmptyState icon={MessageCircle} title={t("No Comments")} description={t("No comments found for the current sprint")} />
                 {renderFormDialog()}
             </div>
@@ -169,63 +177,22 @@ export const CommentsLogView = () => {
 
     return (
         <div>
-            <Header title={t("Comments Log")} description={t("Track all task comments, mentions, and responses")} actions={headerActions} />
-
-            {/* Stats */}
-            <div className={cn("grid grid-cols-2 lg:grid-cols-4", compact ? "gap-2 mb-3" : "gap-4 mb-6")}>
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-lighter">
-                                <MessageCircle className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={stats.total} /></p>
-                                <p className="text-xs text-text-muted">{t("Total Comments")}</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-lighter">
-                                <AtSign className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={stats.withMention} /></p>
-                                <p className="text-xs text-text-muted">{t("With Mention")}</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success-light">
-                                <CheckCircle2 className="h-5 w-5 text-success" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-success"><AnimatedNumber value={stats.withResponse} /></p>
-                                <p className="text-xs text-text-muted">{t("Responded")}</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-warning-light">
-                                <Clock className="h-5 w-5 text-warning" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-warning"><AnimatedNumber value={stats.noResponse} /></p>
-                                <p className="text-xs text-text-muted">{t("No Response")}</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+            <PageHeader title={t("Comments Log")} description={t("Track all task comments, mentions, and responses")}>
+                {p.comments.add() && (
+                    <PageHeader.Actions>
+                        <Button onClick={() => { setForm(emptyForm); setAddOpen(true); }} className="gap-2" disabled={!activeSprintId}>
+                            <Plus className="h-4 w-4" />
+                            {t("Add Comment")}
+                        </Button>
+                    </PageHeader.Actions>
+                )}
+                <PageHeader.Analytics items={[
+                    { icon: MessageCircle, value: stats.total, label: "Total Comments", iconWrapperClassName: "bg-primary-lighter", iconClassName: "text-primary" },
+                    { icon: AtSign, value: stats.withMention, label: "With Mention", iconWrapperClassName: "bg-primary-lighter", iconClassName: "text-primary" },
+                    { icon: CheckCircle2, value: stats.withResponse, label: "Responded", iconWrapperClassName: "bg-success-light", iconClassName: "text-success", valueClassName: "text-success" },
+                    { icon: Clock, value: stats.noResponse, label: "No Response", iconWrapperClassName: "bg-warning-light", iconClassName: "text-warning", valueClassName: "text-warning" },
+                ]} />
+            </PageHeader>
 
             {/* Filters */}
             <Card className={compact ? "mb-3" : "mb-6"}>

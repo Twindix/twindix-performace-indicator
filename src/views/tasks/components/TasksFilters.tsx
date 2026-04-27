@@ -1,10 +1,10 @@
 import { Filter, Plus, Search } from "lucide-react";
 
 import { Button, Card, CardContent, Input } from "@/atoms";
+import { SelectField } from "@/components/shared";
 import { tasksConstants } from "@/constants";
 import { t } from "@/hooks";
 import type { TasksFiltersPropsInterface } from "@/interfaces";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 
 import { ViewModeToggle } from "./ViewModeToggle";
 
@@ -23,6 +23,14 @@ export const TasksFilters = ({
         filters.values.type !== "all" ||
         search.value.length > 0;
 
+    const translateOptions = (opts: { value: string; label: string }[]) =>
+        opts.map((o) => ({ value: o.value, label: t(o.label) }));
+
+    const assigneeOptions = [
+        { value: "all", label: t("All Assignees") },
+        ...users.map((u) => ({ value: u.id, label: u.full_name })),
+    ];
+
     return (
         <Card className="mb-6">
             <CardContent className="p-5">
@@ -40,50 +48,37 @@ export const TasksFilters = ({
                     <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                         <Filter className="h-4 w-4 text-text-muted hidden sm:block shrink-0" />
 
-                        <Select value={filters.values.status} onValueChange={(v) => filters.onChange("status", v)}>
-                            <SelectTrigger className="w-[150px] h-9 text-xs sm:text-sm">
-                                <SelectValue placeholder={t("Status")} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {tasksConstants.statusFilterOptions.map((o) => (
-                                    <SelectItem key={o.value} value={o.value}>{t(o.label)}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <SelectField
+                            value={filters.values.status}
+                            onChange={(v) => filters.onChange("status", v)}
+                            options={translateOptions(tasksConstants.statusFilterOptions)}
+                            placeholder={t("Status")}
+                            triggerClassName="w-[150px] h-9 text-xs sm:text-sm"
+                        />
 
-                        <Select value={filters.values.priority} onValueChange={(v) => filters.onChange("priority", v)}>
-                            <SelectTrigger className="w-[130px] h-9 text-xs sm:text-sm">
-                                <SelectValue placeholder={t("Priority")} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {tasksConstants.priorityFilterOptions.map((o) => (
-                                    <SelectItem key={o.value} value={o.value}>{t(o.label)}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <SelectField
+                            value={filters.values.priority}
+                            onChange={(v) => filters.onChange("priority", v)}
+                            options={translateOptions(tasksConstants.priorityFilterOptions)}
+                            placeholder={t("Priority")}
+                            triggerClassName="w-[130px] h-9 text-xs sm:text-sm"
+                        />
 
-                        <Select value={filters.values.assignee} onValueChange={(v) => filters.onChange("assignee", v)}>
-                            <SelectTrigger className="w-[150px] h-9 text-xs sm:text-sm">
-                                <SelectValue placeholder={t("Assignee")} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">{t("All Assignees")}</SelectItem>
-                                {users.map((u) => (
-                                    <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <SelectField
+                            value={filters.values.assignee}
+                            onChange={(v) => filters.onChange("assignee", v)}
+                            options={assigneeOptions}
+                            placeholder={t("Assignee")}
+                            triggerClassName="w-[150px] h-9 text-xs sm:text-sm"
+                        />
 
-                        <Select value={filters.values.type} onValueChange={(v) => filters.onChange("type", v)}>
-                            <SelectTrigger className="w-[120px] h-9 text-xs sm:text-sm">
-                                <SelectValue placeholder={t("Type")} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {tasksConstants.typeFilterOptions.map((o) => (
-                                    <SelectItem key={o.value} value={o.value}>{t(o.label)}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <SelectField
+                            value={filters.values.type}
+                            onChange={(v) => filters.onChange("type", v)}
+                            options={translateOptions(tasksConstants.typeFilterOptions)}
+                            placeholder={t("Type")}
+                            triggerClassName="w-[120px] h-9 text-xs sm:text-sm"
+                        />
 
                         {isAnyApplied && (
                             <button
