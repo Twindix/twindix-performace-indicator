@@ -13,3 +13,6 @@ export * from "./dashboard";
 export * from "./users";
 export * from "./teams";
 export * from "./projects";
+export * from "./settings";
+export * from "./profile";
+export * from "./profile";
