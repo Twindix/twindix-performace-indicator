@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 
 import { Button, Input, Label } from "@/atoms";
 import { routesData } from "@/data";
-import { useAuth, useProjectsListLite, useSprintsList, useTheme, t, useSettings, usePermissions, usePresence, useUpdateSprint, type PresenceStatus } from "@/hooks";
-import type { SprintInterface } from "@/interfaces";
+import { useAuth, useLogout, useProjectsListLite, useSprintsList, useTheme, t, useSettings, usePermissions, usePresence, useUpdateSprint } from "@/hooks";
+import type { PresenceStatus, SprintInterface } from "@/interfaces";
 import { useProjectStore, useSprintStore } from "@/store";
 import { MobileNav } from "./mobile-nav";
 import {
@@ -38,7 +38,8 @@ const presenceConfig: Record<PresenceStatus, { label: string; dot: string }> = {
 };
 
 export const Topbar = () => {
-    const { user, onLogout } = useAuth();
+    const { user } = useAuth();
+    const { onLogout } = useLogout();
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings] = useSettings();
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
