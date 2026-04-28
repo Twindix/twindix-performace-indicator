@@ -12,7 +12,7 @@ export const useUpdateAlert = ({ onFieldErrors }: UseUpdateAlertOptions = {}) =>
     const { mutate, isLoading } = useMutationAction(
         async (id: string, payload: UpdateAlertPayloadInterface): Promise<AlertInterface> => {
             const res = await alertsService.updateHandler(id, payload);
-            return (res as unknown as { data?: AlertInterface }).data ?? (res as unknown as AlertInterface);
+            return res.data;
         },
         {
             successMessage: alertsConstants.messages.updateSuccess,

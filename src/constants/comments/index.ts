@@ -15,4 +15,14 @@ export const commentsConstants = {
         deleteSuccess: "Comment deleted.",
         respondSuccess: "Response sent.",
     },
+    emptyForm: {
+        body: "",
+        task_title: "",
+        mentioned_user_ids: [] as string[],
+    },
+    responseStatusOptions: [
+        { value: "all", label: "All Statuses" },
+        { value: "responded", label: "Responded" },
+        { value: "no_response", label: "No Response" },
+    ],
 };

@@ -4,12 +4,13 @@ import { Card, CardContent } from "@/atoms";
 import type { UserSettingsInterface } from "@/interfaces";
 import { Header } from "@/components/shared";
 import { SettingsSkeleton } from "@/components/skeletons";
-import { useAuth, useTheme, t, usePageLoader, useUpdateMe, type AppSettings } from "@/hooks";
+import { useAuth, useTheme, t, usePageLoader, useUpdateMe, useUpdateUser, type AppSettings } from "@/hooks";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 
 export const SettingsView = () => {
     const isLoading = usePageLoader();
-    const { user, onUpdateUser } = useAuth();
+    const { user } = useAuth();
+    const { onUpdateUser } = useUpdateUser();
     const { isDarkMode, onToggleTheme } = useTheme();
     const { updateHandler } = useUpdateMe();
 

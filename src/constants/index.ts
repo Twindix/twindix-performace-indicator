@@ -11,7 +11,7 @@ export { redFlagsConstants } from "./red-flags";
 export { alertsConstants } from "./alerts";
 export { teamsConstants } from "./teams";
 export { commentsConstants } from "./comments";
-export { dashboardConstants } from "./dashboard";
+export { dashboardConstants, frictionAreaConfig, metricsTilesConfig } from "./dashboard";
 export { usersConstants } from "./users";
 export { projectsConstants, defaultProjectForm, projectStatusLabels, projectStatusVariants, projectStatusOptions } from "./projects";
 export { permissionsConstants, ROLE_TIERS, ROLE_TIER_LABELS, roleTierOptions } from "./permissions";
