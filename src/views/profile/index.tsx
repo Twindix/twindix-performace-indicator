@@ -4,14 +4,15 @@ import { useState } from "react";
 import { Badge, Button, Card, CardContent, Input } from "@/atoms";
 import { Header } from "@/components/shared";
 import { ProfileSkeleton } from "@/components/skeletons";
-import { t, useAuth, usePageLoader, usePermissions, useUpdateMe } from "@/hooks";
+import { t, useAuth, usePageLoader, usePermissions, useUpdateMe, useUpdateUser } from "@/hooks";
 import { Avatar, AvatarFallback } from "@/ui";
 
 export const ProfileView = () => {
     const isLoading = usePageLoader();
     const p = usePermissions();
     const canEditProfile = p.auth.editProfile();
-    const { user, onUpdateUser } = useAuth();
+    const { user } = useAuth();
+    const { onUpdateUser } = useUpdateUser();
     const { updateHandler, isLoading: isSaving } = useUpdateMe();
     const [isEditingName, setIsEditingName] = useState(false);
     const [editedName, setEditedName] = useState(user?.full_name ?? "");

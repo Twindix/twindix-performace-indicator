@@ -1,14 +1,10 @@
 import { authConstants } from "@/constants";
-import type { UserInterface } from "@/interfaces";
+import type { UserInterface, UseUpdateMeOptionsInterface } from "@/interfaces";
 import { authService } from "@/services";
 
-import { useMutationAction, type FieldErrors } from "../shared";
+import { useMutationAction } from "../shared";
 
-export interface UseUpdateMeOptions {
-    onFieldErrors?: (errors: FieldErrors) => void;
-}
-
-export const useUpdateMe = ({ onFieldErrors }: UseUpdateMeOptions = {}) => {
+export const useUpdateMe = ({ onFieldErrors }: UseUpdateMeOptionsInterface = {}) => {
     const { mutate, isLoading } = useMutationAction(
         (updates: Partial<Pick<UserInterface, "full_name" | "presence_status" | "settings">>): Promise<UserInterface> =>
             authService.updateMeHandler(updates),
