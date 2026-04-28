@@ -3,14 +3,10 @@ import { alertsConstants } from "@/constants";
 import { useAlertsView } from "@/hooks";
 import type { AlertInterface } from "@/interfaces";
 
+import { t } from "@/hooks";
+
 import { AlertFooter, AlertHeader, AlertMentions, AlertMeta } from "./components/card";
-import {
-    AlertsFilters,
-    AlertsHeader,
-    AlertsTabs,
-    DoneAlertsTab,
-    PendingAlertsTab,
-} from "./components";
+import { AlertsHeader, AlertsTabs, DoneAlertsTab, PendingAlertsTab } from "./components";
 import { AlertFormDialog, DeleteAlertDialog } from "./dialogs";
 
 export const AlertsView = () => {
@@ -53,7 +49,18 @@ export const AlertsView = () => {
     return (
         <div>
             <AlertsHeader canCreate={view.permissions.alerts.create()} onCreate={view.form.open} />
-            <AlertsFilters value={view.typeFilter} onChange={view.setTypeFilter} />
+            <div className="flex flex-wrap gap-2 mb-4">
+                {alertsConstants.filters.typeChips.map((chip) => (
+                    <button
+                        key={chip.value || "all"}
+                        type="button"
+                        onClick={() => view.setTypeFilter(chip.value)}
+                        className={`text-xs px-3 py-1 rounded-full border transition-colors cursor-pointer ${view.typeFilter === chip.value ? "bg-primary text-primary-foreground border-primary" : "bg-surface text-text-muted border-border hover:bg-muted"}`}
+                    >
+                        {t(chip.label)}
+                    </button>
+                ))}
+            </div>
             <AlertsTabs
                 pendingCount={view.pendingAlerts.length}
                 doneCount={view.doneAlerts.length}
