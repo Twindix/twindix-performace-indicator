@@ -4,7 +4,8 @@ import { AtSign, MessageCircle, CheckCircle2, Clock, User, Plus, Pencil, Trash2,
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { CommentsLogSkeleton } from "@/components/skeletons";
-import { t, useCommentsList, useSettings, usePageLoader, useCreateComment, useUpdateComment, useDeleteComment, usePermissions, useRespondComment, useUsersList } from "@/hooks";
+import { t } from "@/utils";
+import { useCommentsList, useSettings, usePageLoader, useCreateComment, useUpdateComment, useDeleteComment, usePermissions, useRespondComment, useUsersList } from "@/hooks";
 import type { CommentInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";

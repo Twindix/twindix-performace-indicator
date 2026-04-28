@@ -1,7 +1,7 @@
 import { Pencil } from "lucide-react";
 
 import { Button, Input } from "@/atoms";
-import { t } from "@/hooks";
+import { t } from "@/utils";
 import type { ProfileNameEditorPropsInterface } from "@/interfaces/profile";
 
 export const ProfileNameEditor = ({ user, canEdit, edit }: ProfileNameEditorPropsInterface) => {

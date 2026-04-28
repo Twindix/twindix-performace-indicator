@@ -5,7 +5,8 @@ import { Bell, Check, CheckCheck, Clock, ExternalLink, Link2, Pencil, Plus, Sear
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { AlertsSkeleton } from "@/components/skeletons";
-import { t, useAcknowledgeAlert, useAlertsList, useCreateAlert, useDeleteAlert, useDoneAlert, usePermissions, useUpdateAlert, useUsersList } from "@/hooks";
+import { t } from "@/utils";
+import { useAcknowledgeAlert, useAlertsList, useCreateAlert, useDeleteAlert, useDoneAlert, usePermissions, useUpdateAlert, useUsersList } from "@/hooks";
 import type { AlertInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import {

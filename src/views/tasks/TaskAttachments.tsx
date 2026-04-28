@@ -1,6 +1,7 @@
 import { Paperclip, Trash2 } from "lucide-react";
 
-import { t, useGetTask, usePermissions, useTaskAttachments } from "@/hooks";
+import { t } from "@/utils";
+import { useGetTask, usePermissions, useTaskAttachments } from "@/hooks";
 import type { TaskInterface } from "@/interfaces";
 
 interface Props {

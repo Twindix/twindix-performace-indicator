@@ -2,7 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw, Copy, ChevronDown, ChevronUp } from "lucide-react";
 
 import { Button } from "@/atoms";
-import { t } from "@/hooks";
+import { t } from "@/utils";
 
 interface Props {
     children: ReactNode;

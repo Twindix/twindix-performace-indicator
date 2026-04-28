@@ -2,7 +2,7 @@ import { Info } from "lucide-react";
 
 import { Card, CardContent } from "@/atoms";
 import { settingsConstants } from "@/constants";
-import { t } from "@/hooks";
+import { t } from "@/utils";
 
 export const AboutCard = () => (
     <Card>

@@ -1,5 +1,5 @@
 export { useAuth, usePresence, useUpdateMe, type PresenceStatus } from "./auth";
-export { useTheme, useLocalStorage, useSettings, t, defaultSettings, saveSettings, type AppSettings, useCountUp, useOnlineStatus, usePageLoader, useFormErrors, type FieldErrors, useMutationAction, useQueryAction, type UseQueryActionOptions, usePermissions, type Permissions } from "./shared";
+export { useTheme, useLocalStorage, useSettings, defaultSettings, saveSettings, type AppSettings, useCountUp, useOnlineStatus, usePageLoader, useFormErrors, type FieldErrors, useMutationAction, useQueryAction, type UseQueryActionOptions, usePermissions, type Permissions } from "./shared";
 export * from "./sprints";
 export * from "./tasks";
 export * from "./requirements";

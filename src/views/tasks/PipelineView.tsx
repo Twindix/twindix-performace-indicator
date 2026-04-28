@@ -3,7 +3,7 @@ import { Circle, AlertCircle, Clock, Link2 } from "lucide-react";
 import { Badge } from "@/atoms";
 import { TaskPriority } from "@/enums";
 import type { PipelineBoardInterface, TaskInterface, UserLiteInterface } from "@/interfaces";
-import { t } from "@/hooks";
+import { t } from "@/utils";
 import { cn } from "@/utils";
 
 const PRIORITY_VARIANT: Record<string, "error" | "warning" | "default" | "secondary"> = {

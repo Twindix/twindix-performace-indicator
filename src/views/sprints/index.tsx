@@ -4,7 +4,8 @@ import { Calendar, Edit, MoreHorizontal, Plus, Target, Trash2, Zap } from "lucid
 import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
 import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { SprintsSkeleton } from "@/components/skeletons";
-import { t, useActivateSprint, useCreateSprint, useDeleteSprint, useFormErrors, usePermissions, useSprintsList, useUpdateSprint } from "@/hooks";
+import { t } from "@/utils";
+import { useActivateSprint, useCreateSprint, useDeleteSprint, useFormErrors, usePermissions, useSprintsList, useUpdateSprint } from "@/hooks";
 import type { CreateSprintPayloadInterface, SprintInterface } from "@/interfaces";
 import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,

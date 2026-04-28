@@ -3,7 +3,8 @@ import { ShieldCheck, Lock, CheckCircle2, AlertCircle, Clock, Undo2 } from "luci
 import { Badge, Button, Input, Skeleton, Textarea } from "@/atoms";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
 import { cn } from "@/utils";
-import { t, useTaskViews } from "@/hooks";
+import { t } from "@/utils";
+import { useTaskViews } from "@/hooks";
 import type { TaskInterface } from "@/interfaces";
 import { TaskPhase, TaskPriority } from "@/enums";
 import {

@@ -4,7 +4,8 @@ import { ArrowLeft, Calendar, Edit, FolderKanban, MoreHorizontal, Plus, Trash2, 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { ProjectsSkeleton } from "@/components/skeletons";
-import { t, useCreateProject, useDeleteProject, useFormErrors, usePermissions, useProjectsList, useUpdateProject } from "@/hooks";
+import { t } from "@/utils";
+import { useCreateProject, useDeleteProject, useFormErrors, usePermissions, useProjectsList, useUpdateProject } from "@/hooks";
 import type { CreateProjectPayloadInterface, ProjectInterface } from "@/interfaces";
 import { useProjectStore } from "@/store";
 import {

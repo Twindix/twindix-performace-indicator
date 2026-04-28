@@ -1,6 +1,7 @@
 import { Header, QueryBoundary } from "@/components/shared";
 import { ProfileSkeleton } from "@/components/skeletons";
-import { t, useAuth, useEditProfileName, usePageLoader, usePermissions } from "@/hooks";
+import { t } from "@/utils";
+import { useAuth, useEditProfileName, usePageLoader, usePermissions } from "@/hooks";
 
 import { ProfileCard } from "./components";
 

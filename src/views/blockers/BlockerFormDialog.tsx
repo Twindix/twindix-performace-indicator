@@ -3,7 +3,8 @@ import { Plus, ShieldAlert } from "lucide-react";
 
 import { Button, Input, Label, Textarea } from "@/atoms";
 import { BlockerType } from "@/enums";
-import { t, useCreateBlocker, useUpdateBlocker } from "@/hooks";
+import { t } from "@/utils";
+import { useCreateBlocker, useUpdateBlocker } from "@/hooks";
 import type { BlockerInterface, UserInterface } from "@/interfaces";
 import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,

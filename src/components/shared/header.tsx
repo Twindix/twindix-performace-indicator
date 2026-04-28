@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect } from "react";
 
-import { t, useSettings } from "@/hooks";
+import { t } from "@/utils";
+import { useSettings } from "@/hooks";
 import { cn } from "@/utils";
 
 interface HeaderProps {

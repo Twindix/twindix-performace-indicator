@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 
 import { Button, Input, Label } from "@/atoms";
 import { routesData } from "@/data";
-import { useAuth, useProjectsListLite, useSprintsList, useTheme, t, useSettings, usePermissions, usePresence, useUpdateSprint, type PresenceStatus } from "@/hooks";
+import { t } from "@/utils";
+import { useAuth, useProjectsListLite, useSprintsList, useTheme, useSettings, usePermissions, usePresence, useUpdateSprint, type PresenceStatus } from "@/hooks";
 import type { SprintInterface } from "@/interfaces";
 import { useProjectStore, useSprintStore } from "@/store";
 import { MobileNav } from "./mobile-nav";

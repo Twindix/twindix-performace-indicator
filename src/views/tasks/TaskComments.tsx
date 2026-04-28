@@ -2,7 +2,8 @@ import { useState, useRef, useMemo } from "react";
 import { MessageCircle, Send, Trash2, Pencil, Check, X } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/ui";
-import { t, useCreateTaskComment, useDeleteComment, usePermissions, useUpdateComment } from "@/hooks";
+import { t } from "@/utils";
+import { useCreateTaskComment, useDeleteComment, usePermissions, useUpdateComment } from "@/hooks";
 import type { TaskInterface, TaskCommentInterface, UserLiteInterface } from "@/interfaces";
 
 interface Props {

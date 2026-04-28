@@ -3,7 +3,7 @@ import { Circle, Clock, Link2, Lock } from "lucide-react";
 import { Badge } from "@/atoms";
 import { TaskPriority } from "@/enums";
 import type { KanbanBoardInterface, TaskInterface } from "@/interfaces";
-import { t } from "@/hooks";
+import { t } from "@/utils";
 import { cn } from "@/utils";
 
 const COLUMNS = [

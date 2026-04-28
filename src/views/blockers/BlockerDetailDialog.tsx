@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { AlertCircle, Calendar, CheckCircle2, Clock, Edit, Layers, ShieldAlert, Trash2, TrendingUp, User } from "lucide-react";
 
 import { Badge, Button } from "@/atoms";
-import { t, useDeleteBlocker, useEscalateBlocker, useGetBlocker, usePermissions, useResolveBlocker } from "@/hooks";
+import { t } from "@/utils";
+import { useDeleteBlocker, useEscalateBlocker, useGetBlocker, usePermissions, useResolveBlocker } from "@/hooks";
 import type { BlockerInterface } from "@/interfaces";
 import { Avatar, AvatarFallback, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/ui";
 import { formatDate } from "@/utils";

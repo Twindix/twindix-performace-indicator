@@ -4,7 +4,8 @@ import { Edit, MoreHorizontal, Plus, Trash2, Users } from "lucide-react";
 import { Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { TeamsSkeleton } from "@/components/skeletons";
-import { t, useCreateTeam, useDeleteTeam, useFormErrors, useGetTeams, usePermissions, useUpdateTeam } from "@/hooks";
+import { t } from "@/utils";
+import { useCreateTeam, useDeleteTeam, useFormErrors, useGetTeams, usePermissions, useUpdateTeam } from "@/hooks";
 import type { TeamInterface } from "@/interfaces";
 import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,

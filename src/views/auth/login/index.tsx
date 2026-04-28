@@ -5,7 +5,8 @@ import { useNavigate } from "react-router-dom";
 
 import { Button, Input, Label } from "@/atoms";
 import { DEMO_USERS, routesData } from "@/data";
-import { useAuth, useFormErrors, useSettings, useTheme, t } from "@/hooks";
+import { t } from "@/utils";
+import { useAuth, useFormErrors, useSettings, useTheme } from "@/hooks";
 
 export const LoginView = () => {
     const [email, setEmail] = useState("");

@@ -8,7 +8,8 @@ import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { UsersSkeleton } from "@/components/skeletons";
 import { usersConstants } from "@/constants";
 import type { RoleTier } from "@/constants/permissions";
-import { t, usePermissions } from "@/hooks";
+import { t } from "@/utils";
+import { usePermissions } from "@/hooks";
 import type { UserInterface } from "@/interfaces";
 import { useUsersList, useUsersCreate, useUsersUpdate } from "@/hooks/users";
 import {

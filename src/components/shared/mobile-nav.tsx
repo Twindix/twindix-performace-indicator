@@ -4,7 +4,8 @@ import { Activity, Menu, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 import { sidebarItems } from "@/data";
-import { t, useSettings } from "@/hooks";
+import { t } from "@/utils";
+import { useSettings } from "@/hooks";
 import { cn } from "@/utils";
 
 export const MobileNav = () => {

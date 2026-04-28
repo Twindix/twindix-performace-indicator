@@ -4,7 +4,8 @@ import { AlertTriangle, Clock, Hash, MessageSquare, Mail, Video } from "lucide-r
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { CommunicationSkeleton } from "@/components/skeletons";
-import { t, useSettings, usePageLoader } from "@/hooks";
+import { t } from "@/utils";
+import { useSettings, usePageLoader } from "@/hooks";
 import type { CommunicationChannel, CommunicationInterface, UserInterface } from "@/interfaces";
 import { Avatar, AvatarFallback, Tabs, TabsList, TabsTrigger, TabsContent } from "@/ui";
 import { cn } from "@/utils";

@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Calendar, Users } from "lucide-react";
 
 import { Skeleton } from "@/atoms";
-import { t, useGetTeam } from "@/hooks";
+import { t } from "@/utils";
+import { useGetTeam } from "@/hooks";
 import type { TeamInterface } from "@/interfaces";
 import { Avatar, AvatarFallback, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
 import { formatDate } from "@/utils";

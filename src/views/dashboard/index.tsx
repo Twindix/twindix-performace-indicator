@@ -4,7 +4,8 @@ import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { Header, ScoreGauge, StatusBadge } from "@/components/shared";
 import { DashboardSkeleton } from "@/components/skeletons";
 import { MetricStatus } from "@/enums";
-import { t, useCountUp, useDashboard, usePageLoader, useSettings } from "@/hooks";
+import { t } from "@/utils";
+import { useCountUp, useDashboard, usePageLoader, useSettings } from "@/hooks";
 import { useSprintStore } from "@/store";
 import { cn } from "@/utils";
 

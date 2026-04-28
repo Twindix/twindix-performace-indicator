@@ -3,7 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Skeleton } from "@/atoms";
 import { AnimatedNumber, Header } from "@/components/shared";
-import { t, useUsersAnalytics } from "@/hooks";
+import { t } from "@/utils";
+import { useUsersAnalytics } from "@/hooks";
 import { Avatar, AvatarFallback } from "@/ui";
 import { cn } from "@/utils";
 

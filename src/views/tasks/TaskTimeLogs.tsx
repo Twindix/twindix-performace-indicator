@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, Clock, Pencil, Trash2, X } from "lucide-react";
 
 import { Button, Input, Skeleton } from "@/atoms";
-import { t, useCreateTimeLog, useDeleteTimeLog, useGetTimeLog, usePermissions, useUpdateTimeLog } from "@/hooks";
+import { t } from "@/utils";
+import { useCreateTimeLog, useDeleteTimeLog, useGetTimeLog, usePermissions, useUpdateTimeLog } from "@/hooks";
 import type { TaskInterface, TimeLogInterface, UserLiteInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
 import { useAuthStore } from "@/store";

@@ -4,7 +4,8 @@ import { Edit, Flag, Plus, Trash2 } from "lucide-react";
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { RedFlagsSkeleton } from "@/components/skeletons";
-import { t, useCreateRedFlag, useDeleteRedFlag, usePermissions, useRedFlagsList, useUpdateRedFlag } from "@/hooks";
+import { t } from "@/utils";
+import { useCreateRedFlag, useDeleteRedFlag, usePermissions, useRedFlagsList, useUpdateRedFlag } from "@/hooks";
 import type { RedFlagInterface, CreateRedFlagPayloadInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import {

@@ -3,7 +3,8 @@ import { Activity, AlertCircle, ArrowRight, CheckCircle2, Circle, ClipboardList,
 
 import { Badge, Button, Input, Skeleton } from "@/atoms";
 import { BlockerStatus, TaskPriority, TaskPhase } from "@/enums";
-import { t, useCreateRequirement, useDeleteRequirement, useDeleteTask, useGetRequirement, useMarkTaskComplete, usePermissions, useTaskTags, useToggleRequirement, useUpdateRequirement } from "@/hooks";
+import { t } from "@/utils";
+import { useCreateRequirement, useDeleteRequirement, useDeleteTask, useGetRequirement, useMarkTaskComplete, usePermissions, useTaskTags, useToggleRequirement, useUpdateRequirement } from "@/hooks";
 import type { TaskInterface, UserLiteInterface, BlockerInterface, RequirementInterface } from "@/interfaces";
 import { Avatar, AvatarFallback, Checkbox, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
 import { cn, formatDate } from "@/utils";

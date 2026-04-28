@@ -4,7 +4,8 @@ import { ArrowRight, CheckCircle2, XCircle, ArrowRightLeft, BarChart3, Target } 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { HandoffsSkeleton } from "@/components/skeletons";
-import { t, useSettings, usePageLoader } from "@/hooks";
+import { t } from "@/utils";
+import { useSettings, usePageLoader } from "@/hooks";
 import type { CriterionInterface, HandoffInterface } from "@/interfaces";
 import { cn, td } from "@/utils";
 
