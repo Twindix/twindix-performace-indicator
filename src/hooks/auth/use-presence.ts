@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
+import type { PresenceStatus } from "@/interfaces";
 import { AUTH_UNAUTHORIZED_EVENT } from "@/lib/axios";
 import { runAction } from "@/lib/handle-action";
 import { authService } from "@/services";
-
-export type PresenceStatus = "active" | "offline";
 
 export const usePresence = (userId: string | undefined, disabled = false) => {
     const [status, setStatus] = useState<PresenceStatus>("offline");
