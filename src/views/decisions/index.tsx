@@ -2,9 +2,10 @@ import { useState } from "react";
 import { BookOpen, Plus } from "lucide-react";
 
 import { Button } from "@/atoms";
-import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { EmptyState, FiltersBar, Header, QueryBoundary, SelectField } from "@/components/shared";
 import { DecisionsSkeleton } from "@/components/skeletons";
-import { DecisionStatus } from "@/enums";
+import { decisionsConstants } from "@/constants";
+import { DecisionCategory, DecisionStatus } from "@/enums";
 import {
     t,
     useDecisionViewActions,
@@ -17,10 +18,20 @@ import {
 import type { DecisionsPageFiltersInterface } from "@/interfaces/decisions";
 import { useSprintStore } from "@/store";
 
-import { DecisionsFilters, DecisionsList, DecisionsStats } from "./components";
+import { DecisionsList, DecisionsStats } from "./components";
 import { AddDecisionDialog, DecisionDetailDialog } from "./dialogs";
 
 const initialFilters: DecisionsPageFiltersInterface = { status: "all", category: "all" };
+
+const statusOptions = [
+    { value: "all", label: "All Statuses" },
+    ...Object.values(DecisionStatus).map((s) => ({ value: s, label: decisionsConstants.statusLabels[s] })),
+];
+
+const categoryOptions = [
+    { value: "all", label: "All Categories" },
+    ...Object.values(DecisionCategory).map((c) => ({ value: c, label: decisionsConstants.categoryLabels[c] })),
+];
 
 export const DecisionsView = () => {
     const pageLoading = usePageLoader();
@@ -54,6 +65,8 @@ export const DecisionsView = () => {
     const pendingCount  = analytics?.pending  ?? decisions.filter((d) => d.status === DecisionStatus.Pending).length;
     const rejectedCount = analytics?.rejected ?? decisions.filter((d) => d.status === DecisionStatus.Rejected).length;
 
+    const hasFilters = filters.status !== "all" || filters.category !== "all";
+
     return (
         <QueryBoundary isLoading={pageLoading || isFetching} skeleton={<DecisionsSkeleton />}>
             <div>
@@ -78,13 +91,29 @@ export const DecisionsView = () => {
                     compact={compact}
                 />
 
-                <DecisionsFilters
-                    filters={filters}
+                <FiltersBar
                     count={decisions.length}
-                    compact={compact}
-                    onFilterChange={handleFilterChange}
+                    countLabel={t("decisions")}
+                    hasFilters={hasFilters}
                     onClear={handleClearFilters}
-                />
+                    compact={compact}
+                    showIcon
+                >
+                    <SelectField
+                        value={filters.status}
+                        onChange={(v) => handleFilterChange("status", v as DecisionStatus | "all")}
+                        options={statusOptions.map((o) => ({ value: o.value, label: t(o.label) }))}
+                        placeholder={t("Status")}
+                        triggerClassName="w-[150px] h-9 text-xs"
+                    />
+                    <SelectField
+                        value={filters.category}
+                        onChange={(v) => handleFilterChange("category", v as DecisionCategory | "all")}
+                        options={categoryOptions.map((o) => ({ value: o.value, label: t(o.label) }))}
+                        placeholder={t("Category")}
+                        triggerClassName="w-[160px] h-9 text-xs"
+                    />
+                </FiltersBar>
 
                 {decisions.length === 0 ? (
                     <EmptyState

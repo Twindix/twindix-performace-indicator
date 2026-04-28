@@ -17,3 +17,4 @@ export { SelectField } from "./select-field";
 export { PageHeader } from "./PageHeader";
 export { StatsGrid } from "./stats-grid";
 export { EntityCard } from "./entity-card";
+export { FiltersBar } from "./filters-bar";
