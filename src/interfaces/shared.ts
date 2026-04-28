@@ -28,6 +28,7 @@ export interface PageHeaderAnalyticItemInterface {
     valueClassName?: string;
     iconWrapperClassName?: string;
     iconClassName?: string;
+}
 
 export interface StatCardPropsInterface {
     icon: LucideIcon;

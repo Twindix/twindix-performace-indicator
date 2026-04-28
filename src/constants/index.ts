@@ -15,4 +15,5 @@ export { dashboardConstants, frictionAreaConfig, metricsTilesConfig } from "./da
 export { usersConstants } from "./users";
 export { projectsConstants, defaultProjectForm, projectStatusLabels, projectStatusVariants, projectStatusOptions } from "./projects";
 export { permissionsConstants, ROLE_TIERS, ROLE_TIER_LABELS, roleTierOptions } from "./permissions";
+export { settingsConstants } from "./settings";
 export type { RoleTier } from "./permissions";

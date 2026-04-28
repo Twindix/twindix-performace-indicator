@@ -1,7 +1,8 @@
 import { Heart } from "lucide-react";
 import { Outlet } from "react-router-dom";
 
-import { t, useSettings } from "@/hooks";
+import { t } from "@/hooks";
+import { useSettings } from "@/hooks";
 
 export const AuthLayout = () => {
     useSettings();
