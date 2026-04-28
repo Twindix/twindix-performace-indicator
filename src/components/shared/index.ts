@@ -15,3 +15,4 @@ export { Can, type CanProps } from "./can";
 export { CanRoute, type CanRouteProps } from "./can-route";
 export { SelectField } from "./select-field";
 export { PageHeader } from "./PageHeader";
+export { StatsGrid } from "./stats-grid";

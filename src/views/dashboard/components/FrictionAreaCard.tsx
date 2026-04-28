@@ -1,11 +1,9 @@
 import { Card, CardContent } from "@/atoms";
-import { StatusBadge } from "@/components/shared";
+import { AnimatedNumber, StatusBadge } from "@/components/shared";
 import { t } from "@/hooks";
 import type { FrictionAreaCardPropsInterface } from "@/interfaces";
 import { getProgressColor, getScoreStatus } from "@/lib/dashboard";
 import { cn } from "@/utils";
-
-import { AnimNum } from "./AnimNum";
 
 export const FrictionAreaCard = ({ config, score, compact }: FrictionAreaCardPropsInterface) => {
     const Icon = config.icon;
@@ -18,7 +16,7 @@ export const FrictionAreaCard = ({ config, score, compact }: FrictionAreaCardPro
                     <span className="text-xs font-medium text-text-secondary truncate">{t(config.labelKey)}</span>
                 </div>
                 <div className="flex items-end justify-between">
-                    <AnimNum value={score} className={cn("text-2xl font-bold", config.textColor)} />
+                    <AnimatedNumber value={score} className={cn("text-2xl font-bold", config.textColor)} />
                     <StatusBadge status={getScoreStatus(score)} />
                 </div>
                 <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">

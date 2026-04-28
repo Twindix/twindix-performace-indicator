@@ -1,6 +1,5 @@
 export { ActiveBlockerItem } from "./ActiveBlockerItem";
 export { ActiveBlockersCard } from "./ActiveBlockersCard";
-export { AnimNum } from "./AnimNum";
 export { FrictionAreaCard } from "./FrictionAreaCard";
 export { FrictionAreasGrid } from "./FrictionAreasGrid";
 export { HealthScoreCard } from "./HealthScoreCard";

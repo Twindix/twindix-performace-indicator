@@ -1,43 +1,14 @@
 import { AtSign, CheckCircle2, Clock, MessageCircle } from "lucide-react";
 
-import { StatCard } from "@/atoms";
+import { StatsGrid } from "@/components/shared";
 import { t } from "@/hooks";
 import type { CommentsStatsGridPropsInterface } from "@/interfaces";
-import { cn } from "@/utils";
 
 export const CommentsStatsGrid = ({ stats, compact }: CommentsStatsGridPropsInterface) => (
-    <div className={cn("grid grid-cols-2 lg:grid-cols-4", compact ? "gap-2 mb-3" : "gap-4 mb-6")}>
-        <StatCard
-            icon={MessageCircle}
-            value={stats.total}
-            label={t("Total Comments")}
-            iconWrapperClassName="bg-primary-lighter"
-            iconClassName="text-primary"
-            valueClassName="text-text-dark"
-        />
-        <StatCard
-            icon={AtSign}
-            value={stats.withMention}
-            label={t("With Mention")}
-            iconWrapperClassName="bg-primary-lighter"
-            iconClassName="text-primary"
-            valueClassName="text-text-dark"
-        />
-        <StatCard
-            icon={CheckCircle2}
-            value={stats.withResponse}
-            label={t("Responded")}
-            iconWrapperClassName="bg-success-light"
-            iconClassName="text-success"
-            valueClassName="text-success"
-        />
-        <StatCard
-            icon={Clock}
-            value={stats.noResponse}
-            label={t("No Response")}
-            iconWrapperClassName="bg-warning-light"
-            iconClassName="text-warning"
-            valueClassName="text-warning"
-        />
-    </div>
+    <StatsGrid compact={compact} items={[
+        { label: t("Total Comments"), value: stats.total, icon: MessageCircle, iconWrapperClassName: "bg-primary-lighter", iconClassName: "text-primary", valueClassName: "text-text-dark" },
+        { label: t("With Mention"), value: stats.withMention, icon: AtSign, iconWrapperClassName: "bg-primary-lighter", iconClassName: "text-primary", valueClassName: "text-text-dark" },
+        { label: t("Responded"), value: stats.withResponse, icon: CheckCircle2, iconWrapperClassName: "bg-success-light", iconClassName: "text-success", valueClassName: "text-success" },
+        { label: t("No Response"), value: stats.noResponse, icon: Clock, iconWrapperClassName: "bg-warning-light", iconClassName: "text-warning", valueClassName: "text-warning" },
+    ]} />
 );

@@ -61,11 +61,6 @@ export interface BlockerSeverityBadgeInterface {
     label: string;
 }
 
-export interface AnimNumPropsInterface {
-    value: number;
-    className?: string;
-}
-
 export interface MetricBoxPropsInterface {
     label: string;
     value: number;

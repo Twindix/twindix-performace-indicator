@@ -38,3 +38,18 @@ export interface StatCardPropsInterface {
     iconClassName?: string;
     valueClassName?: string;
 }
+
+export interface StatsGridItemInterface {
+    label: string;
+    value: number;
+    suffix?: string;
+    valueClassName?: string;
+    icon?: LucideIcon;
+    iconWrapperClassName?: string;
+    iconClassName?: string;
+}
+
+export interface StatsGridPropsInterface {
+    items: StatsGridItemInterface[];
+    compact?: boolean;
+}
