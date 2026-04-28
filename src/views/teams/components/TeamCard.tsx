@@ -1,12 +1,8 @@
-import { Edit, MoreHorizontal, Trash2, Users } from "lucide-react";
+import { Edit, Trash2, Users } from "lucide-react";
 
-import { Button } from "@/atoms";
 import { EntityCard } from "@/components/shared";
 import { t } from "@/hooks";
 import type { TeamCardPropsInterface } from "@/interfaces";
-import {
-    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/ui";
 
 export const TeamCard = ({ team, canManage, onClick, onEdit, onDelete }: TeamCardPropsInterface) => (
     <EntityCard className="cursor-pointer" contentClassName="p-5" onClick={onClick}>
@@ -16,22 +12,10 @@ export const TeamCard = ({ team, canManage, onClick, onEdit, onDelete }: TeamCar
             </div>
             <h3 className="text-base font-semibold text-text-dark truncate flex-1">{team.name}</h3>
             {canManage && (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => e.stopPropagation()}>
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }} className="gap-2 cursor-pointer">
-                            <Edit className="h-4 w-4" /> {t("Edit")}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(); }} className="gap-2 text-error focus:text-error cursor-pointer">
-                            <Trash2 className="h-4 w-4" /> {t("Delete")}
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <EntityCard.Menu items={[
+                    { label: t("Edit"), icon: Edit, onSelect: onEdit },
+                    { label: t("Delete"), icon: Trash2, onSelect: onDelete, danger: true },
+                ]} />
             )}
         </div>
     </EntityCard>

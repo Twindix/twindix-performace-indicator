@@ -3,12 +3,8 @@ import { alertsConstants } from "@/constants";
 import { useAlertsView } from "@/hooks";
 import type { AlertInterface } from "@/interfaces";
 
+import { AlertFooter, AlertHeader, AlertMentions, AlertMeta } from "./components/card";
 import {
-    AlertActions,
-    AlertFooter,
-    AlertHeader,
-    AlertMentions,
-    AlertMeta,
     AlertsFilters,
     AlertsHeader,
     AlertsTabs,
@@ -33,7 +29,7 @@ export const AlertsView = () => {
                         sourceTask={alert.source_task}
                         onOpenTask={actions.onOpenTask}
                     />
-                    <AlertActions
+                    <EntityCard.Actions
                         canEdit={permissions.edit}
                         canDelete={permissions.delete}
                         onEdit={actions.onEdit}
@@ -57,9 +53,7 @@ export const AlertsView = () => {
     return (
         <div>
             <AlertsHeader canCreate={view.permissions.alerts.create()} onCreate={view.form.open} />
-
             <AlertsFilters value={view.typeFilter} onChange={view.setTypeFilter} />
-
             <AlertsTabs
                 pendingCount={view.pendingAlerts.length}
                 doneCount={view.doneAlerts.length}
@@ -74,7 +68,6 @@ export const AlertsView = () => {
                     </DoneAlertsTab>
                 }
             />
-
             <AlertFormDialog
                 open={view.form.isOpen}
                 isEdit={view.form.isEdit}
@@ -83,7 +76,6 @@ export const AlertsView = () => {
                 users={view.users}
                 actions={{ onClose: view.form.close, onSubmit: view.form.onSubmit }}
             />
-
             <DeleteAlertDialog
                 open={!!view.actions.deleteTarget}
                 isLoading={view.actions.isDeleting}

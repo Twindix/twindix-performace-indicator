@@ -1,10 +1,43 @@
-import { AtSign, CheckCircle2, Clock, User } from "lucide-react";
+import { AtSign, CheckCircle2, Clock, Pencil, Reply, Trash2, User } from "lucide-react";
 
 import { Badge } from "@/atoms";
 import { t } from "@/hooks";
-import type { CommentCardMetaPropsInterface } from "@/interfaces";
+import type {
+    CommentCardBodyPropsInterface,
+    CommentCardHeaderPropsInterface,
+    CommentCardMetaPropsInterface,
+} from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
 import { formatDate, formatDateTime } from "@/utils";
+
+export const CommentHeader = ({ taskTitle, hasResponse, actions }: CommentCardHeaderPropsInterface) => (
+    <div className="flex items-center justify-between gap-2 mb-2">
+        {taskTitle ? (
+            <Badge variant="outline" className="text-xs font-normal">{taskTitle}</Badge>
+        ) : <span />}
+        <div className="flex items-center gap-1 shrink-0">
+            {!hasResponse && actions.canRespond && (
+                <button onClick={actions.onRespond} className="p-1.5 rounded hover:bg-success-light text-text-muted hover:text-success cursor-pointer" title={t("Respond")}>
+                    <Reply className="h-3.5 w-3.5" />
+                </button>
+            )}
+            {actions.canEdit && (
+                <button onClick={actions.onEdit} className="p-1.5 rounded hover:bg-muted text-text-muted hover:text-primary cursor-pointer" title={t("Edit")}>
+                    <Pencil className="h-3.5 w-3.5" />
+                </button>
+            )}
+            {actions.canDelete && (
+                <button onClick={actions.onDelete} className="p-1.5 rounded hover:bg-error-light text-text-muted hover:text-error cursor-pointer" title={t("Delete")}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                </button>
+            )}
+        </div>
+    </div>
+);
+
+export const CommentBody = ({ body, onClick }: CommentCardBodyPropsInterface) => (
+    <p className="text-sm text-text-dark mb-3 cursor-pointer" onClick={onClick}>{body}</p>
+);
 
 export const CommentMeta = ({ comment }: CommentCardMetaPropsInterface) => {
     const hasResponse = !!comment.responded_at;
@@ -17,7 +50,6 @@ export const CommentMeta = ({ comment }: CommentCardMetaPropsInterface) => {
                 </Avatar>
                 <span className="text-xs text-text-secondary">{comment.author.full_name}</span>
             </div>
-
             {comment.mentioned_users.length > 0 && (
                 <div className="flex items-center gap-1.5 flex-wrap">
                     <AtSign className="h-3.5 w-3.5 text-primary" />
@@ -31,12 +63,10 @@ export const CommentMeta = ({ comment }: CommentCardMetaPropsInterface) => {
                     ))}
                 </div>
             )}
-
             <div className="flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5 text-text-muted" />
                 <span className="text-xs text-text-muted">{formatDateTime(comment.created_at)}</span>
             </div>
-
             {hasResponse ? (
                 <div className="flex items-center gap-1.5 ms-auto">
                     <CheckCircle2 className="h-3.5 w-3.5 text-success" />

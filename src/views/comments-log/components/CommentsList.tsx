@@ -1,13 +1,10 @@
 import { MessageCircle } from "lucide-react";
 
-import { EntityCard } from "@/components/shared";
-import { EmptyState } from "@/components/shared";
+import { EntityCard, EmptyState } from "@/components/shared";
 import { t } from "@/hooks";
 import type { CommentsListPropsInterface } from "@/interfaces";
 
-import { CommentBody } from "./CommentBody";
-import { CommentHeader } from "./CommentHeader";
-import { CommentMeta } from "./CommentMeta";
+import { CommentBody, CommentHeader, CommentMeta } from "./card";
 
 export const CommentsList = ({ comments, permissions, callbacks }: CommentsListPropsInterface) => {
     if (comments.length === 0) {

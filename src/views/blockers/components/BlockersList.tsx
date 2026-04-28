@@ -1,14 +1,12 @@
 import { ShieldAlert } from "lucide-react";
 
 import { Badge } from "@/atoms";
-import { EntityCard } from "@/components/shared";
-import { EmptyState } from "@/components/shared";
+import { EntityCard, EmptyState } from "@/components/shared";
 import { t } from "@/hooks";
 import type { BlockersListPropsInterface } from "@/interfaces";
 import { cn } from "@/utils";
 
-import { BlockerHeader } from "./BlockerHeader";
-import { BlockerMeta } from "./BlockerMeta";
+import { BlockerHeader, BlockerMeta } from "./card";
 
 export const BlockersList = ({ blockers, compact, onSelect }: BlockersListPropsInterface) => (
     <div>
@@ -17,7 +15,6 @@ export const BlockersList = ({ blockers, compact, onSelect }: BlockersListPropsI
                 {t("Blockers")}
                 <Badge className="ms-2" variant="secondary">{blockers.length}</Badge>
             </h2>
-
             {blockers.length === 0 ? (
                 <EmptyState icon={ShieldAlert} title={t("No blockers found")} description={t("No blockers match the current filters")} />
             ) : (
