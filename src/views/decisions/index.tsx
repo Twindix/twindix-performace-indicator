@@ -2,7 +2,7 @@ import { useState } from "react";
 import { BookOpen, Plus } from "lucide-react";
 
 import { Button } from "@/atoms";
-import { EmptyState, FiltersBar, Header, QueryBoundary, SelectField } from "@/components/shared";
+import { EntityList, FiltersBar, Header, QueryBoundary, SelectField } from "@/components/shared";
 import { DecisionsSkeleton } from "@/components/skeletons";
 import { decisionsConstants } from "@/constants";
 import { DecisionCategory, DecisionStatus } from "@/enums";
@@ -18,7 +18,7 @@ import {
 import type { DecisionsPageFiltersInterface } from "@/interfaces/decisions";
 import { useSprintStore } from "@/store";
 
-import { DecisionsList, DecisionsStats } from "./components";
+import { DecisionCard, DecisionsStats } from "./components";
 import { AddDecisionDialog, DecisionDetailDialog } from "./dialogs";
 
 const initialFilters: DecisionsPageFiltersInterface = { status: "all", category: "all" };
@@ -115,21 +115,23 @@ export const DecisionsView = () => {
                     />
                 </FiltersBar>
 
-                {decisions.length === 0 ? (
-                    <EmptyState
-                        icon={BookOpen}
-                        title={t("No decisions found")}
-                        description={t("No decisions match the selected filters")}
-                    />
-                ) : (
-                    <DecisionsList
-                        decisions={decisions}
-                        canSetStatus={p.decisions.setStatus()}
-                        compact={compact}
-                        onView={handleView}
-                        onSetStatus={handleSetStatus}
-                    />
-                )}
+                <EntityList
+                    items={decisions}
+                    emptyIcon={BookOpen}
+                    emptyTitle={t("No decisions found")}
+                    emptyDescription={t("No decisions match the selected filters")}
+                    className={compact ? "gap-2" : "gap-4"}
+                    renderItem={(decision) => (
+                        <DecisionCard
+                            key={decision.id}
+                            decision={decision}
+                            canSetStatus={p.decisions.setStatus()}
+                            compact={compact}
+                            onView={handleView}
+                            onSetStatus={handleSetStatus}
+                        />
+                    )}
+                />
 
                 <DecisionDetailDialog
                     target={viewTarget}

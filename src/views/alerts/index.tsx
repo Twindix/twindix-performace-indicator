@@ -1,12 +1,13 @@
-import { EntityCard } from "@/components/shared";
+import { Bell, CheckCheck, Plus } from "lucide-react";
+
+import { Button } from "@/atoms";
+import { AlertsSkeleton } from "@/components/skeletons";
+import { EmptyState, EntityCard, Header, QueryBoundary, TabsView } from "@/components/shared";
 import { alertsConstants } from "@/constants";
-import { useAlertsView } from "@/hooks";
+import { t, useAlertsView } from "@/hooks";
 import type { AlertInterface } from "@/interfaces";
 
-import { t } from "@/hooks";
-
 import { AlertFooter, AlertHeader, AlertMentions, AlertMeta } from "./components/card";
-import { AlertsHeader, AlertsTabs, DoneAlertsTab, PendingAlertsTab } from "./components";
 import { AlertFormDialog, DeleteAlertDialog } from "./dialogs";
 
 export const AlertsView = () => {
@@ -48,7 +49,18 @@ export const AlertsView = () => {
 
     return (
         <div>
-            <AlertsHeader canCreate={view.permissions.alerts.create()} onCreate={view.form.open} />
+            <Header
+                title={t("Alerts")}
+                description={t("Create announcements and track acknowledgements.")}
+                actions={
+                    view.permissions.alerts.create() ? (
+                        <Button onClick={view.form.open} className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            {t("Create Alert")}
+                        </Button>
+                    ) : null
+                }
+            />
             <div className="flex flex-wrap gap-2 mb-4">
                 {alertsConstants.filters.typeChips.map((chip) => (
                     <button
@@ -61,19 +73,34 @@ export const AlertsView = () => {
                     </button>
                 ))}
             </div>
-            <AlertsTabs
-                pendingCount={view.pendingAlerts.length}
-                doneCount={view.doneAlerts.length}
-                pendingChildren={
-                    <PendingAlertsTab isLoading={view.isLoading} isEmpty={view.pendingAlerts.length === 0}>
-                        {view.pendingAlerts.map(renderCard)}
-                    </PendingAlertsTab>
-                }
-                doneChildren={
-                    <DoneAlertsTab isEmpty={view.doneAlerts.length === 0}>
-                        {view.doneAlerts.map(renderCard)}
-                    </DoneAlertsTab>
-                }
+            <TabsView
+                tabs={[
+                    {
+                        value: "pending",
+                        label: t("Pending"),
+                        count: view.pendingAlerts.length,
+                        children: (
+                            <QueryBoundary
+                                isLoading={view.isLoading}
+                                skeleton={<AlertsSkeleton />}
+                                empty={view.pendingAlerts.length === 0}
+                                emptyState={<EmptyState icon={Bell} title={t("No pending alerts")} description={t("All clear!")} />}
+                            >
+                                <div className="flex flex-col gap-3">{view.pendingAlerts.map(renderCard)}</div>
+                            </QueryBoundary>
+                        ),
+                    },
+                    {
+                        value: "done",
+                        label: t("Done"),
+                        count: view.doneAlerts.length,
+                        children: view.doneAlerts.length === 0 ? (
+                            <EmptyState icon={CheckCheck} title={t("No done alerts")} description="" />
+                        ) : (
+                            <div className="flex flex-col gap-3">{view.doneAlerts.map(renderCard)}</div>
+                        ),
+                    },
+                ]}
             />
             <AlertFormDialog
                 open={view.form.isOpen}

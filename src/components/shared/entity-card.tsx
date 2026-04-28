@@ -1,4 +1,4 @@
-import type { LucideIcon, LucideProps } from "lucide-react";
+import type { LucideProps } from "lucide-react";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 

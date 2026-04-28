@@ -3,11 +3,11 @@ import { Plus, UserCog } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/atoms";
-import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { EmptyState, EntityList, Header, QueryBoundary } from "@/components/shared";
 import { UsersSkeleton } from "@/components/skeletons";
 import { t, usePermissions, useUsersList, useUsersToggleStatus } from "@/hooks";
 
-import { UsersList } from "./components";
+import { UserCard } from "./components";
 import { AddUserDialog } from "./dialogs";
 
 export const UsersView = () => {
@@ -40,11 +40,17 @@ export const UsersView = () => {
                 empty={users.length === 0}
                 emptyState={<EmptyState icon={UserCog} title={t("No Users")} description={t("Add team members to get started")} />}
             >
-                <UsersList
-                    users={users}
-                    canEdit={p.users.edit()}
-                    onToggleStatus={toggleStatus}
-                    onView={(id) => navigate(`/users/${id}`)}
+                <EntityList
+                    items={users}
+                    renderItem={(user) => (
+                        <UserCard
+                            key={user.id}
+                            user={user}
+                            canEdit={p.users.edit()}
+                            onToggleStatus={toggleStatus}
+                            onView={(id) => navigate(`/users/${id}`)}
+                        />
+                    )}
                 />
             </QueryBoundary>
 

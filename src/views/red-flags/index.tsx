@@ -2,13 +2,13 @@ import { useState } from "react";
 import { Flag, Plus } from "lucide-react";
 
 import { Button } from "@/atoms";
-import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { EmptyState, EntityList, Header, QueryBoundary } from "@/components/shared";
 import { RedFlagsSkeleton } from "@/components/skeletons";
 import { t, usePermissions, useRedFlagsList } from "@/hooks";
 import type { RedFlagInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 
-import { RedFlagsList } from "./components";
+import { RedFlagCard } from "./components";
 import { DeleteRedFlagDialog, RedFlagFormDialog } from "./dialogs";
 
 export const RedFlagsView = () => {
@@ -48,12 +48,18 @@ export const RedFlagsView = () => {
                 empty={redFlags.length === 0}
                 emptyState={<EmptyState icon={Flag} title={t("No red flags")} description={t("No risks identified for this sprint.")} />}
             >
-                <RedFlagsList
-                    redFlags={redFlags}
-                    canEditFor={(f) => p.redFlags.edit(f)}
-                    canDeleteFor={(f) => p.redFlags.delete(f)}
-                    onEdit={openEdit}
-                    onDelete={setDeleteTarget}
+                <EntityList
+                    items={redFlags}
+                    renderItem={(f) => (
+                        <RedFlagCard
+                            key={f.id}
+                            redFlag={f}
+                            canEdit={p.redFlags.edit(f)}
+                            canDelete={p.redFlags.delete(f)}
+                            onEdit={openEdit}
+                            onDelete={setDeleteTarget}
+                        />
+                    )}
                 />
             </QueryBoundary>
 

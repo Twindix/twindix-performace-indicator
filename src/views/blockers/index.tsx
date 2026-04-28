@@ -1,9 +1,13 @@
+import { Plus, ShieldAlert } from "lucide-react";
+
+import { Badge, Button } from "@/atoms";
 import { BlockersSkeleton } from "@/components/skeletons";
-import { FiltersBar, SelectField } from "@/components/shared";
+import { EntityCard, EntityList, FiltersBar, Header, SelectField } from "@/components/shared";
 import { blockersConstants } from "@/constants";
 import { t, useBlockersView, usePageLoader } from "@/hooks";
+import { cn } from "@/utils";
 
-import { BlockersHeader, BlockersList, BlockersStats } from "./components";
+import { BlockerHeader, BlockerMeta, BlockersStats } from "./components";
 import { BlockerDetailDialog, BlockerFormDialog } from "./dialogs";
 
 export const BlockerView = () => {
@@ -21,7 +25,18 @@ export const BlockerView = () => {
 
     return (
         <div>
-            <BlockersHeader canCreate={view.permissions.blockers.create()} onCreate={view.formDialog.openAdd} />
+            <Header
+                title={t("Blocker Tracker")}
+                description={t("Track and manage blockers affecting sprint delivery")}
+                actions={
+                    view.permissions.blockers.create() ? (
+                        <Button size="sm" className="gap-1.5" onClick={view.formDialog.openAdd}>
+                            <Plus className="h-4 w-4" />
+                            {t("Add Blocker")}
+                        </Button>
+                    ) : null
+                }
+            />
 
             <BlockersStats stats={view.stats} compact={view.compact} />
 
@@ -70,7 +85,42 @@ export const BlockerView = () => {
                 />
             </FiltersBar>
 
-            <BlockersList blockers={view.blockers} compact={view.compact} onSelect={view.detailDialog.open} />
+            <div className={cn("flex flex-col", view.compact ? "gap-2" : "gap-4")}>
+                <h2 className="text-lg font-semibold text-text-dark">
+                    {t("Blockers")}
+                    <Badge className="ms-2" variant="secondary">{view.blockers.length}</Badge>
+                </h2>
+                <EntityList
+                    items={view.blockers}
+                    emptyIcon={ShieldAlert}
+                    emptyTitle={t("No blockers found")}
+                    emptyDescription={t("No blockers match the current filters")}
+                    className={view.compact ? "gap-2" : "gap-4"}
+                    renderItem={(blocker) => (
+                        <EntityCard
+                            key={blocker.id}
+                            className="overflow-hidden cursor-pointer"
+                            contentClassName={view.compact ? "p-3" : "p-5"}
+                            onClick={() => view.detailDialog.open(blocker)}
+                        >
+                            <BlockerHeader
+                                type={blocker.type}
+                                title={blocker.title}
+                                description={blocker.description}
+                                status={blocker.status}
+                                severity={blocker.severity}
+                            />
+                            <BlockerMeta
+                                reporter={blocker.reporter}
+                                owner={blocker.owner}
+                                durationDays={blocker.duration_days}
+                                createdAt={blocker.created_at}
+                                tasksAffected={blocker.tasks_affected}
+                            />
+                        </EntityCard>
+                    )}
+                />
+            </div>
 
             <BlockerFormDialog
                 open={view.formDialog.isOpen}

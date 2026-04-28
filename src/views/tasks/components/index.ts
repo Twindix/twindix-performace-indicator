@@ -1,4 +1,3 @@
-export { TasksHeader } from "./TasksHeader";
 export { TasksFilters } from "./TasksFilters";
 export { ViewModeToggle } from "./ViewModeToggle";
 export { TasksContent } from "./TasksContent";

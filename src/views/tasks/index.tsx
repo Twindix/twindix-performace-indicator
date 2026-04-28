@@ -1,9 +1,13 @@
-import { TasksSkeleton } from "@/components/skeletons";
-import { useTasksView } from "@/hooks";
-import { TaskPhase } from "@/enums";
+import { Plus } from "lucide-react";
 
-import { TasksContent, TasksFilters, TasksHeader } from "./components";
+import { Badge, Button } from "@/atoms";
+import { TasksSkeleton } from "@/components/skeletons";
+import { PageHeader } from "@/components/shared";
+import { TaskPhase } from "@/enums";
+import { t, useTasksView } from "@/hooks";
 import type { TaskInterface } from "@/interfaces";
+
+import { TasksContent, TasksFilters } from "./components";
 
 import { AddTaskDialog, TaskDetailDialog, TransitionDialog } from "./dialogs";
 
@@ -16,14 +20,33 @@ export const TasksView = () => {
 
     return (
         <div>
-            <TasksHeader
-                actions={{
-                    canCreate: view.permissions.tasks.create(),
-                    onCreate: view.dialogs.openAdd,
-                    hasFiltersOrTasks,
-                    stats: view.stats,
-                }}
-            />
+            <PageHeader
+                title={t("Task Management")}
+                description={t("Use the task detail dialog to move tasks between phases.")}
+            >
+                <PageHeader.Actions>
+                    {!hasFiltersOrTasks ? (
+                        view.permissions.tasks.create() ? (
+                            <Button size="sm" className="gap-1.5" onClick={view.dialogs.openAdd}>
+                                <Plus className="h-4 w-4" />
+                                {t("Add Task")}
+                            </Button>
+                        ) : null
+                    ) : (
+                        <div className="flex items-center gap-2 text-sm text-text-secondary">
+                            <span><strong className="text-text-dark">{view.stats.total}</strong> {t("tasks")}</span>
+                            <span className="text-border">|</span>
+                            <span><strong className="text-text-dark">{view.stats.donePoints}</strong>/{view.stats.totalPoints} {t("pts")}</span>
+                            {view.stats.blocked > 0 && (
+                                <>
+                                    <span className="text-border">|</span>
+                                    <Badge variant="error">{view.stats.blocked} {t("blocked")}</Badge>
+                                </>
+                            )}
+                        </div>
+                    )}
+                </PageHeader.Actions>
+            </PageHeader>
 
             <TasksFilters
                 search={{ value: view.filters.search, onChange: view.filters.setSearch }}

@@ -1,6 +1,10 @@
-import { useTeamsView } from "@/hooks";
+import { Plus } from "lucide-react";
 
-import { TeamsGrid, TeamsHeader } from "./components";
+import { Button } from "@/atoms";
+import { Header } from "@/components/shared";
+import { t, useTeamsView } from "@/hooks";
+
+import { TeamsGrid } from "./components";
 import { DeleteTeamDialog, TeamDetailDialog, TeamFormDialog } from "./dialogs";
 
 export const TeamsView = () => {
@@ -8,7 +12,18 @@ export const TeamsView = () => {
 
     return (
         <div>
-            <TeamsHeader canCreate={v.canCreate} onCreate={v.onAddOpen} />
+            <Header
+                title={t("Teams")}
+                description={t("Organize members into teams.")}
+                actions={
+                    v.canCreate ? (
+                        <Button size="sm" className="gap-1.5" onClick={v.onAddOpen}>
+                            <Plus className="h-4 w-4" />
+                            {t("Add Team")}
+                        </Button>
+                    ) : null
+                }
+            />
 
             <TeamsGrid
                 teams={v.teams}

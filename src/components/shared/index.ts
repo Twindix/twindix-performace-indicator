@@ -18,3 +18,5 @@ export { PageHeader } from "./PageHeader";
 export { StatsGrid } from "./stats-grid";
 export { EntityCard } from "./entity-card";
 export { FiltersBar } from "./filters-bar";
+export { TabsView } from "./tabs-view";
+export { EntityList } from "./entity-list";
