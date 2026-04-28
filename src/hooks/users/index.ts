@@ -5,3 +5,5 @@ export { useUsersAnalytics } from "./use-users-analytics";
 export { useUsersCreate } from "./use-users-create";
 export { useUsersUpdate } from "./use-users-update";
 export { useUsersDelete } from "./use-users-delete";
+export { useUsersAdd } from "./use-users-add";
+export { useUsersToggleStatus } from "./use-users-toggle-status";
