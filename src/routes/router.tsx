@@ -4,16 +4,12 @@ import { routesData } from "@/data";
 import { AuthLayout, DashboardLayout } from "@/layouts";
 import {
     AlertsView,
-    AnalyticsView,
     BlockerView,
     CommentsLogView,
-    CommunicationView,
     DashboardView,
     DecisionsView,
-    HandoffsView,
     LoginView,
     NotFoundView,
-    OwnershipView,
     ProfileView,
     ProjectsView,
     RedFlagsView,
@@ -24,7 +20,6 @@ import {
     TeamsView,
     UserDetailView,
     UsersView,
-    WorkloadView,
 } from "@/views";
 
 import { RouteError } from "./error";
@@ -58,11 +53,6 @@ export const router = createBrowserRouter([
                             { path: routesData.tasks, element: <TasksView /> },
                             { path: routesData.blockers, element: <BlockerView /> },
                             { path: routesData.decisions, element: <DecisionsView /> },
-                            { path: routesData.communication, element: <CommunicationView /> },
-                            { path: routesData.workload, element: <WorkloadView /> },
-                            { path: routesData.analytics, element: <AnalyticsView /> },
-                            { path: routesData.ownership, element: <OwnershipView /> },
-                            { path: routesData.handoffs, element: <HandoffsView /> },
                             { path: routesData.users, element: <UsersView /> },
                             { path: routesData.userDetail, element: <UserDetailView /> },
                             { path: routesData.teams, element: <TeamsView /> },
