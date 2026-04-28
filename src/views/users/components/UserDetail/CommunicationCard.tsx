@@ -1,23 +1,19 @@
 import { MessageSquare } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/atoms";
+import { CardContent } from "@/atoms";
 import { t } from "@/hooks";
 import type { CommunicationCardPropsInterface } from "@/interfaces/users";
 import { buildResponseDistribution } from "@/lib/users";
 
 import { Bar } from "../Bar";
 import { Stat } from "../Stat";
+import { ActivityCard } from "./ActivityCard";
 
 export const CommunicationCard = ({ communication }: CommunicationCardPropsInterface) => {
     const distribution = buildResponseDistribution(communication.response_time_distribution);
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />{t("Communication Performance")}
-                </CardTitle>
-            </CardHeader>
+        <ActivityCard icon={MessageSquare} title={t("Communication Performance")}>
             <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                     <Stat label={t("Questions Asked")} value={communication.questions_asked} />
@@ -51,6 +47,6 @@ export const CommunicationCard = ({ communication }: CommunicationCardPropsInter
                     </div>
                 )}
             </CardContent>
-        </Card>
+        </ActivityCard>
     );
 };

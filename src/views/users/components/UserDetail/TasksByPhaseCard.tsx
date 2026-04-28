@@ -1,23 +1,19 @@
 import { ListChecks } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/atoms";
+import { CardContent } from "@/atoms";
 import { t } from "@/hooks";
 import type { TasksByPhaseCardPropsInterface } from "@/interfaces/users";
 import { buildPhaseRows } from "@/lib/users";
 
 import { Bar } from "../Bar";
+import { ActivityCard } from "./ActivityCard";
 
 export const TasksByPhaseCard = ({ tasksByPhase }: TasksByPhaseCardPropsInterface) => {
     const phaseRows = buildPhaseRows(tasksByPhase);
     const maxPhaseCount = Math.max(...phaseRows.map((row) => row.count), 1);
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                    <ListChecks className="h-4 w-4" />{t("Tasks by Phase")}
-                </CardTitle>
-            </CardHeader>
+        <ActivityCard icon={ListChecks} title={t("Tasks by Phase")}>
             <CardContent className="flex flex-col gap-3">
                 {phaseRows.map(({ phase, count, label }) => (
                     <div key={phase}>
@@ -33,6 +29,6 @@ export const TasksByPhaseCard = ({ tasksByPhase }: TasksByPhaseCardPropsInterfac
                     </div>
                 ))}
             </CardContent>
-        </Card>
+        </ActivityCard>
     );
 };

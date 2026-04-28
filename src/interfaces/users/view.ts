@@ -1,3 +1,6 @@
+import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
+
 import type { UserInterface } from "@/interfaces/common";
 import type { TeamLiteInterface } from "@/interfaces/teams";
 
@@ -15,6 +18,13 @@ import type {
     UserAnalyticsTopStatsInterface,
     UserAnalyticsUserInterface,
 } from "./domain";
+
+export interface ActivityCardPropsInterface {
+    icon?: LucideIcon;
+    title: string;
+    children: ReactNode;
+    titleSize?: "sm" | "base";
+}
 
 export interface BarPropsInterface {
     value: number;

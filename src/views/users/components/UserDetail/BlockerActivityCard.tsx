@@ -1,18 +1,14 @@
 import { TrendingUp } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/atoms";
+import { CardContent } from "@/atoms";
 import { t } from "@/hooks";
 import type { BlockerActivityCardPropsInterface } from "@/interfaces/users";
 
 import { Stat } from "../Stat";
+import { ActivityCard } from "./ActivityCard";
 
 export const BlockerActivityCard = ({ blockerActivity }: BlockerActivityCardPropsInterface) => (
-    <Card>
-        <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />{t("Blocker Activity")}
-            </CardTitle>
-        </CardHeader>
+    <ActivityCard icon={TrendingUp} title={t("Blocker Activity")}>
         <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <Stat label={t("Reported")} value={blockerActivity.reported} />
@@ -26,5 +22,5 @@ export const BlockerActivityCard = ({ blockerActivity }: BlockerActivityCardProp
                 />
             </div>
         </CardContent>
-    </Card>
+    </ActivityCard>
 );

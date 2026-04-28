@@ -1,11 +1,12 @@
 import { Bell } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/atoms";
+import { CardContent } from "@/atoms";
 import { t } from "@/hooks";
 import type { AlertsEngagementCardPropsInterface } from "@/interfaces/users";
 
 import { Bar } from "../Bar";
 import { Stat } from "../Stat";
+import { ActivityCard } from "./ActivityCard";
 
 const ackColor = (rate: number, prefix: "bg" | "text"): string => {
     if (rate >= 80) return `${prefix}-success`;
@@ -14,12 +15,7 @@ const ackColor = (rate: number, prefix: "bg" | "text"): string => {
 };
 
 export const AlertsEngagementCard = ({ alertsEngagement }: AlertsEngagementCardPropsInterface) => (
-    <Card>
-        <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-                <Bell className="h-4 w-4" />{t("Alerts Engagement")}
-            </CardTitle>
-        </CardHeader>
+    <ActivityCard icon={Bell} title={t("Alerts Engagement")}>
         <CardContent>
             <div className="grid grid-cols-3 gap-4 mb-4">
                 <Stat label={t("Received")} value={alertsEngagement.received} />
@@ -40,5 +36,5 @@ export const AlertsEngagementCard = ({ alertsEngagement }: AlertsEngagementCardP
                 <p className="text-xs text-text-muted">{t("No alerts received")}</p>
             )}
         </CardContent>
-    </Card>
+    </ActivityCard>
 );

@@ -1,11 +1,12 @@
 import { MessageCircle } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/atoms";
+import { CardContent } from "@/atoms";
 import { t } from "@/hooks";
 import type { CommentsActivityCardPropsInterface } from "@/interfaces/users";
 
 import { Bar } from "../Bar";
 import { Stat } from "../Stat";
+import { ActivityCard } from "./ActivityCard";
 
 const rateColor = (rate: number, prefix: "bg" | "text"): string => {
     if (rate >= 80) return `${prefix}-success`;
@@ -14,12 +15,7 @@ const rateColor = (rate: number, prefix: "bg" | "text"): string => {
 };
 
 export const CommentsActivityCard = ({ commentsActivity }: CommentsActivityCardPropsInterface) => (
-    <Card>
-        <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-                <MessageCircle className="h-4 w-4" />{t("Comments Activity")}
-            </CardTitle>
-        </CardHeader>
+    <ActivityCard icon={MessageCircle} title={t("Comments Activity")}>
         <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                 <Stat label={t("Written")} value={commentsActivity.written} />
@@ -46,5 +42,5 @@ export const CommentsActivityCard = ({ commentsActivity }: CommentsActivityCardP
                 <p className="text-xs text-text-muted">{t("No comment activity")}</p>
             )}
         </CardContent>
-    </Card>
+    </ActivityCard>
 );

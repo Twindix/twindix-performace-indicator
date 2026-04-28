@@ -1,3 +1,4 @@
+export { ActivityCard } from "./ActivityCard";
 export { ProfileCard } from "./ProfileCard";
 export { QuickStatsCard } from "./QuickStatsCard";
 export { KpiRow } from "./KpiRow";

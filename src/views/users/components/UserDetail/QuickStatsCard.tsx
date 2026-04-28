@@ -1,10 +1,11 @@
 import { ListChecks, MessageSquare, TrendingUp } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/atoms";
+import { CardContent } from "@/atoms";
 import { t } from "@/hooks";
 import type { QuickStatsCardPropsInterface } from "@/interfaces/users";
 
 import { Bar } from "../Bar";
+import { ActivityCard } from "./ActivityCard";
 
 export const QuickStatsCard = ({ quickStats }: QuickStatsCardPropsInterface) => {
     const rows = [
@@ -45,8 +46,7 @@ export const QuickStatsCard = ({ quickStats }: QuickStatsCardPropsInterface) => 
     ];
 
     return (
-        <Card>
-            <CardHeader><CardTitle className="text-sm">{t("Quick Stats")}</CardTitle></CardHeader>
+        <ActivityCard title={t("Quick Stats")} titleSize="sm">
             <CardContent className="flex flex-col gap-4">
                 {rows.map(({ icon: Icon, label, value, barValue, barMax, sub, color, suffix }) => (
                     <div key={label} className="flex items-center gap-3">
@@ -62,6 +62,6 @@ export const QuickStatsCard = ({ quickStats }: QuickStatsCardPropsInterface) => 
                     </div>
                 ))}
             </CardContent>
-        </Card>
+        </ActivityCard>
     );
 };
