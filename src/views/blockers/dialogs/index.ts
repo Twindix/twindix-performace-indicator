@@ -1,8 +1,8 @@
-export { BlockerFormDialog, BlockerFormFields } from "./BlockerFormDialog";
+export { BlockerFormDialog, BlockerFormFields } from "./form-dialog";
 export {
     BlockerDetailDialog,
     BlockerDetailHeader,
     BlockerDetailMeta,
     BlockerDetailLinkedTasks,
     BlockerDetailActions,
-} from "./BlockerDetailDialog";
+} from "./detail-dialog";

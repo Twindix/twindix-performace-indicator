@@ -1,2 +1,2 @@
-export { AddDecisionDialog } from "./AddDecisionDialog";
-export { DecisionDetailDialog } from "./DecisionDetailDialog";
+export { AddDecisionDialog } from "./add-dialog";
+export { DecisionDetailDialog } from "./detail-dialog";

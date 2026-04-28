@@ -6,8 +6,8 @@ import { t } from "@/hooks";
 import type { DecisionDetailDialogPropsInterface } from "@/interfaces/decisions";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
 
-import { DecisionDetailBody } from "./DecisionDetailBody";
-import { DecisionStatusActions } from "./DecisionStatusActions";
+import { DecisionDetailBody } from "./body";
+import { DecisionStatusActions } from "./status-actions";
 
 export const DecisionDetailDialog = ({
     target,
@@ -58,3 +58,6 @@ export const DecisionDetailDialog = ({
         </DialogContent>
     </Dialog>
 );
+
+export { DecisionStatusActions } from "./status-actions";
+export { DecisionDetailBody } from "./body";

@@ -1,2 +1,2 @@
-export { AddUserDialog } from "./AddUserDialog";
-export { AddUserFormFields } from "./AddUserFormFields";
+export { AddUserDialog } from "./add-dialog";
+export { AddUserFormFields } from "./form-fields";

@@ -1,2 +1,2 @@
-export { DeleteSprintDialog } from "./DeleteSprintDialog";
-export { SprintFormDialog } from "./SprintFormDialog";
+export { DeleteSprintDialog } from "./delete-dialog";
+export { SprintFormDialog } from "./form-dialog";

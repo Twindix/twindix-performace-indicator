@@ -11,7 +11,7 @@ import type {
 import { applyMention, getMentionQuery, splitMentions } from "@/lib/tasks";
 import { Avatar, AvatarFallback } from "@/ui";
 
-import { MentionDropdown } from "./MentionDropdown";
+import { MentionDropdown } from "./mention-dropdown";
 
 const renderBody = (body: string, mentioned: { id: string; full_name: string }[]) => {
     const parts = splitMentions(body, mentioned);

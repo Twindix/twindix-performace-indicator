@@ -7,14 +7,14 @@ import type { AddTaskDialogProps } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
 
-import { AddTaskAttachmentsSection } from "./AddTaskAttachmentsSection";
-import { AddTaskCompoundSection } from "./AddTaskCompoundSection";
-import { AddTaskDescriptionField } from "./AddTaskDescriptionField";
-import { AddTaskMetaSection } from "./AddTaskMetaSection";
-import { AddTaskRequirementsSection } from "./AddTaskRequirementsSection";
-import { AddTaskScheduleSection } from "./AddTaskScheduleSection";
-import { AddTaskTagsSection } from "./AddTaskTagsSection";
-import { AddTaskTitleField } from "./AddTaskTitleField";
+import { AddTaskAttachmentsSection } from "./attachments-section";
+import { AddTaskCompoundSection } from "./compound-section";
+import { AddTaskDescriptionField } from "./description-field";
+import { AddTaskMetaSection } from "./meta-section";
+import { AddTaskRequirementsSection } from "./requirements-section";
+import { AddTaskScheduleSection } from "./schedule-section";
+import { AddTaskTagsSection } from "./tags-section";
+import { AddTaskTitleField } from "./title-field";
 
 export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: AddTaskDialogProps) => {
     const { activeSprintId } = useSprintStore();
@@ -118,3 +118,12 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
         </Dialog>
     );
 };
+
+export { AddTaskTitleField } from "./title-field";
+export { AddTaskDescriptionField } from "./description-field";
+export { AddTaskRequirementsSection } from "./requirements-section";
+export { AddTaskTagsSection } from "./tags-section";
+export { AddTaskAttachmentsSection } from "./attachments-section";
+export { AddTaskMetaSection } from "./meta-section";
+export { AddTaskScheduleSection } from "./schedule-section";
+export { AddTaskCompoundSection } from "./compound-section";

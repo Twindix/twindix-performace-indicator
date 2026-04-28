@@ -7,7 +7,7 @@ import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
 } from "@/ui";
 
-import { AddUserFormFields } from "./AddUserFormFields";
+import { AddUserFormFields } from "./form-fields";
 
 export const AddUserDialog = ({ open, onOpenChange, onCreated }: AddUserDialogPropsInterface) => {
     const { form, errors, teams, isCreating, setField, submit, reset } = useUsersAdd();

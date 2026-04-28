@@ -6,7 +6,7 @@ import type { BackwardTransitionDialogPropsInterface } from "@/interfaces";
 import { phaseLabel } from "@/lib/tasks";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
 
-import { TransitionTaskSummary } from "./TransitionTaskSummary";
+import { TransitionTaskSummary } from "./task-summary";
 
 export const BackwardTransitionDialog = ({
     open,

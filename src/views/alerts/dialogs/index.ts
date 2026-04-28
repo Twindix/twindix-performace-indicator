@@ -1,2 +1,2 @@
-export { AlertFormDialog } from "./AlertFormDialog";
-export { DeleteAlertDialog } from "./DeleteAlertDialog";
+export { AlertFormDialog } from "./form-dialog";
+export { DeleteAlertDialog } from "./delete-dialog";

@@ -3,6 +3,9 @@ import type { PipelineViewPropsInterface } from "@/interfaces";
 
 import { PipelineColumn } from "./column";
 
+export { PipelineColumn } from "./column";
+export { TaskPipelineCard } from "./pipeline-card";
+
 export const PipelineView = ({ pipeline, onSelectTask }: PipelineViewPropsInterface) => {
     const columns = Object.entries(pipeline);
 

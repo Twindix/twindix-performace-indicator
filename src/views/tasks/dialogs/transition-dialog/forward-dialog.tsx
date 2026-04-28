@@ -6,9 +6,9 @@ import type { ForwardTransitionDialogPropsInterface } from "@/interfaces";
 import { phaseLabel } from "@/lib/tasks";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
 
-import { TransitionCriteriaList } from "./TransitionCriteriaList";
-import { TransitionTaskSummary } from "./TransitionTaskSummary";
-import { TransitionTimeInput } from "./TransitionTimeInput";
+import { TransitionCriteriaList } from "./criteria-list";
+import { TransitionTaskSummary } from "./task-summary";
+import { TransitionTimeInput } from "./time-input";
 
 export const ForwardTransitionDialog = ({
     open,

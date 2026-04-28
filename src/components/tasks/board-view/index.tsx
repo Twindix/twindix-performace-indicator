@@ -3,6 +3,9 @@ import type { BoardViewPropsInterface } from "@/interfaces";
 
 import { BoardColumn } from "./column";
 
+export { BoardColumn } from "./column";
+export { TaskKanbanCard } from "./kanban-card";
+
 export const BoardView = ({ kanban, onSelectTask }: BoardViewPropsInterface) => (
     <div className="flex flex-1 gap-4 pb-4 overflow-x-auto min-h-[calc(100vh-14rem)]">
         {tasksConstants.columns.map(({ phase, label }) => (

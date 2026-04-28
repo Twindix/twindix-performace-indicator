@@ -5,7 +5,7 @@ import { t } from "@/hooks";
 import type { BlockerFormDialogPropsInterface } from "@/interfaces";
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/ui";
 
-import { BlockerFormFields } from "./BlockerFormFields";
+import { BlockerFormFields } from "./fields";
 
 const canSubmitForm = (value: BlockerFormDialogPropsInterface["form"]["value"]) =>
     value.title.trim().length > 0 && Boolean(value.ownedBy) && Boolean(value.severity) && Boolean(value.type);
@@ -45,3 +45,5 @@ export const BlockerFormDialog = ({
         </Dialog>
     );
 };
+
+export { BlockerFormFields } from "./fields";

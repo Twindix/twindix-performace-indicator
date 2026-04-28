@@ -1,10 +1,10 @@
 import type { BlockerDetailDialogPropsInterface } from "@/interfaces";
 import { Dialog, DialogContent } from "@/ui";
 
-import { BlockerDetailActions } from "./BlockerDetailActions";
-import { BlockerDetailHeader } from "./BlockerDetailHeader";
-import { BlockerDetailLinkedTasks } from "./BlockerDetailLinkedTasks";
-import { BlockerDetailMeta } from "./BlockerDetailMeta";
+import { BlockerDetailActions } from "./actions";
+import { BlockerDetailHeader } from "./header";
+import { BlockerDetailLinkedTasks } from "./linked-tasks";
+import { BlockerDetailMeta } from "./meta";
 
 export const BlockerDetailDialog = ({
     open,
@@ -55,3 +55,8 @@ export const BlockerDetailDialog = ({
         </Dialog>
     );
 };
+
+export { BlockerDetailHeader } from "./header";
+export { BlockerDetailMeta } from "./meta";
+export { BlockerDetailLinkedTasks } from "./linked-tasks";
+export { BlockerDetailActions } from "./actions";

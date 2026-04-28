@@ -1,2 +1,2 @@
-export { DeleteProjectDialog } from "./DeleteProjectDialog";
-export { ProjectFormDialog } from "./ProjectFormDialog";
+export { DeleteProjectDialog } from "./delete-dialog";
+export { ProjectFormDialog } from "./form-dialog";

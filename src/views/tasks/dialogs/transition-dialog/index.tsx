@@ -2,8 +2,8 @@ import { tasksConstants } from "@/constants";
 import { TaskPhase } from "@/enums";
 import type { TransitionDialogPropsInterface } from "@/interfaces";
 
-import { BackwardTransitionDialog } from "./BackwardTransitionDialog";
-import { ForwardTransitionDialog } from "./ForwardTransitionDialog";
+import { BackwardTransitionDialog } from "./backward-dialog";
+import { ForwardTransitionDialog } from "./forward-dialog";
 
 export const TransitionDialog = ({
     open,
@@ -44,3 +44,9 @@ export const TransitionDialog = ({
         />
     );
 };
+
+export { ForwardTransitionDialog } from "./forward-dialog";
+export { BackwardTransitionDialog } from "./backward-dialog";
+export { TransitionTaskSummary } from "./task-summary";
+export { TransitionCriteriaList } from "./criteria-list";
+export { TransitionTimeInput } from "./time-input";

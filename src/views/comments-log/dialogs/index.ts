@@ -1,3 +1,3 @@
-export { CommentFormDialog } from "./CommentFormDialog";
-export { CommentDetailDialog } from "./CommentDetailDialog";
-export { DeleteCommentDialog } from "./DeleteCommentDialog";
+export { CommentFormDialog } from "./form-dialog";
+export { CommentDetailDialog } from "./detail-dialog";
+export { DeleteCommentDialog } from "./delete-dialog";

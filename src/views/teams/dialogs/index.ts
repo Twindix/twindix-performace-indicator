@@ -1,3 +1,3 @@
-export { TeamFormDialog } from "./TeamFormDialog";
-export { DeleteTeamDialog } from "./DeleteTeamDialog";
-export { TeamDetailDialog } from "./TeamDetailDialog";
+export { TeamFormDialog } from "./form-dialog";
+export { DeleteTeamDialog } from "./delete-dialog";
+export { TeamDetailDialog } from "./detail-dialog";

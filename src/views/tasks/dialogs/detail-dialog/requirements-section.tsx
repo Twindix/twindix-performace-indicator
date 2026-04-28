@@ -4,7 +4,7 @@ import { Button, Input, Skeleton } from "@/atoms";
 import { t, useTaskRequirementsForm } from "@/hooks";
 import type { TaskRequirementsSectionPropsInterface } from "@/interfaces";
 
-import { TaskRequirementItem } from "./TaskRequirementItem";
+import { TaskRequirementItem } from "./requirement-item";
 
 export const TaskRequirementsSection = ({
     task,

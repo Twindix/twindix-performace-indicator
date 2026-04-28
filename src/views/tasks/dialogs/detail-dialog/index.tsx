@@ -3,16 +3,16 @@ import type { TaskDetailDialogPropsInterface } from "@/interfaces";
 import { useAuthStore } from "@/store";
 import { Dialog, DialogContent } from "@/ui";
 
-import { DeleteTaskConfirmDialog } from "./DeleteTaskConfirmDialog";
-import { TaskAttachmentsSection } from "./TaskAttachmentsSection";
-import { TaskBlockerSection } from "./TaskBlockerSection";
-import { TaskCommentsSection } from "./TaskCommentsSection";
-import { TaskDetailHeader } from "./TaskDetailHeader";
-import { TaskMetaGrid } from "./TaskMetaGrid";
-import { TaskPhaseNavigation } from "./TaskPhaseNavigation";
-import { TaskRequirementsSection } from "./TaskRequirementsSection";
-import { TaskTagsSection } from "./TaskTagsSection";
-import { TaskTimeLogsSection } from "./TaskTimeLogsSection";
+import { DeleteTaskConfirmDialog } from "./delete-confirm-dialog";
+import { TaskAttachmentsSection } from "./attachments-section";
+import { TaskBlockerSection } from "./blocker-section";
+import { TaskCommentsSection } from "./comments-section";
+import { TaskDetailHeader } from "./header";
+import { TaskMetaGrid } from "./meta-grid";
+import { TaskPhaseNavigation } from "./phase-navigation";
+import { TaskRequirementsSection } from "./requirements-section";
+import { TaskTagsSection } from "./tags-section";
+import { TaskTimeLogsSection } from "./time-logs-section";
 
 void t;
 
@@ -87,3 +87,16 @@ export const TaskDetailDialog = ({
         </Dialog>
     );
 };
+
+export { TaskDetailHeader } from "./header";
+export { TaskPhaseNavigation } from "./phase-navigation";
+export { TaskMetaGrid } from "./meta-grid";
+export { TaskTagsSection } from "./tags-section";
+export { TaskBlockerSection } from "./blocker-section";
+export { TaskRequirementsSection } from "./requirements-section";
+export { TaskRequirementItem } from "./requirement-item";
+export { TaskAttachmentsSection } from "./attachments-section";
+export { TaskTimeLogsSection } from "./time-logs-section";
+export { TaskCommentsSection } from "./comments-section";
+export { MentionDropdown } from "./mention-dropdown";
+export { DeleteTaskConfirmDialog } from "./delete-confirm-dialog";
