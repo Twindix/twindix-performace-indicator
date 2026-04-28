@@ -1,21 +1,16 @@
 import { useCallback } from "react";
 
 import { blockersConstants } from "@/constants";
-import type { BlockerInterface, BlockersAnalyticsInterface } from "@/interfaces";
+import type {
+    BlockerInterface,
+    BlockersAnalyticsInterface,
+    UseBlockersListOptionsInterface,
+} from "@/interfaces";
 import { blockersService } from "@/services";
 
 import { useQueryAction } from "../shared";
 
-interface UseBlockersListOptions {
-    status?: string;
-    type?: string;
-    severity?: string;
-    reporter?: string;
-    owner?: string;
-    per_page?: number;
-}
-
-export const useBlockersList = (sprintId: string, options: UseBlockersListOptions = {}) => {
+export const useBlockersList = (sprintId: string, options: UseBlockersListOptionsInterface = {}) => {
     const { status, type, severity, reporter, owner, per_page } = options;
 
     const {
