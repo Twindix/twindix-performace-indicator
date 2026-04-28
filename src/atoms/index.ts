@@ -7,3 +7,4 @@ export { Label } from "./label";
 export { Skeleton } from "./skeleton";
 export { Textarea } from "./textarea";
 export type { TextareaProps } from "./textarea";
+export { StatCard } from "./stat-card";

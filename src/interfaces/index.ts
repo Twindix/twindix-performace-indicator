@@ -54,7 +54,7 @@ export type {
     BlockerDetailActionsPropsInterface,
 } from "./blockers";
 export type { DecisionInterface, DecisionCreatorInterface, DecisionsListResponseInterface, DecisionDetailResponseInterface, DecisionsAnalyticsInterface, CreateDecisionPayloadInterface, UpdateDecisionPayloadInterface, DecisionsListFiltersInterface } from "./decisions";
-export type { CommentInterface, CommentUserInterface, CommentsListResponseInterface, CommentDetailResponseInterface, CommentsAnalyticsInterface, CommentsListFiltersInterface, CreateCommentPayloadInterface, UpdateCommentPayloadInterface } from "./comments";
+export type { CommentInterface, CommentUserInterface, CommentsListResponseInterface, CommentDetailResponseInterface, CommentsAnalyticsInterface, CommentsListFiltersInterface, CreateCommentPayloadInterface, UpdateCommentPayloadInterface, CommentsStatsInterface, CommentFormState, CommentFormHandlersInterface, CommentsPermissionsInterface, CommentsCallbacksInterface, CommentCardActionsInterface, CommentsHeaderPropsInterface, CommentsStatsGridPropsInterface, CommentsFilterHandlersInterface, CommentsFiltersPropsInterface, CommentsListPropsInterface, CommentCardPropsInterface, CommentCardHeaderPropsInterface, CommentCardBodyPropsInterface, CommentCardMetaPropsInterface, CommentFormDialogPropsInterface, CommentDetailDialogPropsInterface, DeleteCommentDialogPropsInterface, UseCommentsViewReturnInterface } from "./comments";
 export type { RedFlagInterface, RedFlagReporterInterface, RedFlagsListResponseInterface, RedFlagDetailResponseInterface, RedFlagsCountInterface, CreateRedFlagPayloadInterface, UpdateRedFlagPayloadInterface } from "./red-flags";
 export type {
     AlertInterface,
@@ -105,6 +105,7 @@ export type { TeamInterface, TeamMemberInterface, TeamsListResponseInterface, Te
 export type { UserListParamsInterface, UserListResponseInterface, CreateUserPayloadInterface, UpdateUserPayloadInterface, UserAnalyticsInterface, UserLiteInterface } from "./users";
 export type { AttachmentInterface, AddTaskFormState, AddTaskDialogProps, RequirementDraftInterface } from "./tasks-dialog";
 export type { ProjectInterface, ProjectCreatorInterface, CreateProjectPayloadInterface, UpdateProjectPayloadInterface, ProjectLiteInterface } from "./projects";
+export type { StatCardPropsInterface } from "./shared";
 export type {
     EditSprintFormStateInterface,
     UserMenuPresenceInterface,
