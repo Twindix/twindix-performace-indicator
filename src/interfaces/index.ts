@@ -104,6 +104,12 @@ export type { DashboardInterface, HealthScoreInterface, DashboardMetricsInterfac
 export type { TeamInterface, TeamMemberInterface, TeamsListResponseInterface, TeamDetailResponseInterface, CreateTeamPayloadInterface, UpdateTeamPayloadInterface, TeamLiteInterface } from "./teams";
 export type { UserListParamsInterface, UserListResponseInterface, CreateUserPayloadInterface, UpdateUserPayloadInterface, UserAnalyticsInterface, UserLiteInterface } from "./users";
 export type { AttachmentInterface, AddTaskFormState, AddTaskDialogProps, RequirementDraftInterface } from "./tasks-dialog";
+export type { CommunicationInterface, CommunicationChannel, CommunicationStatus } from "./communications";
+export type { TeamMemberWorkloadInterface } from "./workload";
+export type { MetricInterface, FrictionScoresInterface, SprintMetricsInterface } from "./metrics";
+export type { OwnershipEntryInterface } from "./ownership";
+export type { HandoffInterface, CriterionInterface } from "./handoffs";
+export type { ProjectInterface, ProjectCreatorInterface, CreateProjectPayloadInterface, UpdateProjectPayloadInterface, ProjectLiteInterface, ProjectStatus, ProjectStatusBadgeVariant, ProjectFormStateInterface, ProjectCountsInterface, ProjectListPermissionsInterface, ProjectFormControlInterface, UseProjectsPageReturnInterface, OpenedProjectViewPropsInterface, ProjectsGridPropsInterface, ProjectCardPropsInterface, ProjectCardHeaderPropsInterface, ProjectCardActionsPropsInterface, ProjectCardMetaPropsInterface, ProjectCardFooterPropsInterface, ProjectFormDialogPropsInterface, DeleteProjectDialogPropsInterface } from "./projects";
 export type { ProjectInterface, ProjectCreatorInterface, CreateProjectPayloadInterface, UpdateProjectPayloadInterface, ProjectLiteInterface } from "./projects";
 export type { StatCardPropsInterface } from "./shared";
 export type {
