@@ -2,7 +2,7 @@ import { Header, QueryBoundary } from "@/components/shared";
 import { SettingsSkeleton } from "@/components/skeletons";
 import { t, useAuth, usePageLoader, useTheme, useUpdateSetting } from "@/hooks";
 
-import { AboutCard, AppearanceCard, LanguageDateCard } from "./components";
+import { AboutCard, AppearanceCard, LanguageDateCard } from "@/components/settings";
 
 export const SettingsView = () => {
     const isLoading = usePageLoader();

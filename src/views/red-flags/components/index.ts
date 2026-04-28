@@ -1,1 +1,0 @@
-export { RedFlagCard } from "./RedFlagCard";

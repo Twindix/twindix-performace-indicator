@@ -7,7 +7,7 @@ import { TaskPhase } from "@/enums";
 import { t, useTasksView } from "@/hooks";
 import type { TaskInterface } from "@/interfaces";
 
-import { TasksContent, TasksFilters } from "./components";
+import { TasksContent, TasksFilters } from "@/components/tasks";
 
 import { AddTaskDialog, TaskDetailDialog, TransitionDialog } from "./dialogs";
 

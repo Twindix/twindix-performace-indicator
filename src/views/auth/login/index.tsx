@@ -5,7 +5,7 @@ import {
     LoginBrand,
     LoginForm,
     LoginTopControls,
-} from "./components";
+} from "@/components/auth";
 
 export const LoginView = () => {
     const form = useLoginForm();

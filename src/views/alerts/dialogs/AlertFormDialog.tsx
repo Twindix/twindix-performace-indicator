@@ -3,7 +3,7 @@ import { t } from "@/hooks";
 import type { AlertFormDialogPropsInterface } from "@/interfaces";
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/ui";
 
-import { UserMultiSelect } from "../components";
+import { UserMultiSelect } from "@/components/alerts";
 
 export const AlertFormDialog = ({
     open,

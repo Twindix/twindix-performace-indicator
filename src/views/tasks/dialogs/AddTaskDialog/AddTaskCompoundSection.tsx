@@ -2,7 +2,7 @@ import { t } from "@/hooks";
 import type { AddTaskCompoundSectionPropsInterface } from "@/interfaces";
 import { Checkbox } from "@/ui";
 
-import { TaskAutocomplete, UsersAutocomplete } from "../../components";
+import { TaskAutocomplete, UsersAutocomplete } from "@/components/tasks";
 
 export const AddTaskCompoundSection = ({
     sprintTasks,

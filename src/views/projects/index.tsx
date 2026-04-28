@@ -5,7 +5,7 @@ import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { ProjectsSkeleton } from "@/components/skeletons";
 import { t, useProjectsPage } from "@/hooks";
 
-import { OpenedProjectView, ProjectsGrid } from "./components";
+import { OpenedProjectView, ProjectsGrid } from "@/components/projects";
 import { DeleteProjectDialog, ProjectFormDialog } from "./dialogs";
 
 export const ProjectsView = () => {

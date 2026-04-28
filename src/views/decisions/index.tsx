@@ -18,7 +18,7 @@ import {
 import type { DecisionsPageFiltersInterface } from "@/interfaces/decisions";
 import { useSprintStore } from "@/store";
 
-import { DecisionCard, DecisionsStats } from "./components";
+import { DecisionCard, DecisionsStats } from "@/components/decisions";
 import { AddDecisionDialog, DecisionDetailDialog } from "./dialogs";
 
 const initialFilters: DecisionsPageFiltersInterface = { status: "all", category: "all" };

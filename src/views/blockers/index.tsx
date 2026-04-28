@@ -7,7 +7,7 @@ import { blockersConstants } from "@/constants";
 import { t, useBlockersView, usePageLoader } from "@/hooks";
 import { cn } from "@/utils";
 
-import { BlockerHeader, BlockerMeta, BlockersStats } from "./components";
+import { BlockerHeader, BlockerMeta, BlockersStats } from "@/components/blockers";
 import { BlockerDetailDialog, BlockerFormDialog } from "./dialogs";
 
 export const BlockerView = () => {

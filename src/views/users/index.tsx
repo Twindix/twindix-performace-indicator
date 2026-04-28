@@ -7,7 +7,7 @@ import { EmptyState, EntityList, Header, QueryBoundary } from "@/components/shar
 import { UsersSkeleton } from "@/components/skeletons";
 import { t, usePermissions, useUsersList, useUsersToggleStatus } from "@/hooks";
 
-import { UserCard } from "./components";
+import { UserCard } from "@/components/users";
 import { AddUserDialog } from "./dialogs";
 
 export const UsersView = () => {

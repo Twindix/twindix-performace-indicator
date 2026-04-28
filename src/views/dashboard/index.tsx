@@ -4,7 +4,7 @@ import { t, useDashboard, usePageLoader, useSettings } from "@/hooks";
 import { useSprintStore } from "@/store";
 import { cn } from "@/utils";
 
-import { ActiveBlockersCard, FrictionAreasGrid, HealthScoreCard, MetricsSection } from "./components";
+import { ActiveBlockersCard, FrictionAreasGrid, HealthScoreCard, MetricsSection } from "@/components/dashboard";
 
 export const DashboardView = () => {
     const pageLoading = usePageLoader();

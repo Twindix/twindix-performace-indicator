@@ -6,7 +6,7 @@ import { EntityCard, EntityList, FiltersBar, Header, SelectField } from "@/compo
 import { commentsConstants } from "@/constants";
 import { t, useCommentsView } from "@/hooks";
 
-import { CommentBody, CommentHeader, CommentMeta, CommentsStatsGrid } from "./components";
+import { CommentBody, CommentHeader, CommentMeta, CommentsStatsGrid } from "@/components/comments-log";
 import { CommentDetailDialog, CommentFormDialog, DeleteCommentDialog } from "./dialogs";
 
 export const CommentsLogView = () => {

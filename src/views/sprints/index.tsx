@@ -5,7 +5,7 @@ import { EmptyState, Header, QueryBoundary } from "@/components/shared";
 import { SprintsSkeleton } from "@/components/skeletons";
 import { t, useSprintsPage } from "@/hooks";
 
-import { SprintsGrid } from "./components";
+import { SprintsGrid } from "@/components/sprints";
 import { DeleteSprintDialog, SprintFormDialog } from "./dialogs";
 
 export const SprintsView = () => {

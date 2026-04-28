@@ -7,7 +7,7 @@ import { alertsConstants } from "@/constants";
 import { t, useAlertsView } from "@/hooks";
 import type { AlertInterface } from "@/interfaces";
 
-import { AlertFooter, AlertHeader, AlertMentions, AlertMeta } from "./components/card";
+import { AlertFooter, AlertHeader, AlertMentions, AlertMeta } from "@/components/alerts";
 import { AlertFormDialog, DeleteAlertDialog } from "./dialogs";
 
 export const AlertsView = () => {

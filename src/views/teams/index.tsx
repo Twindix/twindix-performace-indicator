@@ -4,7 +4,7 @@ import { Button } from "@/atoms";
 import { Header } from "@/components/shared";
 import { t, useTeamsView } from "@/hooks";
 
-import { TeamsGrid } from "./components";
+import { TeamsGrid } from "@/components/teams";
 import { DeleteTeamDialog, TeamDetailDialog, TeamFormDialog } from "./dialogs";
 
 export const TeamsView = () => {

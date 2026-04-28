@@ -8,7 +8,7 @@ import { t, usePermissions, useRedFlagsList } from "@/hooks";
 import type { RedFlagInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 
-import { RedFlagCard } from "./components";
+import { RedFlagCard } from "@/components/red-flags";
 import { DeleteRedFlagDialog, RedFlagFormDialog } from "./dialogs";
 
 export const RedFlagsView = () => {

@@ -17,7 +17,7 @@ import {
     QuickStatsCard,
     RedFlagsCard,
     TasksByPhaseCard,
-} from "./components";
+} from "@/components/users";
 
 export const UserDetailView = () => {
     const { userId } = useParams<{ userId: string }>();
