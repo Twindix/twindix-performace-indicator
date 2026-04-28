@@ -2,7 +2,7 @@ import { Heart } from "lucide-react";
 import { Outlet } from "react-router-dom";
 
 import { Sidebar, Topbar } from "@/components/shared";
-import { t } from "@/utils";
+import { t } from "@/hooks";
 import { useSettings } from "@/hooks";
 import { useSidebarStore } from "@/store";
 import { cn } from "@/utils";

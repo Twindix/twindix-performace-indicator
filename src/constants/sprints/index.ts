@@ -1,3 +1,5 @@
+import type { SprintBadgeInterface, SprintFormStateInterface } from "@/interfaces";
+
 export const sprintsConstants = {
     errors: {
         fetchFailed: "Failed to load sprints.",
@@ -15,3 +17,16 @@ export const sprintsConstants = {
         activateSuccess: "Sprint activated successfully.",
     },
 };
+
+export const defaultSprintForm: SprintFormStateInterface = {
+    name: "",
+    start_date: "",
+    end_date: "",
+};
+
+export const sprintBadgeByStatus: Record<string, SprintBadgeInterface> = {
+    active:    { label: "Active",    variant: "success" },
+    completed: { label: "Completed", variant: "outline" },
+};
+
+export const defaultSprintBadge: SprintBadgeInterface = { label: "Planned", variant: "secondary" };

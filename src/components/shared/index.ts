@@ -13,3 +13,5 @@ export { BoundaryErrorClass, NetworkError, IndicatorNetworkError, StackError } f
 export { QueryBoundary } from "./query-boundary";
 export { Can, type CanProps } from "./can";
 export { CanRoute, type CanRouteProps } from "./can-route";
+export { SelectField } from "./select-field";
+export { PageHeader } from "./PageHeader";

@@ -2,7 +2,7 @@ import { useRouteError } from "react-router-dom";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
 import { Button } from "@/atoms";
-import { t } from "@/utils";
+import { t } from "@/hooks";
 
 export const RouteError = () => {
     const error = useRouteError();

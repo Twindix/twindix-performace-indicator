@@ -1,6 +1,6 @@
 import { Briefcase, Calendar, Mail, Shield, Users } from "lucide-react";
 
-import { t } from "@/utils";
+import { t } from "@/hooks";
 import type { ProfileInfoListPropsInterface } from "@/interfaces/profile";
 import { formatJoinedDate } from "@/lib/profile";
 

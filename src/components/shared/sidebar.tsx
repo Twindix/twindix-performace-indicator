@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 
 import { cn } from "@/utils";
 import { sidebarItems } from "@/data";
-import { t } from "@/utils";
+import { t } from "@/hooks";
 import { useSettings } from "@/hooks";
 import { useSidebarStore } from "@/store";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui";

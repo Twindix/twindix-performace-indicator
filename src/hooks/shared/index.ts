@@ -1,6 +1,6 @@
 export { useTheme } from "./use-theme";
 export { useLocalStorage } from "./use-local-storage";
-export { useSettings, defaultSettings, saveSettings, type AppSettings } from "./use-settings";
+export { useSettings, t, defaultSettings, saveSettings, type AppSettings } from "./use-settings";
 export { useCountUp } from "./use-count-up";
 export { useOnlineStatus } from "./use-online-status";
 export { usePageLoader } from "./use-page-loader";
@@ -8,3 +8,4 @@ export { useFormErrors, type FieldErrors } from "./use-form-errors";
 export { useMutationAction } from "./use-mutation-action";
 export { useQueryAction, type UseQueryActionOptions } from "./use-query-action";
 export { usePermissions, type Permissions } from "./use-permissions";
+export { useUserMultiSelect } from "./use-user-multi-select";

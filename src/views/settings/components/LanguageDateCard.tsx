@@ -2,8 +2,7 @@ import { Calendar, Globe } from "lucide-react";
 
 import { Card, CardContent } from "@/atoms";
 import { settingsConstants } from "@/constants";
-import { t } from "@/utils";
-import type { AppSettings } from "@/hooks";
+import { t, type AppSettings } from "@/hooks";
 import type { LanguageDateCardPropsInterface } from "@/interfaces/settings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 

@@ -1,7 +1,7 @@
 import { Minimize2, Moon, Sun } from "lucide-react";
 
 import { Card, CardContent } from "@/atoms";
-import { t } from "@/utils";
+import { t } from "@/hooks";
 import type { AppearanceCardPropsInterface } from "@/interfaces/settings";
 
 import { SettingToggle } from "./SettingToggle";

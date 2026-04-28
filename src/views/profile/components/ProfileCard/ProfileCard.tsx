@@ -1,5 +1,5 @@
 import { Badge, Card, CardContent } from "@/atoms";
-import { t } from "@/utils";
+import { t } from "@/hooks";
 import type { ProfileCardPropsInterface } from "@/interfaces/profile";
 import { Avatar, AvatarFallback } from "@/ui";
 

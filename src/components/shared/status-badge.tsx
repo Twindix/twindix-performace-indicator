@@ -1,6 +1,6 @@
 import { Badge } from "@/atoms";
 import { MetricStatus } from "@/enums";
-import { t } from "@/utils";
+import { t } from "@/hooks";
 
 interface StatusBadgeProps {
     status: MetricStatus;

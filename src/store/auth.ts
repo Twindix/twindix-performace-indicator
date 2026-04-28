@@ -1,19 +1,12 @@
 import { create } from "zustand";
 
 import { commonData } from "@/data";
-import type { UserInterface } from "@/interfaces";
+import type { AuthStoreInterface } from "@/interfaces";
 import { AUTH_UNAUTHORIZED_EVENT } from "@/lib/axios";
 import { deleteCookieHandler, getCookieHandler } from "@/lib/cookies";
 import { authService } from "@/services";
 
-interface AuthStore {
-    user: UserInterface | null;
-    isLoading: boolean;
-    setUser: (user: UserInterface | null) => void;
-    setLoading: (isLoading: boolean) => void;
-}
-
-export const useAuthStore = create<AuthStore>()((set) => ({
+export const useAuthStore = create<AuthStoreInterface>()((set) => ({
     user: null,
     isLoading: true,
     setUser: (user) => set({ user, isLoading: false }),

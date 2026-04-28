@@ -1,5 +1,6 @@
 import { useCallback, useSyncExternalStore } from "react";
 
+import { translations } from "@/data/translations";
 import { getStorageItem, setStorageItem } from "@/utils";
 
 const SETTINGS_KEY = "twindix_perf_settings";
@@ -31,6 +32,11 @@ export const getSettings = (): AppSettings => {
         cachedSettings = getStorageItem<AppSettings>(SETTINGS_KEY) ?? defaultSettings;
     }
     return cachedSettings;
+};
+
+export const t = (key: string): string => {
+    const lang = getSettings().language;
+    return translations[key]?.[lang] ?? key;
 };
 
 export const saveSettings = (next: AppSettings) => {

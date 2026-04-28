@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect } from "react";
 
-import { t } from "@/utils";
+import { t } from "@/hooks";
 import { useSettings } from "@/hooks";
 import { cn } from "@/utils";
 
