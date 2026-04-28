@@ -1,63 +1,43 @@
-import { useState, useRef, useMemo } from "react";
-import { MessageCircle, Send, Trash2, Pencil, Check, X } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Check, MessageCircle, Pencil, Send, Trash2, X } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "@/ui";
+import { tasksConstants } from "@/constants";
 import { t, useCreateTaskComment, useDeleteComment, usePermissions, useUpdateComment } from "@/hooks";
-import type { TaskInterface, TaskCommentInterface, UserLiteInterface } from "@/interfaces";
+import type {
+    TaskCommentInterface,
+    TaskCommentsSectionPropsInterface,
+    UserLiteInterface,
+} from "@/interfaces";
+import { applyMention, getMentionQuery, splitMentions } from "@/lib/tasks";
+import { Avatar, AvatarFallback } from "@/ui";
 
-interface Props {
-    task: TaskInterface;
-    currentUserId: string;
-    members: UserLiteInterface[];
-    onUpdateComments?: (taskId: string, comments: TaskCommentInterface[]) => void;
-}
+import { MentionDropdown } from "./MentionDropdown";
 
-// Extract @query at end of text before cursor (e.g. "hello @bas" → "bas")
-const getMentionQuery = (text: string, cursor: number): string | null => {
-    const match = text.slice(0, cursor).match(/@(\w*)$/);
-    return match ? match[1] : null;
-};
-
-// Replace @query with @Full Name and return new text + cursor
-const applyMention = (text: string, cursor: number, user: UserLiteInterface) => {
-    const match = text.slice(0, cursor).match(/@(\w*)$/);
-    if (!match) return { text, cursor };
-    const start = cursor - match[0].length;
-    const ins = `@${user.full_name} `;
-    return { text: text.slice(0, start) + ins + text.slice(cursor), cursor: start + ins.length };
-};
-
-// Render comment body with @mentions highlighted using mentioned_users list
 const renderBody = (body: string, mentioned: { id: string; full_name: string }[]) => {
-    if (!mentioned.length) return <>{body}</>;
-    const escaped = mentioned.map((u) => u.full_name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-    const re = new RegExp(`(@(?:${escaped.join("|")}))`, "g");
-    const parts = body.split(re);
+    const parts = splitMentions(body, mentioned);
     return (
         <>
             {parts.map((p, i) =>
-                p.startsWith("@") ? (
+                p.isMention ? (
                     <span key={i} className="inline-block bg-primary-lighter text-primary-medium font-medium rounded px-1">
-                        {p}
+                        {p.text}
                     </span>
                 ) : (
-                    p
-                )
+                    p.text
+                ),
             )}
         </>
     );
 };
 
-export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
+export const TaskCommentsSection = ({ task, members, onUpdateComments }: TaskCommentsSectionPropsInterface) => {
     const p = usePermissions();
-
     const { createOnTaskHandler, isLoading: isSending } = useCreateTaskComment();
     const { updateHandler: updateCommentHandler, isLoading: isSavingEdit } = useUpdateComment();
     const { deleteHandler: deleteCommentHandler } = useDeleteComment();
 
     const [comments, setComments] = useState<TaskCommentInterface[]>(task.comments ?? []);
 
-    // New comment state
     const [commentText, setCommentText] = useState("");
     const [mentionActive, setMentionActive] = useState(false);
     const [mentionQuery, setMentionQuery] = useState("");
@@ -65,7 +45,6 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
     const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // Edit state
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editText, setEditText] = useState("");
     const [editMentionActive, setEditMentionActive] = useState(false);
@@ -75,15 +54,13 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
     const editTextareaRef = useRef<HTMLTextAreaElement>(null);
 
     const mentionMembers = useMemo(
-        () => members.filter((m) => m.full_name.toLowerCase().includes(mentionQuery.toLowerCase())).slice(0, 8),
-        [members, mentionQuery]
+        () => members.filter((m) => m.full_name.toLowerCase().includes(mentionQuery.toLowerCase())).slice(0, tasksConstants.mentionMaxResults),
+        [members, mentionQuery],
     );
     const editMentionMembers = useMemo(
-        () => members.filter((m) => m.full_name.toLowerCase().includes(editMentionQuery.toLowerCase())).slice(0, 8),
-        [members, editMentionQuery]
+        () => members.filter((m) => m.full_name.toLowerCase().includes(editMentionQuery.toLowerCase())).slice(0, tasksConstants.mentionMaxResults),
+        [members, editMentionQuery],
     );
-
-    // ── New comment handlers ──────────────────────────────────────────────
 
     const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const val = e.target.value;
@@ -109,9 +86,9 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
     const handleCommentKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (mentionActive && mentionMembers.length > 0) {
             if (e.key === "ArrowDown") { e.preventDefault(); setMentionIndex((i) => Math.min(i + 1, mentionMembers.length - 1)); return; }
-            if (e.key === "ArrowUp")   { e.preventDefault(); setMentionIndex((i) => Math.max(i - 1, 0)); return; }
-            if (e.key === "Enter")     { e.preventDefault(); selectMention(mentionMembers[mentionIndex]); return; }
-            if (e.key === "Escape")    { e.preventDefault(); setMentionActive(false); return; }
+            if (e.key === "ArrowUp") { e.preventDefault(); setMentionIndex((i) => Math.max(i - 1, 0)); return; }
+            if (e.key === "Enter") { e.preventDefault(); selectMention(mentionMembers[mentionIndex]); return; }
+            if (e.key === "Escape") { e.preventDefault(); setMentionActive(false); return; }
         }
         if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
     };
@@ -131,8 +108,6 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
             setMentionedUserIds([]);
         }
     };
-
-    // ── Edit handlers ─────────────────────────────────────────────────────
 
     const startEdit = (comment: TaskCommentInterface) => {
         setEditingId(comment.id);
@@ -171,9 +146,9 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
     const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, id: string) => {
         if (editMentionActive && editMentionMembers.length > 0) {
             if (e.key === "ArrowDown") { e.preventDefault(); setEditMentionIndex((i) => Math.min(i + 1, editMentionMembers.length - 1)); return; }
-            if (e.key === "ArrowUp")   { e.preventDefault(); setEditMentionIndex((i) => Math.max(i - 1, 0)); return; }
-            if (e.key === "Enter")     { e.preventDefault(); selectEditMention(editMentionMembers[editMentionIndex]); return; }
-            if (e.key === "Escape")    { e.preventDefault(); setEditMentionActive(false); return; }
+            if (e.key === "ArrowUp") { e.preventDefault(); setEditMentionIndex((i) => Math.max(i - 1, 0)); return; }
+            if (e.key === "Enter") { e.preventDefault(); selectEditMention(editMentionMembers[editMentionIndex]); return; }
+            if (e.key === "Escape") { e.preventDefault(); setEditMentionActive(false); return; }
         }
         if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEdit(id); }
         if (e.key === "Escape") cancelEdit();
@@ -204,8 +179,6 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
             onUpdateComments?.(task.id, next);
         }
     };
-
-    // ── Render ────────────────────────────────────────────────────────────
 
     return (
         <div className="mt-4">
@@ -283,7 +256,6 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
                 </div>
             )}
 
-            {/* New comment input */}
             {p.comments.add() && (
                 <div className="relative">
                     {mentionActive && mentionMembers.length > 0 && (
@@ -310,30 +282,3 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
         </div>
     );
 };
-
-interface MentionDropdownProps {
-    members: UserLiteInterface[];
-    activeIndex: number;
-    onSelect: (user: UserLiteInterface) => void;
-}
-
-const MentionDropdown = ({ members, activeIndex, onSelect }: MentionDropdownProps) => (
-    <div className="absolute bottom-full mb-1 left-0 right-0 bg-surface border border-border rounded-xl shadow-lg z-50 overflow-hidden">
-        {members.map((m, i) => (
-            <button
-                key={m.id}
-                type="button"
-                onMouseDown={(e) => { e.preventDefault(); onSelect(m); }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors cursor-pointer ${i === activeIndex ? "bg-primary-lighter" : "hover:bg-muted"}`}
-            >
-                <Avatar className="h-6 w-6 shrink-0">
-                    <AvatarFallback className="text-[8px]">{m.avatar_initials}</AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                    <p className={`text-xs font-medium truncate ${i === activeIndex ? "text-primary" : "text-text-dark"}`}>{m.full_name}</p>
-                    {m.role_label && <p className="text-[10px] text-text-muted truncate">{m.role_label}</p>}
-                </div>
-            </button>
-        ))}
-    </div>
-);
