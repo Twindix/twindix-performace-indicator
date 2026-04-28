@@ -1,12 +1,14 @@
 import { ShieldAlert } from "lucide-react";
 
 import { Badge } from "@/atoms";
+import { EntityCard } from "@/components/shared";
 import { EmptyState } from "@/components/shared";
 import { t } from "@/hooks";
 import type { BlockersListPropsInterface } from "@/interfaces";
 import { cn } from "@/utils";
 
-import { BlockerCard } from "./BlockerCard";
+import { BlockerHeader } from "./BlockerHeader";
+import { BlockerMeta } from "./BlockerMeta";
 
 export const BlockersList = ({ blockers, compact, onSelect }: BlockersListPropsInterface) => (
     <div>
@@ -20,12 +22,27 @@ export const BlockersList = ({ blockers, compact, onSelect }: BlockersListPropsI
                 <EmptyState icon={ShieldAlert} title={t("No blockers found")} description={t("No blockers match the current filters")} />
             ) : (
                 blockers.map((blocker) => (
-                    <BlockerCard
+                    <EntityCard
                         key={blocker.id}
-                        blocker={blocker}
-                        compact={compact}
+                        className="overflow-hidden cursor-pointer"
+                        contentClassName={compact ? "p-3" : "p-5"}
                         onClick={() => onSelect(blocker)}
-                    />
+                    >
+                        <BlockerHeader
+                            type={blocker.type}
+                            title={blocker.title}
+                            description={blocker.description}
+                            status={blocker.status}
+                            severity={blocker.severity}
+                        />
+                        <BlockerMeta
+                            reporter={blocker.reporter}
+                            owner={blocker.owner}
+                            durationDays={blocker.duration_days}
+                            createdAt={blocker.created_at}
+                            tasksAffected={blocker.tasks_affected}
+                        />
+                    </EntityCard>
                 ))
             )}
         </div>

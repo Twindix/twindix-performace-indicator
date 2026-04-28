@@ -11,7 +11,7 @@ const renderTypeIcon = (type?: AlertType) => {
     return <Bell className="h-3.5 w-3.5 text-text-muted shrink-0" />;
 };
 
-export const AlertCardHeader = ({ type, title, body, sourceTask, onOpenTask }: AlertCardHeaderPropsInterface) => (
+export const AlertHeader = ({ type, title, body, sourceTask, onOpenTask }: AlertCardHeaderPropsInterface) => (
     <div className="flex-1 min-w-0">
         <h3 className="text-sm font-semibold text-text-dark flex items-center gap-1.5">
             {renderTypeIcon(type)}

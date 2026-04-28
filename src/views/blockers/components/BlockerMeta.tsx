@@ -5,13 +5,7 @@ import type { BlockerCardMetaPropsInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
 import { formatDate } from "@/utils";
 
-export const BlockerCardMeta = ({
-    reporter,
-    owner,
-    durationDays,
-    createdAt,
-    tasksAffected,
-}: BlockerCardMetaPropsInterface) => (
+export const BlockerMeta = ({ reporter, owner, durationDays, createdAt, tasksAffected }: BlockerCardMetaPropsInterface) => (
     <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-text-muted">
         {reporter && (
             <div className="flex items-center gap-1.5">

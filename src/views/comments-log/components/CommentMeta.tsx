@@ -6,7 +6,7 @@ import type { CommentCardMetaPropsInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
 import { formatDate, formatDateTime } from "@/utils";
 
-export const CommentCardMeta = ({ comment }: CommentCardMetaPropsInterface) => {
+export const CommentMeta = ({ comment }: CommentCardMetaPropsInterface) => {
     const hasResponse = !!comment.responded_at;
     return (
         <div className="flex flex-wrap items-center gap-3">

@@ -1,1 +1,0 @@
-export { SprintCard } from "./SprintCard";

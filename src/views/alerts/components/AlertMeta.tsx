@@ -4,7 +4,7 @@ import type { AlertCardMetaPropsInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
 import { formatDateTime } from "@/utils";
 
-export const AlertCardMeta = ({ creator, target, createdAt }: AlertCardMetaPropsInterface) => (
+export const AlertMeta = ({ creator, target, createdAt }: AlertCardMetaPropsInterface) => (
     <div className="flex items-center gap-3 flex-wrap text-xs text-text-muted">
         {creator ? (
             <div className="flex items-center gap-1.5">

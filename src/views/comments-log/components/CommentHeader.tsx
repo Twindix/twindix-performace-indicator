@@ -4,7 +4,7 @@ import { Badge } from "@/atoms";
 import { t } from "@/hooks";
 import type { CommentCardHeaderPropsInterface } from "@/interfaces";
 
-export const CommentCardHeader = ({ taskTitle, hasResponse, actions }: CommentCardHeaderPropsInterface) => (
+export const CommentHeader = ({ taskTitle, hasResponse, actions }: CommentCardHeaderPropsInterface) => (
     <div className="flex items-center justify-between gap-2 mb-2">
         {taskTitle ? (
             <Badge variant="outline" className="text-xs font-normal">{taskTitle}</Badge>

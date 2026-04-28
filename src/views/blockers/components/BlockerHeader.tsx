@@ -6,13 +6,7 @@ import { cn } from "@/utils";
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-export const BlockerCardHeader = ({
-    type,
-    title,
-    description,
-    status,
-    severity,
-}: BlockerCardHeaderPropsInterface) => {
+export const BlockerHeader = ({ type, title, description, status, severity }: BlockerCardHeaderPropsInterface) => {
     const typeInfo = blockersConstants.typeConfig[type] ?? blockersConstants.fallbackTypeInfo;
     const TypeIcon = typeInfo.icon;
     const severityVariant = blockersConstants.severityVariants[severity] ?? "secondary";

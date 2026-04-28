@@ -1,10 +1,13 @@
 import { MessageCircle } from "lucide-react";
 
+import { EntityCard } from "@/components/shared";
 import { EmptyState } from "@/components/shared";
 import { t } from "@/hooks";
 import type { CommentsListPropsInterface } from "@/interfaces";
 
-import { CommentCard } from "./CommentCard";
+import { CommentBody } from "./CommentBody";
+import { CommentHeader } from "./CommentHeader";
+import { CommentMeta } from "./CommentMeta";
 
 export const CommentsList = ({ comments, permissions, callbacks }: CommentsListPropsInterface) => {
     if (comments.length === 0) {
@@ -13,7 +16,22 @@ export const CommentsList = ({ comments, permissions, callbacks }: CommentsListP
     return (
         <div className="flex flex-col gap-3">
             {comments.map((comment) => (
-                <CommentCard key={comment.id} comment={comment} permissions={permissions} callbacks={callbacks} />
+                <EntityCard key={comment.id}>
+                    <CommentHeader
+                        taskTitle={comment.task_title}
+                        hasResponse={!!comment.responded_at}
+                        actions={{
+                            canRespond: permissions.canRespond(comment),
+                            canEdit: permissions.canEdit(comment),
+                            canDelete: permissions.canDelete(comment),
+                            onRespond: () => callbacks.onRespond(comment.id),
+                            onEdit: () => callbacks.onEdit(comment),
+                            onDelete: () => callbacks.onDelete(comment),
+                        }}
+                    />
+                    <CommentBody body={comment.body} onClick={() => callbacks.onView(comment)} />
+                    <CommentMeta comment={comment} />
+                </EntityCard>
             ))}
         </div>
     );

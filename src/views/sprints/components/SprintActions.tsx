@@ -10,13 +10,7 @@ import {
     DropdownMenuTrigger,
 } from "@/ui";
 
-export const SprintCardActions = ({
-    isActive,
-    permissions,
-    onEdit,
-    onDelete,
-    onActivate,
-}: SprintCardActionsPropsInterface) => {
+export const SprintActions = ({ isActive, permissions, onEdit, onDelete, onActivate }: SprintCardActionsPropsInterface) => {
     const showActivate = !isActive && permissions.canActivate;
     if (!permissions.canEdit && !permissions.canDelete && !showActivate) return null;
 

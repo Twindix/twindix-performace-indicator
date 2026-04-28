@@ -1,8 +1,14 @@
+import { EntityCard } from "@/components/shared";
+import { alertsConstants } from "@/constants";
 import { useAlertsView } from "@/hooks";
 import type { AlertInterface } from "@/interfaces";
 
 import {
-    AlertCard,
+    AlertActions,
+    AlertFooter,
+    AlertHeader,
+    AlertMentions,
+    AlertMeta,
     AlertsFilters,
     AlertsHeader,
     AlertsTabs,
@@ -14,9 +20,39 @@ import { AlertFormDialog, DeleteAlertDialog } from "./dialogs";
 export const AlertsView = () => {
     const view = useAlertsView();
 
-    const renderCard = (alert: AlertInterface) => (
-        <AlertCard key={alert.id} alert={alert} {...view.cardPropsFor(alert)} />
-    );
+    const renderCard = (alert: AlertInterface) => {
+        const { permissions, busy, actions } = view.cardPropsFor(alert);
+        const isReviewTitle = alert.title === alertsConstants.titles.taskCompletionReviewRequired;
+        return (
+            <EntityCard key={alert.id}>
+                <EntityCard.Row className="mb-2">
+                    <AlertHeader
+                        type={alert.type}
+                        title={alert.title}
+                        body={alert.body}
+                        sourceTask={alert.source_task}
+                        onOpenTask={actions.onOpenTask}
+                    />
+                    <AlertActions
+                        canEdit={permissions.edit}
+                        canDelete={permissions.delete}
+                        onEdit={actions.onEdit}
+                        onDelete={actions.onDelete}
+                    />
+                </EntityCard.Row>
+                <AlertMeta creator={alert.creator} target={alert.target} createdAt={alert.created_at} />
+                <AlertMentions users={alert.mentioned_users} />
+                <AlertFooter
+                    isReviewTitle={isReviewTitle}
+                    sourceTaskId={alert.source_task?.id ?? null}
+                    counts={{ acknowledged: alert.acknowledgment_count, total: alert.total_targets }}
+                    permissions={permissions}
+                    busy={busy}
+                    actions={{ onAcknowledge: actions.onAcknowledge, onMarkDone: actions.onMarkDone, onOpenTask: actions.onOpenTask }}
+                />
+            </EntityCard>
+        );
+    };
 
     return (
         <div>

@@ -2,12 +2,7 @@ import { Pencil, Trash2 } from "lucide-react";
 
 import type { AlertCardActionsPanelPropsInterface } from "@/interfaces";
 
-export const AlertCardActionsPanel = ({
-    canEdit,
-    canDelete,
-    onEdit,
-    onDelete,
-}: AlertCardActionsPanelPropsInterface) => (
+export const AlertActions = ({ canEdit, canDelete, onEdit, onDelete }: AlertCardActionsPanelPropsInterface) => (
     <div className="flex items-center gap-1 shrink-0">
         {canEdit && (
             <button

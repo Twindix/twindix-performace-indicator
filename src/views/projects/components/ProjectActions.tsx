@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
 } from "@/ui";
 
-export const ProjectCardActions = ({ canEdit, canDelete, onEdit, onDelete }: ProjectCardActionsPropsInterface) => {
+export const ProjectActions = ({ canEdit, canDelete, onEdit, onDelete }: ProjectCardActionsPropsInterface) => {
     if (!canEdit && !canDelete) return null;
 
     return (
@@ -29,10 +29,7 @@ export const ProjectCardActions = ({ canEdit, canDelete, onEdit, onDelete }: Pro
                 )}
                 {canEdit && canDelete && <DropdownMenuSeparator />}
                 {canDelete && (
-                    <DropdownMenuItem
-                        onClick={onDelete}
-                        className="gap-2 text-error focus:text-error cursor-pointer"
-                    >
+                    <DropdownMenuItem onClick={onDelete} className="gap-2 text-error focus:text-error cursor-pointer">
                         <Trash2 className="h-4 w-4" /> {t("Delete")}
                     </DropdownMenuItem>
                 )}

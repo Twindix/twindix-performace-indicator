@@ -1,7 +1,7 @@
 import type { AlertCardMentionsPropsInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
 
-export const AlertCardMentions = ({ users }: AlertCardMentionsPropsInterface) => {
+export const AlertMentions = ({ users }: AlertCardMentionsPropsInterface) => {
     if (users.length === 0) return null;
 
     return (
