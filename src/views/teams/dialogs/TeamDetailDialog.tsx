@@ -3,17 +3,11 @@ import { Calendar, Users } from "lucide-react";
 
 import { Skeleton } from "@/atoms";
 import { t, useGetTeam } from "@/hooks";
-import type { TeamInterface } from "@/interfaces";
+import type { TeamDetailDialogPropsInterface, TeamInterface } from "@/interfaces";
 import { Avatar, AvatarFallback, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
 import { formatDate } from "@/utils";
 
-interface TeamDetailDialogProps {
-    teamId: string | null;
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-}
-
-export const TeamDetailDialog = ({ teamId, open, onOpenChange }: TeamDetailDialogProps) => {
+export const TeamDetailDialog = ({ teamId, open, onOpenChange }: TeamDetailDialogPropsInterface) => {
     const { getHandler, isLoading } = useGetTeam();
     const [team, setTeam] = useState<TeamInterface | null>(null);
 

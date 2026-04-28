@@ -203,7 +203,7 @@ export type {
     UseAlertsViewReturnInterface,
 } from "./alerts";
 export type { DashboardInterface, HealthScoreInterface, DashboardMetricsInterface, DashboardSubScoreInterface, DashboardActiveBlockerInterface, DashboardSummaryInterface } from "./dashboard";
-export type { TeamInterface, TeamMemberInterface, TeamsListResponseInterface, TeamDetailResponseInterface, CreateTeamPayloadInterface, UpdateTeamPayloadInterface, TeamLiteInterface } from "./teams";
+export type { TeamInterface, TeamMemberInterface, TeamsListResponseInterface, TeamDetailResponseInterface, CreateTeamPayloadInterface, UpdateTeamPayloadInterface, TeamLiteInterface, TeamsHeaderPropsInterface, TeamCardPropsInterface, TeamsGridPropsInterface, TeamFormFieldsInterface, TeamFormHandlersInterface, TeamFormDialogPropsInterface, DeleteTeamDialogPropsInterface, TeamDetailDialogPropsInterface, UseTeamsViewReturnInterface } from "./teams";
 export type { UserListParamsInterface, UserListResponseInterface, CreateUserPayloadInterface, UpdateUserPayloadInterface, UserAnalyticsInterface, UserLiteInterface } from "./users";
 export type { CommunicationInterface, CommunicationChannel, CommunicationStatus } from "./communications";
 export type { TeamMemberWorkloadInterface } from "./workload";
