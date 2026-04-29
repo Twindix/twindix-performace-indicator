@@ -1,9 +1,14 @@
 import { Calendar, Clock, Layers } from "lucide-react";
 
 import { Badge } from "@/atoms";
+import { EntityCard } from "@/components/shared";
 import { blockersConstants } from "@/constants";
 import { t } from "@/hooks";
-import type { BlockerCardHeaderPropsInterface, BlockerCardMetaPropsInterface } from "@/interfaces";
+import type {
+    BlockerCardHeaderPropsInterface,
+    BlockerCardMetaPropsInterface,
+    BlockerCardPropsInterface,
+} from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
 import { cn, formatDate } from "@/utils";
 
@@ -70,4 +75,27 @@ export const BlockerMeta = ({ reporter, owner, durationDays, createdAt, tasksAff
             </div>
         )}
     </div>
+);
+
+export const BlockerCard = ({ blocker, compact, onClick }: BlockerCardPropsInterface) => (
+    <EntityCard
+        className="overflow-hidden cursor-pointer"
+        contentClassName={compact ? "p-3" : "p-5"}
+        onClick={onClick}
+    >
+        <BlockerHeader
+            type={blocker.type}
+            title={blocker.title}
+            description={blocker.description}
+            status={blocker.status}
+            severity={blocker.severity}
+        />
+        <BlockerMeta
+            reporter={blocker.reporter}
+            owner={blocker.owner}
+            durationDays={blocker.duration_days}
+            createdAt={blocker.created_at}
+            tasksAffected={blocker.tasks_affected}
+        />
+    </EntityCard>
 );

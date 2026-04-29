@@ -2,12 +2,12 @@ import { Plus, ShieldAlert } from "lucide-react";
 
 import { Badge, Button } from "@/atoms";
 import { BlockersSkeleton } from "@/components/skeletons";
-import { EntityCard, EntityList, FiltersBar, Header, SelectField } from "@/components/shared";
+import { EntityList, FiltersBar, Header, SelectField } from "@/components/shared";
 import { blockersConstants } from "@/constants";
 import { t, useBlockersView, usePageLoader } from "@/hooks";
 import { cn } from "@/utils";
 
-import { BlockerHeader, BlockerMeta, BlockersStats } from "@/components/blockers";
+import { BlockerCard, BlockersStats } from "@/components/blockers";
 import { BlockerDetailDialog, BlockerFormDialog } from "./dialogs";
 
 export const BlockerView = () => {
@@ -97,27 +97,12 @@ export const BlockerView = () => {
                     emptyDescription={t("No blockers match the current filters")}
                     className={view.compact ? "gap-2" : "gap-4"}
                     renderItem={(blocker) => (
-                        <EntityCard
+                        <BlockerCard
                             key={blocker.id}
-                            className="overflow-hidden cursor-pointer"
-                            contentClassName={view.compact ? "p-3" : "p-5"}
+                            blocker={blocker}
+                            compact={view.compact}
                             onClick={() => view.detailDialog.open(blocker)}
-                        >
-                            <BlockerHeader
-                                type={blocker.type}
-                                title={blocker.title}
-                                description={blocker.description}
-                                status={blocker.status}
-                                severity={blocker.severity}
-                            />
-                            <BlockerMeta
-                                reporter={blocker.reporter}
-                                owner={blocker.owner}
-                                durationDays={blocker.duration_days}
-                                createdAt={blocker.created_at}
-                                tasksAffected={blocker.tasks_affected}
-                            />
-                        </EntityCard>
+                        />
                     )}
                 />
             </div>

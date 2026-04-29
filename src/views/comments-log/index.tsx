@@ -2,11 +2,11 @@ import { MessageCircle, Plus } from "lucide-react";
 
 import { Button } from "@/atoms";
 import { CommentsLogSkeleton } from "@/components/skeletons";
-import { EntityCard, EntityList, FiltersBar, Header, SelectField } from "@/components/shared";
+import { EntityList, FiltersBar, Header, SelectField } from "@/components/shared";
 import { commentsConstants } from "@/constants";
 import { t, useCommentsView } from "@/hooks";
 
-import { CommentBody, CommentHeader, CommentMeta, CommentsStatsGrid } from "@/components/comments-log";
+import { CommentCard, CommentsStatsGrid } from "@/components/comments-log";
 import { CommentDetailDialog, CommentFormDialog, DeleteCommentDialog } from "./dialogs";
 
 export const CommentsLogView = () => {
@@ -68,22 +68,12 @@ export const CommentsLogView = () => {
                     emptyTitle={t("No Results")}
                     emptyDescription={t("No comments match the selected filters")}
                     renderItem={(comment) => (
-                        <EntityCard key={comment.id}>
-                            <CommentHeader
-                                taskTitle={comment.task_title}
-                                hasResponse={!!comment.responded_at}
-                                actions={{
-                                    canRespond: permissions.canRespond(comment),
-                                    canEdit: permissions.canEdit(comment),
-                                    canDelete: permissions.canDelete(comment),
-                                    onRespond: () => callbacks.onRespond(comment.id),
-                                    onEdit: () => callbacks.onEdit(comment),
-                                    onDelete: () => callbacks.onDelete(comment),
-                                }}
-                            />
-                            <CommentBody body={comment.body} onClick={() => callbacks.onView(comment)} />
-                            <CommentMeta comment={comment} />
-                        </EntityCard>
+                        <CommentCard
+                            key={comment.id}
+                            comment={comment}
+                            permissions={permissions}
+                            callbacks={callbacks}
+                        />
                     )}
                 />
 

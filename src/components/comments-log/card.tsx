@@ -1,11 +1,13 @@
 import { AtSign, CheckCircle2, Clock, Pencil, Reply, Trash2, User } from "lucide-react";
 
 import { Badge } from "@/atoms";
+import { EntityCard } from "@/components/shared";
 import { t } from "@/hooks";
 import type {
     CommentCardBodyPropsInterface,
     CommentCardHeaderPropsInterface,
     CommentCardMetaPropsInterface,
+    CommentCardPropsInterface,
 } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
 import { formatDate, formatDateTime } from "@/utils";
@@ -79,3 +81,22 @@ export const CommentMeta = ({ comment }: CommentCardMetaPropsInterface) => {
         </div>
     );
 };
+
+export const CommentCard = ({ comment, permissions, callbacks }: CommentCardPropsInterface) => (
+    <EntityCard>
+        <CommentHeader
+            taskTitle={comment.task_title}
+            hasResponse={!!comment.responded_at}
+            actions={{
+                canRespond: permissions.canRespond(comment),
+                canEdit: permissions.canEdit(comment),
+                canDelete: permissions.canDelete(comment),
+                onRespond: () => callbacks.onRespond(comment.id),
+                onEdit: () => callbacks.onEdit(comment),
+                onDelete: () => callbacks.onDelete(comment),
+            }}
+        />
+        <CommentBody body={comment.body} onClick={() => callbacks.onView(comment)} />
+        <CommentMeta comment={comment} />
+    </EntityCard>
+);

@@ -1,12 +1,15 @@
 import { Bell, Check, CheckCheck, Clock, ExternalLink, Link2, ShieldCheck } from "lucide-react";
 
 import { Badge, Button } from "@/atoms";
+import { EntityCard } from "@/components/shared";
+import { alertsConstants } from "@/constants";
 import { t } from "@/hooks";
 import type {
     AlertCardFooterPropsInterface,
     AlertCardHeaderPropsInterface,
     AlertCardMentionsPropsInterface,
     AlertCardMetaPropsInterface,
+    AlertCardPropsInterface,
     AlertType,
 } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
@@ -97,3 +100,36 @@ export const AlertFooter = ({ isReviewTitle, sourceTaskId, counts, permissions, 
         </div>
     </div>
 );
+
+export const AlertCard = ({ alert, permissions, busy, actions }: AlertCardPropsInterface) => {
+    const isReviewTitle = alert.title === alertsConstants.titles.taskCompletionReviewRequired;
+    return (
+        <EntityCard>
+            <EntityCard.Row className="mb-2">
+                <AlertHeader
+                    type={alert.type}
+                    title={alert.title}
+                    body={alert.body}
+                    sourceTask={alert.source_task}
+                    onOpenTask={actions.onOpenTask}
+                />
+                <EntityCard.Actions
+                    canEdit={permissions.edit}
+                    canDelete={permissions.delete}
+                    onEdit={actions.onEdit}
+                    onDelete={actions.onDelete}
+                />
+            </EntityCard.Row>
+            <AlertMeta creator={alert.creator} target={alert.target} createdAt={alert.created_at} />
+            <AlertMentions users={alert.mentioned_users} />
+            <AlertFooter
+                isReviewTitle={isReviewTitle}
+                sourceTaskId={alert.source_task?.id ?? null}
+                counts={{ acknowledged: alert.acknowledgment_count, total: alert.total_targets }}
+                permissions={permissions}
+                busy={busy}
+                actions={{ onAcknowledge: actions.onAcknowledge, onMarkDone: actions.onMarkDone, onOpenTask: actions.onOpenTask }}
+            />
+        </EntityCard>
+    );
+};

@@ -1,2 +1,2 @@
 export { BlockersStats } from "./stats";
-export { BlockerHeader, BlockerMeta } from "./card";
+export { BlockerCard, BlockerHeader, BlockerMeta } from "./card";

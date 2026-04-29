@@ -1,4 +1,4 @@
-export { AlertHeader, AlertMeta, AlertMentions, AlertFooter } from "./card";
+export { AlertCard, AlertHeader, AlertMeta, AlertMentions, AlertFooter } from "./card";
 export {
     UserMultiSelect,
     SelectedUserChips,

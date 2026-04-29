@@ -2,12 +2,12 @@ import { Bell, CheckCheck, Plus } from "lucide-react";
 
 import { Button } from "@/atoms";
 import { AlertsSkeleton } from "@/components/skeletons";
-import { EmptyState, EntityCard, Header, QueryBoundary, TabsView } from "@/components/shared";
+import { EmptyState, Header, QueryBoundary, TabsView } from "@/components/shared";
 import { alertsConstants } from "@/constants";
 import { t, useAlertsView } from "@/hooks";
 import type { AlertInterface } from "@/interfaces";
 
-import { AlertFooter, AlertHeader, AlertMentions, AlertMeta } from "@/components/alerts";
+import { AlertCard } from "@/components/alerts";
 import { AlertFormDialog, DeleteAlertDialog } from "./dialogs";
 
 export const AlertsView = () => {
@@ -15,35 +15,14 @@ export const AlertsView = () => {
 
     const renderCard = (alert: AlertInterface) => {
         const { permissions, busy, actions } = view.cardPropsFor(alert);
-        const isReviewTitle = alert.title === alertsConstants.titles.taskCompletionReviewRequired;
         return (
-            <EntityCard key={alert.id}>
-                <EntityCard.Row className="mb-2">
-                    <AlertHeader
-                        type={alert.type}
-                        title={alert.title}
-                        body={alert.body}
-                        sourceTask={alert.source_task}
-                        onOpenTask={actions.onOpenTask}
-                    />
-                    <EntityCard.Actions
-                        canEdit={permissions.edit}
-                        canDelete={permissions.delete}
-                        onEdit={actions.onEdit}
-                        onDelete={actions.onDelete}
-                    />
-                </EntityCard.Row>
-                <AlertMeta creator={alert.creator} target={alert.target} createdAt={alert.created_at} />
-                <AlertMentions users={alert.mentioned_users} />
-                <AlertFooter
-                    isReviewTitle={isReviewTitle}
-                    sourceTaskId={alert.source_task?.id ?? null}
-                    counts={{ acknowledged: alert.acknowledgment_count, total: alert.total_targets }}
-                    permissions={permissions}
-                    busy={busy}
-                    actions={{ onAcknowledge: actions.onAcknowledge, onMarkDone: actions.onMarkDone, onOpenTask: actions.onOpenTask }}
-                />
-            </EntityCard>
+            <AlertCard
+                key={alert.id}
+                alert={alert}
+                permissions={permissions}
+                busy={busy}
+                actions={actions}
+            />
         );
     };
 
