@@ -13,7 +13,7 @@ export const SprintsGrid = ({ sprints, permissions, onEdit, onDelete, onActivate
                 <EntityCard.Row className="gap-2">
                     <SprintHeader sprint={sprint} />
                     <EntityCard.Menu items={[
-                        ...(!sprint.status !== "active" && permissions.canActivate ? [{ label: t("Activate"), icon: Zap, onSelect: () => onActivate(sprint) }] : []),
+                        ...(sprint.status !== "active" && permissions.canActivate ? [{ label: t("Activate"), icon: Zap, onSelect: () => onActivate(sprint) }] : []),
                         ...(permissions.canEdit ? [{ label: t("Edit"), icon: Edit, onSelect: () => onEdit(sprint) }] : []),
                         ...(permissions.canDelete ? [{ label: t("Delete"), icon: Trash2, onSelect: () => onDelete(sprint), danger: true }] : []),
                     ]} />

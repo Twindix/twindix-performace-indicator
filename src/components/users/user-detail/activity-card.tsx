@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/atoms";
+import { Card, CardHeader, CardTitle } from "@/atoms";
 import type { ActivityCardPropsInterface } from "@/interfaces/users";
 import { cn } from "@/utils";
 

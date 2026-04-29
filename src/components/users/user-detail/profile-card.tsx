@@ -1,9 +1,9 @@
 import { Badge, Card, CardContent } from "@/atoms";
 import { t } from "@/hooks";
-import type { ProfileCardPropsInterface } from "@/interfaces/users";
+import type { UserDetailProfileCardPropsInterface } from "@/interfaces/users";
 import { Avatar, AvatarFallback } from "@/ui";
 
-export const ProfileCard = ({ user }: ProfileCardPropsInterface) => (
+export const ProfileCard = ({ user }: UserDetailProfileCardPropsInterface) => (
     <Card>
         <CardContent className="p-6 flex flex-col items-center gap-3 text-center">
             <Avatar className="h-20 w-20">

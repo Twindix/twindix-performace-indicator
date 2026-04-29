@@ -66,7 +66,7 @@ export interface AddUserFormFieldsPropsInterface {
     onChange: (field: keyof AddUserFormStateInterface, value: string) => void;
 }
 
-export interface ProfileCardPropsInterface {
+export interface UserDetailProfileCardPropsInterface {
     user: UserAnalyticsUserInterface;
 }
 

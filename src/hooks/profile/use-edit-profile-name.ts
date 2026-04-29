@@ -4,9 +4,11 @@ import type { UseEditProfileNameReturnInterface } from "@/interfaces/profile";
 
 import { useAuth } from "../auth";
 import { useUpdateMe } from "../auth/use-update-me";
+import { useUpdateUser } from "../auth/use-update-user";
 
 export const useEditProfileName = (): UseEditProfileNameReturnInterface => {
-    const { user, onUpdateUser } = useAuth();
+    const { user } = useAuth();
+    const { onUpdateUser } = useUpdateUser();
     const { updateHandler, isLoading: isSaving } = useUpdateMe();
 
     const [isEditing, setIsEditing] = useState(false);

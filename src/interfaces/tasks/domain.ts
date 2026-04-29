@@ -29,16 +29,6 @@ export interface CommentListResponseInterface {
     count: number;
 }
 
-export interface CreateCommentPayloadInterface {
-    body: string;
-    mentioned_user_ids?: string[];
-}
-
-export interface UpdateCommentPayloadInterface {
-    body: string;
-    mentioned_user_ids?: string[];
-}
-
 export interface TaskPhaseNavigationInterface {
     previous: string | null;
     current: string | null;

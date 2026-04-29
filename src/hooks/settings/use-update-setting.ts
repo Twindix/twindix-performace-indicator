@@ -6,9 +6,11 @@ import { buildSettingsPatch } from "@/lib/settings";
 
 import { useAuth } from "../auth";
 import { useUpdateMe } from "../auth/use-update-me";
+import { useUpdateUser } from "../auth/use-update-user";
 
 export const useUpdateSetting = (): UseUpdateSettingReturnInterface => {
-    const { user, onUpdateUser } = useAuth();
+    const { user } = useAuth();
+    const { onUpdateUser } = useUpdateUser();
     const { updateHandler } = useUpdateMe();
 
     const updateSetting = useCallback(async (patch: Partial<UserSettingsInterface>) => {
