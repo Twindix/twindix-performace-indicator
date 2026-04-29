@@ -1,5 +1,5 @@
-export { useAuth, usePresence, useUpdateMe, type PresenceStatus } from "./auth";
-export { useTheme, useLocalStorage, useSettings, t, defaultSettings, saveSettings, type AppSettings, useCountUp, useOnlineStatus, usePageLoader, useFormErrors, type FieldErrors, useMutationAction, useQueryAction, type UseQueryActionOptions, usePermissions, type Permissions } from "./shared";
+export { useAuth, useLogin, useLogout, useUpdateUser, useLoginForm, usePresence, useUpdateMe } from "./auth";
+export { useTheme, useLocalStorage, useSettings, t, defaultSettings, saveSettings, type AppSettings, useCountUp, useOnlineStatus, usePageLoader, useFormErrors, type FieldErrors, useMutationAction, useQueryAction, type UseQueryActionOptions, usePermissions, type Permissions, useUserMultiSelect } from "./shared";
 export * from "./sprints";
 export * from "./tasks";
 export * from "./requirements";
@@ -13,3 +13,5 @@ export * from "./dashboard";
 export * from "./users";
 export * from "./teams";
 export * from "./projects";
+export * from "./settings";
+export * from "./profile";

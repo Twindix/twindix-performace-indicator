@@ -4,3 +4,4 @@ export { getStorageItem, setStorageItem, removeStorageItem, storageKeys } from "
 export { td } from "./translate-data";
 export { checkIsNetworkErrorHandler, getErrorMessageHandler } from "./error-handlers";
 export { generateClassNameHandler } from "./generate-class-name";
+export { capitalize } from "./capitalize";

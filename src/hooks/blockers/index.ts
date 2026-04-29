@@ -7,3 +7,6 @@ export { useResolveBlocker } from "./use-resolve-blocker";
 export { useEscalateBlocker } from "./use-escalate-blocker";
 export { useLinkBlockerTasks } from "./use-link-blocker-tasks";
 export { useUnlinkBlockerTask } from "./use-unlink-blocker-task";
+export { useBlockerForm } from "./use-blocker-form";
+export { useBlockerDetail } from "./use-blocker-detail";
+export { useBlockersView } from "./use-blockers-view";

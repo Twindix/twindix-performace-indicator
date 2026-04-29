@@ -1,3 +1,5 @@
+import type { LucideIcon } from "lucide-react";
+
 export interface DashboardSubScoreInterface {
     score: number;
     label: string;
@@ -37,4 +39,63 @@ export interface DashboardMetricsInterface {
 export interface DashboardInterface {
     health_score: HealthScoreInterface;
     metrics: DashboardMetricsInterface;
+}
+
+export interface FrictionAreaConfigInterface {
+    key: string;
+    labelKey: string;
+    icon: LucideIcon;
+    textColor: string;
+}
+
+export interface MetricTileConfigInterface {
+    labelKey: string;
+    field: keyof DashboardMetricsInterface;
+    suffix?: string;
+}
+
+export type DashboardBadgeVariant = "error" | "warning" | "secondary";
+
+export interface BlockerSeverityBadgeInterface {
+    variant: DashboardBadgeVariant;
+    label: string;
+}
+
+export interface MetricBoxPropsInterface {
+    label: string;
+    value: number;
+    suffix?: string;
+}
+
+export interface HealthScoreCardPropsInterface {
+    overallScore: number;
+    summary?: DashboardSummaryInterface;
+}
+
+export interface HealthScoreSummaryPropsInterface {
+    summary?: DashboardSummaryInterface;
+}
+
+export interface FrictionAreasGridPropsInterface {
+    subScores: Record<string, DashboardSubScoreInterface>;
+    compact: boolean;
+}
+
+export interface FrictionAreaCardPropsInterface {
+    config: FrictionAreaConfigInterface;
+    score: number;
+    compact: boolean;
+}
+
+export interface MetricsSectionPropsInterface {
+    metrics: DashboardMetricsInterface;
+    compact: boolean;
+}
+
+export interface ActiveBlockersCardPropsInterface {
+    blockers: DashboardActiveBlockerInterface[];
+}
+
+export interface ActiveBlockerItemPropsInterface {
+    blocker: DashboardActiveBlockerInterface;
 }
