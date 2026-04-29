@@ -1,1 +1,1 @@
-export { EditSprintDialog } from "./EditSprintDialog";
+export { EditSprintDialog } from "./edit-sprint-dialog";

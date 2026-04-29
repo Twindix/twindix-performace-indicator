@@ -1,10 +1,10 @@
 import type { UserMenuPropsInterface } from "@/interfaces";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuSeparator, DropdownMenuTrigger } from "@/ui";
 
-import { PresenceStatusMenuItems } from "./PresenceStatusMenuItems";
-import { UserMenuActions } from "./UserMenuActions";
-import { UserMenuHeader } from "./UserMenuHeader";
-import { UserMenuTrigger } from "./UserMenuTrigger";
+import { PresenceStatusMenuItems } from "./presence-status-menu-items";
+import { UserMenuActions } from "./user-menu-actions";
+import { UserMenuHeader } from "./user-menu-header";
+import { UserMenuTrigger } from "./user-menu-trigger";
 
 export const UserMenu = ({
     user,

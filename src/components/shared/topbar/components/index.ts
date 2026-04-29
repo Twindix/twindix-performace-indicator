@@ -1,11 +1,11 @@
-export { ProjectSelector } from "./ProjectSelector";
-export { SprintSelector } from "./SprintSelector";
-export { EditSprintButton } from "./EditSprintButton";
-export { ThemeToggle } from "./ThemeToggle";
+export { ProjectSelector } from "./project-selector";
+export { SprintSelector } from "./sprint-selector";
+export { EditSprintButton } from "./edit-sprint-button";
+export { ThemeToggle } from "./theme-toggle";
 export {
     UserMenu,
     UserMenuTrigger,
     UserMenuHeader,
     PresenceStatusMenuItems,
     UserMenuActions,
-} from "./UserMenu";
+} from "./user-menu";
