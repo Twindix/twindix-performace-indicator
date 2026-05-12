@@ -12,5 +12,6 @@ export { MobileNav } from "./mobile-nav";
 export { BoundaryErrorClass, NetworkError, IndicatorNetworkError, StackError } from "./error";
 export { QueryBoundary } from "./query-boundary";
 export { Pagination, type PaginationProps } from "./pagination";
+export { LoadMore, type LoadMoreProps } from "./load-more";
 export { Can, type CanProps } from "./can";
 export { CanRoute, type CanRouteProps } from "./can-route";
