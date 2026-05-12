@@ -188,7 +188,7 @@ export interface LoadMoreProps {
     total: number;
     pageSize: number;
     onPage: (page: number) => void;
-    onPageSize: (pageSize: number) => void;
+    onPageSize?: (pageSize: number) => void;
     pageSizes?: number[];
     label?: string;
     className?: string;
@@ -227,7 +227,7 @@ export const LoadMore = ({
     };
 
     const handleStepChange = (next: number) => {
-        onPageSize(next);
+        onPageSize?.(next);
         onPage(1);
     };
 
@@ -377,20 +377,22 @@ export const LoadMore = ({
                     )}
                 </button>
 
-                {/* Step label + dropdown */}
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-                    <span
-                        style={{
-                            color: COLORS.textMuted,
-                            fontFamily: FONT_STACK,
-                            fontSize: 13,
-                            fontWeight: 500,
-                        }}
-                    >
-                        Step
-                    </span>
-                    <StepDropdown value={pageSize} options={pageSizes} onChange={handleStepChange} />
-                </div>
+                {/* Step label + dropdown (omitted when onPageSize not provided) */}
+                {onPageSize && (
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+                        <span
+                            style={{
+                                color: COLORS.textMuted,
+                                fontFamily: FONT_STACK,
+                                fontSize: 13,
+                                fontWeight: 500,
+                            }}
+                        >
+                            Step
+                        </span>
+                        <StepDropdown value={pageSize} options={pageSizes} onChange={handleStepChange} />
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -48,7 +48,8 @@ export const usePaginatedQuery = <T>(
         try {
             const result = await runAction(() => fnRef.current({ page, per_page: perPage }), runOptions);
             if (result) {
-                setItemsState(result.data ?? []);
+                const incomingPage = result.meta?.current_page ?? page;
+                setItemsState((prev) => (incomingPage <= 1 ? (result.data ?? []) : [...prev, ...(result.data ?? [])]));
                 setMeta(result.meta ?? null);
             }
             return result;
