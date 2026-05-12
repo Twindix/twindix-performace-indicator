@@ -1,7 +1,6 @@
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { useMemo } from "react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronDown } from "lucide-react";
+import { useMemo, type ReactNode } from "react";
 
-import { Button } from "@/atoms";
 import { t, useSettings } from "@/hooks";
 import type { PaginationMetaInterface } from "@/interfaces";
 import { cn } from "@/utils";
@@ -15,9 +14,8 @@ type PageItem = number | "dots";
 const buildPageWindow = (current: number, last: number): PageItem[] => {
     if (last <= 1) return [1];
     const total = SIBLINGS * 2 + BOUNDARIES * 2 + 3;
-    if (last <= total) {
-        return Array.from({ length: last }, (_, i) => i + 1);
-    }
+    if (last <= total) return Array.from({ length: last }, (_, i) => i + 1);
+
     const leftSibling = Math.max(current - SIBLINGS, BOUNDARIES + 2);
     const rightSibling = Math.min(current + SIBLINGS, last - BOUNDARIES - 1);
     const showLeftDots = leftSibling > BOUNDARIES + 2;
@@ -33,6 +31,34 @@ const buildPageWindow = (current: number, last: number): PageItem[] => {
     for (let i = last - BOUNDARIES + 1; i <= last; i += 1) pages.push(i);
     return pages;
 };
+
+interface NavButtonProps {
+    onClick: () => void;
+    disabled?: boolean;
+    "aria-label": string;
+    children: ReactNode;
+}
+
+const NavButton = ({ onClick, disabled, children, ...rest }: NavButtonProps) => (
+    <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        aria-label={rest["aria-label"]}
+        className={cn(
+            "inline-flex h-7 w-7 items-center justify-center rounded-full transition-all duration-200",
+            "text-text-muted hover:text-text-dark hover:bg-card",
+            "active:scale-90",
+            "disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-text-muted",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+            "cursor-pointer",
+        )}
+    >
+        {children}
+    </button>
+);
+
+const Divider = () => <span aria-hidden className="mx-0.5 h-4 w-px bg-border/70 shrink-0" />;
 
 export interface PaginationProps {
     meta: PaginationMetaInterface | null;
@@ -78,68 +104,118 @@ export const Pagination = ({
     const showControls = last > 1;
 
     return (
-        <div className={cn("flex flex-col sm:flex-row items-center justify-between gap-3 py-3", className)}>
-            <p className="text-xs text-text-muted">
-                {t("Showing")} <span className="font-semibold text-text-dark">{from ?? 0}</span>
-                {"–"}
-                <span className="font-semibold text-text-dark">{to ?? 0}</span>{" "}
-                {t("of")} <span className="font-semibold text-text-dark">{total}</span>
+        <nav
+            aria-label={t("Pagination")}
+            className={cn(
+                "flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-6 py-4",
+                isLoading && "opacity-70 pointer-events-none",
+                className,
+            )}
+        >
+            {/* Range counter — typographic label */}
+            <p className="flex items-baseline gap-1.5 text-[11px] font-medium tracking-[0.08em] uppercase text-text-muted whitespace-nowrap tabular-nums">
+                <span>{t("Showing")}</span>
+                <span className="text-text-dark font-semibold normal-case tracking-normal text-xs">{from}</span>
+                <span className="text-text-muted/60">–</span>
+                <span className="text-text-dark font-semibold normal-case tracking-normal text-xs">{to}</span>
+                <span className="ms-1.5 normal-case tracking-normal">{t("of")}</span>
+                <span className="text-text-dark font-semibold normal-case tracking-normal text-xs">{total}</span>
             </p>
 
+            {/* Floating capsule with nav controls */}
             {showControls && (
-                <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => goTo(1)} disabled={current === 1 || isLoading} aria-label={t("First page")} className="h-8 w-8">
-                        <FirstIcon className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => goTo(current - 1)} disabled={current === 1 || isLoading} aria-label={t("Previous page")} className="h-8 w-8">
-                        <PrevIcon className="h-4 w-4" />
-                    </Button>
+                <div
+                    className={cn(
+                        "inline-flex items-center gap-0.5 rounded-full",
+                        "bg-muted/40 border border-border/60",
+                        "p-1 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_16px_-12px_rgba(0,0,0,0.08)]",
+                    )}
+                >
+                    <NavButton onClick={() => goTo(1)} disabled={current === 1} aria-label={t("First page")}>
+                        <FirstIcon className="h-3.5 w-3.5" />
+                    </NavButton>
+                    <NavButton onClick={() => goTo(current - 1)} disabled={current === 1} aria-label={t("Previous page")}>
+                        <PrevIcon className="h-3.5 w-3.5" />
+                    </NavButton>
+
+                    <Divider />
 
                     {pages.map((p, idx) => {
                         if (p === "dots") {
-                            return <span key={`dots-${idx}`} className="px-2 text-text-muted text-sm select-none">…</span>;
+                            return (
+                                <span
+                                    key={`dots-${idx}`}
+                                    aria-hidden
+                                    className="inline-flex h-7 min-w-7 items-center justify-center text-text-muted/70 text-xs select-none"
+                                >
+                                    ⋯
+                                </span>
+                            );
                         }
                         const isActive = p === current;
                         return (
-                            <Button
+                            <button
                                 key={p}
-                                variant={isActive ? "default" : "ghost"}
-                                size="sm"
+                                type="button"
                                 onClick={() => goTo(p)}
-                                disabled={isLoading}
                                 aria-current={isActive ? "page" : undefined}
-                                className={cn("h-8 min-w-8 px-2", !isActive && "text-text-dark")}
+                                aria-label={`${t("Page")} ${p}`}
+                                className={cn(
+                                    "relative inline-flex h-7 min-w-7 items-center justify-center px-2 rounded-full text-xs font-semibold tabular-nums",
+                                    "transition-all duration-200 cursor-pointer",
+                                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                                    isActive
+                                        ? "bg-primary text-primary-foreground shadow-[0_2px_6px_-2px_rgba(0,0,0,0.2)] scale-[1.04]"
+                                        : "text-text-dark hover:bg-card hover:text-primary active:scale-95",
+                                )}
                             >
                                 {p}
-                            </Button>
+                            </button>
                         );
                     })}
 
-                    <Button variant="ghost" size="icon" onClick={() => goTo(current + 1)} disabled={current === last || isLoading} aria-label={t("Next page")} className="h-8 w-8">
-                        <NextIcon className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => goTo(last)} disabled={current === last || isLoading} aria-label={t("Last page")} className="h-8 w-8">
-                        <LastIcon className="h-4 w-4" />
-                    </Button>
+                    <Divider />
+
+                    <NavButton onClick={() => goTo(current + 1)} disabled={current === last} aria-label={t("Next page")}>
+                        <NextIcon className="h-3.5 w-3.5" />
+                    </NavButton>
+                    <NavButton onClick={() => goTo(last)} disabled={current === last} aria-label={t("Last page")}>
+                        <LastIcon className="h-3.5 w-3.5" />
+                    </NavButton>
                 </div>
             )}
 
-            {onPerPageChange && (
-                <div className="flex items-center gap-2">
-                    <label htmlFor="per-page" className="text-xs text-text-muted">{t("Rows per page")}</label>
-                    <select
-                        id="per-page"
-                        value={perPage}
-                        onChange={(e) => onPerPageChange(Number(e.target.value))}
-                        disabled={isLoading}
-                        className="h-8 rounded-md border border-border bg-card text-text-dark text-xs px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-                    >
-                        {perPageOptions.map((opt) => (
-                            <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                    </select>
-                </div>
+            {/* Per-page selector — chip style */}
+            {onPerPageChange ? (
+                <label className="flex items-center gap-2 text-[11px] font-medium tracking-[0.08em] uppercase text-text-muted whitespace-nowrap">
+                    <span>{t("Rows")}</span>
+                    <span className="relative inline-flex items-center">
+                        <select
+                            value={perPage}
+                            onChange={(e) => onPerPageChange(Number(e.target.value))}
+                            disabled={isLoading}
+                            aria-label={t("Rows per page")}
+                            className={cn(
+                                "appearance-none h-7 ps-3 pe-7 rounded-full",
+                                "bg-muted/40 border border-border/60",
+                                "text-text-dark text-xs font-semibold tabular-nums normal-case tracking-normal",
+                                "cursor-pointer transition-colors duration-200",
+                                "hover:bg-muted hover:border-border",
+                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                                "disabled:opacity-50 disabled:cursor-not-allowed",
+                            )}
+                        >
+                            {perPageOptions.map((opt) => (
+                                <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                        </select>
+                        <ChevronDown aria-hidden className="absolute end-2 top-1/2 -translate-y-1/2 h-3 w-3 text-text-muted pointer-events-none" />
+                    </span>
+                </label>
+            ) : (
+                /* Spacer to keep the nav centered when there's no per-page selector */
+                <span aria-hidden className="hidden sm:block w-[1px]" />
             )}
-        </div>
+        </nav>
     );
 };
