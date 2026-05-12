@@ -36,6 +36,7 @@ export const tasksService = {
         priority?: string;
         type?: string;
         search?: string;
+        page?: number;
         per_page?: number;
         sort_by?: string;
         sort_order?: string;

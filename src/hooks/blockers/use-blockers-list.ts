@@ -4,7 +4,7 @@ import { blockersConstants } from "@/constants";
 import type { BlockerInterface, BlockersAnalyticsInterface } from "@/interfaces";
 import { blockersService } from "@/services";
 
-import { useQueryAction } from "../shared";
+import { usePaginatedQuery, useQueryAction } from "../shared";
 
 interface UseBlockersListOptions {
     status?: string;
@@ -12,36 +12,24 @@ interface UseBlockersListOptions {
     severity?: string;
     reporter?: string;
     owner?: string;
-    per_page?: number;
+    initialPerPage?: number;
 }
 
 export const useBlockersList = (sprintId: string, options: UseBlockersListOptions = {}) => {
-    const { status, type, severity, reporter, owner, per_page } = options;
+    const { status, type, severity, reporter, owner, initialPerPage } = options;
 
-    const {
-        data: blockers,
-        isLoading,
-        refetch,
-        setData,
-    } = useQueryAction<BlockerInterface[]>(
-        async () => {
-            if (!sprintId) return [];
-            const res = await blockersService.listHandler(sprintId, { status, type, severity, reporter, owner, per_page });
-            return res.data;
-        },
-        [sprintId, status, type, severity, reporter, owner, per_page],
+    const { items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, setItems } = usePaginatedQuery<BlockerInterface>(
+        ({ page, per_page }) => blockersService.listHandler(sprintId, { status, type, severity, reporter, owner, page, per_page }),
+        [sprintId, status, type, severity, reporter, owner],
         {
             enabled: !!sprintId,
             errorFallback: blockersConstants.errors.fetchFailed,
-            initialData: [],
             context: "blockers.list",
+            initialPerPage,
         },
     );
 
-    const {
-        data: analytics,
-        refetch: refetchAnalytics,
-    } = useQueryAction<BlockersAnalyticsInterface | null>(
+    const { data: analytics, refetch: refetchAnalytics } = useQueryAction<BlockersAnalyticsInterface | null>(
         async () => (sprintId ? await blockersService.analyticsHandler(sprintId) : null),
         [sprintId],
         {
@@ -53,21 +41,25 @@ export const useBlockersList = (sprintId: string, options: UseBlockersListOption
     );
 
     const patchBlockerLocal = useCallback((blocker: BlockerInterface) => {
-        setData((prev) => {
-            const arr = prev ?? [];
-            const exists = arr.some((b) => b.id === blocker.id);
-            return exists ? arr.map((b) => (b.id === blocker.id ? blocker : b)) : [blocker, ...arr];
+        setItems((prev) => {
+            const exists = prev.some((b) => b.id === blocker.id);
+            return exists ? prev.map((b) => (b.id === blocker.id ? blocker : b)) : [blocker, ...prev];
         });
-    }, [setData]);
+    }, [setItems]);
 
     const removeBlockerLocal = useCallback((id: string) => {
-        setData((prev) => (prev ?? []).filter((b) => b.id !== id));
-    }, [setData]);
+        setItems((prev) => prev.filter((b) => b.id !== id));
+    }, [setItems]);
 
     return {
-        blockers: blockers ?? [],
+        blockers: items,
+        meta,
+        page,
+        perPage,
         analytics: analytics ?? null,
         isLoading,
+        setPage,
+        setPerPage,
         refetch,
         refetchAnalytics,
         patchBlockerLocal,

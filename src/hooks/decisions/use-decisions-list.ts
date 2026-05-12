@@ -5,43 +5,38 @@ import type { DecisionCategory, DecisionStatus } from "@/enums";
 import type { DecisionInterface } from "@/interfaces";
 import { decisionsService } from "@/services";
 
-import { useQueryAction } from "../shared";
+import { usePaginatedQuery } from "../shared";
 
 interface UseDecisionsListOptions {
     status?: DecisionStatus;
     category?: DecisionCategory;
-    per_page?: number;
+    initialPerPage?: number;
 }
 
 export const useDecisionsList = (sprintId: string, options: UseDecisionsListOptions = {}) => {
-    const { status, category, per_page } = options;
+    const { status, category, initialPerPage } = options;
 
-    const { data, isLoading, refetch, setData } = useQueryAction<DecisionInterface[]>(
-        async () => {
-            if (!sprintId) return [];
-            const res = await decisionsService.listHandler(sprintId, { status, category, per_page });
-            return res.data;
-        },
-        [sprintId, status, category, per_page],
+    const { items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, setItems } = usePaginatedQuery<DecisionInterface>(
+        ({ page, per_page }) => decisionsService.listHandler(sprintId, { status, category, page, per_page }),
+        [sprintId, status, category],
         {
             enabled: !!sprintId,
             errorFallback: decisionsConstants.errors.fetchFailed,
-            initialData: [],
             context: "decisions.list",
+            initialPerPage,
         },
     );
 
     const patchDecisionLocal = useCallback((decision: DecisionInterface) => {
-        setData((prev) => {
-            const arr = prev ?? [];
-            const exists = arr.some((d) => d.id === decision.id);
-            return exists ? arr.map((d) => (d.id === decision.id ? decision : d)) : [decision, ...arr];
+        setItems((prev) => {
+            const exists = prev.some((d) => d.id === decision.id);
+            return exists ? prev.map((d) => (d.id === decision.id ? decision : d)) : [decision, ...prev];
         });
-    }, [setData]);
+    }, [setItems]);
 
     const removeDecisionLocal = useCallback((id: string) => {
-        setData((prev) => (prev ?? []).filter((d) => d.id !== id));
-    }, [setData]);
+        setItems((prev) => prev.filter((d) => d.id !== id));
+    }, [setItems]);
 
-    return { decisions: data ?? [], isLoading, refetch, patchDecisionLocal, removeDecisionLocal };
+    return { decisions: items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, patchDecisionLocal, removeDecisionLocal };
 };

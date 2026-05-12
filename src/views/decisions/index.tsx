@@ -2,7 +2,7 @@ import { useState } from "react";
 import { BookOpen, Calendar, Check, Filter, Plus, Trash2, X } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
-import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
+import { AnimatedNumber, EmptyState, Header, Pagination } from "@/components/shared";
 import { DecisionsSkeleton } from "@/components/skeletons";
 import { DecisionCategory, DecisionStatus } from "@/enums";
 import {
@@ -61,7 +61,7 @@ export const DecisionsView = () => {
     const [statusFilter, setStatusFilter] = useState<DecisionStatus | "all">("all");
     const [categoryFilter, setCategoryFilter] = useState<DecisionCategory | "all">("all");
 
-    const { decisions, isLoading: isFetching, patchDecisionLocal, removeDecisionLocal } = useDecisionsList(activeSprintId, {
+    const { decisions, meta, isLoading: isFetching, setPage, setPerPage, patchDecisionLocal, removeDecisionLocal } = useDecisionsList(activeSprintId, {
         status: statusFilter === "all" ? undefined : statusFilter,
         category: categoryFilter === "all" ? undefined : categoryFilter,
     });
@@ -134,7 +134,7 @@ export const DecisionsView = () => {
         }
     };
 
-    if (pageLoading || isFetching) return <DecisionsSkeleton />;
+    if (pageLoading || (isFetching && decisions.length === 0)) return <DecisionsSkeleton />;
 
     const totalCount = analytics?.total ?? decisions.length;
     const approvedCount = analytics?.approved ?? decisions.filter((d) => d.status === DecisionStatus.Approved).length;
@@ -236,6 +236,7 @@ export const DecisionsView = () => {
                     description={t("No decisions match the selected filters")}
                 />
             ) : (
+                <>
                 <div className={cn("flex flex-col", compact ? "gap-2" : "gap-4")}>
                     {decisions.map((decision) => {
                         const creator = decision.created_by;
@@ -318,6 +319,8 @@ export const DecisionsView = () => {
                         );
                     })}
                 </div>
+                <Pagination meta={meta} onPageChange={setPage} onPerPageChange={setPerPage} isLoading={isFetching} />
+                </>
             )}
 
             {/* Detail dialog */}

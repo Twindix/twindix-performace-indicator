@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { AlertTriangle, Calendar, Clock, Filter, GitBranch, Layers, MessageSquare, PenTool, Plus, Shield, ShieldAlert } from "lucide-react";
 
 import { Badge, Button, Card, CardContent } from "@/atoms";
-import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
+import { AnimatedNumber, EmptyState, Header, Pagination } from "@/components/shared";
 import { BlockersSkeleton } from "@/components/skeletons";
 import { BlockerType } from "@/enums";
 import { t, useBlockersList, usePermissions, useSettings, usePageLoader, useUsersList } from "@/hooks";
@@ -49,7 +49,7 @@ export const BlockerView = () => {
     const [ownerFilter, setOwnerFilter] = useState<string>("all");
     const [reporterFilter, setReporterFilter] = useState<string>("all");
 
-    const { blockers, analytics, isLoading: isFetching, patchBlockerLocal, removeBlockerLocal, refetchAnalytics } = useBlockersList(activeSprintId, {
+    const { blockers, meta, analytics, isLoading: isFetching, setPage, setPerPage, patchBlockerLocal, removeBlockerLocal, refetchAnalytics } = useBlockersList(activeSprintId, {
         status: statusFilter === "all" ? undefined : statusFilter,
         type: typeFilter === "all" ? undefined : typeFilter,
         severity: severityFilter === "all" ? undefined : severityFilter,
@@ -79,7 +79,7 @@ export const BlockerView = () => {
         return { total: blockers.length, active, resolved, avgDuration };
     }, [analytics, blockers]);
 
-    if (pageLoading || isFetching) return <BlockersSkeleton />;
+    if (pageLoading || (isFetching && blockers.length === 0)) return <BlockersSkeleton />;
 
     return (
         <div>
@@ -266,6 +266,13 @@ export const BlockerView = () => {
                         })
                     )}
                 </div>
+
+                <Pagination
+                    meta={meta}
+                    onPageChange={setPage}
+                    onPerPageChange={setPerPage}
+                    isLoading={isFetching}
+                />
             </div>
 
             <BlockerFormDialog

@@ -1,3 +1,5 @@
+import type { PaginatedResponseInterface } from "@/interfaces/common";
+
 export interface TaskUserInterface {
     id: string;
     full_name: string;
@@ -178,17 +180,7 @@ export interface TransitionCriteriaResponseInterface {
 export type KanbanBoardInterface = Record<string, TaskInterface[]>;
 export type PipelineBoardInterface = Record<string, TaskInterface[]>;
 
-export interface TaskListMetaInterface {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-}
-
-export interface TaskListResponseInterface {
-    data: TaskInterface[];
-    meta: TaskListMetaInterface;
-}
+export type TaskListResponseInterface = PaginatedResponseInterface<TaskInterface>;
 
 export interface TaskDetailResponseInterface {
     data: TaskInterface;
