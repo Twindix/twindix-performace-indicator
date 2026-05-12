@@ -32,33 +32,52 @@ const buildPageWindow = (current: number, last: number): PageItem[] => {
     return pages;
 };
 
-interface PageButtonProps {
+interface ArrowButtonProps {
     onClick: () => void;
     disabled?: boolean;
-    active?: boolean;
-    "aria-label"?: string;
-    "aria-current"?: "page" | undefined;
+    "aria-label": string;
     children: ReactNode;
-    className?: string;
 }
 
-const PageButton = ({ onClick, disabled, active, children, className, ...rest }: PageButtonProps) => (
+const ArrowButton = ({ onClick, disabled, children, ...rest }: ArrowButtonProps) => (
     <button
         type="button"
         onClick={onClick}
         disabled={disabled}
         aria-label={rest["aria-label"]}
-        aria-current={rest["aria-current"]}
         className={cn(
-            "inline-flex h-9 min-w-9 items-center justify-center px-3 rounded-md",
-            "text-sm font-medium tabular-nums",
-            "border transition-colors duration-150 cursor-pointer",
+            "inline-flex h-8 w-8 items-center justify-center rounded-md",
+            "text-text-muted transition-colors duration-150 cursor-pointer",
+            "hover:text-text-dark hover:bg-card",
+            "disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-text-muted",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+        )}
+    >
+        {children}
+    </button>
+);
+
+interface NumberButtonProps {
+    onClick: () => void;
+    active?: boolean;
+    "aria-current"?: "page" | undefined;
+    "aria-label": string;
+    children: ReactNode;
+}
+
+const NumberButton = ({ onClick, active, children, ...rest }: NumberButtonProps) => (
+    <button
+        type="button"
+        onClick={onClick}
+        aria-current={rest["aria-current"]}
+        aria-label={rest["aria-label"]}
+        className={cn(
+            "inline-flex h-8 min-w-8 items-center justify-center px-2.5 rounded-md",
+            "text-sm font-medium tabular-nums transition-colors duration-150 cursor-pointer",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:z-10",
             active
-                ? "bg-text-dark text-surface border-text-dark hover:bg-text-dark"
-                : "bg-card text-text-dark border-border hover:bg-muted",
-            "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-card",
-            className,
+                ? "bg-text-dark text-surface shadow-sm"
+                : "bg-card text-text-dark border border-border hover:bg-muted",
         )}
     >
         {children}
@@ -128,15 +147,15 @@ export const Pagination = ({
                 {" "}{t("results")}
             </p>
 
-            {/* Page buttons */}
+            {/* The pagination strip — pill container with bare arrows + bordered number squares */}
             {showControls && (
-                <div className="flex items-center gap-1.5">
-                    <PageButton onClick={() => goTo(1)} disabled={current === 1} aria-label={t("First page")} className="px-0">
+                <div className="inline-flex items-center gap-1 rounded-xl bg-muted/40 px-1.5 py-1">
+                    <ArrowButton onClick={() => goTo(1)} disabled={current === 1} aria-label={t("First page")}>
                         <FirstIcon className="h-4 w-4" />
-                    </PageButton>
-                    <PageButton onClick={() => goTo(current - 1)} disabled={current === 1} aria-label={t("Previous page")} className="px-0">
+                    </ArrowButton>
+                    <ArrowButton onClick={() => goTo(current - 1)} disabled={current === 1} aria-label={t("Previous page")}>
                         <PrevIcon className="h-4 w-4" />
-                    </PageButton>
+                    </ArrowButton>
 
                     {pages.map((p, idx) => {
                         if (p === "dots") {
@@ -144,7 +163,7 @@ export const Pagination = ({
                                 <span
                                     key={`dots-${idx}`}
                                     aria-hidden
-                                    className="inline-flex h-9 min-w-9 items-center justify-center text-sm text-text-muted select-none"
+                                    className="inline-flex h-8 min-w-6 items-center justify-center text-sm text-text-muted select-none"
                                 >
                                     …
                                 </span>
@@ -152,7 +171,7 @@ export const Pagination = ({
                         }
                         const isActive = p === current;
                         return (
-                            <PageButton
+                            <NumberButton
                                 key={p}
                                 onClick={() => goTo(p)}
                                 active={isActive}
@@ -160,16 +179,16 @@ export const Pagination = ({
                                 aria-label={`${t("Page")} ${p}`}
                             >
                                 {p}
-                            </PageButton>
+                            </NumberButton>
                         );
                     })}
 
-                    <PageButton onClick={() => goTo(current + 1)} disabled={current === last} aria-label={t("Next page")} className="px-0">
+                    <ArrowButton onClick={() => goTo(current + 1)} disabled={current === last} aria-label={t("Next page")}>
                         <NextIcon className="h-4 w-4" />
-                    </PageButton>
-                    <PageButton onClick={() => goTo(last)} disabled={current === last} aria-label={t("Last page")} className="px-0">
+                    </ArrowButton>
+                    <ArrowButton onClick={() => goTo(last)} disabled={current === last} aria-label={t("Last page")}>
                         <LastIcon className="h-4 w-4" />
-                    </PageButton>
+                    </ArrowButton>
                 </div>
             )}
 
@@ -185,7 +204,7 @@ export const Pagination = ({
                         onChange={(e) => onPerPageChange(Number(e.target.value))}
                         disabled={isLoading}
                         className={cn(
-                            "h-9 px-2 rounded-md border border-border bg-card",
+                            "h-8 px-2 rounded-md border border-border bg-card",
                             "text-sm text-text-dark tabular-nums cursor-pointer",
                             "hover:bg-muted transition-colors",
                             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
