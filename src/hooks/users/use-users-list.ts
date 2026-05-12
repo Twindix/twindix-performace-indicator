@@ -1,22 +1,34 @@
+import { useCallback } from "react";
+
 import { usersConstants } from "@/constants";
+import type { RoleTier } from "@/constants/permissions";
 import type { UserInterface } from "@/interfaces";
 import { usersService } from "@/services/users";
 
-import { useQueryAction } from "../shared";
+import { usePaginatedQuery } from "../shared";
 
-export const useUsersList = () => {
-    const { data, isLoading, refetch, setData } = useQueryAction<UserInterface[]>(
-        () => usersService.listHandler(),
-        [],
+export interface UseUsersListOptions {
+    role_tier?: RoleTier;
+    team_id?: string;
+    initialPerPage?: number;
+}
+
+export const useUsersList = (options: UseUsersListOptions = {}) => {
+    const { role_tier, team_id, initialPerPage } = options;
+
+    const { items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, setItems } = usePaginatedQuery<UserInterface>(
+        ({ page, per_page }) => usersService.listHandler({ page, per_page, role_tier, team_id }),
+        [role_tier, team_id],
         {
             errorFallback: usersConstants.errors.fetchFailed,
-            initialData: [],
             context: "users.list",
+            initialPerPage,
         },
     );
 
-    const patchUserLocal = (updated: UserInterface) =>
-        setData((prev) => (prev ?? []).map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
+    const patchUserLocal = useCallback((updated: UserInterface) => {
+        setItems((prev) => prev.map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
+    }, [setItems]);
 
-    return { users: data ?? [], isLoading, refetch, patchUserLocal };
+    return { users: items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, patchUserLocal };
 };

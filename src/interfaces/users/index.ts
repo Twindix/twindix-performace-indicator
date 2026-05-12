@@ -1,24 +1,12 @@
 import type { RoleTier } from "@/constants/permissions";
-import type { UserInterface } from "@/interfaces/common";
+import type { PaginatedResponseInterface, PaginationParamsInterface, UserInterface } from "@/interfaces/common";
 
-export interface UserListParamsInterface {
-    page?: number;
-    per_page?: number;
+export interface UserListParamsInterface extends PaginationParamsInterface {
     role_tier?: RoleTier;
     team_id?: string;
 }
 
-export interface UserPaginationMetaInterface {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-}
-
-export interface UserListResponseInterface {
-    data: UserInterface[];
-    meta: UserPaginationMetaInterface;
-}
+export type UserListResponseInterface = PaginatedResponseInterface<UserInterface>;
 
 export interface UserLiteInterface {
     id: string;
