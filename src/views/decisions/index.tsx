@@ -260,7 +260,7 @@ export const DecisionsView = () => {
                                             <Badge variant={statusVariant[decision.status]}>
                                                 {t(decision.status.charAt(0).toUpperCase() + decision.status.slice(1))}
                                             </Badge>
-                                            {decision.category && (
+                                            {decision.category && categoryLabels[decision.category] && (
                                                 <Badge variant="outline">{t(categoryLabels[decision.category])}</Badge>
                                             )}
                                         </div>
@@ -339,7 +339,7 @@ export const DecisionsView = () => {
                                     <Badge variant={statusVariant[viewTarget.status]}>
                                         {t(viewTarget.status.charAt(0).toUpperCase() + viewTarget.status.slice(1))}
                                     </Badge>
-                                    {viewTarget.category && (
+                                    {viewTarget.category && categoryLabels[viewTarget.category] && (
                                         <Badge variant="outline">{t(categoryLabels[viewTarget.category])}</Badge>
                                     )}
                                     {isLoadingDetail && <span className="text-xs text-text-muted">{t("Refreshing...")}</span>}

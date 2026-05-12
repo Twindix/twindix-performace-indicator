@@ -2,7 +2,7 @@ import { useCallback } from "react";
 
 import { sprintsConstants } from "@/constants";
 import type { PaginationMetaInterface, SprintInterface } from "@/interfaces";
-import { projectsService, sprintsService } from "@/services";
+import { projectsService } from "@/services";
 import { useProjectStore } from "@/store";
 
 import { usePaginatedQuery } from "../shared";
@@ -24,15 +24,13 @@ export const useSprintsList = ({ initialPerPage }: UseSprintsListOptions = {}) =
     const activeProjectId = useProjectStore((s) => s.activeProjectId);
 
     const { items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, setItems } = usePaginatedQuery<SprintInterface>(
-        async ({ page, per_page }) => {
-            if (activeProjectId) {
-                const all = await projectsService.sprintsHandler(activeProjectId);
-                return { data: all, meta: synthesizeMeta(all) };
-            }
-            return sprintsService.listHandler({ page, per_page });
+        async () => {
+            const all = await projectsService.sprintsHandler(activeProjectId);
+            return { data: all, meta: synthesizeMeta(all) };
         },
         [activeProjectId],
         {
+            enabled: !!activeProjectId,
             errorFallback: sprintsConstants.errors.fetchFailed,
             context: "sprints.list",
             initialPerPage,

@@ -86,10 +86,15 @@ export const TeamsView = () => {
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {teams.filter((team) => team.id !== deleteTarget?.id).map((team) => (
-                        <Card key={team.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setDetailTeamId(team.id)}>
+                        <Card
+                            key={team.id}
+                            onClick={() => setDetailTeamId(team.id)}
+                            className="group relative cursor-pointer overflow-hidden transition-all duration-200 hover:border-primary/40 hover:shadow-[0_4px_16px_-6px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99]"
+                        >
+                            <span aria-hidden className="pointer-events-none absolute inset-y-0 start-0 w-0.5 bg-primary scale-y-0 origin-top transition-transform duration-300 group-hover:scale-y-100" />
                             <CardContent className="p-5">
                                 <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-lighter text-primary-medium shrink-0">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-lighter text-primary-medium shrink-0 transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                                         <Users className="h-5 w-5" />
                                     </div>
                                     <h3 className="text-base font-semibold text-text-dark truncate flex-1">{team.name}</h3>
