@@ -198,7 +198,6 @@ export const UsersView = () => {
                     onPageChange={setPage}
                     onPerPageChange={setPerPage}
                     isLoading={isLoading}
-                    hideOnSinglePage
                 />
             </QueryBoundary>
 

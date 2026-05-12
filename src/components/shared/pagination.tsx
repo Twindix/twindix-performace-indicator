@@ -41,7 +41,6 @@ export interface PaginationProps {
     perPageOptions?: number[];
     isLoading?: boolean;
     className?: string;
-    hideOnSinglePage?: boolean;
 }
 
 export const Pagination = ({
@@ -51,7 +50,6 @@ export const Pagination = ({
     perPageOptions = DEFAULT_PER_PAGE_OPTIONS,
     isLoading = false,
     className,
-    hideOnSinglePage = false,
 }: PaginationProps) => {
     const [settings] = useSettings();
     const isRTL = settings.language === "ar";
@@ -66,7 +64,6 @@ export const Pagination = ({
     const pages = useMemo(() => buildPageWindow(current, last), [current, last]);
 
     if (!meta || total === 0) return null;
-    if (hideOnSinglePage && last <= 1) return null;
 
     const PrevIcon = isRTL ? ChevronRight : ChevronLeft;
     const NextIcon = isRTL ? ChevronLeft : ChevronRight;
@@ -78,6 +75,8 @@ export const Pagination = ({
         onPageChange(page);
     };
 
+    const showControls = last > 1;
+
     return (
         <div className={cn("flex flex-col sm:flex-row items-center justify-between gap-3 py-3", className)}>
             <p className="text-xs text-text-muted">
@@ -87,41 +86,43 @@ export const Pagination = ({
                 {t("of")} <span className="font-semibold text-text-dark">{total}</span>
             </p>
 
-            <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" onClick={() => goTo(1)} disabled={current === 1 || isLoading} aria-label={t("First page")} className="h-8 w-8">
-                    <FirstIcon className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => goTo(current - 1)} disabled={current === 1 || isLoading} aria-label={t("Previous page")} className="h-8 w-8">
-                    <PrevIcon className="h-4 w-4" />
-                </Button>
+            {showControls && (
+                <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => goTo(1)} disabled={current === 1 || isLoading} aria-label={t("First page")} className="h-8 w-8">
+                        <FirstIcon className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => goTo(current - 1)} disabled={current === 1 || isLoading} aria-label={t("Previous page")} className="h-8 w-8">
+                        <PrevIcon className="h-4 w-4" />
+                    </Button>
 
-                {pages.map((p, idx) => {
-                    if (p === "dots") {
-                        return <span key={`dots-${idx}`} className="px-2 text-text-muted text-sm select-none">…</span>;
-                    }
-                    const isActive = p === current;
-                    return (
-                        <Button
-                            key={p}
-                            variant={isActive ? "default" : "ghost"}
-                            size="sm"
-                            onClick={() => goTo(p)}
-                            disabled={isLoading}
-                            aria-current={isActive ? "page" : undefined}
-                            className={cn("h-8 min-w-8 px-2", !isActive && "text-text-dark")}
-                        >
-                            {p}
-                        </Button>
-                    );
-                })}
+                    {pages.map((p, idx) => {
+                        if (p === "dots") {
+                            return <span key={`dots-${idx}`} className="px-2 text-text-muted text-sm select-none">…</span>;
+                        }
+                        const isActive = p === current;
+                        return (
+                            <Button
+                                key={p}
+                                variant={isActive ? "default" : "ghost"}
+                                size="sm"
+                                onClick={() => goTo(p)}
+                                disabled={isLoading}
+                                aria-current={isActive ? "page" : undefined}
+                                className={cn("h-8 min-w-8 px-2", !isActive && "text-text-dark")}
+                            >
+                                {p}
+                            </Button>
+                        );
+                    })}
 
-                <Button variant="ghost" size="icon" onClick={() => goTo(current + 1)} disabled={current === last || isLoading} aria-label={t("Next page")} className="h-8 w-8">
-                    <NextIcon className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => goTo(last)} disabled={current === last || isLoading} aria-label={t("Last page")} className="h-8 w-8">
-                    <LastIcon className="h-4 w-4" />
-                </Button>
-            </div>
+                    <Button variant="ghost" size="icon" onClick={() => goTo(current + 1)} disabled={current === last || isLoading} aria-label={t("Next page")} className="h-8 w-8">
+                        <NextIcon className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => goTo(last)} disabled={current === last || isLoading} aria-label={t("Last page")} className="h-8 w-8">
+                        <LastIcon className="h-4 w-4" />
+                    </Button>
+                </div>
+            )}
 
             {onPerPageChange && (
                 <div className="flex items-center gap-2">
