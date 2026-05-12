@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Calendar, Edit, MoreHorizontal, Plus, Target, Trash2, Zap } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
-import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shared";
 import { SprintsSkeleton } from "@/components/skeletons";
 import { t, useActivateSprint, useCreateSprint, useDeleteSprint, useFormErrors, usePermissions, useSprintsList, useUpdateSprint } from "@/hooks";
 import type { CreateSprintPayloadInterface, SprintInterface } from "@/interfaces";
@@ -15,7 +15,7 @@ const emptyForm: CreateSprintPayloadInterface = { name: "", start_date: "", end_
 
 export const SprintsView = () => {
     const p = usePermissions();
-    const { sprints, isLoading, patchSprintLocal, removeSprintLocal } = useSprintsList();
+    const { sprints, meta, isLoading, setPage, setPerPage, patchSprintLocal, removeSprintLocal } = useSprintsList();
     const { setFieldErrors, clearError, clear: clearFieldErrors, getError } = useFormErrors();
     const { createHandler, isLoading: isCreating } = useCreateSprint({ onFieldErrors: setFieldErrors });
     const { updateHandler, isLoading: isUpdating } = useUpdateSprint({ onFieldErrors: setFieldErrors });
@@ -85,7 +85,7 @@ export const SprintsView = () => {
             />
 
             <QueryBoundary
-                isLoading={isLoading}
+                isLoading={isLoading && sprints.length === 0}
                 skeleton={<SprintsSkeleton />}
                 empty={sprints.length === 0}
                 emptyState={<EmptyState icon={Target} title={t("No sprints yet")} description={t("Create your first sprint to start planning work.")} />}
@@ -137,6 +137,13 @@ export const SprintsView = () => {
                         </Card>
                     ))}
                 </div>
+
+                <Pagination
+                    meta={meta}
+                    onPageChange={setPage}
+                    onPerPageChange={setPerPage}
+                    isLoading={isLoading}
+                />
             </QueryBoundary>
 
             <Dialog open={addOpen || !!editTarget} onOpenChange={(open) => { if (!open) closeDialogs(); }}>

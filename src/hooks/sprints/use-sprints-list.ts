@@ -1,38 +1,54 @@
 import { useCallback } from "react";
 
 import { sprintsConstants } from "@/constants";
-import type { SprintInterface } from "@/interfaces";
+import type { PaginationMetaInterface, SprintInterface } from "@/interfaces";
 import { projectsService, sprintsService } from "@/services";
 import { useProjectStore } from "@/store";
 
-import { useQueryAction } from "../shared";
+import { usePaginatedQuery } from "../shared";
 
-export const useSprintsList = () => {
+export interface UseSprintsListOptions {
+    initialPerPage?: number;
+}
+
+const synthesizeMeta = (items: SprintInterface[]): PaginationMetaInterface => ({
+    current_page: 1,
+    last_page: 1,
+    per_page: items.length || 1,
+    total: items.length,
+    from: items.length > 0 ? 1 : null,
+    to: items.length > 0 ? items.length : null,
+});
+
+export const useSprintsList = ({ initialPerPage }: UseSprintsListOptions = {}) => {
     const activeProjectId = useProjectStore((s) => s.activeProjectId);
-    const { data, isLoading, refetch, setData } = useQueryAction<SprintInterface[]>(
-        async () => {
-            if (activeProjectId) return projectsService.sprintsHandler(activeProjectId);
-            return (await sprintsService.listHandler()).data;
+
+    const { items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, setItems } = usePaginatedQuery<SprintInterface>(
+        async ({ page, per_page }) => {
+            if (activeProjectId) {
+                const all = await projectsService.sprintsHandler(activeProjectId);
+                return { data: all, meta: synthesizeMeta(all) };
+            }
+            return sprintsService.listHandler({ page, per_page });
         },
         [activeProjectId],
         {
             errorFallback: sprintsConstants.errors.fetchFailed,
-            initialData: [],
             context: "sprints.list",
+            initialPerPage,
         },
     );
 
     const patchSprintLocal = useCallback((sprint: SprintInterface) => {
-        setData((prev) => {
-            const arr = prev ?? [];
-            const exists = arr.some((s) => s.id === sprint.id);
-            return exists ? arr.map((s) => (s.id === sprint.id ? sprint : s)) : [...arr, sprint];
+        setItems((prev) => {
+            const exists = prev.some((s) => s.id === sprint.id);
+            return exists ? prev.map((s) => (s.id === sprint.id ? sprint : s)) : [...prev, sprint];
         });
-    }, [setData]);
+    }, [setItems]);
 
     const removeSprintLocal = useCallback((id: string) => {
-        setData((prev) => (prev ?? []).filter((s) => s.id !== id));
-    }, [setData]);
+        setItems((prev) => prev.filter((s) => s.id !== id));
+    }, [setItems]);
 
-    return { sprints: data ?? [], isLoading, refetch, patchSprintLocal, removeSprintLocal };
+    return { sprints: items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, patchSprintLocal, removeSprintLocal };
 };

@@ -44,7 +44,7 @@ export const Topbar = () => {
     const { activeSprintId, onSetActiveSprint } = useSprintStore();
     const { activeProjectId, onSetActiveProject } = useProjectStore();
     const { projects } = useProjectsListLite();
-    const { sprints, refetch: refetchSprints } = useSprintsList();
+    const { sprints, refetch: refetchSprints } = useSprintsList({ initialPerPage: 100 });
     const { updateHandler: updateSprintHandler, isLoading: isSaving } = useUpdateSprint();
     const navigate = useNavigate();
     const p = usePermissions();
