@@ -3,28 +3,8 @@ export const APP_DESCRIPTION = "Team performance and delivery friction tracking 
 export const DEMO_USERS = [
   {
     role: "ADMIN",
-    email: "admin@example.com",
-    password: "Admin@123"
-  },
-  {
-    role: "MANAGER",
-    email: "manager@example.com",
-    password: "Manager@123"
-  },
-  {
-    role: "MEMBER",
-    email: "member@example.com",
-    password: "Member@123"
-  },
-  {
-    role: "VIEWER",
-    email: "viewer@example.com",
-    password: "Viewer@123"
-  },
-  {
-    role: "TESTER",
-    email: "tester@example.com",
-    password: "Tester@123"
+    email: "admin@twindix.com",
+    password: "password"
   }
 ];
 
