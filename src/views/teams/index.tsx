@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Edit, MoreHorizontal, Plus, Trash2, Users } from "lucide-react";
 
 import { Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
-import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shared";
 import { TeamsSkeleton } from "@/components/skeletons";
 import { t, useCreateTeam, useDeleteTeam, useFormErrors, useGetTeams, usePermissions, useUpdateTeam } from "@/hooks";
 import type { TeamInterface } from "@/interfaces";
@@ -14,7 +14,7 @@ import { TeamDetailDialog } from "./TeamDetailDialog";
 
 export const TeamsView = () => {
     const p = usePermissions();
-    const { teams, isLoading, patchTeamLocal, removeTeamLocal } = useGetTeams();
+    const { teams, meta, isLoading, setPage, setPerPage, patchTeamLocal, removeTeamLocal } = useGetTeams();
     const { setFieldErrors, clearError, clear: clearFieldErrors, getError } = useFormErrors();
     const { createHandler, isLoading: isCreating } = useCreateTeam({ onFieldErrors: setFieldErrors });
     const { updateHandler, isLoading: isUpdating } = useUpdateTeam({ onFieldErrors: setFieldErrors });
@@ -79,7 +79,7 @@ export const TeamsView = () => {
             />
 
             <QueryBoundary
-                isLoading={isLoading}
+                isLoading={isLoading && teams.length === 0}
                 skeleton={<TeamsSkeleton />}
                 empty={teams.length === 0}
                 emptyState={<EmptyState icon={Users} title={t("No teams yet")} description={t("Create your first team to group members.")} />}
@@ -121,6 +121,14 @@ export const TeamsView = () => {
                         </Card>
                     ))}
                 </div>
+
+                <Pagination
+                    meta={meta}
+                    onPageChange={setPage}
+                    onPerPageChange={setPerPage}
+                    isLoading={isLoading}
+                    label="teams"
+                />
             </QueryBoundary>
 
             <Dialog open={addOpen || editTarget !== null} onOpenChange={(open) => !open && closeDialog()}>

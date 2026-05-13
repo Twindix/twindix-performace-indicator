@@ -1,10 +1,10 @@
 import { apisData } from "@/data";
-import type { CreateTeamPayloadInterface, TeamDetailResponseInterface, TeamLiteInterface, TeamsListResponseInterface, UpdateTeamPayloadInterface } from "@/interfaces";
+import type { CreateTeamPayloadInterface, TeamDetailResponseInterface, TeamLiteInterface, TeamsListFiltersInterface, TeamsListResponseInterface, UpdateTeamPayloadInterface } from "@/interfaces";
 import { apiClient } from "@/lib/axios";
 
 export const teamsService = {
-    listHandler: async (): Promise<TeamsListResponseInterface> => {
-        const { data } = await apiClient.get<TeamsListResponseInterface>(apisData.teams.list);
+    listHandler: async (params?: TeamsListFiltersInterface): Promise<TeamsListResponseInterface> => {
+        const { data } = await apiClient.get<TeamsListResponseInterface>(apisData.teams.list, { params });
         return data;
     },
 
