@@ -24,4 +24,5 @@ export const routesData = {
     alerts: "/alerts",
     profile: "/profile",
     settings: "/settings",
+    deploys: "/deploys",
 } as const;

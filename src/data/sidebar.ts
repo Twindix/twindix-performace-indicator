@@ -13,6 +13,7 @@ import {
     LayoutDashboard,
     ListChecks,
     MessageCircle,
+    Rocket,
     Shield,
     type LucideIcon,
     Settings,
@@ -54,4 +55,5 @@ export const sidebarNewItems: SidebarItemInterface[] = [
     { label: "Handoffs", path: routesData.handoffs, icon: ArrowRightLeft },
     { label: "Ownership", path: routesData.ownership, icon: Shield },
     { label: "Reports", path: routesData.reports, icon: FileText },
+    { label: "Deploys", path: routesData.deploys, icon: Rocket },
 ];

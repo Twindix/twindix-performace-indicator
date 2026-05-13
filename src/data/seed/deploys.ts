@@ -1,0 +1,127 @@
+import { DeployEnvironment, DeployStatus } from "@/enums";
+import type { DeployInterface } from "@/interfaces";
+
+const u = (id: string, name: string, initials: string, role: string) => ({ id, full_name: name, avatar_initials: initials, role_label: role });
+
+const hoursAgo = (h: number) => new Date(Date.now() - h * 3600 * 1000).toISOString();
+const daysAgo  = (d: number) => new Date(Date.now() - d * 86400 * 1000).toISOString();
+
+export const seedDeploys: DeployInterface[] = [
+    {
+        id: "dep-001",
+        title: "API Service",
+        version: "v2.14.0",
+        file_name: "api-service-2.14.0.tar.gz",
+        file_size: 47_185_920,
+        file_type: "application/gzip",
+        environment: DeployEnvironment.Production,
+        status: DeployStatus.Ready,
+        changes: [
+            "Added GraphQL endpoint for sprint analytics",
+            "Reduced cold-start by 38% via lazy module loading",
+            "Patched CVE-2026-1184 in axios upstream",
+            "Migrated background jobs to BullMQ",
+        ],
+        uploaded_by: u("019def78-60f9-7391-a4e6-86b2439dee89", "Ahmed Bashier", "AB", "Senior Backend Engineer"),
+        uploaded_at: hoursAgo(3),
+    },
+    {
+        id: "dep-002",
+        title: "Web Dashboard",
+        version: "v4.2.1",
+        file_name: "dashboard-build-4.2.1.zip",
+        file_size: 12_582_912,
+        file_type: "application/zip",
+        environment: DeployEnvironment.Production,
+        status: DeployStatus.Ready,
+        changes: [
+            "New reminders & deploys modules",
+            "Refined pagination with LoadMore pattern",
+            "Light-mode init loader",
+        ],
+        uploaded_by: u("019def78-5f45-7155-8015-72dac21d0c75", "Basel Sherif", "BS", "Frontend Engineer"),
+        uploaded_at: hoursAgo(7),
+    },
+    {
+        id: "dep-003",
+        title: "Mobile App (Android)",
+        version: "v1.8.2-beta",
+        file_name: "twindix-mobile-1.8.2.apk",
+        file_size: 28_311_552,
+        file_type: "application/vnd.android.package-archive",
+        environment: DeployEnvironment.Staging,
+        status: DeployStatus.Ready,
+        changes: [
+            "Offline-first sync with conflict resolution",
+            "Push notifications via FCM",
+            "Sentry crash reporting wired",
+        ],
+        uploaded_by: u("019def78-601a-72da-8863-fc0a2bf41a28", "Ahmed Heikal", "AH", "Mobile Engineer"),
+        uploaded_at: daysAgo(1),
+    },
+    {
+        id: "dep-004",
+        title: "ML Pipeline",
+        version: "v0.9.0",
+        file_name: "ml-pipeline-0.9.0.tar.gz",
+        file_size: 156_237_824,
+        file_type: "application/gzip",
+        environment: DeployEnvironment.Staging,
+        status: DeployStatus.Ready,
+        changes: [
+            "Switched embedding model to text-embedding-3-large",
+            "Added vector index rebuild job",
+            "Initial PII redaction layer",
+        ],
+        uploaded_by: u("019def78-67ea-7265-9c84-77bae41d9c10", "Mohamed Ahmed", "MA", "ML Engineer"),
+        uploaded_at: daysAgo(2),
+    },
+    {
+        id: "dep-005",
+        title: "API Service",
+        version: "v2.13.0",
+        file_name: "api-service-2.13.0.tar.gz",
+        file_size: 46_661_632,
+        file_type: "application/gzip",
+        environment: DeployEnvironment.Production,
+        status: DeployStatus.Deprecated,
+        changes: [
+            "Initial GraphQL scaffold (incomplete — rolled forward into 2.14.0)",
+            "Bug: occasional 502 on /sprints during high concurrency",
+        ],
+        uploaded_by: u("019def78-60f9-7391-a4e6-86b2439dee89", "Ahmed Bashier", "AB", "Senior Backend Engineer"),
+        uploaded_at: daysAgo(5),
+    },
+    {
+        id: "dep-006",
+        title: "Web Dashboard",
+        version: "v4.2.0",
+        file_name: "dashboard-build-4.2.0.zip",
+        file_size: 12_320_768,
+        file_type: "application/zip",
+        environment: DeployEnvironment.Production,
+        status: DeployStatus.RolledBack,
+        changes: [
+            "Reverted: bug in topbar caused project selector to lose state on refresh",
+        ],
+        uploaded_by: u("019def78-5e66-72bd-8216-9b1940619517", "Mohamed Elhawary", "ME", "Sr. Frontend Engineer"),
+        uploaded_at: daysAgo(6),
+    },
+    {
+        id: "dep-007",
+        title: "Mobile App (iOS)",
+        version: "v1.8.0",
+        file_name: "twindix-mobile-1.8.0.ipa",
+        file_size: 31_457_280,
+        file_type: "application/octet-stream",
+        environment: DeployEnvironment.Production,
+        status: DeployStatus.Ready,
+        changes: [
+            "Dark mode parity with web",
+            "Biometric unlock",
+            "Performance: 22% startup improvement",
+        ],
+        uploaded_by: u("019def78-601a-72da-8863-fc0a2bf41a28", "Ahmed Heikal", "AH", "Mobile Engineer"),
+        uploaded_at: daysAgo(11),
+    },
+];
