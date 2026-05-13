@@ -93,7 +93,7 @@ export const ProjectsView = () => {
 
     if (openedProject) {
         return (
-            <div>
+            <div className="flex-1 flex flex-col">
                 <div className="mb-4">
                     <Button variant="outline" size="sm" onClick={() => setOpenedProject(null)} className="gap-1.5">
                         <ArrowLeft className="h-4 w-4" />
