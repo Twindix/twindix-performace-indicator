@@ -8,3 +8,4 @@ export { LogoSizeEnum } from "./logo-size";
 export { GanttStatus } from "./gantt";
 export { MeetingStatus, MeetingType, AttendeeRsvp } from "./meetings";
 export { DeployStatus, DeployEnvironment } from "./deploys";
+export { ReminderStatus, NOTIFY_PRESETS } from "./reminders";

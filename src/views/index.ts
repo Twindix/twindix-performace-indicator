@@ -25,3 +25,4 @@ export { RedFlagsView } from "./red-flags";
 export { AlertsView } from "./alerts";
 export { TeamsView } from "./teams";
 export { DeploysView } from "./deploys";
+export { RemindersView } from "./reminders";

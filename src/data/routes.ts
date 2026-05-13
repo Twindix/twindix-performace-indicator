@@ -25,4 +25,5 @@ export const routesData = {
     profile: "/profile",
     settings: "/settings",
     deploys: "/deploys",
+    reminders: "/reminders",
 } as const;

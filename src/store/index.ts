@@ -4,3 +4,4 @@ export { useSprintStore } from "./sprint";
 export { useProjectStore } from "./project";
 export { useNetworkErrorStore } from "./network-error";
 export { useDeployStore } from "./deploy";
+export { useRemindersStore } from "./reminders";

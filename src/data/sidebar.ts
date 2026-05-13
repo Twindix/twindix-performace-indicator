@@ -3,6 +3,7 @@ import {
     AlertTriangle,
     ArrowRightLeft,
     Bell,
+    BellRing,
     BookOpen,
     CalendarDays,
     Clock,
@@ -56,4 +57,5 @@ export const sidebarNewItems: SidebarItemInterface[] = [
     { label: "Ownership", path: routesData.ownership, icon: Shield },
     { label: "Reports", path: routesData.reports, icon: FileText },
     { label: "Deploys", path: routesData.deploys, icon: Rocket },
+    { label: "Reminders", path: routesData.reminders, icon: BellRing },
 ];
