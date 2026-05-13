@@ -3,6 +3,8 @@ const PREFIX = "twindix_perf_";
 export const storageKeys = {
     authUser: `${PREFIX}auth_user`,
     theme: `${PREFIX}theme`,
+    activeProjectId: `${PREFIX}active_project_id`,
+    activeSprintId: `${PREFIX}active_sprint_id`,
 } as const;
 
 export const getStorageItem = <T>(key: string): T | null => {

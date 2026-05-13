@@ -8,4 +8,5 @@ export { useFormErrors, type FieldErrors } from "./use-form-errors";
 export { useMutationAction } from "./use-mutation-action";
 export { useQueryAction, type UseQueryActionOptions } from "./use-query-action";
 export { usePaginatedQuery, type UsePaginatedQueryOptions, type UsePaginatedQueryResult } from "./use-paginated-query";
+export { useAppInit } from "./use-app-init";
 export { usePermissions, type Permissions } from "./use-permissions";
