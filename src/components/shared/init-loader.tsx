@@ -20,30 +20,48 @@ const BLIPS: Array<{ x: number; y: number; delay: string; size: number }> = [
     { x: 56, y: 154, delay: "0.85s", size: 2 },
 ];
 
-const TICKS = Array.from({ length: 24 }, (_, i) => i * 15);
+// Tick geometry is static — precompute once at module load instead of on every render.
+const TICK_LINES = Array.from({ length: 24 }, (_, i) => {
+    const deg = i * 15;
+    const rad = (deg - 90) * (Math.PI / 180);
+    const isMajor = deg % 90 === 0;
+    const outer = 146;
+    const inner = isMajor ? 134 : 140;
+    return {
+        deg,
+        isMajor,
+        x1: 150 + Math.cos(rad) * outer,
+        y1: 150 + Math.sin(rad) * outer,
+        x2: 150 + Math.cos(rad) * inner,
+        y2: 150 + Math.sin(rad) * inner,
+    };
+});
 
 const formatElapsed = (ms: number) => {
     const totalSeconds = ms / 1000;
-    const s = totalSeconds.toFixed(2);
-    return s.padStart(5, "0");
+    return totalSeconds.toFixed(2).padStart(5, "0");
+};
+
+// Isolated counter — its 60ms tick only re-renders this tiny component,
+// not the whole loader (which has ~30 SVG nodes + a large <style> block).
+const ElapsedCounter = () => {
+    const [elapsed, setElapsed] = useState(0);
+    useEffect(() => {
+        const start = performance.now();
+        const id = window.setInterval(() => setElapsed(performance.now() - start), 60);
+        return () => window.clearInterval(id);
+    }, []);
+    return <b>{formatElapsed(elapsed)}s</b>;
 };
 
 export const InitLoader = () => {
     const [statusIdx, setStatusIdx] = useState(0);
-    const [elapsed, setElapsed] = useState(0);
 
     useEffect(() => {
-        const start = performance.now();
-        const statusInterval = window.setInterval(() => {
+        const id = window.setInterval(() => {
             setStatusIdx((i) => (i + 1) % STATUSES.length);
         }, 720);
-        const tickInterval = window.setInterval(() => {
-            setElapsed(performance.now() - start);
-        }, 60);
-        return () => {
-            window.clearInterval(statusInterval);
-            window.clearInterval(tickInterval);
-        };
+        return () => window.clearInterval(id);
     }, []);
 
     return (
@@ -309,24 +327,14 @@ export const InitLoader = () => {
                     <circle className="il-ring"        cx="150" cy="150" r="78"  />
                     <circle className="il-ring"        cx="150" cy="150" r="44"  />
 
-                    {/* Tick marks every 15° (major every 90°) */}
-                    {TICKS.map((deg) => {
-                        const rad = (deg - 90) * (Math.PI / 180);
-                        const isMajor = deg % 90 === 0;
-                        const outer = 146;
-                        const inner = isMajor ? 134 : 140;
-                        const x1 = 150 + Math.cos(rad) * outer;
-                        const y1 = 150 + Math.sin(rad) * outer;
-                        const x2 = 150 + Math.cos(rad) * inner;
-                        const y2 = 150 + Math.sin(rad) * inner;
-                        return (
-                            <line
-                                key={deg}
-                                className={isMajor ? "il-tick major" : "il-tick"}
-                                x1={x1} y1={y1} x2={x2} y2={y2}
-                            />
-                        );
-                    })}
+                    {/* Tick marks every 15° (major every 90°) — geometry precomputed */}
+                    {TICK_LINES.map((tick) => (
+                        <line
+                            key={tick.deg}
+                            className={tick.isMajor ? "il-tick major" : "il-tick"}
+                            x1={tick.x1} y1={tick.y1} x2={tick.x2} y2={tick.y2}
+                        />
+                    ))}
 
                     {/* Dashed spinning core ring */}
                     <circle className="il-core-ring" cx="150" cy="150" r="22" />
@@ -369,7 +377,7 @@ export const InitLoader = () => {
                 <div className="il-counter" aria-hidden>
                     <span>SIG <b>STRONG</b></span>
                     <span>SEC <b>OK</b></span>
-                    <span>T+<b>{formatElapsed(elapsed)}s</b></span>
+                    <span>T+<ElapsedCounter /></span>
                 </div>
             </div>
         </div>

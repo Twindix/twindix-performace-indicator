@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import type { ProjectInterface } from "@/interfaces";
+import type { ProjectInterface, SprintInterface } from "@/interfaces";
 import { projectsService } from "@/services";
 import { useProjectStore, useSprintStore } from "@/store";
 
@@ -41,8 +41,10 @@ export const useAppInit = () => {
                 const projects: ProjectInterface[] = res.data ?? [];
                 const activeProjects = projects.filter((p) => p.status === "active");
 
-                // 2. Pick a project: keep persisted (if still active), else first active with sprints.
+                // 2. Pick a project: keep persisted (if still active), else first active with active sprints.
                 let chosen: ProjectInterface | undefined;
+                let sprintsForChosen: SprintInterface[] | undefined;
+
                 if (activeProjectId) {
                     chosen = activeProjects.find((p) => p.id === activeProjectId);
                 }
@@ -55,14 +57,18 @@ export const useAppInit = () => {
                     // "Has sprints" means has at least one ACTIVE sprint — a project full of
                     // planned/completed sprints isn't a useful default.
                     const withActiveSprintsIdx = sprintsByProject.findIndex((arr) => arr.some((s) => s.status === "active"));
-                    chosen = withActiveSprintsIdx >= 0 ? activeProjects[withActiveSprintsIdx] : activeProjects[0];
+                    const idx = withActiveSprintsIdx >= 0 ? withActiveSprintsIdx : 0;
+                    chosen = activeProjects[idx];
+                    // Reuse the already-fetched sprints — saves one round-trip below.
+                    sprintsForChosen = sprintsByProject[idx];
                 }
 
                 // 3. Apply chosen project + first active sprint inside it.
                 if (chosen) {
                     if (chosen.id !== activeProjectId) onSetActiveProject(chosen.id);
 
-                    const sprints = await projectsService.sprintsHandler(chosen.id).catch(() => []);
+                    // Only fetch sprints if we don't already have them from step 2.
+                    const sprints = sprintsForChosen ?? (await projectsService.sprintsHandler(chosen.id).catch(() => []));
                     if (cancelled) return;
                     const activeSprints = sprints.filter((s) => s.status === "active");
 

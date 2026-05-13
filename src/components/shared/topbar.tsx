@@ -1,5 +1,5 @@
 import { FolderKanban, LogOut, Moon, Settings, Sun, User } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/atoms";
@@ -42,8 +42,13 @@ export const Topbar = () => {
     const { user, onLogout } = useAuth();
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings] = useSettings();
-    const { activeSprintId, onSetActiveSprint } = useSprintStore();
-    const { activeProjectId, onSetActiveProject } = useProjectStore();
+
+    // Subscribe with selectors so each store update only re-renders the slice that changed.
+    const activeSprintId = useSprintStore((s) => s.activeSprintId);
+    const onSetActiveSprint = useSprintStore((s) => s.onSetActiveSprint);
+    const activeProjectId = useProjectStore((s) => s.activeProjectId);
+    const onSetActiveProject = useProjectStore((s) => s.onSetActiveProject);
+
     const { projects } = useProjectsListLite();
     const { sprints } = useSprintsList({ initialPerPage: 100 });
     const navigate = useNavigate();
@@ -51,17 +56,16 @@ export const Topbar = () => {
     const canEditProfile = p.auth.editProfile();
     const { status, updateStatus } = usePresence(user?.id, !canEditProfile);
 
-    // Auto-pick the first active project if none is selected (or current selection is stale).
-    useEffect(() => {
-        if (projects.length === 0) return;
-        if (activeProjectId && projects.some((proj) => proj.id === activeProjectId)) return;
-        const firstActive = projects.find((proj) => proj.status === "active");
-        if (firstActive) onSetActiveProject(firstActive.id);
-    }, [projects, activeProjectId, onSetActiveProject]);
+    // Only active sprints belong in a selector. Memoize so the next effect's dep array
+    // is stable across renders that don't actually change the sprint list.
+    const selectableSprints: SprintInterface[] = useMemo(
+        () => sprints.filter((s) => s.status === "active"),
+        [sprints],
+    );
 
-    // Only active sprints belong in a selector
-    const selectableSprints: SprintInterface[] = sprints.filter((s) => s.status === "active");
-
+    // Reactive fallback: if the persisted sprint becomes invalid (deleted, project switch
+    // drops it from the list, etc.) jump to the first active sprint. Project resolution
+    // is owned by useAppInit on first mount; this is only a runtime safety net.
     useEffect(() => {
         if (selectableSprints.length === 0) {
             if (activeSprintId) onSetActiveSprint("");

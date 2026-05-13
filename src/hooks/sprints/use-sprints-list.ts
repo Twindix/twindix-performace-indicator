@@ -14,7 +14,10 @@ export interface UseSprintsListOptions {
 const synthesizeMeta = (items: SprintInterface[]): PaginationMetaInterface => ({
     current_page: 1,
     last_page: 1,
-    per_page: items.length || 1,
+    // The project-scoped endpoint returns the full list — there's nothing to paginate.
+    // Pin per_page to a sane default so the Step dropdown doesn't show absurd numbers
+    // like "47" when there happen to be 47 sprints.
+    per_page: 20,
     total: items.length,
     from: items.length > 0 ? 1 : null,
     to: items.length > 0 ? items.length : null,
