@@ -52,8 +52,10 @@ export const useAppInit = () => {
                         activeProjects.map((p) => projectsService.sprintsHandler(p.id).catch(() => [])),
                     );
                     if (cancelled) return;
-                    const withSprintsIdx = sprintsByProject.findIndex((arr) => arr.length > 0);
-                    chosen = withSprintsIdx >= 0 ? activeProjects[withSprintsIdx] : activeProjects[0];
+                    // "Has sprints" means has at least one ACTIVE sprint — a project full of
+                    // planned/completed sprints isn't a useful default.
+                    const withActiveSprintsIdx = sprintsByProject.findIndex((arr) => arr.some((s) => s.status === "active"));
+                    chosen = withActiveSprintsIdx >= 0 ? activeProjects[withActiveSprintsIdx] : activeProjects[0];
                 }
 
                 // 3. Apply chosen project + first active sprint inside it.

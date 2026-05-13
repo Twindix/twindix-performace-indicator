@@ -109,7 +109,7 @@ export const ProjectsView = () => {
     }
 
     return (
-        <div>
+        <div className="flex-1 flex flex-col">
             <Header
                 title={t("Projects")}
                 description={t("Group your sprints into projects.")}

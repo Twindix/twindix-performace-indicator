@@ -76,7 +76,7 @@ export const SprintsView = () => {
     };
 
     return (
-        <div>
+        <div className="flex-1 flex flex-col">
             <Header
                 title={t("Sprints")}
                 description={t("Manage sprints and activate the current one.")}

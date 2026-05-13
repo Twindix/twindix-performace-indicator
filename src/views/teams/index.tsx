@@ -64,7 +64,7 @@ export const TeamsView = () => {
     const closeDialog = () => { setAddOpen(false); setEditTarget(null); setName(""); setDescription(""); clearFieldErrors(); };
 
     return (
-        <div>
+        <div className="flex-1 flex flex-col">
             <Header
                 title={t("Teams")}
                 description={t("Organize members into teams.")}

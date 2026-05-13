@@ -30,7 +30,7 @@ export const Pagination = ({
 
     return (
         <div
-            className={className}
+            className={`mt-auto ${className ?? ""}`.trim()}
             style={{
                 paddingBlock: 24,
                 opacity: isLoading ? 0.7 : 1,

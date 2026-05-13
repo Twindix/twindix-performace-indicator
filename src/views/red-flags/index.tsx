@@ -64,7 +64,7 @@ export const RedFlagsView = () => {
     };
 
     return (
-        <div>
+        <div className="flex-1 flex flex-col">
             <Header
                 title={t("Red Flags")}
                 description={t("Track and manage sprint risk indicators.")}

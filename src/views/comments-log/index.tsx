@@ -168,7 +168,7 @@ export const CommentsLogView = () => {
     }
 
     return (
-        <div>
+        <div className="flex-1 flex flex-col">
             <Header title={t("Comments Log")} description={t("Track all task comments, mentions, and responses")} actions={headerActions} />
 
             {/* Stats */}

@@ -279,7 +279,7 @@ export const AlertsView = () => {
     );
 
     return (
-        <div>
+        <div className="flex-1 flex flex-col">
             <Header
                 title={t("Alerts")}
                 description={t("Create announcements and track acknowledgements.")}

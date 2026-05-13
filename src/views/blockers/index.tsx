@@ -82,7 +82,7 @@ export const BlockerView = () => {
     if (pageLoading || (isFetching && blockers.length === 0)) return <BlockersSkeleton />;
 
     return (
-        <div>
+        <div className="flex-1 flex flex-col">
             <Header
                 title={t("Blocker Tracker")}
                 description={t("Track and manage blockers affecting sprint delivery")}

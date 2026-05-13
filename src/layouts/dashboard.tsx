@@ -18,7 +18,7 @@ export const DashboardLayout = () => {
             <Sidebar />
             <div className={cn("transition-all duration-300 flex-1 flex flex-col", isOpen ? "ms-[var(--spacing-sidebar)]" : "ms-16", "max-lg:ms-0")}>
                 <Topbar />
-                <main className={cn("flex-1 transition-all", settings.compactView ? "p-2 sm:p-3" : "p-3 sm:p-6")}>
+                <main className={cn("flex-1 flex flex-col transition-all", settings.compactView ? "p-2 sm:p-3" : "p-3 sm:p-6")}>
                     <Outlet />
                 </main>
                 <footer className="border-t border-border py-4 px-6">

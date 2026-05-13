@@ -142,7 +142,7 @@ export const DecisionsView = () => {
     const rejectedCount = analytics?.rejected ?? decisions.filter((d) => d.status === DecisionStatus.Rejected).length;
 
     return (
-        <div>
+        <div className="flex-1 flex flex-col">
             <Header
                 title={t("Decision Log")}
                 description={t("Document and track important project decisions")}
