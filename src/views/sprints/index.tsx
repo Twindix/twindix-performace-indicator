@@ -6,15 +6,18 @@ import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shar
 import { SprintsSkeleton } from "@/components/skeletons";
 import { t, useActivateSprint, useCreateSprint, useDeleteSprint, useFormErrors, usePermissions, useSprintsList, useUpdateSprint } from "@/hooks";
 import type { CreateSprintPayloadInterface, SprintInterface } from "@/interfaces";
+import { useProjectStore } from "@/store";
 import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/ui";
 
-const emptyForm: CreateSprintPayloadInterface = { name: "", start_date: "", end_date: "" };
+const todayISO = () => new Date().toISOString().split("T")[0];
+const buildEmptyForm = (): CreateSprintPayloadInterface => ({ name: "", start_date: todayISO(), end_date: "" });
 
 export const SprintsView = () => {
     const p = usePermissions();
+    const activeProjectId = useProjectStore((s) => s.activeProjectId);
     const { sprints, meta, isLoading, setPage, setPerPage, patchSprintLocal, removeSprintLocal } = useSprintsList();
     const { setFieldErrors, clearError, clear: clearFieldErrors, getError } = useFormErrors();
     const { createHandler, isLoading: isCreating } = useCreateSprint({ onFieldErrors: setFieldErrors });
@@ -27,20 +30,23 @@ export const SprintsView = () => {
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<SprintInterface | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<SprintInterface | null>(null);
-    const [form, setForm] = useState(emptyForm);
+    const [form, setForm] = useState<CreateSprintPayloadInterface>(buildEmptyForm);
 
-    const openAdd = () => { setForm(emptyForm); setAddOpen(true); };
+    const openAdd = () => { setForm(buildEmptyForm()); setAddOpen(true); };
 
     const openEdit = (s: SprintInterface) => {
         setForm({ name: s.name, start_date: s.start_date, end_date: s.end_date });
         setEditTarget(s);
     };
 
-    const closeDialogs = () => { setAddOpen(false); setEditTarget(null); setForm(emptyForm); clearFieldErrors(); };
+    const closeDialogs = () => { setAddOpen(false); setEditTarget(null); setForm(buildEmptyForm()); clearFieldErrors(); };
 
     const handleSubmitAdd = async () => {
-        if (!form.name.trim() || !form.start_date || !form.end_date) return;
-        const created = await createHandler({ name: form.name.trim(), start_date: form.start_date, end_date: form.end_date });
+        if (!form.name.trim() || !form.start_date || !form.end_date || !activeProjectId) return;
+        const created = await createHandler({
+            projectId: activeProjectId,
+            payload: { name: form.name.trim(), start_date: form.start_date, end_date: form.end_date },
+        });
         if (created) { patchSprintLocal(created); closeDialogs(); }
     };
 
@@ -76,7 +82,7 @@ export const SprintsView = () => {
                 description={t("Manage sprints and activate the current one.")}
                 actions={
                     p.sprints.create() ? (
-                        <Button size="sm" className="gap-1.5" onClick={openAdd}>
+                        <Button size="sm" className="gap-1.5" onClick={openAdd} disabled={!activeProjectId} title={!activeProjectId ? t("Pick a project first") : undefined}>
                             <Plus className="h-4 w-4" />
                             {t("Add Sprint")}
                         </Button>

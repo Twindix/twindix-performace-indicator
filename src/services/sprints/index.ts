@@ -18,8 +18,9 @@ export const sprintsService = {
         return data;
     },
 
-    createHandler: async (payload: CreateSprintPayloadInterface): Promise<SprintDetailResponseInterface> => {
-        const { data } = await apiClient.post<SprintDetailResponseInterface>(apisData.sprints.create, payload);
+    createHandler: async (projectId: string, payload: CreateSprintPayloadInterface): Promise<SprintDetailResponseInterface> => {
+        // Sprints are project-scoped — always POST under the project, never the top-level /sprints route.
+        const { data } = await apiClient.post<SprintDetailResponseInterface>(apisData.projects.sprints(projectId), payload);
         return data;
     },
 
