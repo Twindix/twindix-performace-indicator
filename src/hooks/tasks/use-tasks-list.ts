@@ -4,7 +4,7 @@ import { tasksConstants } from "@/constants";
 import type { KanbanBoardInterface, TaskInterface } from "@/interfaces";
 import { tasksService } from "@/services";
 
-import { useQueryAction } from "../shared";
+import { usePaginatedQuery } from "../shared";
 
 export interface TasksListFilters {
     status?: string;
@@ -12,56 +12,41 @@ export interface TasksListFilters {
     priority?: string;
     type?: string;
     search?: string;
-    per_page?: number;
     sort_by?: string;
     sort_order?: string;
+    initialPerPage?: number;
 }
 
-const buildParams = (filters: TasksListFilters): TasksListFilters => {
-    const { status, assigned_to, priority, type, search, per_page, sort_by, sort_order } = filters;
-    const params: TasksListFilters = {};
-    if (status && status !== "all") params.status = status;
-    if (assigned_to && assigned_to !== "all") params.assigned_to = assigned_to;
-    if (priority && priority !== "all") params.priority = priority;
-    if (type && type !== "all") params.type = type;
-    if (search) params.search = search;
-    if (per_page) params.per_page = per_page;
-    if (sort_by) params.sort_by = sort_by;
-    if (sort_order) params.sort_order = sort_order;
-    return params;
-};
-
 export const useTasksList = (sprintId: string, filters: TasksListFilters = {}) => {
-    const { status, assigned_to, priority, type, search, per_page, sort_by, sort_order } = filters;
+    const { status, assigned_to, priority, type, search, sort_by, sort_order, initialPerPage = 100 } = filters;
 
-    const { data, isLoading, refetch, setData } = useQueryAction<TaskInterface[]>(
-        async () => {
-            if (!sprintId) return [];
-            const res = await tasksService.listHandler(sprintId, buildParams(filters));
-            return res.data;
-        },
-        [sprintId, status, assigned_to, priority, type, search, per_page, sort_by, sort_order],
+    const { items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, setItems } = usePaginatedQuery<TaskInterface>(
+        ({ page, per_page }) => tasksService.listHandler(sprintId, {
+            status, assigned_to, priority, type, search, sort_by, sort_order,
+            page, per_page,
+        }),
+        [sprintId, status, assigned_to, priority, type, search, sort_by, sort_order],
         {
             enabled: !!sprintId,
             errorFallback: tasksConstants.errors.fetchFailed,
-            initialData: [],
             context: "tasks.list",
+            initialPerPage,
         },
     );
 
-    const tasks = data ?? [];
+    const tasks = items;
 
     const patchTaskLocal = useCallback((task: TaskInterface) => {
-        setData((prev) => (prev ?? []).map((t) => (t.id === task.id ? task : t)));
-    }, [setData]);
+        setItems((prev) => prev.map((t) => (t.id === task.id ? task : t)));
+    }, [setItems]);
 
     const removeTaskLocal = useCallback((id: string) => {
-        setData((prev) => (prev ?? []).filter((t) => t.id !== id));
-    }, [setData]);
+        setItems((prev) => prev.filter((t) => t.id !== id));
+    }, [setItems]);
 
     const addTaskLocal = useCallback((task: TaskInterface) => {
-        setData((prev) => [task, ...(prev ?? [])]);
-    }, [setData]);
+        setItems((prev) => [task, ...prev]);
+    }, [setItems]);
 
     const toKanban = useCallback((): KanbanBoardInterface => {
         const board: KanbanBoardInterface = {};
@@ -72,5 +57,5 @@ export const useTasksList = (sprintId: string, filters: TasksListFilters = {}) =
         return board;
     }, [tasks]);
 
-    return { tasks, isLoading, refetch, patchTaskLocal, removeTaskLocal, addTaskLocal, toKanban };
+    return { tasks, meta, page, perPage, isLoading, setPage, setPerPage, refetch, patchTaskLocal, removeTaskLocal, addTaskLocal, toKanban };
 };

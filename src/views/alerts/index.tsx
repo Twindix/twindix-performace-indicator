@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Bell, Check, CheckCheck, Clock, ExternalLink, Link2, Pencil, Plus, Search, ShieldCheck, Trash2, X } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
-import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shared";
 import { AlertsSkeleton } from "@/components/skeletons";
-import { t, useAcknowledgeAlert, useAlertsList, useCreateAlert, useDeleteAlert, useDoneAlert, usePermissions, useUpdateAlert, useUsersList } from "@/hooks";
+import { t, useAcknowledgeAlert, useAlertsList, useCreateAlert, useDeleteAlert, useDoneAlert, usePermissions, useUpdateAlert, useUsersListLite } from "@/hooks";
 import type { AlertInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import {
@@ -110,13 +110,13 @@ export const AlertsView = () => {
     const p = usePermissions();
     const { activeSprintId } = useSprintStore();
     const [typeFilter, setTypeFilter] = useState<string>("");
-    const { alerts, isLoading, patchAlertLocal, removeAlertLocal } = useAlertsList(activeSprintId, typeFilter ? { type: typeFilter } : {});
+    const { alerts, meta, isLoading, setPage, setPerPage, patchAlertLocal, removeAlertLocal } = useAlertsList(activeSprintId, typeFilter ? { type: typeFilter } : {});
     const { createHandler, isLoading: isCreating } = useCreateAlert();
     const { updateHandler, isLoading: isUpdating } = useUpdateAlert();
     const { deleteHandler, isLoading: isDeleting } = useDeleteAlert();
     const { acknowledgeHandler, isLoading: isAcknowledging } = useAcknowledgeAlert();
     const { doneHandler, isLoading: isMarkingDone } = useDoneAlert();
-    const { users } = useUsersList();
+    const { users } = useUsersListLite();
 
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<AlertInterface | null>(null);
@@ -279,7 +279,7 @@ export const AlertsView = () => {
     );
 
     return (
-        <div>
+        <div className="flex-1 flex flex-col">
             <Header
                 title={t("Alerts")}
                 description={t("Create announcements and track acknowledgements.")}
@@ -338,6 +338,8 @@ export const AlertsView = () => {
                     )}
                 </TabsContent>
             </Tabs>
+
+            <Pagination meta={meta} onPageChange={setPage} onPerPageChange={setPerPage} isLoading={isLoading} />
 
             {/* Add / Edit dialog */}
             <Dialog open={addOpen || !!editTarget} onOpenChange={(open) => { if (!open) { setAddOpen(false); setEditTarget(null); setForm(emptyForm); } }}>

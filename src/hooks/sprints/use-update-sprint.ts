@@ -3,6 +3,7 @@ import type { SprintInterface, UpdateSprintPayloadInterface } from "@/interfaces
 import { sprintsService } from "@/services";
 
 import { useMutationAction, type FieldErrors } from "../shared";
+import { invalidateProjectSprintsCache } from "../projects/use-project-sprints";
 
 export interface UseUpdateSprintOptions {
     onFieldErrors?: (errors: FieldErrors) => void;
@@ -12,6 +13,7 @@ export const useUpdateSprint = ({ onFieldErrors }: UseUpdateSprintOptions = {}) 
     const { mutate, isLoading } = useMutationAction(
         async (id: string, payload: UpdateSprintPayloadInterface): Promise<SprintInterface> => {
             const res = await sprintsService.updateHandler(id, payload);
+            invalidateProjectSprintsCache();
             return res.data;
         },
         {

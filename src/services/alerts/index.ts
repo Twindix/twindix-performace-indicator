@@ -1,9 +1,9 @@
 import { apisData } from "@/data";
-import type { AlertDetailResponseInterface, AlertsCountInterface, AlertsListResponseInterface, CreateAlertPayloadInterface, UpdateAlertPayloadInterface } from "@/interfaces";
+import type { AlertDetailResponseInterface, AlertsCountInterface, AlertsListFiltersInterface, AlertsListResponseInterface, CreateAlertPayloadInterface, UpdateAlertPayloadInterface } from "@/interfaces";
 import { apiClient } from "@/lib/axios";
 
 export const alertsService = {
-    listHandler: async (sprintId: string, params?: { type?: string }): Promise<AlertsListResponseInterface> => {
+    listHandler: async (sprintId: string, params?: AlertsListFiltersInterface): Promise<AlertsListResponseInterface> => {
         const { data } = await apiClient.get<AlertsListResponseInterface>(apisData.alerts.list(sprintId), { params });
         return data;
     },

@@ -1,22 +1,12 @@
 import { apisData } from "@/data";
-import type { CreateTimeLogPayloadInterface, TimeLogInterface, TimeLogsSummaryInterface, UpdateTimeLogPayloadInterface } from "@/interfaces";
+import type { CreateTimeLogPayloadInterface, PaginatedResponseInterface, PaginationParamsInterface, TimeLogInterface, TimeLogsSummaryInterface, UpdateTimeLogPayloadInterface } from "@/interfaces";
 import { apiClient } from "@/lib/axios";
 
-interface TimeLogsMetaInterface {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-}
-
-export interface TimeLogsListResponseInterface {
-    data: TimeLogInterface[];
-    meta?: TimeLogsMetaInterface;
-}
+export type TimeLogsListResponseInterface = PaginatedResponseInterface<TimeLogInterface>;
 
 export const timeLogsService = {
-    sprintListHandler: async (sprintId: string): Promise<TimeLogsListResponseInterface> => {
-        const { data } = await apiClient.get<TimeLogsListResponseInterface>(apisData.timeLogs.sprintList(sprintId));
+    sprintListHandler: async (sprintId: string, params?: PaginationParamsInterface): Promise<TimeLogsListResponseInterface> => {
+        const { data } = await apiClient.get<TimeLogsListResponseInterface>(apisData.timeLogs.sprintList(sprintId), { params });
         return data;
     },
 

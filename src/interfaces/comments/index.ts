@@ -1,3 +1,5 @@
+import type { PaginatedResponseInterface, PaginationParamsInterface } from "@/interfaces/common";
+
 export interface CommentUserInterface {
     id: string;
     full_name: string;
@@ -16,17 +18,7 @@ export interface CommentInterface {
     created_at: string;
 }
 
-export interface CommentsMetaInterface {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-}
-
-export interface CommentsListResponseInterface {
-    data: CommentInterface[];
-    meta: CommentsMetaInterface;
-}
+export type CommentsListResponseInterface = PaginatedResponseInterface<CommentInterface>;
 
 export interface CommentDetailResponseInterface {
     data: CommentInterface;
@@ -55,8 +47,7 @@ export interface UpdateCommentPayloadInterface {
     mentioned_user_ids?: string[];
 }
 
-export interface CommentsListFiltersInterface {
+export interface CommentsListFiltersInterface extends PaginationParamsInterface {
     status?: string;
     mention?: string;
-    per_page?: number;
 }

@@ -1,11 +1,11 @@
 import { apiClient } from "@/lib/axios";
 import { apisData } from "@/data/apis";
-import type { CreateUserPayloadInterface, UpdateUserPayloadInterface, UserAnalyticsInterface, UserInterface, UserLiteInterface } from "@/interfaces";
+import type { CreateUserPayloadInterface, UpdateUserPayloadInterface, UserAnalyticsInterface, UserInterface, UserListParamsInterface, UserListResponseInterface, UserLiteInterface } from "@/interfaces";
 
 export const usersService = {
-    listHandler: async (): Promise<UserInterface[]> => {
-        const res = await apiClient.get(apisData.users.list);
-        return res.data.data ?? res.data;
+    listHandler: async (params?: UserListParamsInterface): Promise<UserListResponseInterface> => {
+        const res = await apiClient.get<UserListResponseInterface>(apisData.users.list, { params });
+        return res.data;
     },
 
     listLiteHandler: async (): Promise<UserLiteInterface[]> => {

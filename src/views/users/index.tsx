@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
-import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shared";
 import { UsersSkeleton } from "@/components/skeletons";
 import { usersConstants } from "@/constants";
 import type { RoleTier } from "@/constants/permissions";
@@ -41,7 +41,7 @@ type FormErrors = Partial<Record<keyof FormState, string>>;
 export const UsersView = () => {
     const navigate = useNavigate();
     const p = usePermissions();
-    const { users, isLoading, refetch, patchUserLocal } = useUsersList();
+    const { users, meta, isLoading, setPage, setPerPage, patchUserLocal, prependUserLocal } = useUsersList();
 
     const [errors, setErrors] = useState<FormErrors>({});
     const mapFieldErrors = (fe: Record<string, string[]>) => {
@@ -100,15 +100,16 @@ export const UsersView = () => {
         });
 
         if (created) {
+            // Optimistic prepend — no need to refetch the whole list after a create.
+            prependUserLocal(created as UserInterface);
             setAddOpen(false);
             setForm(emptyForm);
             setErrors({});
-            refetch();
         }
     };
 
     return (
-        <div>
+        <div className="flex-1 flex flex-col">
             <Header title={t("User Management")} description={t("Manage team members and view individual performance analytics")} />
 
             {p.users.create() && (
@@ -121,7 +122,7 @@ export const UsersView = () => {
             )}
 
             <QueryBoundary
-                isLoading={isLoading}
+                isLoading={isLoading && users.length === 0}
                 skeleton={<UsersSkeleton />}
                 empty={users.length === 0}
                 emptyState={<EmptyState icon={UserCog} title={t("No Users")} description={t("Add team members to get started")} />}
@@ -192,6 +193,13 @@ export const UsersView = () => {
                         );
                     })}
                 </div>
+
+                <Pagination
+                    meta={meta}
+                    onPageChange={setPage}
+                    onPerPageChange={setPerPage}
+                    isLoading={isLoading}
+                />
             </QueryBoundary>
 
             {/* ── Add User Dialog ── */}

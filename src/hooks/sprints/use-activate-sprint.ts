@@ -3,11 +3,13 @@ import type { SprintInterface } from "@/interfaces";
 import { sprintsService } from "@/services";
 
 import { useMutationAction } from "../shared";
+import { invalidateProjectSprintsCache } from "../projects/use-project-sprints";
 
 export const useActivateSprint = () => {
     const { mutate, isLoading } = useMutationAction(
         async (id: string): Promise<SprintInterface> => {
             const res = await sprintsService.activateHandler(id);
+            invalidateProjectSprintsCache();
             return res.data;
         },
         {

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Edit, LineChart, MoreHorizontal, Plus, Trash2, Users } from "lucide-react";
 
 import { Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
-import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shared";
 import { TeamsSkeleton } from "@/components/skeletons";
 import { analyticsSeed } from "@/data";
 import { t, useCreateTeam, useDeleteTeam, useFormErrors, useGetTeams, usePermissions, useUpdateTeam } from "@/hooks";
@@ -16,7 +16,7 @@ import { TeamDetailDialog } from "./TeamDetailDialog";
 
 export const TeamsView = () => {
     const p = usePermissions();
-    const { teams, isLoading, patchTeamLocal, removeTeamLocal } = useGetTeams();
+    const { teams, meta, isLoading, setPage, setPerPage, patchTeamLocal, removeTeamLocal } = useGetTeams();
     const { setFieldErrors, clearError, clear: clearFieldErrors, getError } = useFormErrors();
     const { createHandler, isLoading: isCreating } = useCreateTeam({ onFieldErrors: setFieldErrors });
     const { updateHandler, isLoading: isUpdating } = useUpdateTeam({ onFieldErrors: setFieldErrors });
@@ -80,7 +80,7 @@ export const TeamsView = () => {
     }
 
     return (
-        <div>
+        <div className="flex-1 flex flex-col">
             <Header
                 title={t("Teams")}
                 description={t("Organize members into teams.")}
@@ -95,7 +95,7 @@ export const TeamsView = () => {
             />
 
             <QueryBoundary
-                isLoading={isLoading}
+                isLoading={isLoading && teams.length === 0}
                 skeleton={<TeamsSkeleton />}
                 empty={teams.length === 0}
                 emptyState={<EmptyState icon={Users} title={t("No teams yet")} description={t("Create your first team to group members.")} />}
@@ -105,10 +105,14 @@ export const TeamsView = () => {
                         const a = analyticsSeed.teams[team.id] ?? analyticsSeed.fallback.team;
                         const completion = Math.round((a.tasks_done / Math.max(a.tasks_total, 1)) * 100);
                         return (
-                        <Card key={team.id} className="hover:shadow-md transition-shadow">
+                        <Card
+                            key={team.id}
+                            className="group relative overflow-hidden transition-all duration-200 hover:border-primary/40 hover:shadow-[0_4px_16px_-6px_rgba(0,0,0,0.12)] hover:-translate-y-0.5"
+                        >
+                            <span aria-hidden className="pointer-events-none absolute inset-y-0 start-0 w-0.5 bg-primary scale-y-0 origin-top transition-transform duration-300 group-hover:scale-y-100" />
                             <CardContent className="p-5 space-y-3">
                                 <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-lighter text-primary-medium shrink-0">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-lighter text-primary-medium shrink-0 transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                                         <Users className="h-5 w-5" />
                                     </div>
                                     <h3 className="text-base font-semibold text-text-dark truncate flex-1">{team.name}</h3>
@@ -163,6 +167,14 @@ export const TeamsView = () => {
                         );
                     })}
                 </div>
+
+                <Pagination
+                    meta={meta}
+                    onPageChange={setPage}
+                    onPerPageChange={setPerPage}
+                    isLoading={isLoading}
+                    label="teams"
+                />
             </QueryBoundary>
 
             <Dialog open={addOpen || editTarget !== null} onOpenChange={(open) => !open && closeDialog()}>

@@ -1,10 +1,10 @@
 import { apisData } from "@/data";
-import type { CreateSprintPayloadInterface, SprintDetailResponseInterface, SprintSummaryInterface, SprintsListResponseInterface, UpdateSprintPayloadInterface } from "@/interfaces";
+import type { CreateSprintPayloadInterface, PaginationParamsInterface, SprintDetailResponseInterface, SprintSummaryInterface, SprintsListResponseInterface, UpdateSprintPayloadInterface } from "@/interfaces";
 import { apiClient } from "@/lib/axios";
 
 export const sprintsService = {
-    listHandler: async (): Promise<SprintsListResponseInterface> => {
-        const { data } = await apiClient.get<SprintsListResponseInterface>(apisData.sprints.list);
+    listHandler: async (params?: PaginationParamsInterface): Promise<SprintsListResponseInterface> => {
+        const { data } = await apiClient.get<SprintsListResponseInterface>(apisData.sprints.list, { params });
         return data;
     },
 
@@ -18,8 +18,9 @@ export const sprintsService = {
         return data;
     },
 
-    createHandler: async (payload: CreateSprintPayloadInterface): Promise<SprintDetailResponseInterface> => {
-        const { data } = await apiClient.post<SprintDetailResponseInterface>(apisData.sprints.create, payload);
+    createHandler: async (projectId: string, payload: CreateSprintPayloadInterface): Promise<SprintDetailResponseInterface> => {
+        // Sprints are project-scoped — always POST under the project, never the top-level /sprints route.
+        const { data } = await apiClient.post<SprintDetailResponseInterface>(apisData.projects.sprints(projectId), payload);
         return data;
     },
 

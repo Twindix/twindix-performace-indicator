@@ -4,33 +4,37 @@ import { alertsConstants } from "@/constants";
 import type { AlertInterface } from "@/interfaces";
 import { alertsService } from "@/services";
 
-import { useQueryAction } from "../shared";
+import { usePaginatedQuery } from "../shared";
 
-export const useAlertsList = (sprintId: string, params: { type?: string } = {}) => {
-    const { data, isLoading, refetch, setData } = useQueryAction<AlertInterface[]>(
-        async () => (sprintId ? (await alertsService.listHandler(sprintId, params)).data : []),
-        [sprintId, params.type],
+export interface UseAlertsListOptions {
+    type?: string;
+    initialPerPage?: number;
+}
+
+export const useAlertsList = (sprintId: string, { type, initialPerPage }: UseAlertsListOptions = {}) => {
+    const { items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, setItems } = usePaginatedQuery<AlertInterface>(
+        ({ page, per_page }) => alertsService.listHandler(sprintId, { type, page, per_page }),
+        [sprintId, type],
         {
             enabled: !!sprintId,
             errorFallback: alertsConstants.errors.fetchFailed,
-            initialData: [],
             context: "alerts.list",
+            initialPerPage,
         },
     );
 
     const patchAlertLocal = useCallback((alert: AlertInterface) => {
-        setData((prev) => {
-            const arr = prev ?? [];
-            const exists = arr.some((a) => a.id === alert.id);
+        setItems((prev) => {
+            const exists = prev.some((a) => a.id === alert.id);
             return exists
-                ? arr.map((a) => (a.id === alert.id ? { ...a, ...alert } : a))
-                : [alert, ...arr];
+                ? prev.map((a) => (a.id === alert.id ? { ...a, ...alert } : a))
+                : [alert, ...prev];
         });
-    }, [setData]);
+    }, [setItems]);
 
     const removeAlertLocal = useCallback((id: string) => {
-        setData((prev) => (prev ?? []).filter((a) => a.id !== id));
-    }, [setData]);
+        setItems((prev) => prev.filter((a) => a.id !== id));
+    }, [setItems]);
 
-    return { alerts: data ?? [], isLoading, refetch, patchAlertLocal, removeAlertLocal };
+    return { alerts: items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, patchAlertLocal, removeAlertLocal };
 };

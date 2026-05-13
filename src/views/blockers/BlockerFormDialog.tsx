@@ -4,7 +4,7 @@ import { Plus, ShieldAlert } from "lucide-react";
 import { Button, Input, Label, Textarea } from "@/atoms";
 import { BlockerType } from "@/enums";
 import { t, useCreateBlocker, useUpdateBlocker } from "@/hooks";
-import type { BlockerInterface, UserInterface } from "@/interfaces";
+import type { BlockerInterface, UserLiteInterface } from "@/interfaces";
 import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -15,7 +15,7 @@ interface Props {
     onOpenChange: (open: boolean) => void;
     sprintId: string | null | undefined;
     initial?: BlockerInterface | null;
-    users: UserInterface[];
+    users: UserLiteInterface[];
     onSaved: (blocker: BlockerInterface) => void;
 }
 

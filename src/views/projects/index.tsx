@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ArrowLeft, BarChart3, Calendar, Edit, FolderKanban, LineChart, MoreHorizontal, Plus, Trash2, Users } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
-import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shared";
 import { ProjectsSkeleton } from "@/components/skeletons";
 import { analyticsSeed } from "@/data/seed";
 import { t, useCreateProject, useDeleteProject, useFormErrors, usePermissions, useProjectsList, useUpdateProject } from "@/hooks";
@@ -43,7 +43,7 @@ export const ProjectsView = () => {
     const p = usePermissions();
     const { onSetActiveProject } = useProjectStore();
     const { setFieldErrors, clearError, clear: clearFieldErrors, getError } = useFormErrors();
-    const { projects, isLoading, prependProjectLocal, patchProjectLocal, removeProjectLocal } = useProjectsList();
+    const { projects, meta, isLoading, setPage, setPerPage, prependProjectLocal, patchProjectLocal, removeProjectLocal } = useProjectsList();
     const { createHandler, isLoading: isCreating } = useCreateProject({ onFieldErrors: setFieldErrors });
     const { updateHandler, isLoading: isUpdating } = useUpdateProject({ onFieldErrors: setFieldErrors });
     const { deleteHandler, isLoading: isDeleting } = useDeleteProject();
@@ -115,7 +115,7 @@ export const ProjectsView = () => {
 
     if (openedProject) {
         return (
-            <div>
+            <div className="flex-1 flex flex-col">
                 <div className="mb-4">
                     <Button variant="outline" size="sm" onClick={() => setOpenedProject(null)} className="gap-1.5">
                         <ArrowLeft className="h-4 w-4" />
@@ -131,7 +131,7 @@ export const ProjectsView = () => {
     }
 
     return (
-        <div>
+        <div className="flex-1 flex flex-col">
             <Header
                 title={t("Projects")}
                 description={t("Group your sprints into projects.")}
@@ -146,7 +146,7 @@ export const ProjectsView = () => {
             />
 
             <QueryBoundary
-                isLoading={isLoading}
+                isLoading={isLoading && projects.length === 0}
                 skeleton={<ProjectsSkeleton />}
                 empty={projects.length === 0}
                 emptyState={<EmptyState icon={FolderKanban} title={t("No projects yet")} description={t("Create your first project to start organizing sprints.")} />}
@@ -251,6 +251,13 @@ export const ProjectsView = () => {
                         );
                     })}
                 </div>
+
+                <Pagination
+                    meta={meta}
+                    onPageChange={setPage}
+                    onPerPageChange={setPerPage}
+                    isLoading={isLoading}
+                />
             </QueryBoundary>
 
             {/* Add / Edit Dialog */}

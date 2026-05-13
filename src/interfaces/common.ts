@@ -6,6 +6,35 @@ export interface ApiSuccessResponse<T> {
     message?: string;
 }
 
+export interface PaginationMetaInterface {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+    path?: string;
+    links?: Array<{ url: string | null; label: string; page: number | null; active: boolean }>;
+}
+
+export interface PaginationLinksInterface {
+    first: string | null;
+    last: string | null;
+    prev: string | null;
+    next: string | null;
+}
+
+export interface PaginatedResponseInterface<T> {
+    data: T[];
+    meta: PaginationMetaInterface;
+    links?: PaginationLinksInterface;
+}
+
+export interface PaginationParamsInterface {
+    page?: number;
+    per_page?: number;
+}
+
 export interface UserSettingsInterface {
     dark_mode: boolean | null;
     compact_view: boolean | null;

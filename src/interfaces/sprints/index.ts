@@ -1,3 +1,5 @@
+import type { PaginatedResponseInterface } from "@/interfaces/common";
+
 export interface SprintInterface {
     id: string;
     name: string;
@@ -12,17 +14,7 @@ export interface SprintInterface {
     healthScore?: number;
 }
 
-export interface SprintMetaInterface {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-}
-
-export interface SprintsListResponseInterface {
-    data: SprintInterface[];
-    meta: SprintMetaInterface;
-}
+export type SprintsListResponseInterface = PaginatedResponseInterface<SprintInterface>;
 
 export interface SprintDetailResponseInterface {
     data: SprintInterface;

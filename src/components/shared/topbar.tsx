@@ -1,21 +1,16 @@
-import { FolderKanban, LogOut, Moon, Pencil, Settings, Sun, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { FolderKanban, LogOut, Moon, Settings, Sun, User } from "lucide-react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Button, Input, Label } from "@/atoms";
+import { Button } from "@/atoms";
 import { routesData } from "@/data";
-import { useAuth, useProjectsListLite, useSprintsList, useTheme, t, useSettings, usePermissions, usePresence, useUpdateSprint, type PresenceStatus } from "@/hooks";
+import { useAuth, useProjectSprints, useProjectsListLite, useTheme, t, useSettings, usePermissions, usePresence, type PresenceStatus } from "@/hooks";
 import type { SprintInterface } from "@/interfaces";
 import { useProjectStore, useSprintStore } from "@/store";
 import { MobileNav } from "./mobile-nav";
 import {
     Avatar,
     AvatarFallback,
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -37,55 +32,52 @@ const presenceConfig: Record<PresenceStatus, { label: string; dot: string }> = {
     offline: { label: "Offline", dot: "bg-text-muted" },
 };
 
+const EmptyOption = ({ label }: { label: string }) => (
+    <div className="px-2 py-1.5 text-xs text-text-muted italic select-none">
+        {label}
+    </div>
+);
+
 export const Topbar = () => {
     const { user, onLogout } = useAuth();
     const { isDarkMode, onToggleTheme } = useTheme();
     const [settings] = useSettings();
-    const { activeSprintId, onSetActiveSprint } = useSprintStore();
-    const { activeProjectId, onSetActiveProject } = useProjectStore();
+
+    // Subscribe with selectors so each store update only re-renders the slice that changed.
+    const activeSprintId = useSprintStore((s) => s.activeSprintId);
+    const onSetActiveSprint = useSprintStore((s) => s.onSetActiveSprint);
+    const activeProjectId = useProjectStore((s) => s.activeProjectId);
+    const onSetActiveProject = useProjectStore((s) => s.onSetActiveProject);
+
     const { projects } = useProjectsListLite();
-    const { sprints, refetch: refetchSprints } = useSprintsList();
-    const { updateHandler: updateSprintHandler, isLoading: isSaving } = useUpdateSprint();
+    // Use the cached reader — `useAppInit` seeded it on cold start, and sprint
+    // mutations invalidate it. Avoids a duplicate /projects/:id/sprints fetch.
+    const { sprints } = useProjectSprints(activeProjectId);
     const navigate = useNavigate();
     const p = usePermissions();
     const canEditProfile = p.auth.editProfile();
     const { status, updateStatus } = usePresence(user?.id, !canEditProfile);
 
-    const [editOpen, setEditOpen] = useState(false);
-    const [form, setForm] = useState({ name: "", start_date: "", end_date: "" });
+    // Only active sprints belong in a selector. Memoize so the next effect's dep array
+    // is stable across renders that don't actually change the sprint list.
+    const selectableSprints: SprintInterface[] = useMemo(
+        () => sprints.filter((s) => s.status === "active"),
+        [sprints],
+    );
 
+    // Reactive fallback: if the persisted sprint becomes invalid (deleted, project switch
+    // drops it from the list, etc.) jump to the first active sprint. Project resolution
+    // is owned by useAppInit on first mount; this is only a runtime safety net.
     useEffect(() => {
-        if (sprints.length === 0) return;
-        if (activeSprintId && sprints.some((s) => s.id === activeSprintId)) return;
-        const active = sprints.find((s) => s.status === "active") ?? sprints[0];
-        if (active) onSetActiveSprint(active.id);
-    }, [sprints, activeSprintId, onSetActiveSprint]);
+        if (selectableSprints.length === 0) {
+            if (activeSprintId) onSetActiveSprint("");
+            return;
+        }
+        if (activeSprintId && selectableSprints.some((s) => s.id === activeSprintId)) return;
+        onSetActiveSprint(selectableSprints[0].id);
+    }, [selectableSprints, activeSprintId, onSetActiveSprint]);
 
     const isArabic = settings.language === "ar";
-    const activeSprint: SprintInterface | undefined = sprints.find((s) => s.id === activeSprintId);
-
-    const openEdit = () => {
-        if (!activeSprint) return;
-        setForm({
-            name: activeSprint.name,
-            start_date: activeSprint.start_date,
-            end_date: activeSprint.end_date,
-        });
-        setEditOpen(true);
-    };
-
-    const handleSave = async () => {
-        if (!activeSprint || !form.name.trim()) return;
-        const res = await updateSprintHandler(activeSprint.id, {
-            name: form.name.trim(),
-            start_date: form.start_date,
-            end_date: form.end_date,
-        });
-        if (res) {
-            await refetchSprints();
-            setEditOpen(false);
-        }
-    };
 
     return (
         <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between border-b border-border bg-surface/80 backdrop-blur-sm px-3 sm:px-6">
@@ -97,50 +89,42 @@ export const Topbar = () => {
                             <SelectValue placeholder={t("Select Project")} />
                         </SelectTrigger>
                         <SelectContent>
-                            {projects.map((p) => (
-                                <SelectItem key={p.id} value={p.id}>
-                                    <span className="flex items-center gap-1.5">
-                                        <FolderKanban className="h-3 w-3 text-primary shrink-0" />
-                                        {p.name}
-                                    </span>
-                                </SelectItem>
-                            ))}
+                            {projects.length === 0 ? (
+                                <EmptyOption label={t("No projects yet")} />
+                            ) : (
+                                projects.map((proj) => (
+                                    <SelectItem key={proj.id} value={proj.id}>
+                                        <span className="flex items-center gap-1.5">
+                                            <FolderKanban className="h-3 w-3 text-primary shrink-0" />
+                                            {proj.name}
+                                        </span>
+                                    </SelectItem>
+                                ))
+                            )}
                         </SelectContent>
                     </Select>
-                    <Select value={activeSprintId} onValueChange={onSetActiveSprint}>
+
+                    <Select value={activeSprintId} onValueChange={onSetActiveSprint} disabled={!activeProjectId}>
                         <SelectTrigger className="w-[140px] sm:w-[200px] h-9 text-xs sm:text-sm">
-                            <SelectValue placeholder={t("Select Sprint")} />
+                            <SelectValue placeholder={activeProjectId ? t("Select Sprint") : t("Pick a project first")} />
                         </SelectTrigger>
                         <SelectContent>
-                            {sprints.map((s) => (
-                                <SelectItem key={s.id} value={s.id}>
-                                    <span className="flex items-center gap-1.5">
-                                        {s.status === "active" && (
+                            {!activeProjectId ? (
+                                <EmptyOption label={t("Pick a project first")} />
+                            ) : selectableSprints.length === 0 ? (
+                                <EmptyOption label={t("No active sprints")} />
+                            ) : (
+                                selectableSprints.map((s) => (
+                                    <SelectItem key={s.id} value={s.id}>
+                                        <span className="flex items-center gap-1.5">
                                             <span className="h-2 w-2 rounded-full bg-success shrink-0" />
-                                        )}
-                                        {s.name}
-                                    </span>
-                                </SelectItem>
-                            ))}
+                                            {s.name}
+                                        </span>
+                                    </SelectItem>
+                                ))
+                            )}
                         </SelectContent>
                     </Select>
-                    <TooltipProvider delayDuration={300}>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={openEdit}
-                                    disabled={!activeSprint}
-                                    className="h-9 w-9"
-                                    aria-label={t("Edit sprint")}
-                                >
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{t("Edit sprint")}</TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
                 </div>
             </div>
 
@@ -208,54 +192,6 @@ export const Topbar = () => {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-
-            {/* Edit Sprint Dialog */}
-            <Dialog open={editOpen} onOpenChange={setEditOpen}>
-                <DialogContent className="max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>{t("Edit Sprint")}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 mt-3">
-                        <div className="space-y-2">
-                            <Label htmlFor="sp-name">{t("Name")} <span className="text-error">*</span></Label>
-                            <Input
-                                id="sp-name"
-                                value={form.name}
-                                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                                placeholder={t("Sprint name")}
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-2">
-                                <Label htmlFor="sp-start">{t("Start Date")}</Label>
-                                <Input
-                                    id="sp-start"
-                                    type="date"
-                                    value={form.start_date}
-                                    onChange={(e) => setForm({ ...form, start_date: e.target.value })}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="sp-end">{t("End Date")}</Label>
-                                <Input
-                                    id="sp-end"
-                                    type="date"
-                                    value={form.end_date}
-                                    onChange={(e) => setForm({ ...form, end_date: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex justify-end gap-2 mt-4">
-                        <DialogClose asChild>
-                            <Button variant="outline" disabled={isSaving}>{t("Cancel")}</Button>
-                        </DialogClose>
-                        <Button onClick={handleSave} disabled={isSaving || !form.name.trim()}>
-                            {isSaving ? t("Saving...") : t("Save Changes")}
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
         </header>
     );
 };

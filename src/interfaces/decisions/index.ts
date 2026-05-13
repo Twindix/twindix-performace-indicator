@@ -1,4 +1,5 @@
 import type { DecisionCategory, DecisionStatus } from "@/enums";
+import type { PaginatedResponseInterface, PaginationParamsInterface } from "@/interfaces/common";
 
 export interface DecisionCreatorInterface {
     id: string;
@@ -18,17 +19,7 @@ export interface DecisionInterface {
     created_at: string;
 }
 
-export interface DecisionsMetaInterface {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-}
-
-export interface DecisionsListResponseInterface {
-    data: DecisionInterface[];
-    meta: DecisionsMetaInterface;
-}
+export type DecisionsListResponseInterface = PaginatedResponseInterface<DecisionInterface>;
 
 export interface DecisionDetailResponseInterface {
     data: DecisionInterface;
@@ -60,8 +51,7 @@ export interface UpdateDecisionPayloadInterface {
     decided_at?: string;
 }
 
-export interface DecisionsListFiltersInterface {
+export interface DecisionsListFiltersInterface extends PaginationParamsInterface {
     status?: DecisionStatus;
     category?: DecisionCategory;
-    per_page?: number;
 }
