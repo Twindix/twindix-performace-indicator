@@ -13,5 +13,6 @@ export { BoundaryErrorClass, NetworkError, IndicatorNetworkError, StackError } f
 export { QueryBoundary } from "./query-boundary";
 export { Pagination, type PaginationProps } from "./pagination";
 export { LoadMore, type LoadMoreProps } from "./load-more";
+export { InitLoader } from "./init-loader";
 export { Can, type CanProps } from "./can";
 export { CanRoute, type CanRouteProps } from "./can-route";

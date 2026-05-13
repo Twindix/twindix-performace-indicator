@@ -1,29 +1,10 @@
-import { Activity, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 import { Outlet } from "react-router-dom";
 
-import { Sidebar, Topbar } from "@/components/shared";
+import { InitLoader, Sidebar, Topbar } from "@/components/shared";
 import { t, useAppInit, useSettings } from "@/hooks";
 import { useSidebarStore } from "@/store";
 import { cn } from "@/utils";
-
-const InitLoader = () => (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-5 text-center px-6">
-        <div className="relative">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
-                <Activity className="h-7 w-7" />
-            </div>
-            <span aria-hidden className="absolute inset-0 rounded-2xl border-2 border-primary/40 animate-ping" />
-        </div>
-        <div className="flex flex-col gap-1">
-            <p className="text-sm font-semibold text-text-dark">{t("Preparing your workspace")}</p>
-            <p className="text-xs text-text-muted">{t("Loading active project and sprint…")}</p>
-        </div>
-        <span aria-hidden className="h-1 w-32 overflow-hidden rounded-full bg-muted">
-            <span className="block h-full w-1/3 bg-primary animate-[loading-bar_1.2s_ease-in-out_infinite]" />
-        </span>
-        <style>{`@keyframes loading-bar { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }`}</style>
-    </div>
-);
 
 export const DashboardLayout = () => {
     const isOpen = useSidebarStore((s) => s.isOpen);
