@@ -30,5 +30,13 @@ export const useUsersList = (options: UseUsersListOptions = {}) => {
         setItems((prev) => prev.map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
     }, [setItems]);
 
-    return { users: items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, patchUserLocal };
+    const prependUserLocal = useCallback((created: UserInterface) => {
+        setItems((prev) => [created, ...prev]);
+    }, [setItems]);
+
+    const removeUserLocal = useCallback((id: string) => {
+        setItems((prev) => prev.filter((u) => u.id !== id));
+    }, [setItems]);
+
+    return { users: items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, patchUserLocal, prependUserLocal, removeUserLocal };
 };

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/atoms";
 import { routesData } from "@/data";
-import { useAuth, useProjectsListLite, useSprintsList, useTheme, t, useSettings, usePermissions, usePresence, type PresenceStatus } from "@/hooks";
+import { useAuth, useProjectSprints, useProjectsListLite, useTheme, t, useSettings, usePermissions, usePresence, type PresenceStatus } from "@/hooks";
 import type { SprintInterface } from "@/interfaces";
 import { useProjectStore, useSprintStore } from "@/store";
 import { MobileNav } from "./mobile-nav";
@@ -50,7 +50,9 @@ export const Topbar = () => {
     const onSetActiveProject = useProjectStore((s) => s.onSetActiveProject);
 
     const { projects } = useProjectsListLite();
-    const { sprints } = useSprintsList({ initialPerPage: 100 });
+    // Use the cached reader — `useAppInit` seeded it on cold start, and sprint
+    // mutations invalidate it. Avoids a duplicate /projects/:id/sprints fetch.
+    const { sprints } = useProjectSprints(activeProjectId);
     const navigate = useNavigate();
     const p = usePermissions();
     const canEditProfile = p.auth.editProfile();

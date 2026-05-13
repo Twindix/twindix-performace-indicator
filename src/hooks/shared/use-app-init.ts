@@ -4,6 +4,8 @@ import type { ProjectInterface, SprintInterface } from "@/interfaces";
 import { projectsService } from "@/services";
 import { useProjectStore, useSprintStore } from "@/store";
 
+import { seedProjectSprintsCache } from "../projects/use-project-sprints";
+
 /**
  * Resolves the initial active project + sprint on app load.
  *
@@ -70,6 +72,10 @@ export const useAppInit = () => {
                     // Only fetch sprints if we don't already have them from step 2.
                     const sprints = sprintsForChosen ?? (await projectsService.sprintsHandler(chosen.id).catch(() => []));
                     if (cancelled) return;
+
+                    // Seed the topbar's sprints cache so it doesn't fetch the same list again.
+                    seedProjectSprintsCache(chosen.id, sprints);
+
                     const activeSprints = sprints.filter((s) => s.status === "active");
 
                     if (activeSprintId && activeSprints.some((s) => s.id === activeSprintId)) {

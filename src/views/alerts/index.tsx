@@ -5,7 +5,7 @@ import { Bell, Check, CheckCheck, Clock, ExternalLink, Link2, Pencil, Plus, Sear
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shared";
 import { AlertsSkeleton } from "@/components/skeletons";
-import { t, useAcknowledgeAlert, useAlertsList, useCreateAlert, useDeleteAlert, useDoneAlert, usePermissions, useUpdateAlert, useUsersList } from "@/hooks";
+import { t, useAcknowledgeAlert, useAlertsList, useCreateAlert, useDeleteAlert, useDoneAlert, usePermissions, useUpdateAlert, useUsersListLite } from "@/hooks";
 import type { AlertInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import {
@@ -116,7 +116,7 @@ export const AlertsView = () => {
     const { deleteHandler, isLoading: isDeleting } = useDeleteAlert();
     const { acknowledgeHandler, isLoading: isAcknowledging } = useAcknowledgeAlert();
     const { doneHandler, isLoading: isMarkingDone } = useDoneAlert();
-    const { users } = useUsersList();
+    const { users } = useUsersListLite();
 
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<AlertInterface | null>(null);

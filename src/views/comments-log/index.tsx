@@ -4,7 +4,7 @@ import { AtSign, MessageCircle, CheckCircle2, Clock, User, Plus, Pencil, Trash2,
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header, Pagination } from "@/components/shared";
 import { CommentsLogSkeleton } from "@/components/skeletons";
-import { t, useCommentsList, useSettings, usePageLoader, useCreateComment, useUpdateComment, useDeleteComment, usePermissions, useRespondComment, useUsersList } from "@/hooks";
+import { t, useCommentsList, useSettings, usePageLoader, useCreateComment, useUpdateComment, useDeleteComment, usePermissions, useRespondComment, useUsersListLite } from "@/hooks";
 import type { CommentInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
@@ -26,7 +26,7 @@ export const CommentsLogView = () => {
         status: responseFilter === "all" ? undefined : responseFilter,
         mention: mentionFilter === "all" ? undefined : mentionFilter,
     });
-    const { users } = useUsersList();
+    const { users } = useUsersListLite();
     const { createHandler: createCommentHandler, isLoading: isCreating } = useCreateComment();
     const { updateHandler: updateCommentHandler, isLoading: isUpdating } = useUpdateComment();
     const { deleteHandler: deleteCommentHandler } = useDeleteComment();

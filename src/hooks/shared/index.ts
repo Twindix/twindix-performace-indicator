@@ -9,4 +9,5 @@ export { useMutationAction } from "./use-mutation-action";
 export { useQueryAction, type UseQueryActionOptions } from "./use-query-action";
 export { usePaginatedQuery, type UsePaginatedQueryOptions, type UsePaginatedQueryResult } from "./use-paginated-query";
 export { useAppInit } from "./use-app-init";
+export { useSessionCachedList, invalidateSessionCachedList } from "./use-session-cached-list";
 export { usePermissions, type Permissions } from "./use-permissions";

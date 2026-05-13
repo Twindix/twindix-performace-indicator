@@ -42,7 +42,6 @@ const TasksViewInner = () => {
         removeTaskLocal,
         addTaskLocal,
         toKanban,
-        refetch,
     } = useTasksList(activeSprintId, {
         status: statusFilter !== "all" && statusFilter !== "blocked" ? statusFilter : undefined,
         assigned_to: assigneeFilter !== "all" ? assigneeFilter : undefined,
@@ -315,10 +314,7 @@ const TasksViewInner = () => {
 
             <AddTaskDialog
                 open={addTaskDialogOpen}
-                onOpenChange={(open) => {
-                    setAddTaskDialogOpen(open);
-                    if (!open) refetch();
-                }}
+                onOpenChange={setAddTaskDialogOpen}
                 members={users}
                 sprintId={activeSprintId}
                 addTaskLocal={addTaskLocal}

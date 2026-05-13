@@ -5,7 +5,7 @@ import { Badge, Button, Card, CardContent } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header, Pagination } from "@/components/shared";
 import { BlockersSkeleton } from "@/components/skeletons";
 import { BlockerType } from "@/enums";
-import { t, useBlockersList, usePermissions, useSettings, usePageLoader, useUsersList } from "@/hooks";
+import { t, useBlockersList, usePermissions, useSettings, usePageLoader, useUsersListLite } from "@/hooks";
 import type { BlockerInterface } from "@/interfaces";
 import { useSprintStore } from "@/store";
 import { Avatar, AvatarFallback, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
@@ -56,7 +56,7 @@ export const BlockerView = () => {
         owner: ownerFilter === "all" ? undefined : ownerFilter,
         reporter: reporterFilter === "all" ? undefined : reporterFilter,
     });
-    const { users } = useUsersList();
+    const { users } = useUsersListLite();
 
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<BlockerInterface | null>(null);

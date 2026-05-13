@@ -41,7 +41,7 @@ type FormErrors = Partial<Record<keyof FormState, string>>;
 export const UsersView = () => {
     const navigate = useNavigate();
     const p = usePermissions();
-    const { users, meta, isLoading, setPage, setPerPage, refetch, patchUserLocal } = useUsersList();
+    const { users, meta, isLoading, setPage, setPerPage, patchUserLocal, prependUserLocal } = useUsersList();
 
     const [errors, setErrors] = useState<FormErrors>({});
     const mapFieldErrors = (fe: Record<string, string[]>) => {
@@ -100,10 +100,11 @@ export const UsersView = () => {
         });
 
         if (created) {
+            // Optimistic prepend — no need to refetch the whole list after a create.
+            prependUserLocal(created as UserInterface);
             setAddOpen(false);
             setForm(emptyForm);
             setErrors({});
-            refetch();
         }
     };
 
