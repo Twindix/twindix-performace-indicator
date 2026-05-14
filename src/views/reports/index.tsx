@@ -3,7 +3,10 @@ import { ArrowRight, Download, FileSpreadsheet, Lightbulb, Users } from "lucide-
 
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, Header, ScoreGauge, StatusBadge } from "@/components/shared";
-import { analyticsSeed, authorshipSeed, handoffsSeed, timeSeed, workloadSeed } from "@/data";
+import { analyticsSeed, authorshipSeed, handoffsSeed, timeSeed } from "@/data";
+
+interface WorkloadStub { memberId: string; sprintId: string; assignedPoints: number; completedPoints: number; capacity: number; contextSwitches: number; activeTaskCount: number; }
+const workloadSeed: WorkloadStub[] = [];
 import { MetricStatus } from "@/enums";
 import { t } from "@/hooks";
 import type { BreakdownSliceInterface } from "@/interfaces";
