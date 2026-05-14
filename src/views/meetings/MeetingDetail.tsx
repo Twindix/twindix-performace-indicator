@@ -1,26 +1,33 @@
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { ChevronLeft, Paperclip, Plus, Send, Trash2 } from "lucide-react";
 
 import { Badge, Button, Input, Textarea } from "@/atoms";
-import { AttendeeRsvp, MeetingStatus } from "@/enums";
-import { t, useAuth } from "@/hooks";
-import type { MeetingInterface, MeetingTimeSlotInterface, MeetingUserInterface } from "@/interfaces/meetings";
+import {
+    t,
+    useAuth,
+    useAddMeetingSlot,
+    useCreateMeetingComment,
+    useDeleteMeetingAttachment,
+    useDeleteMeetingComment,
+    useFinalizeMeeting,
+    useMeetingDetail,
+    useRemoveMeetingSlot,
+    useUpdateMeetingRsvp,
+    useUploadMeetingAttachment,
+    useVoteMeetingSlot,
+} from "@/hooks";
+import type {
+    ApiMeetingAttendeeInterface,
+    ApiMeetingTimeSlotInterface,
+    RsvpStatus,
+} from "@/interfaces";
 import { cn } from "@/utils";
 
 import { MEETING_STATUS_LABEL, MEETING_STATUS_VARIANT, MEETING_TYPE_LABEL, RSVP_LABEL, RSVP_TONE } from "./constants";
 
 interface MeetingDetailProps {
-    meeting: MeetingInterface;
+    meetingId: string;
     onBack: () => void;
-    onRsvp: (meetingId: string, rsvp: AttendeeRsvp) => void;
-    onVote: (meetingId: string, slotId: string) => void;
-    onAddSlot: (meetingId: string, slot: { date: string; start_time: string; end_time: string }) => void;
-    onCloseVoting: (meetingId: string, winningSlotId: string) => void;
-    onAddComment: (meetingId: string, body: string) => void;
-    onAddAttachment: (meetingId: string, name: string, size: number) => void;
-    onRemoveAttachment: (meetingId: string, attachmentId: string) => void;
-    currentUserId: string;
-    isOrganizer: boolean;
 }
 
 const computeDuration = (start?: string | null, end?: string | null) => {
@@ -42,60 +49,124 @@ const formatSize = (bytes: number) => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const topVotedSlot = (slots: MeetingTimeSlotInterface[]) =>
-    [...slots].sort((a, b) => b.voter_ids.length - a.voter_ids.length)[0] ?? null;
+const topVotedSlot = (slots: ApiMeetingTimeSlotInterface[]) =>
+    [...slots].sort((a, b) => b.votes_count - a.votes_count)[0] ?? null;
 
-export const MeetingDetail = ({
-    meeting,
-    onBack,
-    onRsvp,
-    onVote,
-    onAddSlot,
-    onCloseVoting,
-    onAddComment,
-    onAddAttachment,
-    onRemoveAttachment,
-    currentUserId,
-    isOrganizer,
-}: MeetingDetailProps) => {
+export const MeetingDetail = ({ meetingId, onBack }: MeetingDetailProps) => {
     const { user } = useAuth();
+    const currentUserId = user?.id ?? "";
     const displayName = user?.full_name ?? "You";
+
+    const { meeting, isLoading, refetch, setMeeting } = useMeetingDetail(meetingId);
+    const { voteHandler } = useVoteMeetingSlot();
+    const { updateRsvpHandler } = useUpdateMeetingRsvp();
+    const { finalizeHandler } = useFinalizeMeeting();
+    const { addHandler: addSlotHandler } = useAddMeetingSlot();
+    const { removeHandler: removeSlotHandler } = useRemoveMeetingSlot();
+    const { createHandler: createCommentHandler } = useCreateMeetingComment();
+    const { deleteHandler: deleteCommentHandler } = useDeleteMeetingComment();
+    const { uploadHandler: uploadAttachmentHandler } = useUploadMeetingAttachment();
+    const { deleteHandler: deleteAttachmentHandler } = useDeleteMeetingAttachment();
 
     const [commentDraft, setCommentDraft] = useState("");
     const [slotDraft, setSlotDraft] = useState({ date: "", start_time: "", end_time: "" });
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    if (isLoading && !meeting) {
+        return (
+            <div>
+                <div className="flex items-start gap-3 mb-4">
+                    <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5 mt-1">
+                        <ChevronLeft className="h-4 w-4" />
+                        {t("Back")}
+                    </Button>
+                </div>
+                <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-text-muted">
+                    {t("Loading meeting...")}
+                </div>
+            </div>
+        );
+    }
+
+    if (!meeting) {
+        return (
+            <div>
+                <div className="flex items-start gap-3 mb-4">
+                    <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5 mt-1">
+                        <ChevronLeft className="h-4 w-4" />
+                        {t("Back")}
+                    </Button>
+                </div>
+                <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-text-muted">
+                    {t("Meeting not found.")}
+                </div>
+            </div>
+        );
+    }
+
     const duration = computeDuration(meeting.start_time, meeting.end_time);
-    const myAttendance = meeting.attendees.find((a) => a.user.id === currentUserId);
+    const myAttendance = meeting.attendees.find((a: ApiMeetingAttendeeInterface) => a.user_id === currentUserId);
+    const winning = topVotedSlot(meeting.time_slots);
+    const isVoting = meeting.status === "voting";
+    const isOrganizer = meeting.organizer.id === currentUserId;
 
-    const winning = useMemo(() => topVotedSlot(meeting.suggested_slots), [meeting.suggested_slots]);
+    const handleRsvp = async (rsvp: RsvpStatus) => {
+        if (!currentUserId) return;
+        const updated = await updateRsvpHandler(meeting.id, currentUserId, rsvp);
+        if (updated) setMeeting(updated);
+    };
 
-    const handleSlotAdd = () => {
+    const handleVote = async (slotId: string) => {
+        const updated = await voteHandler(meeting.id, slotId);
+        if (updated) setMeeting(updated);
+    };
+
+    const handleSlotAdd = async () => {
         if (!slotDraft.date || !slotDraft.start_time || !slotDraft.end_time) return;
-        onAddSlot(meeting.id, slotDraft);
-        setSlotDraft({ date: "", start_time: "", end_time: "" });
+        const result = await addSlotHandler(meeting.id, slotDraft);
+        if (result) {
+            setSlotDraft({ date: "", start_time: "", end_time: "" });
+            refetch();
+        }
     };
 
-    const handleCloseVoting = () => {
-        if (!winning) return;
-        onCloseVoting(meeting.id, winning.id);
+    const handleSlotRemove = async (slotId: string) => {
+        const ok = await removeSlotHandler(meeting.id, slotId);
+        if (ok) refetch();
     };
 
-    const handleCommentSubmit = () => {
+    const handleFinalize = async () => {
+        const updated = await finalizeHandler(meeting.id);
+        if (updated) setMeeting(updated);
+    };
+
+    const handleCommentSubmit = async () => {
         const body = commentDraft.trim();
         if (!body) return;
-        onAddComment(meeting.id, body);
-        setCommentDraft("");
+        const created = await createCommentHandler(meeting.id, body);
+        if (created) {
+            setCommentDraft("");
+            refetch();
+        }
     };
 
-    const handleFilePick = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleCommentDelete = async (commentId: string) => {
+        const ok = await deleteCommentHandler(meeting.id, commentId);
+        if (ok) refetch();
+    };
+
+    const handleFilePick = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (!file) return;
-        onAddAttachment(meeting.id, file.name, file.size);
         event.target.value = "";
+        if (!file) return;
+        const uploaded = await uploadAttachmentHandler(meeting.id, file);
+        if (uploaded) refetch();
     };
 
-    const isVoting = meeting.status === MeetingStatus.Voting;
+    const handleAttachmentDelete = async (attachmentId: string) => {
+        const ok = await deleteAttachmentHandler(meeting.id, attachmentId);
+        if (ok) refetch();
+    };
 
     return (
         <div>
@@ -123,30 +194,30 @@ export const MeetingDetail = ({
                 <Stat label={t("Date")} value={meeting.date ?? "—"} />
                 <Stat label={t("Time")} value={meeting.start_time && meeting.end_time ? `${meeting.start_time} – ${meeting.end_time}` : "—"} />
                 <Stat label={t("Duration")} value={duration ?? "—"} />
-                <Stat label={t("Type")} value={t(MEETING_TYPE_LABEL[meeting.type])} />
+                <Stat label={t("Type")} value={t(MEETING_TYPE_LABEL[meeting.meeting_type])} />
             </div>
 
-            {myAttendance && !isVoting && meeting.status === MeetingStatus.Scheduled && (
+            {myAttendance && !isVoting && meeting.status === "scheduled" && (
                 <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-4 mb-4">
-                    {myAttendance.rsvp === AttendeeRsvp.Pending ? (
+                    {myAttendance.rsvp_status === "pending" ? (
                         <p className="text-sm text-text-dark">{t("You haven't responded to this meeting yet.")}</p>
                     ) : (
                         <p className="text-sm text-text-dark">
-                            {t("Your response:")} <span className={cn("font-semibold", RSVP_TONE[myAttendance.rsvp])}>{t(RSVP_LABEL[myAttendance.rsvp])}</span>
+                            {t("Your response:")} <span className={cn("font-semibold", RSVP_TONE[myAttendance.rsvp_status])}>{t(RSVP_LABEL[myAttendance.rsvp_status])}</span>
                         </p>
                     )}
                     <div className="flex items-center gap-2">
                         <Button
                             size="sm"
-                            onClick={() => onRsvp(meeting.id, AttendeeRsvp.Accepted)}
-                            variant={myAttendance.rsvp === AttendeeRsvp.Accepted ? "default" : "outline"}
+                            onClick={() => handleRsvp("accepted")}
+                            variant={myAttendance.rsvp_status === "accepted" ? "default" : "outline"}
                         >
                             {t("Accept")}
                         </Button>
                         <Button
                             size="sm"
-                            onClick={() => onRsvp(meeting.id, AttendeeRsvp.Declined)}
-                            variant={myAttendance.rsvp === AttendeeRsvp.Declined ? "destructive" : "outline"}
+                            onClick={() => handleRsvp("declined")}
+                            variant={myAttendance.rsvp_status === "declined" ? "destructive" : "outline"}
                         >
                             {t("Decline")}
                         </Button>
@@ -166,16 +237,16 @@ export const MeetingDetail = ({
                             </p>
                         </div>
                         {isOrganizer && (
-                            <Button size="sm" variant="outline" onClick={handleCloseVoting} disabled={!winning}>
+                            <Button size="sm" variant="outline" onClick={handleFinalize} disabled={!winning}>
                                 {t("Close voting & confirm")}
                             </Button>
                         )}
                     </div>
 
                     <div className="space-y-2">
-                        {meeting.suggested_slots.map((slot) => {
-                            const hasVoted = slot.voter_ids.includes(currentUserId);
-                            const isTop = winning?.id === slot.id && slot.voter_ids.length > 0;
+                        {meeting.time_slots.map((slot) => {
+                            const hasVoted = myAttendance?.voted_slot_id === slot.id;
+                            const isTop = winning?.id === slot.id && slot.votes_count > 0;
                             return (
                                 <div
                                     key={slot.id}
@@ -189,16 +260,28 @@ export const MeetingDetail = ({
                                             {slot.date} · {slot.start_time} – {slot.end_time}
                                         </p>
                                         <p className="text-[11px] text-text-muted">
-                                            {slot.voter_ids.length} {slot.voter_ids.length === 1 ? t("vote") : t("votes")}
+                                            {slot.votes_count} {slot.votes_count === 1 ? t("vote") : t("votes")}
                                         </p>
                                     </div>
-                                    <Button
-                                        size="sm"
-                                        variant={hasVoted ? "default" : "outline"}
-                                        onClick={() => onVote(meeting.id, slot.id)}
-                                    >
-                                        {hasVoted ? t("Voted") : t("Vote")}
-                                    </Button>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            size="sm"
+                                            variant={hasVoted ? "default" : "outline"}
+                                            onClick={() => handleVote(slot.id)}
+                                        >
+                                            {hasVoted ? t("Voted") : t("Vote")}
+                                        </Button>
+                                        {isOrganizer && (
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-8 w-8"
+                                                onClick={() => handleSlotRemove(slot.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4 text-error" />
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
                             );
                         })}
@@ -236,13 +319,13 @@ export const MeetingDetail = ({
             )}
 
             <div className="rounded-lg border border-border bg-card p-4 mb-4 space-y-3">
-                <Labelled label={t("Organizer")} value={meeting.organizer.full_name} />
+                <Labelled label={t("Organizer")} value={meeting.organizer.name} />
                 {meeting.location && <Labelled label={t("Location / Link")} value={meeting.location} />}
                 {meeting.description && <Labelled label={t("Description")} value={meeting.description} />}
-                {meeting.agenda && <Labelled label={t("Notes / Agenda")} value={meeting.agenda} />}
+                {meeting.notes && <Labelled label={t("Notes / Agenda")} value={meeting.notes} />}
                 <div className="grid grid-cols-2 gap-4">
-                    {meeting.project_id && <Labelled label={t("Project")} value={meeting.project_name ?? meeting.project_id} tone="primary" />}
-                    {meeting.team_id && <Labelled label={t("Team")} value={meeting.team_name ?? meeting.team_id} tone="primary" />}
+                    {meeting.project && <Labelled label={t("Project")} value={meeting.project.name} tone="primary" />}
+                    {meeting.team && <Labelled label={t("Team")} value={meeting.team.name} tone="primary" />}
                 </div>
             </div>
 
@@ -253,10 +336,9 @@ export const MeetingDetail = ({
                 <div className="space-y-2 divide-y divide-border">
                     {meeting.attendees.map((attendee) => (
                         <AttendeeRow
-                            key={attendee.user.id}
-                            attendee={attendee.user}
-                            rsvp={attendee.rsvp}
-                            isSelf={attendee.user.id === currentUserId}
+                            key={attendee.user_id}
+                            attendee={attendee}
+                            isSelf={attendee.user_id === currentUserId}
                             selfDisplayName={displayName}
                         />
                     ))}
@@ -283,18 +365,18 @@ export const MeetingDetail = ({
                                 <div className="flex items-center gap-2 min-w-0">
                                     <Paperclip className="h-4 w-4 text-text-muted shrink-0" />
                                     <div className="min-w-0">
-                                        <p className="text-sm font-medium text-text-dark truncate">{attachment.name}</p>
+                                        <p className="text-sm font-medium text-text-dark truncate">{attachment.file_name}</p>
                                         <p className="text-[11px] text-text-muted">
-                                            {formatSize(attachment.size)} · {attachment.uploaded_by.full_name}
+                                            {formatSize(attachment.file_size)} · {attachment.uploaded_by.name}
                                         </p>
                                     </div>
                                 </div>
-                                {attachment.uploaded_by.id === currentUserId && (
+                                {(attachment.uploaded_by.id === currentUserId || isOrganizer) && (
                                     <Button
                                         size="icon"
                                         variant="ghost"
                                         className="h-8 w-8"
-                                        onClick={() => onRemoveAttachment(meeting.id, attachment.id)}
+                                        onClick={() => handleAttachmentDelete(attachment.id)}
                                     >
                                         <Trash2 className="h-4 w-4 text-error" />
                                     </Button>
@@ -316,12 +398,22 @@ export const MeetingDetail = ({
                     {meeting.comments.map((comment) => (
                         <div key={comment.id} className="flex items-start gap-3">
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-lighter text-primary-medium text-xs font-semibold shrink-0">
-                                {comment.author.avatar_initials}
+                                {comment.avatar_initials ?? comment.user_name.split(/\s+/).filter(Boolean).map((p) => p[0]).slice(0, 2).join("").toUpperCase()}
                             </div>
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-0.5">
-                                    <span className="text-sm font-semibold text-text-dark">{comment.author.full_name}</span>
+                                    <span className="text-sm font-semibold text-text-dark">{comment.user_name}</span>
                                     <span className="text-[11px] text-text-muted">{new Date(comment.created_at).toLocaleString()}</span>
+                                    {(comment.user_id === currentUserId || isOrganizer) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCommentDelete(comment.id)}
+                                            className="ml-auto text-error hover:opacity-80 cursor-pointer"
+                                            aria-label={t("Delete comment")}
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                    )}
                                 </div>
                                 <p className="text-sm text-text-dark whitespace-pre-wrap">{comment.body}</p>
                             </div>
@@ -361,19 +453,17 @@ const Labelled = ({ label, value, tone }: { label: string; value: string; tone?:
 );
 
 interface AttendeeRowProps {
-    attendee: MeetingUserInterface;
-    rsvp: AttendeeRsvp;
+    attendee: ApiMeetingAttendeeInterface;
     isSelf: boolean;
     selfDisplayName: string;
 }
 
-const AttendeeRow = ({ attendee, rsvp, isSelf, selfDisplayName }: AttendeeRowProps) => (
+const AttendeeRow = ({ attendee, isSelf, selfDisplayName }: AttendeeRowProps) => (
     <div className="flex items-center justify-between py-2 first:pt-0">
         <div>
-            <p className="text-sm font-semibold text-text-dark">{isSelf ? `${selfDisplayName} (${t("You")})` : attendee.full_name}</p>
-            {attendee.role_label && <p className="text-[11px] text-text-muted">{attendee.role_label}</p>}
+            <p className="text-sm font-semibold text-text-dark">{isSelf ? `${selfDisplayName} (${t("You")})` : attendee.name}</p>
+            {attendee.role && <p className="text-[11px] text-text-muted">{attendee.role}</p>}
         </div>
-        <span className={cn("text-sm font-semibold", RSVP_TONE[rsvp])}>{t(RSVP_LABEL[rsvp])}</span>
+        <span className={cn("text-sm font-semibold", RSVP_TONE[attendee.rsvp_status])}>{t(RSVP_LABEL[attendee.rsvp_status])}</span>
     </div>
 );
-
