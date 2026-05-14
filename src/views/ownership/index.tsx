@@ -1,73 +1,73 @@
-import { useMemo, useState } from "react";
-import { ClipboardList, FileCode, FolderKanban, Search, User, Users } from "lucide-react";
+import { useState } from "react";
+import { ClipboardList, FileCode, FolderKanban, Plus, Search, User, Users } from "lucide-react";
 
-import { Badge, Card, CardContent, CardHeader, CardTitle, Input } from "@/atoms";
-import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
-import { authorshipSeed, timeSeed } from "@/data";
-import { t } from "@/hooks";
-import type { AuthorshipEntryInterface, TimeMemberInterface } from "@/interfaces";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input } from "@/atoms";
+import { AnimatedNumber, EmptyState, Header, Pagination } from "@/components/shared";
+import {
+    t,
+    useOwnershipFeed,
+    useOwnershipLeaderboard,
+    useOwnershipStats,
+    usePermissions,
+    useUsersListLite,
+} from "@/hooks";
+
+import { FeatureFormDialog } from "./FeatureFormDialog";
+import type { OwnershipFeedItemInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";
 import { cn, formatDate } from "@/utils";
 
-const STATUS_VARIANT: Record<AuthorshipEntryInterface["status"], "default" | "success" | "warning" | "secondary"> = {
+const STATUS_VARIANT: Record<string, "default" | "success" | "warning" | "secondary"> = {
     draft: "warning",
     active: "default",
     shipped: "success",
     archived: "secondary",
 };
 
+const initialsFor = (name: string) =>
+    name.split(/\s+/).filter(Boolean).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+
 export const OwnershipView = () => {
+    const p = usePermissions();
     const [query, setQuery] = useState("");
     const [creatorFilter, setCreatorFilter] = useState<string>("all");
     const [kindFilter, setKindFilter] = useState<"all" | "feature" | "task">("all");
+    const [createOpen, setCreateOpen] = useState(false);
 
-    const getMember = (id: string) => timeSeed.members.find((m) => m.id === id);
-    const getProject = (id: string) => timeSeed.projects.find((p) => p.id === id);
+    const { stats, refetch: refetchStats } = useOwnershipStats();
+    const { leaderboard, refetch: refetchLeaderboard } = useOwnershipLeaderboard();
+    const { items, meta, isLoading, setPage, setPerPage, refetch: refetchFeed } = useOwnershipFeed({
+        type: kindFilter,
+        creator: creatorFilter === "all" ? undefined : creatorFilter,
+        search: query || undefined,
+    });
 
-    const filtered = useMemo(() => authorshipSeed.filter((entry) => {
-        if (kindFilter !== "all" && entry.kind !== kindFilter) return false;
-        if (creatorFilter !== "all" && entry.creator_id !== creatorFilter) return false;
-        if (query && !(`${entry.name} ${entry.description}`.toLowerCase().includes(query.toLowerCase()))) return false;
-        return true;
-    }), [query, creatorFilter, kindFilter]);
+    const { users } = useUsersListLite();
 
-    const leaderboard = useMemo(() => {
-        const map = new Map<string, { member?: TimeMemberInterface; count: number; features: number; tasks: number }>();
-        authorshipSeed.forEach((entry) => {
-            const current = map.get(entry.creator_id) ?? { member: getMember(entry.creator_id), count: 0, features: 0, tasks: 0 };
-            current.count += 1;
-            if (entry.kind === "feature") current.features += 1;
-            else current.tasks += 1;
-            map.set(entry.creator_id, current);
-        });
-        return Array.from(map.values()).sort((a, b) => b.count - a.count);
-    }, []);
-
-    const stats = useMemo(() => ({
-        total: authorshipSeed.length,
-        features: authorshipSeed.filter((e) => e.kind === "feature").length,
-        tasks: authorshipSeed.filter((e) => e.kind === "task").length,
-        contributors: leaderboard.length,
-    }), [leaderboard]);
-
-    if (authorshipSeed.length === 0) {
-        return (
-            <div>
-                <Header title={t("Ownership")} description={t("See who authored each feature and task")} />
-                <EmptyState icon={User} title={t("No authorship data")} description={t("No authorship records yet")} />
-            </div>
-        );
-    }
+    const handleFeatureCreated = () => {
+        refetchFeed();
+        refetchStats();
+        refetchLeaderboard();
+    };
 
     return (
         <div>
-            <Header title={t("Ownership")} description={t("See who authored each feature and task across the platform")} />
+            <Header
+                title={t("Ownership")}
+                description={t("See who authored each feature and task across the platform")}
+                actions={p.features.create() ? (
+                    <Button size="sm" className="gap-1.5" onClick={() => setCreateOpen(true)}>
+                        <Plus className="h-4 w-4" />
+                        {t("Create Feature")}
+                    </Button>
+                ) : null}
+            />
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <StatCard icon={ClipboardList} label={t("Total Items")} value={stats.total} tone="primary" />
-                <StatCard icon={FolderKanban} label={t("Features")} value={stats.features} tone="primary" />
-                <StatCard icon={FileCode} label={t("Tasks")} value={stats.tasks} tone="primary" />
-                <StatCard icon={Users} label={t("Contributors")} value={stats.contributors} tone="success" />
+                <StatCard icon={ClipboardList} label={t("Total Items")} value={stats?.total_items ?? 0} tone="primary" />
+                <StatCard icon={FolderKanban} label={t("Features")} value={stats?.features ?? 0} tone="primary" />
+                <StatCard icon={FileCode} label={t("Tasks")} value={stats?.tasks ?? 0} tone="primary" />
+                <StatCard icon={Users} label={t("Contributors")} value={stats?.contributors ?? 0} tone="success" />
             </div>
 
             <Card className="mb-6">
@@ -91,8 +91,8 @@ export const OwnershipView = () => {
                         className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                     >
                         <option value="all">{t("All Creators")}</option>
-                        {timeSeed.members.map((m) => (
-                            <option key={m.id} value={m.id}>{m.full_name}</option>
+                        {users.map((u) => (
+                            <option key={u.id} value={u.id}>{u.full_name}</option>
                         ))}
                     </select>
                 </CardContent>
@@ -101,53 +101,65 @@ export const OwnershipView = () => {
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
                 <div>
                     <h2 className="text-lg font-semibold text-text-dark mb-3">{t("Authorship Feed")}</h2>
-                    <div className="grid grid-cols-1 gap-3">
-                        {filtered.map((entry) => {
-                            const creator = getMember(entry.creator_id);
-                            const project = getProject(entry.project_id);
-                            return (
-                                <Card key={entry.id}>
-                                    <CardContent className="p-4">
-                                        <div className="flex items-start justify-between gap-3 mb-2">
-                                            <div className="flex items-center gap-2 min-w-0">
-                                                <span className={cn(
-                                                    "flex h-7 w-7 items-center justify-center rounded-md shrink-0",
-                                                    entry.kind === "feature" ? "bg-primary-lighter text-primary" : "bg-success-light text-success",
-                                                )}>
-                                                    {entry.kind === "feature" ? <FolderKanban className="h-3.5 w-3.5" /> : <FileCode className="h-3.5 w-3.5" />}
+                    {isLoading && items.length === 0 ? (
+                        <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-text-muted">
+                            {t("Loading...")}
+                        </div>
+                    ) : items.length === 0 ? (
+                        <EmptyState icon={User} title={t("No matches")} description={t("Try adjusting the filters")} />
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-1 gap-3">
+                                {items.map((entry: OwnershipFeedItemInterface) => (
+                                    <Card key={entry.id}>
+                                        <CardContent className="p-4">
+                                            <div className="flex items-start justify-between gap-3 mb-2">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <span className={cn(
+                                                        "flex h-7 w-7 items-center justify-center rounded-md shrink-0",
+                                                        entry.type === "feature" ? "bg-primary-lighter text-primary" : "bg-success-light text-success",
+                                                    )}>
+                                                        {entry.type === "feature" ? <FolderKanban className="h-3.5 w-3.5" /> : <FileCode className="h-3.5 w-3.5" />}
+                                                    </span>
+                                                    <h3 className="text-sm font-semibold text-text-dark truncate">{entry.title}</h3>
+                                                </div>
+                                                <Badge variant={STATUS_VARIANT[entry.status] ?? "secondary"} className="text-[10px]">{t(entry.status)}</Badge>
+                                            </div>
+                                            {entry.description && <p className="text-xs text-text-muted mb-3">{entry.description}</p>}
+                                            <div className="flex flex-wrap items-center gap-3 text-[11px] text-text-muted">
+                                                <span className="flex items-center gap-1.5">
+                                                    <Avatar className="h-5 w-5">
+                                                        <AvatarFallback className="text-[8px]">
+                                                            {entry.creator.avatar_initials ?? initialsFor(entry.creator.name)}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <span className="font-semibold text-text-dark">{entry.creator.name}</span>
                                                 </span>
-                                                <h3 className="text-sm font-semibold text-text-dark truncate">{entry.name}</h3>
+                                                {entry.project_name && <span className="text-primary">{entry.project_name}</span>}
+                                                <span>{t("Created")}: {formatDate(entry.created_at)}</span>
+                                                <span>{t("Updated")}: {formatDate(entry.updated_at)}</span>
+                                                {entry.linked_tasks_count > 0 && (
+                                                    <span>{entry.linked_tasks_count} {t("linked tasks")}</span>
+                                                )}
                                             </div>
-                                            <Badge variant={STATUS_VARIANT[entry.status]} className="text-[10px]">{t(entry.status)}</Badge>
-                                        </div>
-                                        <p className="text-xs text-text-muted mb-3">{entry.description}</p>
-                                        <div className="flex flex-wrap items-center gap-3 text-[11px] text-text-muted">
-                                            <span className="flex items-center gap-1.5">
-                                                <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{creator?.avatar_initials ?? "?"}</AvatarFallback></Avatar>
-                                                <span className="font-semibold text-text-dark">{creator?.full_name ?? "Unknown"}</span>
-                                            </span>
-                                            {project && <span className="text-primary">{project.name}</span>}
-                                            <span>{t("Created")}: {formatDate(entry.created_at)}</span>
-                                            <span>{t("Updated")}: {formatDate(entry.updated_at)}</span>
-                                            {entry.linked_task_ids.length > 0 && (
-                                                <span>{entry.linked_task_ids.length} {t("linked tasks")}</span>
+                                            {entry.tags.length > 0 && (
+                                                <div className="flex flex-wrap gap-1 mt-2">
+                                                    {entry.tags.map((tag) => (
+                                                        <span key={tag} className="text-[10px] text-text-muted bg-muted/60 px-1.5 py-0.5 rounded">{tag}</span>
+                                                    ))}
+                                                </div>
                                             )}
-                                        </div>
-                                        {entry.tags.length > 0 && (
-                                            <div className="flex flex-wrap gap-1 mt-2">
-                                                {entry.tags.map((tag) => (
-                                                    <span key={tag} className="text-[10px] text-text-muted bg-muted/60 px-1.5 py-0.5 rounded">{tag}</span>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
-                        {filtered.length === 0 && (
-                            <EmptyState icon={User} title={t("No matches")} description={t("Try adjusting the filters")} />
-                        )}
-                    </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                            {meta && (
+                                <div className="mt-4">
+                                    <Pagination meta={meta} onPageChange={setPage} onPerPageChange={setPerPage} />
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
 
                 <div>
@@ -155,28 +167,41 @@ export const OwnershipView = () => {
                     <Card>
                         <CardHeader className="pb-2"><CardTitle className="text-sm">{t("Top Authors")}</CardTitle></CardHeader>
                         <CardContent className="flex flex-col gap-3">
-                            {leaderboard.map(({ member, count, features, tasks }, i) => (
+                            {leaderboard.map((entry, i) => (
                                 <button
-                                    key={member?.id ?? i}
-                                    onClick={() => setCreatorFilter(member?.id ?? "all")}
+                                    key={entry.user_id}
+                                    onClick={() => setCreatorFilter(entry.user_id)}
                                     className={cn(
                                         "flex items-center gap-3 text-start rounded-md p-2 -mx-2 transition-colors",
-                                        creatorFilter === member?.id ? "bg-primary-lighter" : "hover:bg-muted/40",
+                                        creatorFilter === entry.user_id ? "bg-primary-lighter" : "hover:bg-muted/40",
                                     )}
                                 >
                                     <span className="text-xs text-text-muted w-5 text-right shrink-0">#{i + 1}</span>
-                                    <Avatar className="h-7 w-7 shrink-0"><AvatarFallback className="text-[10px]">{member?.avatar_initials ?? "?"}</AvatarFallback></Avatar>
+                                    <Avatar className="h-7 w-7 shrink-0">
+                                        <AvatarFallback className="text-[10px]">
+                                            {entry.avatar_initials ?? initialsFor(entry.name)}
+                                        </AvatarFallback>
+                                    </Avatar>
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-xs font-semibold text-text-dark truncate">{member?.full_name ?? "Unknown"}</p>
-                                        <p className="text-[10px] text-text-muted">{features} {t("features")} · {tasks} {t("tasks")}</p>
+                                        <p className="text-xs font-semibold text-text-dark truncate">{entry.name}</p>
+                                        <p className="text-[10px] text-text-muted">{entry.features} {t("features")} · {entry.tasks} {t("tasks")}</p>
                                     </div>
-                                    <span className="text-sm font-bold text-primary"><AnimatedNumber value={count} /></span>
+                                    <span className="text-sm font-bold text-primary"><AnimatedNumber value={entry.count} /></span>
                                 </button>
                             ))}
+                            {leaderboard.length === 0 && (
+                                <p className="text-xs text-text-muted text-center py-2">{t("No contributors yet.")}</p>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
             </div>
+
+            <FeatureFormDialog
+                open={createOpen}
+                onOpenChange={setCreateOpen}
+                onCreated={handleFeatureCreated}
+            />
         </div>
     );
 };

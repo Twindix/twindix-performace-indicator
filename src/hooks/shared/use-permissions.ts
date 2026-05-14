@@ -9,6 +9,7 @@ import {
     blockersPolicy,
     commentsPolicy,
     decisionsPolicy,
+    featuresPolicy,
     projectsPolicy,
     redFlagsPolicy,
     sprintsPolicy,
@@ -50,6 +51,7 @@ export interface Permissions {
     decisions: BoundModule<typeof decisionsPolicy>;
     users: BoundModule<typeof usersPolicy>;
     teams: BoundModule<typeof teamsPolicy>;
+    features: BoundModule<typeof featuresPolicy>;
 }
 
 export const usePermissions = (): Permissions => {
@@ -71,6 +73,7 @@ export const usePermissions = (): Permissions => {
             decisions: bindModule(decisionsPolicy as unknown as Module, ctx) as BoundModule<typeof decisionsPolicy>,
             users: bindModule(usersPolicy as unknown as Module, ctx) as BoundModule<typeof usersPolicy>,
             teams: bindModule(teamsPolicy as unknown as Module, ctx) as BoundModule<typeof teamsPolicy>,
+            features: bindModule(featuresPolicy as unknown as Module, ctx) as BoundModule<typeof featuresPolicy>,
         };
     }, [user?.id, user?.role_tier]);
 };
