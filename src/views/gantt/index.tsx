@@ -2,9 +2,8 @@ import { useMemo, useState } from "react";
 import { GanttChart as GanttIcon } from "lucide-react";
 
 import { EmptyState, Header } from "@/components/shared";
-import { ganttSeed } from "@/data/seed";
 import { GanttStatus } from "@/enums";
-import { t } from "@/hooks";
+import { t, useGanttTasks, useProjectsListLite } from "@/hooks";
 import type { GanttFiltersInterface } from "@/interfaces/gantt";
 
 import { GanttChart } from "./GanttChart";
@@ -28,49 +27,42 @@ const defaultFilters: GanttFiltersInterface = {
 
 export const GanttView = () => {
     const [filters, setFilters] = useState<GanttFiltersInterface>(defaultFilters);
+    const { projects } = useProjectsListLite();
 
-    const filteredTasks = useMemo(() => {
-        return ganttSeed.tasks.filter((task) => {
-            if (filters.projectId !== "all" && task.project_id !== filters.projectId) return false;
-            if (filters.status !== "all" && task.status !== filters.status) return false;
-            if (filters.rangeStart && parseDate(task.end_date) < parseDate(filters.rangeStart)) return false;
-            if (filters.rangeEnd && parseDate(task.start_date) > parseDate(filters.rangeEnd)) return false;
-            return true;
-        });
-    }, [filters]);
+    const apiFilters = useMemo(() => ({
+        project_id: filters.projectId !== "all" ? filters.projectId : undefined,
+        status: filters.status !== "all" ? (filters.status as GanttStatus) : undefined,
+        from: filters.rangeStart || undefined,
+        to: filters.rangeEnd || undefined,
+    }), [filters]);
+
+    const { tasks, summary, isLoading } = useGanttTasks(apiFilters);
 
     const { windowStart, windowEnd } = useMemo(() => {
         if (filters.rangeStart && filters.rangeEnd) {
             return { windowStart: filters.rangeStart, windowEnd: filters.rangeEnd };
         }
-        if (filteredTasks.length === 0) {
+        if (tasks.length === 0) {
             const now = Date.now();
             return {
                 windowStart: toIso(now - 30 * DAY_MS),
                 windowEnd: toIso(now + 60 * DAY_MS),
             };
         }
-        const minStart = Math.min(...filteredTasks.map((task) => parseDate(task.start_date)));
-        const maxEnd = Math.max(...filteredTasks.map((task) => parseDate(task.end_date)));
+        const minStart = Math.min(...tasks.map((task) => parseDate(task.start_date)));
+        const maxEnd = Math.max(...tasks.map((task) => parseDate(task.end_date)));
         return {
             windowStart: filters.rangeStart || toIso(minStart - 3 * DAY_MS),
             windowEnd: filters.rangeEnd || toIso(maxEnd + 3 * DAY_MS),
         };
-    }, [filteredTasks, filters.rangeStart, filters.rangeEnd]);
+    }, [tasks, filters.rangeStart, filters.rangeEnd]);
 
-    const summary = useMemo(() => {
-        const total = filteredTasks.length;
-        const byStatus = filteredTasks.reduce<Record<string, number>>((acc, task) => {
-            acc[task.status] = (acc[task.status] ?? 0) + 1;
-            return acc;
-        }, {});
-        return {
-            total,
-            inProgress: byStatus[GanttStatus.InProgress] ?? 0,
-            completed: byStatus[GanttStatus.Completed] ?? 0,
-            delayed: byStatus[GanttStatus.Delayed] ?? 0,
-        };
-    }, [filteredTasks]);
+    const totals = summary ?? {
+        total_tasks: tasks.length,
+        in_progress: 0,
+        completed: 0,
+        delayed: 0,
+    };
 
     const canReset =
         filters.projectId !== "all" ||
@@ -91,7 +83,7 @@ export const GanttView = () => {
             />
 
             <GanttFilters
-                projects={ganttSeed.projects}
+                projects={projects}
                 filters={filters}
                 onChange={handleChange}
                 onReset={handleReset}
@@ -99,13 +91,17 @@ export const GanttView = () => {
             />
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                <SummaryTile label={t("Tasks")} value={summary.total} />
-                <SummaryTile label={t("In Progress")} value={summary.inProgress} tone="primary" />
-                <SummaryTile label={t("Completed")} value={summary.completed} tone="success" />
-                <SummaryTile label={t("Delayed")} value={summary.delayed} tone="error" />
+                <SummaryTile label={t("Tasks")} value={totals.total_tasks} />
+                <SummaryTile label={t("In Progress")} value={totals.in_progress} tone="primary" />
+                <SummaryTile label={t("Completed")} value={totals.completed} tone="success" />
+                <SummaryTile label={t("Delayed")} value={totals.delayed} tone="error" />
             </div>
 
-            {filteredTasks.length === 0 ? (
+            {isLoading ? (
+                <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-text-muted">
+                    {t("Loading gantt tasks...")}
+                </div>
+            ) : tasks.length === 0 ? (
                 <EmptyState
                     icon={GanttIcon}
                     title={t("No tasks match these filters")}
@@ -113,7 +109,7 @@ export const GanttView = () => {
                 />
             ) : (
                 <div className="overflow-x-auto">
-                    <GanttChart tasks={filteredTasks} windowStart={windowStart} windowEnd={windowEnd} />
+                    <GanttChart tasks={tasks} windowStart={windowStart} windowEnd={windowEnd} />
                 </div>
             )}
         </div>

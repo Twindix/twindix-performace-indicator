@@ -129,5 +129,8 @@ export const apisData = {
         healthScore: (sprintId: string) => `/sprints/${sprintId}/dashboard/health-score`,
         metrics: (sprintId: string) => `/sprints/${sprintId}/dashboard/metrics`,
     },
+    gantt: {
+        tasks: "/gantt/tasks",
+    },
     baseUrl: import.meta.env.VITE_API_URL as string,
 };
