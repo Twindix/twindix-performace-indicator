@@ -40,6 +40,7 @@ export const apisData = {
         update: (id: string) => `/projects/${id}`,
         delete: (id: string) => `/projects/${id}`,
         sprints: (id: string) => `/projects/${id}/sprints`,
+        analytics: (id: string) => `/projects/${id}/analytics`,
     },
     tasks: {
         list: (sprintId: string) => `/sprints/${sprintId}/tasks`,

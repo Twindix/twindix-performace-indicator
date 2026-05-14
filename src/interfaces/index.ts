@@ -15,7 +15,7 @@ export type { TeamMemberWorkloadInterface } from "./workload";
 export type { MetricInterface, FrictionScoresInterface, SprintMetricsInterface } from "./metrics";
 export type { OwnershipEntryInterface } from "./ownership";
 export type { HandoffInterface, CriterionInterface } from "./handoffs";
-export type { ProjectInterface, ProjectCreatorInterface, CreateProjectPayloadInterface, UpdateProjectPayloadInterface, ProjectLiteInterface, ProjectsListResponseInterface, ProjectsListFiltersInterface } from "./projects";
+export type { ProjectInterface, ProjectCreatorInterface, CreateProjectPayloadInterface, UpdateProjectPayloadInterface, ProjectLiteInterface, ProjectsListResponseInterface, ProjectsListFiltersInterface, ProjectAnalyticsResponseInterface, ProjectAnalyticsSummaryInterface, ProjectAnalyticsStatsInterface, ProjectAnalyticsContributorInterface, ProjectAnalyticsVelocityPointInterface, ProjectAnalyticsBurnChartInterface, ProjectAnalyticsTaskStatusInterface, ProjectAnalyticsBlockerSourcesInterface } from "./projects";
 export type { GanttTaskInterface, GanttProjectLiteInterface, GanttAssigneeInterface, GanttFiltersInterface, GanttSeedInterface } from "./gantt";
 export type { TimeProjectInterface, TimeSprintInterface, TimeTeamInterface, TimeMemberInterface, TimeTaskInterface, TimeEntryInterface, TimeSeedInterface, TimeEntityKind, TimeLogEntryRow, CreateTimeEntryPayloadInterface } from "./time";
 export type { MeetingInterface, MeetingAttendeeInterface, MeetingTimeSlotInterface, MeetingCommentInterface, MeetingAttachmentInterface, MeetingUserInterface, MeetingSeedInterface, RequestMeetingPayloadInterface } from "./meetings";
