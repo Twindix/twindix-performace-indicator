@@ -39,3 +39,13 @@ export interface UpdateSprintPayloadInterface {
     start_date?: string;
     end_date?: string;
 }
+
+export type {
+    SprintAnalyticsResponseInterface,
+    SprintAnalyticsSummaryInterface,
+    SprintAnalyticsStatsInterface,
+    SprintAnalyticsContributorInterface,
+    SprintAnalyticsBurnChartInterface,
+    SprintAnalyticsDailyThroughputPointInterface,
+    SprintAnalyticsTaskStatusInterface,
+} from "./analytics";

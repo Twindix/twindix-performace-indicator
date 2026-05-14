@@ -5,7 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
 import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shared";
 import { SprintsSkeleton } from "@/components/skeletons";
-import { routesData, analyticsSeed } from "@/data";
+import { routesData } from "@/data";
+
+const sprintCardFallback = { completion_rate: 0, on_time_rate: 0, days_left: 0, open_blockers: 0, tasks_done: 0, tasks_total: 0, story_points_done: 0, story_points_total: 0 };
 import { t, useActivateSprint, useCreateSprint, useDeleteSprint, useFormErrors, usePermissions, useSprintsList, useUpdateSprint } from "@/hooks";
 import type { CreateSprintPayloadInterface, SprintInterface } from "@/interfaces";
 import { useProjectStore, useSprintStore } from "@/store";
@@ -120,7 +122,7 @@ export const SprintsView = () => {
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {sprints.map((s) => {
-                        const a = analyticsSeed.sprints[s.id] ?? analyticsSeed.fallback.sprint;
+                        const a = sprintCardFallback;
                         return (
                         <Card key={s.id} className="hover:shadow-md transition-shadow">
                             <CardContent className="p-5 space-y-3">
