@@ -2,23 +2,21 @@ import { useCallback, useEffect, useRef, useState, type DragEvent } from "react"
 import { File as FileIcon, UploadCloud, X } from "lucide-react";
 
 import { Button, Input, Label, Textarea } from "@/atoms";
-import { DeployEnvironment, DeployStatus } from "@/enums";
-import { t } from "@/hooks";
+import { DeployEnvironment } from "@/enums";
+import { t, useFormErrors, useUploadDeploy } from "@/hooks";
 import type { DeployInterface } from "@/interfaces";
-import { useAuthStore, useDeployStore } from "@/store";
 import { cn } from "@/utils";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 
 interface Props {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    onUploaded?: (deploy: DeployInterface) => void;
 }
 
-const newId = () => `dep-${Math.random().toString(36).slice(2, 10)}`;
-
-export const UploadDeployDialog = ({ open, onOpenChange }: Props) => {
-    const { user } = useAuthStore();
-    const addDeploy = useDeployStore((s) => s.addDeploy);
+export const UploadDeployDialog = ({ open, onOpenChange, onUploaded }: Props) => {
+    const { setFieldErrors, getError, clear: clearFieldErrors } = useFormErrors();
+    const { uploadHandler, isLoading } = useUploadDeploy({ onFieldErrors: setFieldErrors });
 
     const [file, setFile] = useState<File | null>(null);
     const [title, setTitle] = useState("");
@@ -36,27 +34,21 @@ export const UploadDeployDialog = ({ open, onOpenChange }: Props) => {
             setChanges("");
             setEnvironment(DeployEnvironment.Production);
             setIsDragging(false);
+            clearFieldErrors();
         }
-    }, [open]);
+    }, [open, clearFieldErrors]);
 
     const acceptFile = useCallback((f: File | null) => {
         if (!f) return;
         setFile(f);
         if (!title.trim()) {
-            // Strip extension and humanize
             const base = f.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim();
             setTitle(base.charAt(0).toUpperCase() + base.slice(1));
         }
     }, [title]);
 
-    const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        setIsDragging(true);
-    };
-    const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        setIsDragging(false);
-    };
+    const handleDragOver = (e: DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(true); };
+    const handleDragLeave = (e: DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(false); };
     const handleDrop = (e: DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         setIsDragging(false);
@@ -64,38 +56,28 @@ export const UploadDeployDialog = ({ open, onOpenChange }: Props) => {
         if (dropped) acceptFile(dropped);
     };
 
-    const handleSubmit = () => {
-        if (!file || !title.trim() || !user) return;
+    const handleSubmit = async () => {
+        if (!file || !title.trim()) return;
         const bullets = changes
             .split("\n")
             .map((s) => s.replace(/^[•\-*\s]+/, "").trim())
             .filter(Boolean);
 
-        const deploy: DeployInterface = {
-            id: newId(),
+        const result = await uploadHandler({
             title: title.trim(),
             version: version.trim() || null,
-            file_name: file.name,
-            file_size: file.size,
-            file_type: file.type || file.name.split(".").pop() || "binary",
+            file,
+            changes: bullets,
             environment,
-            status: DeployStatus.Ready,
-            changes: bullets.length > 0 ? bullets : [t("No changelog provided")],
-            uploaded_by: {
-                id: user.id,
-                full_name: user.full_name,
-                avatar_initials: user.avatar_initials,
-                role_label: user.role_label ?? null,
-            },
-            uploaded_at: new Date().toISOString(),
-            download_url: URL.createObjectURL(file),
-        };
-        addDeploy(deploy);
-        onOpenChange(false);
+        });
+        if (result) {
+            onUploaded?.(result);
+            onOpenChange(false);
+        }
     };
 
-    const fileTooBig = file && file.size > 250 * 1024 * 1024; // 250 MB demo cap
-    const canSubmit = !!file && !!title.trim() && !fileTooBig;
+    const fileTooBig = file && file.size > 250 * 1024 * 1024;
+    const canSubmit = !!file && !!title.trim() && !fileTooBig && !isLoading;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -111,15 +93,13 @@ export const UploadDeployDialog = ({ open, onOpenChange }: Props) => {
                 </DialogHeader>
 
                 <div className="flex flex-col gap-4 mt-2">
-                    {/* Drag & drop zone */}
                     <div
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                         onClick={() => fileInputRef.current?.click()}
                         className={cn(
-                            "relative cursor-pointer rounded-xl border-2 border-dashed transition-all duration-200",
-                            "p-6 text-center",
+                            "relative cursor-pointer rounded-xl border-2 border-dashed transition-all duration-200 p-6 text-center",
                             isDragging
                                 ? "border-primary bg-primary/8"
                                 : file
@@ -166,11 +146,13 @@ export const UploadDeployDialog = ({ open, onOpenChange }: Props) => {
                     {fileTooBig && (
                         <p className="text-xs text-error">{t("File exceeds the 250 MB demo limit.")}</p>
                     )}
+                    {getError("file") && <p className="text-[11px] text-error">{getError("file")}</p>}
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
                             <Label htmlFor="dep-title">{t("Title")} <span className="text-error">*</span></Label>
                             <Input id="dep-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("API Service")} />
+                            {getError("title") && <p className="text-[11px] text-error">{getError("title")}</p>}
                         </div>
                         <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
                             <Label htmlFor="dep-version">{t("Version")}</Label>
@@ -206,10 +188,10 @@ export const UploadDeployDialog = ({ open, onOpenChange }: Props) => {
 
                 <div className="flex justify-end gap-2 mt-4">
                     <DialogClose asChild>
-                        <Button variant="outline">{t("Cancel")}</Button>
+                        <Button variant="outline" disabled={isLoading}>{t("Cancel")}</Button>
                     </DialogClose>
                     <Button onClick={handleSubmit} disabled={!canSubmit}>
-                        {t("Submit Deploy")}
+                        {isLoading ? t("Uploading...") : t("Submit Deploy")}
                     </Button>
                 </div>
             </DialogContent>

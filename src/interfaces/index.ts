@@ -21,5 +21,5 @@ export type { TimeProjectInterface, TimeSprintInterface, TimeTeamInterface, Time
 export type { MeetingInterface, MeetingAttendeeInterface, MeetingTimeSlotInterface, MeetingCommentInterface, MeetingAttachmentInterface, MeetingUserInterface, MeetingSeedInterface, RequestMeetingPayloadInterface } from "./meetings";
 export type { ProjectAnalyticsInterface, SprintAnalyticsInterface, TeamAnalyticsInterface, DeliveryAnalyticsInterface, AnalyticsSeedInterface, MetricPointInterface, DualMetricPointInterface, BreakdownSliceInterface, MemberContributionInterface } from "./analytics";
 export type { AuthorshipEntryInterface, AuthorshipSeedInterface } from "./authorship";
-export type { DeployInterface, DeployUploaderInterface, UploadDeployPayloadInterface } from "./deploys";
+export type { DeployInterface, DeployUploaderInterface, UploadDeployPayloadInterface, UpdateDeployStatusPayloadInterface, DeploysListFiltersInterface, DeploysListResponseInterface } from "./deploys";
 export type { ReminderInterface, ReminderCreatorInterface, CreateReminderPayloadInterface, UpdateReminderPayloadInterface } from "./reminders";
