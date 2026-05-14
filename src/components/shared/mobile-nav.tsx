@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Activity, Menu, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
-import { sidebarItems } from "@/data";
+import { sidebarItems, sidebarNewItems, type SidebarItemInterface } from "@/data";
 import { t, useSettings } from "@/hooks";
 import { cn } from "@/utils";
 
@@ -21,6 +21,38 @@ export const MobileNav = () => {
         }
         return () => { document.body.style.overflow = ""; };
     }, [open]);
+
+    const isItemActive = (path: string) =>
+        path === "/" ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
+
+    const renderItem = ({ label, path, icon: Icon, disabled }: SidebarItemInterface) => {
+        const isActive = isItemActive(path);
+        if (disabled) {
+            return (
+                <li key={path}>
+                    <span className="flex items-center gap-3 rounded-[var(--radius-default)] px-3 py-2.5 text-sm font-medium text-text-muted opacity-40 cursor-not-allowed select-none">
+                        <Icon className="h-5 w-5 shrink-0" />
+                        <span>{t(label)}</span>
+                    </span>
+                </li>
+            );
+        }
+        return (
+            <li key={path}>
+                <Link
+                    to={path}
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                        "flex items-center gap-3 rounded-[var(--radius-default)] px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                        isActive ? "bg-primary-lighter text-primary-medium shadow-sm" : "text-text-secondary hover:bg-accent hover:text-text-dark",
+                    )}
+                >
+                    <Icon className="h-5 w-5 shrink-0" />
+                    <span>{t(label)}</span>
+                </Link>
+            </li>
+        );
+    };
 
     return (
         <div className="lg:hidden">
@@ -62,25 +94,11 @@ export const MobileNav = () => {
                         {/* Nav */}
                         <nav className="flex-1 overflow-y-auto p-2 scrollbar-thin">
                             <ul className="flex flex-col gap-1">
-                                {sidebarItems.map(({ label, path, icon: Icon, disabled }) => {
-                                    const isActive = path === "/" ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
-                                    if (disabled) return (
-                                        <li key={path}>
-                                            <span className="flex items-center gap-3 rounded-[var(--radius-default)] px-3 py-2.5 text-sm font-medium text-text-muted opacity-40 cursor-not-allowed select-none">
-                                                <Icon className="h-5 w-5 shrink-0" />
-                                                <span>{t(label)}</span>
-                                            </span>
-                                        </li>
-                                    );
-                                    return (
-                                        <li key={path}>
-                                            <Link to={path} onClick={() => setOpen(false)} className={cn("flex items-center gap-3 rounded-[var(--radius-default)] px-3 py-2.5 text-sm font-medium transition-all duration-200", isActive ? "bg-primary-lighter text-primary-medium shadow-sm" : "text-text-secondary hover:bg-accent hover:text-text-dark")}>
-                                                <Icon className="h-5 w-5 shrink-0" />
-                                                <span>{t(label)}</span>
-                                            </Link>
-                                        </li>
-                                    );
-                                })}
+                                {sidebarItems.map((item) => renderItem(item))}
+                            </ul>
+                            <div className="my-3 mx-2 border-t border-border" aria-hidden />
+                            <ul className="flex flex-col gap-1">
+                                {sidebarNewItems.map((item) => renderItem(item))}
                             </ul>
                         </nav>
 

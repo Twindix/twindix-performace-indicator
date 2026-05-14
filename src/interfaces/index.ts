@@ -16,3 +16,10 @@ export type { MetricInterface, FrictionScoresInterface, SprintMetricsInterface }
 export type { OwnershipEntryInterface } from "./ownership";
 export type { HandoffInterface, CriterionInterface } from "./handoffs";
 export type { ProjectInterface, ProjectCreatorInterface, CreateProjectPayloadInterface, UpdateProjectPayloadInterface, ProjectLiteInterface, ProjectsListResponseInterface, ProjectsListFiltersInterface } from "./projects";
+export type { GanttTaskInterface, GanttProjectLiteInterface, GanttAssigneeInterface, GanttFiltersInterface, GanttSeedInterface } from "./gantt";
+export type { TimeProjectInterface, TimeSprintInterface, TimeTeamInterface, TimeMemberInterface, TimeTaskInterface, TimeEntryInterface, TimeSeedInterface, TimeEntityKind, TimeLogEntryRow, CreateTimeEntryPayloadInterface } from "./time";
+export type { MeetingInterface, MeetingAttendeeInterface, MeetingTimeSlotInterface, MeetingCommentInterface, MeetingAttachmentInterface, MeetingUserInterface, MeetingSeedInterface, RequestMeetingPayloadInterface } from "./meetings";
+export type { ProjectAnalyticsInterface, SprintAnalyticsInterface, TeamAnalyticsInterface, DeliveryAnalyticsInterface, AnalyticsSeedInterface, MetricPointInterface, DualMetricPointInterface, BreakdownSliceInterface, MemberContributionInterface } from "./analytics";
+export type { AuthorshipEntryInterface, AuthorshipSeedInterface } from "./authorship";
+export type { DeployInterface, DeployUploaderInterface, UploadDeployPayloadInterface } from "./deploys";
+export type { ReminderInterface, ReminderCreatorInterface, CreateReminderPayloadInterface, UpdateReminderPayloadInterface } from "./reminders";

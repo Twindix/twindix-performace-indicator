@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { ArrowLeft, Calendar, Edit, FolderKanban, MoreHorizontal, Plus, Trash2, Users } from "lucide-react";
+import { ArrowLeft, BarChart3, Calendar, Edit, FolderKanban, LineChart, MoreHorizontal, Plus, Trash2, Users } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shared";
 import { ProjectsSkeleton } from "@/components/skeletons";
+import { analyticsSeed } from "@/data/seed";
 import { t, useCreateProject, useDeleteProject, useFormErrors, usePermissions, useProjectsList, useUpdateProject } from "@/hooks";
 import type { CreateProjectPayloadInterface, ProjectInterface } from "@/interfaces";
 import { useProjectStore } from "@/store";
@@ -13,6 +14,8 @@ import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/ui";
 import { SprintsView } from "@/views/sprints";
+
+import { ProjectAnalyticsView } from "./ProjectAnalyticsView";
 
 const emptyForm: CreateProjectPayloadInterface = {
     name: "",
@@ -46,6 +49,7 @@ export const ProjectsView = () => {
     const { deleteHandler, isLoading: isDeleting } = useDeleteProject();
 
     const [openedProject, setOpenedProject] = useState<ProjectInterface | null>(null);
+    const [analyticsProject, setAnalyticsProject] = useState<ProjectInterface | null>(null);
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<ProjectInterface | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<ProjectInterface | null>(null);
@@ -91,6 +95,24 @@ export const ProjectsView = () => {
         setOpenedProject(project);
     };
 
+    const openAnalytics = (project: ProjectInterface) => {
+        setAnalyticsProject(project);
+    };
+
+    if (analyticsProject) {
+        return (
+            <ProjectAnalyticsView
+                project={analyticsProject}
+                onBack={() => setAnalyticsProject(null)}
+                onViewSprints={() => {
+                    onSetActiveProject(analyticsProject.id);
+                    setOpenedProject(analyticsProject);
+                    setAnalyticsProject(null);
+                }}
+            />
+        );
+    }
+
     if (openedProject) {
         return (
             <div className="flex-1 flex flex-col">
@@ -133,15 +155,12 @@ export const ProjectsView = () => {
                     {projects.map((project) => {
                         const sprintCount = project.sprint_count ?? project.sprints_count ?? 0;
                         const memberCount = project.member_count ?? project.members_count ?? 0;
+                        const a = analyticsSeed.projects[project.id] ?? analyticsSeed.fallback.project;
                         return (
                             <Card key={project.id} className="hover:shadow-md transition-shadow">
                                 <CardContent className="p-5">
                                     <div className="flex items-start justify-between gap-3 mb-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => enterProject(project)}
-                                            className="flex items-start gap-3 text-start flex-1 min-w-0 cursor-pointer"
-                                        >
+                                        <div className="flex items-start gap-3 flex-1 min-w-0">
                                             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-lighter text-primary-medium shrink-0">
                                                 <FolderKanban className="h-5 w-5" />
                                             </div>
@@ -153,7 +172,7 @@ export const ProjectsView = () => {
                                                     {t(STATUS_LABEL[project.status])}
                                                 </Badge>
                                             </div>
-                                        </button>
+                                        </div>
 
                                         {(p.projects.edit() || p.projects.delete()) && (
                                             <DropdownMenu>
@@ -186,19 +205,46 @@ export const ProjectsView = () => {
                                         <p className="text-xs text-text-muted line-clamp-2 mb-3">{project.description}</p>
                                     )}
 
-                                    <div className="flex items-center gap-3 text-[11px] text-text-muted">
+                                    <div className="flex items-center gap-3 text-[11px] text-text-muted mb-3">
                                         <span className="flex items-center gap-1">
                                             <Calendar className="h-3 w-3" />
                                             {project.start_date ?? "—"} → {project.end_date ?? "—"}
                                         </span>
                                     </div>
 
-                                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-border text-[11px] text-text-muted">
+                                    <div className="grid grid-cols-3 gap-2 mb-3">
+                                        <CardStat label={t("Done")} value={`${a.completion_rate}%`} tone="primary" />
+                                        <CardStat label={t("On-time")} value={`${a.on_time_rate}%`} tone="success" />
+                                        <CardStat label={t("Blockers")} value={a.open_blockers} tone={a.open_blockers > 0 ? "error" : "muted"} />
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <div className="flex items-center justify-between text-[11px] text-text-muted mb-1">
+                                            <span>{t("Tasks")}</span>
+                                            <span>{a.tasks_done} / {a.tasks_total}</span>
+                                        </div>
+                                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                                            <div className="h-full bg-primary-medium" style={{ width: `${Math.round((a.tasks_done / Math.max(a.tasks_total, 1)) * 100)}%` }} />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-3 border-t border-border text-[11px] text-text-muted mb-3">
                                         <span>{sprintCount} {t("sprints")}</span>
                                         <span className="flex items-center gap-1">
                                             <Users className="h-3 w-3" />
                                             {memberCount}
                                         </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => openAnalytics(project)}>
+                                            <LineChart className="h-3.5 w-3.5" />
+                                            {t("Analytics")}
+                                        </Button>
+                                        <Button size="sm" className="flex-1 gap-1.5" onClick={() => enterProject(project)}>
+                                            <BarChart3 className="h-3.5 w-3.5" />
+                                            {t("Sprints")}
+                                        </Button>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -312,6 +358,27 @@ export const ProjectsView = () => {
                     </div>
                 </DialogContent>
             </Dialog>
+        </div>
+    );
+};
+
+interface CardStatProps {
+    label: string;
+    value: string | number;
+    tone: "primary" | "success" | "error" | "muted";
+}
+
+const CardStat = ({ label, value, tone }: CardStatProps) => {
+    const toneClass = {
+        primary: "text-primary-medium",
+        success: "text-success",
+        error: "text-error",
+        muted: "text-text-muted",
+    }[tone];
+    return (
+        <div className="rounded-md bg-muted/40 px-2 py-1.5 text-center">
+            <p className="text-[10px] uppercase tracking-wide text-text-muted">{label}</p>
+            <p className={`text-sm font-bold ${toneClass}`}>{value}</p>
         </div>
     );
 };
