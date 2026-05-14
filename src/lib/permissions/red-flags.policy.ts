@@ -1,8 +1,7 @@
 // Matrix: Red Flags.
 // - View: all tiers.
 // - Create / edit own / delete own: everyone except viewer.
-// - Edit others / delete others: admin ONLY (manager cannot — asymmetric vs alerts).
-// Owner field on RedFlagInterface: `reporter.id`.
+// - Edit others / delete others: owner + admin (manager cannot — asymmetric vs alerts).
 import type { RedFlagInterface } from "@/interfaces";
 import type { Ctx } from "./helpers";
 import { inRoles, isViewer } from "./helpers";
@@ -14,7 +13,7 @@ export const redFlagsPolicy = {
     view:         (_: Ctx) => true,
     create:       (ctx: Ctx) => !isViewer(ctx),
     edit:         (ctx: Ctx, f: RedFlagInterface) =>
-                     inRoles(ctx, "admin") || (!isViewer(ctx) && isReporter(f, ctx)),
+                     inRoles(ctx, "owner", "admin") || (!isViewer(ctx) && isReporter(f, ctx)),
     delete:       (ctx: Ctx, f: RedFlagInterface) =>
-                     inRoles(ctx, "admin") || (!isViewer(ctx) && isReporter(f, ctx)),
+                     inRoles(ctx, "owner", "admin") || (!isViewer(ctx) && isReporter(f, ctx)),
 };

@@ -1,5 +1,5 @@
 export type { Ctx } from "./helpers";
-export { inRoles, isViewer, ownerOf } from "./helpers";
+export { inRoles, isViewer, isOwner, isAdmin, isAdminOrAbove, isManagerOrAbove, ownerOf } from "./helpers";
 
 export { authPolicy } from "./auth.policy";
 export { sprintsPolicy } from "./sprints.policy";
