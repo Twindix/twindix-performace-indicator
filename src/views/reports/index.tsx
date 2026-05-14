@@ -3,7 +3,13 @@ import { ArrowRight, Download, FileSpreadsheet, Lightbulb, Users } from "lucide-
 
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, Header, ScoreGauge, StatusBadge } from "@/components/shared";
-import { analyticsSeed, authorshipSeed, handoffsSeed, timeSeed, workloadSeed } from "@/data";
+import { analyticsSeed, authorshipSeed, handoffsSeed, workloadSeed } from "@/data";
+
+const timeSeed = {
+    projects: [] as Array<{ id: string; name: string; team_name: string; status: string; progress: number }>,
+    sprints: [] as Array<{ id: string; name: string; project_id: string; status: string; start_date: string; end_date: string }>,
+    members: [] as Array<{ id: string; full_name: string }>,
+};
 import { MetricStatus } from "@/enums";
 import { t } from "@/hooks";
 import type { BreakdownSliceInterface } from "@/interfaces";

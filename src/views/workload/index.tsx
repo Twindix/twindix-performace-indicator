@@ -4,7 +4,16 @@ import { AlertTriangle, ArrowRightLeft, BarChart3, FolderKanban, Layers, Target,
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import { t, useSettings } from "@/hooks";
-import { timeSeed, workloadSeed } from "@/data";
+import { workloadSeed } from "@/data";
+
+const timeSeed = {
+    projects: [] as Array<{ id: string; name: string; team_name: string; team_id: string; status: "active" | "planning" | "completed" | "on_hold"; progress: number }>,
+    sprints: [] as Array<{ id: string; name: string; project_id: string; project_name: string; status: "active" | "planning" | "completed" | "on_hold"; start_date: string; end_date: string }>,
+    teams: [] as Array<{ id: string; name: string; department: string }>,
+    members: [] as Array<{ id: string; full_name: string; avatar_initials: string; role_label?: string; team_id?: string }>,
+    tasks: [] as Array<{ id: string; name: string; project_id: string; sprint_id?: string | null }>,
+    entries: [] as Array<{ id: string; date: string; member_id: string; project_id: string; sprint_id?: string | null; task_id?: string | null; hours: number; note?: string }>,
+};
 import type { TeamMemberWorkloadInterface } from "@/interfaces";
 import { Avatar, AvatarFallback, Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
 import { cn } from "@/utils";

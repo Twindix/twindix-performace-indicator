@@ -3,7 +3,12 @@ import { ClipboardList, FileCode, FolderKanban, Search, User, Users } from "luci
 
 import { Badge, Card, CardContent, CardHeader, CardTitle, Input } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
-import { authorshipSeed, timeSeed } from "@/data";
+import { authorshipSeed } from "@/data";
+
+const timeSeed = {
+    members: [] as Array<{ id: string; full_name: string; avatar_initials: string; role_label?: string; team_id?: string }>,
+    projects: [] as Array<{ id: string; name: string }>,
+};
 import { t } from "@/hooks";
 import type { AuthorshipEntryInterface, TimeMemberInterface } from "@/interfaces";
 import { Avatar, AvatarFallback } from "@/ui";

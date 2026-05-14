@@ -72,8 +72,16 @@ export const apisData = {
         taskList: (taskId: string) => `/tasks/${taskId}/time-logs`,
         summary: (sprintId: string) => `/sprints/${sprintId}/time-logs/summary`,
         create: (taskId: string) => `/tasks/${taskId}/time-logs`,
+        createStandalone: "/time-logs",
         update: (id: string) => `/time-logs/${id}`,
         delete: (id: string) => `/time-logs/${id}`,
+    },
+    time: {
+        byProject: "/time/by-project",
+        bySprint: "/time/by-sprint",
+        byTeam: "/time/by-team",
+        byMember: "/time/by-member",
+        summary: "/time/summary",
     },
     blockers: {
         list: (sprintId: string) => `/sprints/${sprintId}/blockers`,
