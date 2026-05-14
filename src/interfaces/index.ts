@@ -14,7 +14,7 @@ export type { CommunicationInterface, CommunicationChannel, CommunicationStatus 
 export type { TeamMemberWorkloadInterface } from "./workload";
 export type { MetricInterface, FrictionScoresInterface, SprintMetricsInterface } from "./metrics";
 export type { OwnershipEntryInterface } from "./ownership";
-export type { HandoffInterface, CriterionInterface } from "./handoffs";
+export type { HandoffCriteriaType, HandoffCriterionInterface, HandoffTransitionInterface, HandoffsSummaryInterface, HandoffsResponseInterface, HandoffsFiltersInterface, HandoffCriteriaSeedInterface, CreateHandoffCriteriaPayloadInterface, UpdateHandoffCriteriaPayloadInterface, HandoffTaskStatusInterface } from "./handoffs";
 export type { ProjectInterface, ProjectCreatorInterface, CreateProjectPayloadInterface, UpdateProjectPayloadInterface, ProjectLiteInterface, ProjectsListResponseInterface, ProjectsListFiltersInterface } from "./projects";
 export type { GanttTaskInterface, GanttProjectLiteInterface, GanttAssigneeInterface, GanttFiltersInterface, GanttSeedInterface } from "./gantt";
 export type { TimeProjectInterface, TimeSprintInterface, TimeTeamInterface, TimeMemberInterface, TimeTaskInterface, TimeEntryInterface, TimeSeedInterface, TimeEntityKind, TimeLogEntryRow, CreateTimeEntryPayloadInterface } from "./time";

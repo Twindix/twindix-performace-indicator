@@ -3,7 +3,10 @@ import { ArrowRight, Download, FileSpreadsheet, Lightbulb, Users } from "lucide-
 
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, Header, ScoreGauge, StatusBadge } from "@/components/shared";
-import { analyticsSeed, authorshipSeed, handoffsSeed, timeSeed, workloadSeed } from "@/data";
+import { analyticsSeed, authorshipSeed, timeSeed, workloadSeed } from "@/data";
+
+interface HandoffStub { id: string; fromPhase: string; toPhase: string; taskId: string; sprintId: string; completionRate: number; entryCriteria: { id: string; label: string; met: boolean }[]; exitCriteria: { id: string; label: string; met: boolean }[]; completedAt?: string; }
+const handoffsSeed: HandoffStub[] = [];
 import { MetricStatus } from "@/enums";
 import { t } from "@/hooks";
 import type { BreakdownSliceInterface } from "@/interfaces";
