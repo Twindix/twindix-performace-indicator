@@ -139,6 +139,14 @@ export const apisData = {
         healthScore: (sprintId: string) => `/sprints/${sprintId}/dashboard/health-score`,
         metrics: (sprintId: string) => `/sprints/${sprintId}/dashboard/metrics`,
     },
+    handoffs: {
+        overview: "/handoffs",
+        criteria: "/handoffs/criteria",
+        criteriaCreate: "/handoffs/criteria",
+        criteriaUpdate: (id: string) => `/handoffs/criteria/${id}`,
+        criteriaDelete: (id: string) => `/handoffs/criteria/${id}`,
+        toggleCheck: (taskId: string, criteriaId: string) => `/handoffs/checks/${taskId}/${criteriaId}`,
+        taskStatus: (taskId: string) => `/handoffs/tasks/${taskId}`,
     workload: {
         byProject: "/workload/by-project",
         bySprint: "/workload/by-sprint",

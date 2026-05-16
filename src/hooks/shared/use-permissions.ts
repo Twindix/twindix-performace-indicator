@@ -9,6 +9,7 @@ import {
     blockersPolicy,
     commentsPolicy,
     decisionsPolicy,
+    handoffsPolicy,
     featuresPolicy,
     deploysPolicy,
     projectsPolicy,
@@ -54,6 +55,7 @@ export interface Permissions {
     decisions: BoundModule<typeof decisionsPolicy>;
     users: BoundModule<typeof usersPolicy>;
     teams: BoundModule<typeof teamsPolicy>;
+    handoffs: BoundModule<typeof handoffsPolicy>;
     features: BoundModule<typeof featuresPolicy>;
     reports: BoundModule<typeof reportsPolicy>;
     deploys: BoundModule<typeof deploysPolicy>;
@@ -79,6 +81,7 @@ export const usePermissions = (): Permissions => {
             decisions: bindModule(decisionsPolicy as unknown as Module, ctx) as BoundModule<typeof decisionsPolicy>,
             users: bindModule(usersPolicy as unknown as Module, ctx) as BoundModule<typeof usersPolicy>,
             teams: bindModule(teamsPolicy as unknown as Module, ctx) as BoundModule<typeof teamsPolicy>,
+            handoffs: bindModule(handoffsPolicy as unknown as Module, ctx) as BoundModule<typeof handoffsPolicy>,
             features: bindModule(featuresPolicy as unknown as Module, ctx) as BoundModule<typeof featuresPolicy>,
             reports: bindModule(reportsPolicy as unknown as Module, ctx) as BoundModule<typeof reportsPolicy>,
             deploys: bindModule(deploysPolicy as unknown as Module, ctx) as BoundModule<typeof deploysPolicy>,
