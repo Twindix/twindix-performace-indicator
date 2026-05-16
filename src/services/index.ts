@@ -14,3 +14,4 @@ export { teamsService } from "./teams";
 export { projectsService } from "./projects";
 export { ownershipService } from "./ownership";
 export { featuresService } from "./features";
+export { deliveryAnalyticsService } from "./delivery-analytics";
