@@ -4,30 +4,33 @@ import { teamsConstants } from "@/constants";
 import type { TeamInterface } from "@/interfaces";
 import { teamsService } from "@/services";
 
-import { useQueryAction } from "../shared";
+import { usePaginatedQuery } from "../shared";
 
-export const useGetTeams = () => {
-    const { data, isLoading, refetch, setData } = useQueryAction<TeamInterface[]>(
-        async () => (await teamsService.listHandler()).data,
+export interface UseGetTeamsOptions {
+    initialPerPage?: number;
+}
+
+export const useGetTeams = ({ initialPerPage }: UseGetTeamsOptions = {}) => {
+    const { items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, setItems } = usePaginatedQuery<TeamInterface>(
+        ({ page, per_page }) => teamsService.listHandler({ page, per_page }),
         [],
         {
             errorFallback: teamsConstants.errors.fetchFailed,
-            initialData: [],
             context: "teams.list",
+            initialPerPage,
         },
     );
 
     const patchTeamLocal = useCallback((team: TeamInterface) => {
-        setData((prev) => {
-            const arr = prev ?? [];
-            const exists = arr.some((t) => t.id === team.id);
-            return exists ? arr.map((t) => (t.id === team.id ? team : t)) : [...arr, team];
+        setItems((prev) => {
+            const exists = prev.some((t) => t.id === team.id);
+            return exists ? prev.map((t) => (t.id === team.id ? team : t)) : [...prev, team];
         });
-    }, [setData]);
+    }, [setItems]);
 
     const removeTeamLocal = useCallback((id: string) => {
-        setData((prev) => (prev ?? []).filter((t) => t.id !== id));
-    }, [setData]);
+        setItems((prev) => prev.filter((t) => t.id !== id));
+    }, [setItems]);
 
-    return { teams: data ?? [], isLoading, refetch, patchTeamLocal, removeTeamLocal };
+    return { teams: items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, patchTeamLocal, removeTeamLocal };
 };

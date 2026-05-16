@@ -1,3 +1,5 @@
+import type { PaginatedResponseInterface, PaginationParamsInterface } from "@/interfaces/common";
+
 export interface AlertCreatorInterface {
     id: string;
     full_name: string;
@@ -27,8 +29,10 @@ export interface AlertInterface {
     created_at: string;
 }
 
-export interface AlertsListResponseInterface {
-    data: AlertInterface[];
+export type AlertsListResponseInterface = PaginatedResponseInterface<AlertInterface>;
+
+export interface AlertsListFiltersInterface extends PaginationParamsInterface {
+    type?: string;
 }
 
 export interface AlertDetailResponseInterface {

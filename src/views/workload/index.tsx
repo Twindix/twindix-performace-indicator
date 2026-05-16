@@ -1,15 +1,35 @@
-import { useMemo } from "react";
-import { AlertTriangle, ArrowRightLeft, BarChart3, Users } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, ArrowRightLeft, BarChart3, FolderKanban, Layers, Target, Users } from "lucide-react";
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
-import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
-import { WorkloadSkeleton } from "@/components/skeletons";
-import { usersConstants } from "@/constants";
-import { t, useSettings, usePageLoader } from "@/hooks";
-import type { TeamMemberWorkloadInterface, UserInterface } from "@/interfaces";
-import { Avatar, AvatarFallback } from "@/ui";
-import { cn } from "@/utils";
+import {
+    AnimatedNumber,
+    EmptyState,
+    Header,
+} from "@/components/shared";
 
+import {
+    t,
+    useSettings,
+    useSprintsList,
+    useWorkloadByMember,
+    useWorkloadByProject,
+    useWorkloadBySprint,
+    useWorkloadByTeam,
+} from "@/hooks";
+
+import { useSprintStore } from "@/store";
+
+import {
+    Avatar,
+    AvatarFallback,
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from "@/ui";
+
+import { cn } from "@/utils";
 const getUtilizationColor = (util: number): string => {
     if (util > 100) return "bg-error";
     if (util >= 85) return "bg-warning";
@@ -23,267 +43,286 @@ const getUtilizationTextColor = (util: number): string => {
 };
 
 export const WorkloadView = () => {
-    const isLoading = usePageLoader();
     const [settings] = useSettings();
     const compact = settings.compactView;
-    const sprintWorkload: TeamMemberWorkloadInterface[] = [];
-    const members: UserInterface[] = [];
 
-    const getMember = (id: string) => members.find((m) => m.id === id);
+    const [scope, setScope] = useState<"projects" | "sprints" | "teams" | "members">("projects");
 
-    const stats = useMemo(() => {
-        const teamSize = sprintWorkload.length;
-        const avgUtilization =
-            teamSize > 0
-                ? Math.round(sprintWorkload.reduce((acc, w) => acc + (w.assignedPoints / w.capacity) * 100, 0) / teamSize)
-                : 0;
-        const overloadedCount = sprintWorkload.filter((w) => w.assignedPoints > w.capacity).length;
-        const totalContextSwitches = sprintWorkload.reduce((acc, w) => acc + w.contextSwitches, 0);
-        return { teamSize, avgUtilization, overloadedCount, totalContextSwitches };
-    }, [sprintWorkload]);
+    const activeSprintId = useSprintStore((s) => s.activeSprintId);
+    const { sprints } = useSprintsList();
+    const [memberSprintId, setMemberSprintId] = useState<string>(activeSprintId ?? "");
 
-    const sortedByContextSwitches = useMemo(
-        () => [...sprintWorkload].sort((a, b) => b.contextSwitches - a.contextSwitches),
-        [sprintWorkload],
-    );
+    const { rows: projectRows, isLoading: loadingProjects } = useWorkloadByProject();
+    const { rows: sprintRows, isLoading: loadingSprints } = useWorkloadBySprint();
+    const { rows: teamRows, isLoading: loadingTeams } = useWorkloadByTeam();
+    const { rows: memberRows, isLoading: loadingMembers } = useWorkloadByMember({ sprint_id: memberSprintId || undefined });
 
-    const maxAssigned = useMemo(
-        () => Math.max(...sprintWorkload.map((w) => w.assignedPoints), 1),
-        [sprintWorkload],
-    );
+    const maxAssigned = Math.max(...memberRows.map((m) => m.assigned), 1);
+    const sortedByContextSwitches = [...memberRows].sort((a, b) => b.context_switches - a.context_switches);
 
-    if (isLoading) return <WorkloadSkeleton />;
-
-    if (sprintWorkload.length === 0) {
-        return (
-            <div>
-                <Header title={t("Team Workload")} description={t("Track team capacity, utilization, and context switching")} />
-                <EmptyState icon={Users} title={t("No workload data")} description={t("No workload data available for this sprint")} />
-            </div>
-        );
-    }
+    const memberTotals = {
+        teamSize: memberRows.length,
+        avgUtilization: memberRows.length > 0
+            ? Math.round(memberRows.reduce((acc, m) => acc + m.utilization, 0) / memberRows.length)
+            : 0,
+        overloadedCount: memberRows.filter((m) => m.overloaded).length,
+        contextSwitches: memberRows.reduce((acc, m) => acc + m.context_switches, 0),
+    };
 
     return (
         <div>
-            <Header title={t("Team Workload")} description={t("Track team capacity, utilization, and context switching")} />
+            <Header title={t("Team Workload")} description={t("Track capacity across projects, sprints, teams, and members")} />
 
-            {/* Stats Row */}
-            <div className={cn("grid grid-cols-2 sm:grid-cols-4", compact ? "gap-2 mb-3" : "gap-4 mb-6")}>
-                <Card>
-                    <CardContent className="p-4 text-center">
-                        <p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={stats.teamSize} /></p>
-                        <p className="text-xs text-text-muted">{t("Team Size")}</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-4 text-center">
-                        <p className={cn("text-2xl font-bold", getUtilizationTextColor(stats.avgUtilization))}>
-                            <AnimatedNumber value={stats.avgUtilization} suffix="%" />
-                        </p>
-                        <p className="text-xs text-text-muted">{t("Avg Utilization")}</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-4 text-center">
-                        <p className={cn("text-2xl font-bold", stats.overloadedCount > 0 ? "text-error" : "text-success")}>
-                            {stats.overloadedCount}
-                        </p>
-                        <p className="text-xs text-text-muted">{t("Overloaded")}</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-4 text-center">
-                        <p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={stats.totalContextSwitches} /></p>
-                        <p className="text-xs text-text-muted">{t("Context Switches")}</p>
-                    </CardContent>
-                </Card>
-            </div>
+            <Tabs value={scope} onValueChange={(v) => setScope(v as typeof scope)}>
+                <TabsList className="mb-6">
+                    <TabsTrigger value="projects"><FolderKanban className="h-4 w-4 me-1.5" />{t("Projects")}</TabsTrigger>
+                    <TabsTrigger value="sprints"><Layers className="h-4 w-4 me-1.5" />{t("Sprints")}</TabsTrigger>
+                    <TabsTrigger value="teams"><Users className="h-4 w-4 me-1.5" />{t("Teams")}</TabsTrigger>
+                    <TabsTrigger value="members"><Target className="h-4 w-4 me-1.5" />{t("Members")}</TabsTrigger>
+                </TabsList>
 
-            {/* Team Member Detail Cards */}
-            <h2 className={cn("font-semibold text-text-dark", compact ? "text-base mb-2" : "text-lg mb-3")}>{t("Team Members")}</h2>
-            <div className={cn("flex flex-col", compact ? "gap-2 mb-4" : "gap-3 mb-8")}>
-                {sprintWorkload.map((w) => {
-                    const member = getMember(w.memberId);
-                    const utilization = Math.round((w.assignedPoints / w.capacity) * 100);
-                    const isOverloaded = w.assignedPoints > w.capacity;
-
-                    return (
-                        <Card key={w.memberId}>
-                            <CardContent className={compact ? "p-3" : "p-4"}>
-                                <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
-                                    {/* Avatar + Name + Overloaded (mobile) */}
-                                    <div className="flex items-center gap-3 md:w-48 md:shrink-0">
-                                        <Avatar className="h-9 w-9">
-                                            <AvatarFallback>{member?.avatar_initials ?? "?"}</AvatarFallback>
-                                        </Avatar>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-sm font-semibold text-text-dark truncate">{member?.full_name ?? "Unknown"}</p>
-                                            <p className="text-xs text-text-muted truncate">{member?.role_tier ? usersConstants.roleTierLabels[member.role_tier] : ""}</p>
-                                        </div>
-                                        {isOverloaded && (
-                                            <Badge variant="error" className="shrink-0 md:hidden">
-                                                <AlertTriangle className="h-3 w-3 me-1" />
-                                                {t("Overloaded")}
+                <TabsContent value="projects">
+                    {loadingProjects ? (
+                        <LoadingTile />
+                    ) : projectRows.length === 0 ? (
+                        <EmptyState icon={FolderKanban} title={t("No workload data")} description={t("No project workload available")} />
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {projectRows.map((row) => (
+                                <Card key={row.project_id}>
+                                    <CardHeader>
+                                        <CardTitle className="text-base flex items-center justify-between">
+                                            <span className="truncate">{row.project_name}</span>
+                                            <Badge variant={row.project_status === "active" ? "success" : row.project_status === "planning" ? "warning" : "secondary"}>
+                                                {t(row.project_status)}
                                             </Badge>
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="pt-0">
+                                        <p className="text-xs text-text-muted mb-3">{row.team_name}</p>
+                                        <div className="grid grid-cols-2 gap-2 mb-3">
+                                            <ScopeStat label={t("Members")} value={row.member_count} />
+                                            <ScopeStat label={t("Avg Util.")} value={`${row.avg_utilization}%`} tone={getUtilizationTextColor(row.avg_utilization)} />
+                                            <ScopeStat label={t("Overloaded")} value={row.overloaded_count} tone={row.overloaded_count > 0 ? "text-error" : "text-success"} />
+                                            <ScopeStat label={t("Switches")} value={row.context_switches} />
+                                        </div>
+                                        <div className="flex items-center justify-between text-[11px] text-text-muted mb-1">
+                                            <span>{row.points_completed} / {row.points_total} {t("points")}</span>
+                                            <span>{row.progress}%</span>
+                                        </div>
+                                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                                            <div className="h-full bg-success" style={{ width: `${Math.min(100, row.progress)}%` }} />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </TabsContent>
+
+                <TabsContent value="sprints">
+                    {loadingSprints ? (
+                        <LoadingTile />
+                    ) : sprintRows.length === 0 ? (
+                        <EmptyState icon={Layers} title={t("No workload data")} description={t("No sprint workload available")} />
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {sprintRows.map((row) => (
+                                <Card key={row.sprint_id}>
+                                    <CardHeader>
+                                        <CardTitle className="text-base flex items-center justify-between">
+                                            <span className="truncate">{row.sprint_name}</span>
+                                            <Badge variant={row.sprint_status === "active" ? "success" : row.sprint_status === "completed" ? "outline" : "secondary"}>
+                                                {t(row.sprint_status)}
+                                            </Badge>
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="pt-0">
+                                        <p className="text-xs text-text-muted mb-1">{row.project_name}</p>
+                                        {row.start_date && row.end_date && (
+                                            <p className="text-xs text-text-muted mb-3">{row.start_date} → {row.end_date}</p>
                                         )}
-                                    </div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <ScopeStat label={t("Members")} value={row.member_count} />
+                                            <ScopeStat label={t("Avg Util.")} value={`${row.avg_utilization}%`} tone={getUtilizationTextColor(row.avg_utilization)} />
+                                            <ScopeStat label={t("Overloaded")} value={row.overloaded_count} tone={row.overloaded_count > 0 ? "text-error" : "text-success"} />
+                                            <ScopeStat label={t("Switches")} value={row.context_switches} />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </TabsContent>
 
-                                    {/* Utilization Bar */}
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between mb-1">
-                                            <span className="text-xs text-text-muted">{t("Utilization")}</span>
-                                            <span className={cn("text-xs font-bold", getUtilizationTextColor(utilization))}>
-                                                <AnimatedNumber value={utilization} suffix="%" />
-                                            </span>
+                <TabsContent value="teams">
+                    {loadingTeams ? (
+                        <LoadingTile />
+                    ) : teamRows.length === 0 ? (
+                        <EmptyState icon={Users} title={t("No workload data")} description={t("No team workload available")} />
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {teamRows.map((row) => (
+                                <Card key={row.team_id}>
+                                    <CardHeader>
+                                        <CardTitle className="text-base">{row.team_name}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="pt-0">
+                                        {row.department && <p className="text-xs text-text-muted mb-3">{row.department}</p>}
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <ScopeStat label={t("Members")} value={row.member_count} />
+                                            <ScopeStat label={t("Avg Util.")} value={`${row.avg_utilization}%`} tone={getUtilizationTextColor(row.avg_utilization)} />
+                                            <ScopeStat label={t("Overloaded")} value={row.overloaded_count} tone={row.overloaded_count > 0 ? "text-error" : "text-success"} />
+                                            <ScopeStat label={t("Switches")} value={row.context_switches} />
                                         </div>
-                                        <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-                                            <div
-                                                className={cn("h-full rounded-full transition-all duration-500 progress-animated", getUtilizationColor(utilization))}
-                                                style={{ width: `${Math.min(utilization, 100)}%` }}
-                                            />
-                                        </div>
-                                    </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </TabsContent>
 
-                                    {/* Stats row */}
-                                    <div className="grid grid-cols-4 md:flex md:items-center gap-2 md:gap-0">
-                                        <div className="md:w-24 shrink-0 text-center">
-                                            <p className={cn("text-sm font-bold", isOverloaded ? "text-error" : "text-text-dark")}>
-                                                {w.assignedPoints}/{w.capacity}
-                                            </p>
-                                            <p className="text-[10px] md:text-xs text-text-muted">{t("assigned")}/{t("capacity")}</p>
-                                        </div>
-                                        <div className="md:w-20 shrink-0 text-center">
-                                            <p className="text-sm font-bold text-text-dark">{w.completedPoints}</p>
-                                            <p className="text-[10px] md:text-xs text-text-muted">{t("completed")}</p>
-                                        </div>
-                                        <div className="md:w-20 shrink-0 text-center">
-                                            <div className="flex items-center justify-center gap-1">
-                                                <ArrowRightLeft className={cn("h-3 w-3", w.contextSwitches >= 5 ? "text-error" : "text-text-muted")} />
-                                                <span className={cn("text-sm font-bold", w.contextSwitches >= 5 ? "text-error" : "text-text-dark")}>
-                                                    {w.contextSwitches}
-                                                </span>
-                                            </div>
-                                            <p className="text-[10px] md:text-xs text-text-muted">{t("switches")}</p>
-                                        </div>
-                                        <div className="md:w-20 shrink-0 text-center">
-                                            <p className="text-sm font-bold text-text-dark">{w.activeTaskCount}</p>
-                                            <p className="text-[10px] md:text-xs text-text-muted">{t("active tasks")}</p>
-                                        </div>
-                                    </div>
+                <TabsContent value="members">
+                    <div className="flex items-center gap-2 mb-4 flex-wrap">
+                        {sprints.map((sprint) => (
+                            <button
+                                key={sprint.id}
+                                onClick={() => setMemberSprintId(sprint.id)}
+                                className={cn(
+                                    "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer",
+                                    memberSprintId === sprint.id
+                                        ? "border-primary bg-primary-lighter text-primary"
+                                        : "border-border text-text-muted hover:text-text-dark hover:bg-muted/40",
+                                )}
+                            >
+                                {sprint.name}
+                            </button>
+                        ))}
+                    </div>
 
-                                    {/* Overloaded (desktop) */}
-                                    {isOverloaded && (
-                                        <Badge variant="error" className="shrink-0 hidden md:inline-flex">
-                                            <AlertTriangle className="h-3 w-3 me-1" />
-                                            {t("Overloaded")}
-                                        </Badge>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    );
-                })}
-            </div>
-
-            {/* Workload Distribution */}
-            <Card className="mb-6">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                        <BarChart3 className="h-4 w-4 text-primary" />
-                        {t("Workload Distribution")}
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-4">
-                    {sprintWorkload.map((w) => {
-                        const member = getMember(w.memberId);
-                        const assignedWidth = (w.assignedPoints / maxAssigned) * 100;
-                        const capacityWidth = (w.capacity / maxAssigned) * 100;
-                        const isOverloaded = w.assignedPoints > w.capacity;
-                        return (
-                            <div key={w.memberId}>
-                                <div className="flex items-center justify-between mb-1.5">
-                                    <div className="flex items-center gap-2">
-                                        <Avatar className="h-5 w-5">
-                                            <AvatarFallback className="text-[8px]">{member?.avatar_initials ?? "?"}</AvatarFallback>
-                                        </Avatar>
-                                        <span className="text-xs font-medium text-text-dark">{member?.full_name ?? "Unknown"}</span>
-                                    </div>
-                                    <span className={cn("text-xs font-medium", isOverloaded ? "text-error" : "text-text-secondary")}>
-                                        {w.assignedPoints} / {w.capacity} {t("points")}
-                                    </span>
-                                </div>
-                                <div className="relative h-4 rounded-full bg-muted overflow-hidden">
-                                    {/* Capacity marker */}
-                                    <div
-                                        className="absolute top-0 h-full border-r-2 border-dashed border-text-muted z-10"
-                                        style={{ left: `${capacityWidth}%` }}
-                                    />
-                                    {/* Assigned bar */}
-                                    <div
-                                        className={cn(
-                                            "h-full rounded-full transition-all duration-500 progress-animated",
-                                            isOverloaded ? "bg-error" : "bg-primary",
-                                        )}
-                                        style={{ width: `${Math.min(assignedWidth, 100)}%` }}
-                                    />
-                                </div>
+                    {loadingMembers ? (
+                        <LoadingTile />
+                    ) : memberRows.length === 0 ? (
+                        <EmptyState icon={Users} title={t("No workload")} description={t("No workload entries for this sprint")} />
+                    ) : (
+                        <>
+                            <div className={cn("grid grid-cols-2 sm:grid-cols-4", compact ? "gap-2 mb-3" : "gap-4 mb-6")}>
+                                <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={memberTotals.teamSize} /></p><p className="text-xs text-text-muted">{t("Team Size")}</p></CardContent></Card>
+                                <Card><CardContent className="p-4 text-center"><p className={cn("text-2xl font-bold", getUtilizationTextColor(memberTotals.avgUtilization))}><AnimatedNumber value={memberTotals.avgUtilization} suffix="%" /></p><p className="text-xs text-text-muted">{t("Avg Utilization")}</p></CardContent></Card>
+                                <Card><CardContent className="p-4 text-center"><p className={cn("text-2xl font-bold", memberTotals.overloadedCount > 0 ? "text-error" : "text-success")}>{memberTotals.overloadedCount}</p><p className="text-xs text-text-muted">{t("Overloaded")}</p></CardContent></Card>
+                                <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={memberTotals.contextSwitches} /></p><p className="text-xs text-text-muted">{t("Context Switches")}</p></CardContent></Card>
                             </div>
-                        );
-                    })}
-                    <div className="flex items-center gap-4 pt-2 border-t border-border text-xs text-text-muted">
-                        <div className="flex items-center gap-2">
-                            <div className="h-2.5 w-6 rounded bg-primary" />
-                            <span>{t("Assigned")}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="h-2.5 w-6 rounded bg-error" />
-                            <span>{t("Over capacity")}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="h-4 w-0 border-r-2 border-dashed border-text-muted" />
-                            <span>{t("Capacity limit")}</span>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
 
-            {/* Context Switching */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                        <ArrowRightLeft className="h-4 w-4 text-warning" />
-                        {t("Context Switching")}
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col gap-3">
-                        {sortedByContextSwitches.map((w, index) => {
-                            const member = getMember(w.memberId);
-                            const maxSwitches = sortedByContextSwitches[0]?.contextSwitches ?? 1;
-                            const barWidth = maxSwitches > 0 ? (w.contextSwitches / maxSwitches) * 100 : 0;
-                            const isHigh = w.contextSwitches >= 5;
-                            return (
-                                <div key={w.memberId} className="flex items-center gap-3">
-                                    <span className="text-xs text-text-muted w-5 text-right shrink-0">#{index + 1}</span>
-                                    <Avatar className="h-6 w-6 shrink-0">
-                                        <AvatarFallback className="text-[8px]">{member?.avatar_initials ?? "?"}</AvatarFallback>
-                                    </Avatar>
-                                    <span className="text-xs font-medium text-text-dark w-32 truncate shrink-0">{member?.full_name ?? "Unknown"}</span>
-                                    <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden">
-                                        <div
-                                            className={cn("h-full rounded-full transition-all duration-500 progress-animated", isHigh ? "bg-error" : "bg-warning")}
-                                            style={{ width: `${Math.max(barWidth, 4)}%` }}
-                                        />
+                            <h2 className={cn("font-semibold text-text-dark", compact ? "text-base mb-2" : "text-lg mb-3")}>
+                                {t("Team Members")}{memberRows[0]?.sprint_name ? ` — ${memberRows[0].sprint_name}` : ""}
+                            </h2>
+                            <div className={cn("flex flex-col", compact ? "gap-2 mb-4" : "gap-3 mb-8")}>
+                                {memberRows.map((row) => {
+                                    const isOverloaded = row.overloaded;
+                                    return (
+                                        <Card key={`${row.member_id}-${row.sprint_id ?? ""}`}>
+                                            <CardContent className={compact ? "p-3" : "p-4"}>
+                                                <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+                                                    <div className="flex items-center gap-3 md:w-48 md:shrink-0">
+                                                        <Avatar className="h-9 w-9"><AvatarFallback>{row.avatar_initials ?? "?"}</AvatarFallback></Avatar>
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-sm font-semibold text-text-dark truncate">{row.member_name}</p>
+                                                            <p className="text-xs text-text-muted truncate">{row.role ?? "—"}</p>
+                                                        </div>
+                                                        {isOverloaded && <Badge variant="error" className="shrink-0 md:hidden"><AlertTriangle className="h-3 w-3 me-1" />{t("Overloaded")}</Badge>}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <span className="text-xs text-text-muted">{t("Utilization")}</span>
+                                                            <span className={cn("text-xs font-bold", getUtilizationTextColor(row.utilization))}><AnimatedNumber value={row.utilization} suffix="%" /></span>
+                                                        </div>
+                                                        <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                                                            <div className={cn("h-full rounded-full transition-all duration-500", getUtilizationColor(row.utilization))} style={{ width: `${Math.min(row.utilization, 100)}%` }} />
+                                                        </div>
+                                                    </div>
+                                                    <div className="grid grid-cols-4 md:flex md:items-center gap-2 md:gap-0">
+                                                        <div className="md:w-24 shrink-0 text-center"><p className={cn("text-sm font-bold", isOverloaded ? "text-error" : "text-text-dark")}>{row.assigned}/{row.capacity}</p><p className="text-[10px] md:text-xs text-text-muted">{t("assigned")}/{t("capacity")}</p></div>
+                                                        <div className="md:w-20 shrink-0 text-center"><p className="text-sm font-bold text-text-dark">{row.completed}</p><p className="text-[10px] md:text-xs text-text-muted">{t("completed")}</p></div>
+                                                        <div className="md:w-20 shrink-0 text-center"><div className="flex items-center justify-center gap-1"><ArrowRightLeft className={cn("h-3 w-3", row.context_switches >= 5 ? "text-error" : "text-text-muted")} /><span className={cn("text-sm font-bold", row.context_switches >= 5 ? "text-error" : "text-text-dark")}>{row.context_switches}</span></div><p className="text-[10px] md:text-xs text-text-muted">{t("switches")}</p></div>
+                                                        <div className="md:w-20 shrink-0 text-center"><p className="text-sm font-bold text-text-dark">{row.active_tasks}</p><p className="text-[10px] md:text-xs text-text-muted">{t("active tasks")}</p></div>
+                                                    </div>
+                                                    {isOverloaded && <Badge variant="error" className="shrink-0 hidden md:inline-flex"><AlertTriangle className="h-3 w-3 me-1" />{t("Overloaded")}</Badge>}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    );
+                                })}
+                            </div>
+
+                            <Card className="mb-6">
+                                <CardHeader><CardTitle className="flex items-center gap-2 text-base"><BarChart3 className="h-4 w-4 text-primary" />{t("Workload Distribution")}</CardTitle></CardHeader>
+                                <CardContent className="flex flex-col gap-4">
+                                    {memberRows.map((row) => {
+                                        const assignedWidth = (row.assigned / maxAssigned) * 100;
+                                        const capacityWidth = (row.capacity / maxAssigned) * 100;
+                                        return (
+                                            <div key={`${row.member_id}-bar`}>
+                                                <div className="flex items-center justify-between mb-1.5">
+                                                    <div className="flex items-center gap-2">
+                                                        <Avatar className="h-5 w-5"><AvatarFallback className="text-[8px]">{row.avatar_initials ?? "?"}</AvatarFallback></Avatar>
+                                                        <span className="text-xs font-medium text-text-dark">{row.member_name}</span>
+                                                    </div>
+                                                    <span className={cn("text-xs font-medium", row.overloaded ? "text-error" : "text-text-secondary")}>{row.assigned} / {row.capacity} {t("points")}</span>
+                                                </div>
+                                                <div className="relative h-4 rounded-full bg-muted overflow-hidden">
+                                                    <div className="absolute top-0 h-full border-r-2 border-dashed border-text-muted z-10" style={{ left: `${capacityWidth}%` }} />
+                                                    <div className={cn("h-full rounded-full transition-all duration-500", row.overloaded ? "bg-error" : "bg-primary")} style={{ width: `${Math.min(assignedWidth, 100)}%` }} />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ArrowRightLeft className="h-4 w-4 text-warning" />{t("Context Switching")}</CardTitle></CardHeader>
+                                <CardContent>
+                                    <div className="flex flex-col gap-3">
+                                        {sortedByContextSwitches.map((row, index) => {
+                                            const maxSwitches = sortedByContextSwitches[0]?.context_switches ?? 1;
+                                            const barWidth = maxSwitches > 0 ? (row.context_switches / maxSwitches) * 100 : 0;
+                                            const isHigh = row.context_switches >= 5;
+                                            return (
+                                                <div key={`${row.member_id}-ctx`} className="flex items-center gap-3">
+                                                    <span className="text-xs text-text-muted w-5 text-right shrink-0">#{index + 1}</span>
+                                                    <Avatar className="h-6 w-6 shrink-0"><AvatarFallback className="text-[8px]">{row.avatar_initials ?? "?"}</AvatarFallback></Avatar>
+                                                    <span className="text-xs font-medium text-text-dark w-32 truncate shrink-0">{row.member_name}</span>
+                                                    <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden"><div className={cn("h-full rounded-full transition-all duration-500", isHigh ? "bg-error" : "bg-warning")} style={{ width: `${Math.max(barWidth, 4)}%` }} /></div>
+                                                    <span className={cn("text-xs font-bold w-6 text-right shrink-0", isHigh ? "text-error" : "text-text-dark")}><AnimatedNumber value={row.context_switches} /></span>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                    <span className={cn("text-xs font-bold w-6 text-right shrink-0", isHigh ? "text-error" : "text-text-dark")}>
-                                        <AnimatedNumber value={w.contextSwitches} />
-                                    </span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </CardContent>
-            </Card>
+                                </CardContent>
+                            </Card>
+                        </>
+                    )}
+                </TabsContent>
+            </Tabs>
         </div>
     );
 };
+
+const LoadingTile = () => (
+    <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-text-muted">
+        {t("Loading workload...")}
+    </div>
+);
+
+interface ScopeStatProps {
+    label: string;
+    value: string | number;
+    tone?: string;
+}
+
+const ScopeStat = ({ label, value, tone }: ScopeStatProps) => (
+    <div className="rounded-md bg-muted/40 px-2 py-1.5">
+        <p className="text-[10px] uppercase tracking-wide text-text-muted">{label}</p>
+        <p className={cn("text-sm font-bold", tone ?? "text-text-dark")}>{value}</p>
+    </div>
+);

@@ -1,3 +1,5 @@
+import type { PaginatedResponseInterface, PaginationParamsInterface } from "@/interfaces/common";
+
 export interface RedFlagReporterInterface {
     id: string;
     full_name: string;
@@ -15,9 +17,9 @@ export interface RedFlagInterface {
     updated_at: string;
 }
 
-export interface RedFlagsListResponseInterface {
-    data: RedFlagInterface[];
-}
+export type RedFlagsListResponseInterface = PaginatedResponseInterface<RedFlagInterface>;
+
+export interface RedFlagsListFiltersInterface extends PaginationParamsInterface {}
 
 export interface RedFlagDetailResponseInterface {
     data: RedFlagInterface;

@@ -1,8 +1,11 @@
 import { apisData } from "@/data";
 import type {
     CreateProjectPayloadInterface,
+    ProjectAnalyticsResponseInterface,
     ProjectInterface,
     ProjectLiteInterface,
+    ProjectsListFiltersInterface,
+    ProjectsListResponseInterface,
     SprintInterface,
     UpdateProjectPayloadInterface,
 } from "@/interfaces";
@@ -16,9 +19,9 @@ const unwrap = <T,>(payload: unknown): T => {
 };
 
 export const projectsService = {
-    listHandler: async (params?: { status?: string; per_page?: number; page?: number }): Promise<ProjectInterface[]> => {
-        const res = await apiClient.get(apisData.projects.list, { params });
-        return unwrap<ProjectInterface[]>(res.data);
+    listHandler: async (params?: ProjectsListFiltersInterface): Promise<ProjectsListResponseInterface> => {
+        const res = await apiClient.get<ProjectsListResponseInterface>(apisData.projects.list, { params });
+        return res.data;
     },
 
     listLiteHandler: async (): Promise<ProjectLiteInterface[]> => {
@@ -48,5 +51,10 @@ export const projectsService = {
     sprintsHandler: async (id: string): Promise<SprintInterface[]> => {
         const res = await apiClient.get(apisData.projects.sprints(id));
         return unwrap<SprintInterface[]>(res.data);
+    },
+
+    analyticsHandler: async (id: string): Promise<ProjectAnalyticsResponseInterface> => {
+        const res = await apiClient.get(apisData.projects.analytics(id));
+        return unwrap<ProjectAnalyticsResponseInterface>(res.data);
     },
 };

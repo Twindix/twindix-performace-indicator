@@ -1,21 +1,24 @@
 import { Heart } from "lucide-react";
 import { Outlet } from "react-router-dom";
 
-import { Sidebar, Topbar } from "@/components/shared";
-import { t, useSettings } from "@/hooks";
+import { InitLoader, Sidebar, Topbar } from "@/components/shared";
+import { t, useAppInit, useSettings } from "@/hooks";
 import { useSidebarStore } from "@/store";
 import { cn } from "@/utils";
 
 export const DashboardLayout = () => {
     const isOpen = useSidebarStore((s) => s.isOpen);
     const [settings] = useSettings();
+    const { isReady } = useAppInit();
+
+    if (!isReady) return <InitLoader />;
 
     return (
         <div className="min-h-screen bg-background flex flex-col">
             <Sidebar />
             <div className={cn("transition-all duration-300 flex-1 flex flex-col", isOpen ? "ms-[var(--spacing-sidebar)]" : "ms-16", "max-lg:ms-0")}>
                 <Topbar />
-                <main className={cn("flex-1 transition-all", settings.compactView ? "p-2 sm:p-3" : "p-3 sm:p-6")}>
+                <main className={cn("flex-1 flex flex-col transition-all", settings.compactView ? "p-2 sm:p-3" : "p-3 sm:p-6")}>
                     <Outlet />
                 </main>
                 <footer className="border-t border-border py-4 px-6">

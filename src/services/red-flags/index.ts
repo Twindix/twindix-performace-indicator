@@ -1,10 +1,10 @@
 import { apisData } from "@/data";
-import type { CreateRedFlagPayloadInterface, RedFlagDetailResponseInterface, RedFlagsCountInterface, RedFlagsListResponseInterface, UpdateRedFlagPayloadInterface } from "@/interfaces";
+import type { CreateRedFlagPayloadInterface, RedFlagDetailResponseInterface, RedFlagsCountInterface, RedFlagsListFiltersInterface, RedFlagsListResponseInterface, UpdateRedFlagPayloadInterface } from "@/interfaces";
 import { apiClient } from "@/lib/axios";
 
 export const redFlagsService = {
-    listHandler: async (sprintId: string): Promise<RedFlagsListResponseInterface> => {
-        const { data } = await apiClient.get<RedFlagsListResponseInterface>(apisData.redFlags.list(sprintId));
+    listHandler: async (sprintId: string, params?: RedFlagsListFiltersInterface): Promise<RedFlagsListResponseInterface> => {
+        const { data } = await apiClient.get<RedFlagsListResponseInterface>(apisData.redFlags.list(sprintId), { params });
         return data;
     },
 

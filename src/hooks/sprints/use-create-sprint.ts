@@ -3,15 +3,22 @@ import type { CreateSprintPayloadInterface, SprintInterface } from "@/interfaces
 import { sprintsService } from "@/services";
 
 import { useMutationAction, type FieldErrors } from "../shared";
+import { invalidateProjectSprintsCache } from "../projects/use-project-sprints";
 
 export interface UseCreateSprintOptions {
     onFieldErrors?: (errors: FieldErrors) => void;
 }
 
+interface CreateSprintArgs {
+    projectId: string;
+    payload: CreateSprintPayloadInterface;
+}
+
 export const useCreateSprint = ({ onFieldErrors }: UseCreateSprintOptions = {}) => {
     const { mutate, isLoading } = useMutationAction(
-        async (payload: CreateSprintPayloadInterface): Promise<SprintInterface> => {
-            const res = await sprintsService.createHandler(payload);
+        async ({ projectId, payload }: CreateSprintArgs): Promise<SprintInterface> => {
+            const res = await sprintsService.createHandler(projectId, payload);
+            invalidateProjectSprintsCache();
             return res.data;
         },
         {

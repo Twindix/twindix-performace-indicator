@@ -4,33 +4,36 @@ import { redFlagsConstants } from "@/constants";
 import type { RedFlagInterface } from "@/interfaces";
 import { redFlagsService } from "@/services";
 
-import { useQueryAction } from "../shared";
+import { usePaginatedQuery } from "../shared";
 
-export const useRedFlagsList = (sprintId: string) => {
-    const { data, isLoading, refetch, setData } = useQueryAction<RedFlagInterface[]>(
-        async () => (sprintId ? (await redFlagsService.listHandler(sprintId)).data : []),
+export interface UseRedFlagsListOptions {
+    initialPerPage?: number;
+}
+
+export const useRedFlagsList = (sprintId: string, { initialPerPage }: UseRedFlagsListOptions = {}) => {
+    const { items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, setItems } = usePaginatedQuery<RedFlagInterface>(
+        ({ page, per_page }) => redFlagsService.listHandler(sprintId, { page, per_page }),
         [sprintId],
         {
             enabled: !!sprintId,
             errorFallback: redFlagsConstants.errors.fetchFailed,
-            initialData: [],
             context: "red-flags.list",
+            initialPerPage,
         },
     );
 
     const patchRedFlagLocal = useCallback((flag: RedFlagInterface) => {
-        setData((prev) => {
-            const arr = prev ?? [];
-            const exists = arr.some((f) => f.id === flag.id);
+        setItems((prev) => {
+            const exists = prev.some((f) => f.id === flag.id);
             return exists
-                ? arr.map((f) => (f.id === flag.id ? { ...f, ...flag } : f))
-                : [flag, ...arr];
+                ? prev.map((f) => (f.id === flag.id ? { ...f, ...flag } : f))
+                : [flag, ...prev];
         });
-    }, [setData]);
+    }, [setItems]);
 
     const removeRedFlagLocal = useCallback((id: string) => {
-        setData((prev) => (prev ?? []).filter((f) => f.id !== id));
-    }, [setData]);
+        setItems((prev) => prev.filter((f) => f.id !== id));
+    }, [setItems]);
 
-    return { redFlags: data ?? [], isLoading, refetch, patchRedFlagLocal, removeRedFlagLocal };
+    return { redFlags: items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, patchRedFlagLocal, removeRedFlagLocal };
 };

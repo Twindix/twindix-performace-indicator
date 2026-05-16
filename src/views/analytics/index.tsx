@@ -1,281 +1,187 @@
 import { useMemo } from "react";
-import { AlertTriangle, Clock, GitBranch, MessageSquare, Shield, Users } from "lucide-react";
+import { CheckCircle2, Clock, Target, TriangleAlert } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/atoms";
-import { Header, MetricCard, ScoreGauge, StatusBadge } from "@/components/shared";
-import { AnalyticsSkeleton } from "@/components/skeletons";
-import { MetricStatus } from "@/enums";
-import { t, useSettings, usePageLoader } from "@/hooks";
-import type { SprintMetricsInterface } from "@/interfaces";
-import { useSprintsList } from "@/hooks";
+import { EmptyState, Header } from "@/components/shared";
+import {
+    BarSeries,
+    BurnChart,
+    ChartCard,
+    DonutBreakdown,
+    RadialProgress,
+} from "@/components/shared";
+import { t, useSprintAnalytics, useSprintsList } from "@/hooks";
 import { useSprintStore } from "@/store";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
-import { cn, td } from "@/utils";
 
-const frictionAreaConfig = [
-    { key: "poorRequirements" as const, labelKey: "Poor Requirements", icon: AlertTriangle, color: "bg-friction-requirements" },
-    { key: "communicationGaps" as const, labelKey: "Communication Gaps", icon: MessageSquare, color: "bg-friction-communication" },
-    { key: "weakOwnership" as const, labelKey: "Weak Ownership", icon: Shield, color: "bg-friction-ownership" },
-    { key: "dependencyBlockers" as const, labelKey: "Dependency Blockers", icon: GitBranch, color: "bg-friction-dependencies" },
-    { key: "processGaps" as const, labelKey: "Process Gaps", icon: Clock, color: "bg-friction-process" },
-    { key: "teamCulture" as const, labelKey: "Team & Culture", icon: Users, color: "bg-friction-team" },
-];
-
-const SPRINT_COLOR_POOL = [
-    { bar: "bg-primary-lighter", text: "text-primary-medium" },
-    { bar: "bg-warning-light",   text: "text-warning" },
-    { bar: "bg-success-light",   text: "text-success" },
-    { bar: "bg-error-light",     text: "text-error" },
-];
-
-const getScoreStatus = (score: number): MetricStatus => {
-    if (score >= 80) return MetricStatus.Healthy;
-    if (score >= 60) return MetricStatus.Warning;
-    return MetricStatus.Critical;
+const STATUS_COLOR_MAP: Record<string, string> = {
+    in_progress: "var(--color-primary-medium)",
+    review: "var(--color-info)",
+    blocked: "var(--color-error)",
+    done: "var(--color-success)",
+    backlog: "var(--color-muted-foreground)",
 };
 
-const getBarColor = (score: number): string => {
-    if (score >= 80) return "bg-success";
-    if (score >= 60) return "bg-warning";
-    return "bg-error";
+const STATUS_LABEL_MAP: Record<string, string> = {
+    in_progress: "In Progress",
+    review: "Review",
+    blocked: "Blocked",
+    done: "Done",
+    backlog: "Backlog",
+};
+
+const initialsFor = (name: string) =>
+    name.split(/\s+/).filter(Boolean).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+
+const MiniStat = ({ icon: Icon, label, value, tone = "primary" }: {
+    icon: typeof Target;
+    label: string;
+    value: string | number;
+    tone?: "primary" | "success" | "warning" | "error";
+}) => {
+    const toneClass = {
+        primary: "text-primary-medium bg-primary-lighter",
+        success: "text-success bg-success-light",
+        warning: "text-warning bg-warning-light",
+        error: "text-error bg-error-light",
+    }[tone];
+    return (
+        <div className="rounded-lg border border-border bg-card p-3 flex items-center gap-3">
+            <div className={`h-9 w-9 rounded-md flex items-center justify-center ${toneClass}`}>
+                <Icon className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+                <p className="text-[11px] uppercase tracking-wide text-text-muted">{label}</p>
+                <p className="text-base font-bold text-text-dark">{value}</p>
+            </div>
+        </div>
+    );
 };
 
 export const AnalyticsView = () => {
-    const isLoading = usePageLoader();
-    const [settings] = useSettings();
-    const isRTL = settings.language === "ar";
     const { activeSprintId } = useSprintStore();
     const { sprints } = useSprintsList();
-    const allMetrics: SprintMetricsInterface[] = [];
+    const { analytics, isLoading } = useSprintAnalytics(activeSprintId ?? "");
 
-    const orderedSprintIds = sprints.map((s) => s.id);
+    const view = useMemo(() => {
+        if (!analytics) return null;
+        const burnLength = Math.max(analytics.burn_chart.planned.length, analytics.burn_chart.actual.length);
+        return {
+            sprint: analytics.sprint,
+            stats: analytics.stats,
+            contributors: analytics.contributors,
+            burn: Array.from({ length: burnLength }).map((_, i) => ({
+                label: `D${i + 1}`,
+                planned: analytics.burn_chart.planned[i] ?? 0,
+                actual: analytics.burn_chart.actual[i] ?? 0,
+            })),
+            dailyThroughput: analytics.daily_throughput.map((d) => ({
+                label: d.day,
+                value: d.tasks_completed,
+            })),
+            taskStatus: Object.entries(analytics.task_status)
+                .filter(([, v]) => typeof v === "number" && v > 0)
+                .map(([k, v]) => ({
+                    name: STATUS_LABEL_MAP[k] ?? k,
+                    value: Number(v),
+                    color: STATUS_COLOR_MAP[k] ?? "var(--color-muted-foreground)",
+                })),
+        };
+    }, [analytics]);
 
-    const sprintMetricsMap = useMemo(() => {
-        const map: Record<string, SprintMetricsInterface> = {};
-        for (const m of allMetrics) {
-            map[m.sprintId] = m;
-        }
-        return map;
-    }, [allMetrics]);
-
-    const activeMetrics = sprintMetricsMap[activeSprintId];
-
-    // Gather all unique metric names across sprints for trend comparison
-    const allMetricNames = useMemo(() => {
-        const names = new Set<string>();
-        for (const sm of allMetrics) {
-            for (const m of sm.metrics) {
-                names.add(m.name);
-            }
-        }
-        return Array.from(names);
-    }, [allMetrics]);
-
-    if (isLoading) return <AnalyticsSkeleton />;
+    if (!activeSprintId) {
+        return (
+            <div>
+                <Header title={t("Sprint Analytics")} description={t("Performance metrics for the active sprint")} />
+                <EmptyState
+                    icon={Target}
+                    title={t("No active sprint")}
+                    description={sprints.length > 0 ? t("Pick a sprint from the sprints page to see analytics.") : t("Create and activate a sprint to see analytics.")}
+                />
+            </div>
+        );
+    }
 
     return (
         <div>
             <Header
                 title={t("Sprint Analytics")}
-                description={t("Compare metrics across sprints and track improvement trends")}
+                description={view?.sprint?.name ? `${t("Analytics for")} ${view.sprint.name}` : t("Performance metrics for the active sprint")}
             />
 
-            <Tabs defaultValue="overview" className="space-y-6">
-                <TabsList className="flex-wrap">
-                    <TabsTrigger value="overview" className="text-xs sm:text-sm">{t("Overview")}</TabsTrigger>
-                    <TabsTrigger value="metrics" className="text-xs sm:text-sm">{t("All Metrics")}</TabsTrigger>
-                    <TabsTrigger value="trends" className="text-xs sm:text-sm">{t("Sprint Trends")}</TabsTrigger>
-                    <TabsTrigger value="friction" className="text-xs sm:text-sm">{t("Friction Breakdown")}</TabsTrigger>
-                </TabsList>
+            {isLoading && !view ? (
+                <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-text-muted">
+                    {t("Loading sprint analytics...")}
+                </div>
+            ) : !view ? (
+                <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-text-muted">
+                    {t("No analytics available for this sprint.")}
+                </div>
+            ) : (
+                <>
+                    {view.stats.warning && (
+                        <div className="rounded-md border border-warning bg-warning-light text-warning px-4 py-3 text-sm mb-4">
+                            {view.stats.warning}
+                        </div>
+                    )}
 
-                {/* Overview Tab */}
-                <TabsContent value="overview">
-                    {/* Sprint Comparison - Health Scores */}
-                    <h2 className="text-lg font-semibold text-text-dark mb-4">{t("Sprint Health Comparison")}</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-                        {orderedSprintIds.map((sprintId) => {
-                            const data = sprintMetricsMap[sprintId];
-                            const sprint = sprints.find((s) => s.id === sprintId);
-                            const score = data?.healthScore ?? 0;
-                            const isActive = sprintId === activeSprintId;
-                            return (
-                                <Card key={sprintId} className={cn(isActive && "ring-2 ring-primary")}>
-                                    <CardHeader className="pb-2">
-                                        <CardTitle className="text-sm text-center">
-                                            {sprint?.name ?? sprintId}
-                                            {isActive && (
-                                                <span className="ms-2 text-xs text-primary font-normal">({t("Active")})</span>
-                                            )}
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="flex flex-col items-center gap-3">
-                                        <ScoreGauge score={score} size="lg" label={t("Health")} />
-                                        <StatusBadge status={getScoreStatus(score)} />
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                        <MiniStat icon={Target} label={t("Completion")} value={`${view.stats.completion}%`} tone="primary" />
+                        <MiniStat icon={CheckCircle2} label={t("On-time")} value={`${view.stats.on_time_rate}%`} tone="success" />
+                        <MiniStat icon={Clock} label={t("Days Left")} value={view.stats.days_left} tone={view.stats.days_left <= 2 ? "warning" : "primary"} />
+                        <MiniStat icon={TriangleAlert} label={t("Blockers")} value={view.stats.open_blockers} tone={view.stats.open_blockers > 0 ? "error" : "success"} />
                     </div>
 
-                    {/* Quick Metrics for Active Sprint */}
-                    {activeMetrics && (
-                        <>
-                            <h2 className="text-lg font-semibold text-text-dark mb-3">
-                                {t("Key Metrics")} - {sprints.find((s) => s.id === activeSprintId)?.name ?? activeSprintId}
-                            </h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                {activeMetrics.metrics.slice(0, 8).map((m) => (
-                                    <MetricCard
-                                        key={m.id}
-                                        name={m.name}
-                                        value={m.value}
-                                        unit={m.unit}
-                                        status={m.status}
-                                        trend={m.trend}
-                                        trendPercent={m.trendPercent}
-                                        description={m.description}
-                                    />
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                        <div className="lg:col-span-2">
+                            <ChartCard title={t("Burn Chart")} subtitle={t("Planned vs actual remaining")} height={240}>
+                                <BurnChart data={view.burn} />
+                            </ChartCard>
+                        </div>
+                        <ChartCard title={t("Completion")} subtitle={t("Sprint progress")} height={240}>
+                            <div className="relative h-full">
+                                <RadialProgress value={view.stats.completion} color="var(--color-success)" />
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div className="text-center">
+                                        <p className="text-2xl font-bold text-text-dark">{view.stats.completion}%</p>
+                                        <p className="text-[10px] text-text-muted uppercase tracking-wide">{t("complete")}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </ChartCard>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                        <ChartCard title={t("Daily Throughput")} subtitle={t("Tasks completed per day")} height={220}>
+                            <BarSeries data={view.dailyThroughput} color="var(--color-primary-medium)" valueLabel={t("Tasks")} />
+                        </ChartCard>
+                        <ChartCard title={t("Task Status")} subtitle={t("Current breakdown")} height={220}>
+                            <DonutBreakdown data={view.taskStatus} unit={t("tasks")} />
+                        </ChartCard>
+                    </div>
+
+                    <div className="rounded-lg border border-border bg-card p-4">
+                        <h3 className="text-sm font-semibold text-text-dark mb-3">{t("Contributors")}</h3>
+                        {view.contributors.length === 0 ? (
+                            <p className="text-xs text-text-muted">{t("No contributors yet.")}</p>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {view.contributors.map((person) => (
+                                    <div key={person.user_id} className="flex items-center gap-3">
+                                        <div className="h-8 w-8 rounded-full bg-primary-lighter text-primary-medium text-xs font-semibold flex items-center justify-center">
+                                            {person.avatar_initials ?? initialsFor(person.name)}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-semibold text-text-dark truncate">{person.name}</p>
+                                            <p className="text-[11px] text-text-muted">
+                                                {person.tasks_count} {t("tasks")} · {person.hours_logged}h
+                                            </p>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
-                        </>
-                    )}
-                </TabsContent>
-
-                {/* All Metrics Tab */}
-                <TabsContent value="metrics">
-                    <h2 className="text-lg font-semibold text-text-dark mb-4">
-                        {t("All Metrics")} - {sprints.find((s) => s.id === activeSprintId)?.name ?? activeSprintId}
-                    </h2>
-                    {activeMetrics ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                            {activeMetrics.metrics.map((m) => (
-                                <MetricCard
-                                    key={m.id}
-                                    name={m.name}
-                                    value={m.value}
-                                    unit={m.unit}
-                                    status={m.status}
-                                    trend={m.trend}
-                                    trendPercent={m.trendPercent}
-                                    description={m.description}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-sm text-text-muted text-center py-8">{t("No metrics data available for this sprint")}</p>
-                    )}
-                </TabsContent>
-
-                {/* Sprint-over-Sprint Trends Tab */}
-                <TabsContent value="trends">
-                    <h2 className="text-lg font-semibold text-text-dark mb-4">{t("Sprint-over-Sprint Trends")}</h2>
-
-                    {/* Legend */}
-                    <div className="flex items-center gap-4 mb-6">
-                        {orderedSprintIds.map((id, i) => (
-                            <div key={id} className="flex items-center gap-2">
-                                <div className={cn("h-3 w-3 rounded-sm", SPRINT_COLOR_POOL[i % SPRINT_COLOR_POOL.length].bar)} />
-                                <span className="text-xs text-text-secondary">{sprints.find((s) => s.id === id)?.name ?? id}</span>
-                            </div>
-                        ))}
+                        )}
                     </div>
-
-                    <div className="flex flex-col gap-4">
-                        {allMetricNames.map((metricName) => {
-                            const values = orderedSprintIds.map((sprintId) => {
-                                const sm = sprintMetricsMap[sprintId];
-                                const metric = sm?.metrics.find((m) => m.name === metricName);
-                                return { sprintId, value: metric?.value ?? 0, unit: metric?.unit ?? "" };
-                            });
-                            const maxVal = Math.max(...values.map((v) => v.value), 1);
-
-                            return (
-                                <Card key={metricName}>
-                                    <CardContent className="p-4">
-                                        <div className={cn("flex items-center justify-between mb-3", isRTL && "flex-row-reverse")}>
-                                            <h3 className="text-sm font-semibold text-text-dark">{td(metricName)}</h3>
-                                            <span className="text-xs text-text-muted">{td(values[0].unit)}</span>
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            {values.map(({ sprintId, value }, i) => {
-                                                const color = SPRINT_COLOR_POOL[i % SPRINT_COLOR_POOL.length];
-                                                const sprintName = sprints.find((s) => s.id === sprintId)?.name ?? sprintId;
-                                                const widthPercent = maxVal > 0 ? (value / maxVal) * 100 : 0;
-                                                return (
-                                                    <div key={sprintId} className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
-                                                        <span className="text-xs text-text-muted w-16 shrink-0">{sprintName}</span>
-                                                        <div className="flex-1 h-5 rounded bg-muted overflow-hidden">
-                                                            <div
-                                                                className={cn("h-full rounded transition-all duration-500 progress-animated", color.bar)}
-                                                                style={{ width: `${Math.max(widthPercent, 2)}%` }}
-                                                            />
-                                                        </div>
-                                                        <span className={cn("text-xs font-bold w-12", isRTL ? "text-left" : "text-right", color.text)}>
-                                                            {value}
-                                                        </span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
-                    </div>
-                </TabsContent>
-
-                {/* Friction Breakdown Tab */}
-                <TabsContent value="friction">
-                    <h2 className="text-lg font-semibold text-text-dark mb-4">{t("Health Score Breakdown")}</h2>
-
-                    {activeMetrics ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Overall Score */}
-                            <Card className="md:col-span-2">
-                                <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-                                    <ScoreGauge score={activeMetrics.healthScore} size="md" label={t("Overall")} />
-                                    <div className="flex-1 text-center sm:text-start">
-                                        <h3 className="text-lg font-semibold text-text-dark mb-1">{t("Overall Health Score")}</h3>
-                                        <p className="text-sm text-text-secondary mb-3">
-                                            {t("Composite score derived from 6 friction areas")}
-                                        </p>
-                                        <StatusBadge status={getScoreStatus(activeMetrics.healthScore)} />
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Friction Area Progress Bars */}
-                            {frictionAreaConfig.map(({ key, labelKey, icon: Icon }) => {
-                                const score = activeMetrics.frictionScores[key] ?? 0;
-                                return (
-                                    <Card key={key}>
-                                        <CardContent className="p-5">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <div className="flex items-center gap-2">
-                                                    <Icon className="h-4 w-4 text-text-secondary" />
-                                                    <h4 className="text-sm font-semibold text-text-dark">{t(labelKey)}</h4>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className={cn("text-lg font-bold", score >= 80 ? "text-success" : score >= 60 ? "text-warning" : "text-error")}>{score}</span>
-                                                    <StatusBadge status={getScoreStatus(score)} />
-                                                </div>
-                                            </div>
-                                            <div className="h-3 rounded-full bg-muted overflow-hidden">
-                                                <div
-                                                    className={cn("h-full rounded-full transition-all duration-500 progress-animated", getBarColor(score))}
-                                                    style={{ width: `${score}%` }}
-                                                />
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <p className="text-sm text-text-muted text-center py-8">{t("No friction data available for this sprint")}</p>
-                    )}
-                </TabsContent>
-            </Tabs>
+                </>
+            )}
         </div>
     );
 };

@@ -4,41 +4,29 @@ import { commentsConstants } from "@/constants";
 import type { CommentInterface, CommentsAnalyticsInterface } from "@/interfaces";
 import { commentsService } from "@/services";
 
-import { useQueryAction } from "../shared";
+import { usePaginatedQuery, useQueryAction } from "../shared";
 
 interface UseCommentsListOptions {
     status?: string;
     mention?: string;
-    per_page?: number;
+    initialPerPage?: number;
 }
 
 export const useCommentsList = (sprintId: string, options: UseCommentsListOptions = {}) => {
-    const { status, mention, per_page } = options;
+    const { status, mention, initialPerPage } = options;
 
-    const {
-        data: comments,
-        isLoading,
-        refetch,
-        setData,
-    } = useQueryAction<CommentInterface[]>(
-        async () => {
-            if (!sprintId) return [];
-            const res = await commentsService.listHandler(sprintId, { status, mention, per_page });
-            return res.data;
-        },
-        [sprintId, status, mention, per_page],
+    const { items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, setItems } = usePaginatedQuery<CommentInterface>(
+        ({ page, per_page }) => commentsService.listHandler(sprintId, { status, mention, page, per_page }),
+        [sprintId, status, mention],
         {
             enabled: !!sprintId,
             errorFallback: commentsConstants.errors.fetchFailed,
-            initialData: [],
             context: "comments.list",
+            initialPerPage,
         },
     );
 
-    const {
-        data: analytics,
-        refetch: refetchAnalytics,
-    } = useQueryAction<CommentsAnalyticsInterface | null>(
+    const { data: analytics, refetch: refetchAnalytics } = useQueryAction<CommentsAnalyticsInterface | null>(
         async () => (sprintId ? await commentsService.analyticsHandler(sprintId) : null),
         [sprintId],
         {
@@ -51,23 +39,27 @@ export const useCommentsList = (sprintId: string, options: UseCommentsListOption
     );
 
     const patchCommentLocal = useCallback((comment: CommentInterface) => {
-        setData((prev) => {
-            const arr = prev ?? [];
-            const exists = arr.some((c) => c.id === comment.id);
+        setItems((prev) => {
+            const exists = prev.some((c) => c.id === comment.id);
             return exists
-                ? arr.map((c) => (c.id === comment.id ? { ...c, ...comment } : c))
-                : [comment, ...arr];
+                ? prev.map((c) => (c.id === comment.id ? { ...c, ...comment } : c))
+                : [comment, ...prev];
         });
-    }, [setData]);
+    }, [setItems]);
 
     const removeCommentLocal = useCallback((id: string) => {
-        setData((prev) => (prev ?? []).filter((c) => c.id !== id));
-    }, [setData]);
+        setItems((prev) => prev.filter((c) => c.id !== id));
+    }, [setItems]);
 
     return {
-        comments: comments ?? [],
+        comments: items,
+        meta,
+        page,
+        perPage,
         analytics: analytics ?? null,
         isLoading,
+        setPage,
+        setPerPage,
         refetch,
         refetchAnalytics,
         patchCommentLocal,

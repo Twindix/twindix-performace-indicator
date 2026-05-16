@@ -1,22 +1,12 @@
 import { apisData } from "@/data";
-import type { CreateTimeLogPayloadInterface, TimeLogInterface, TimeLogsSummaryInterface, UpdateTimeLogPayloadInterface } from "@/interfaces";
+import type { CreateStandaloneTimeLogPayloadInterface, CreateTimeLogPayloadInterface, PaginatedResponseInterface, PaginationParamsInterface, TimeLogInterface, TimeLogsSummaryInterface, UpdateTimeLogPayloadInterface } from "@/interfaces";
 import { apiClient } from "@/lib/axios";
 
-interface TimeLogsMetaInterface {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-}
-
-export interface TimeLogsListResponseInterface {
-    data: TimeLogInterface[];
-    meta?: TimeLogsMetaInterface;
-}
+export type TimeLogsListResponseInterface = PaginatedResponseInterface<TimeLogInterface>;
 
 export const timeLogsService = {
-    sprintListHandler: async (sprintId: string): Promise<TimeLogsListResponseInterface> => {
-        const { data } = await apiClient.get<TimeLogsListResponseInterface>(apisData.timeLogs.sprintList(sprintId));
+    sprintListHandler: async (sprintId: string, params?: PaginationParamsInterface): Promise<TimeLogsListResponseInterface> => {
+        const { data } = await apiClient.get<TimeLogsListResponseInterface>(apisData.timeLogs.sprintList(sprintId), { params });
         return data;
     },
 
@@ -42,6 +32,11 @@ export const timeLogsService = {
 
     createHandler: async (taskId: string, payload: CreateTimeLogPayloadInterface): Promise<{ data: TimeLogInterface }> => {
         const { data } = await apiClient.post<{ data: TimeLogInterface }>(apisData.timeLogs.create(taskId), payload);
+        return data;
+    },
+
+    createStandaloneHandler: async (payload: CreateStandaloneTimeLogPayloadInterface): Promise<{ data: TimeLogInterface } | TimeLogInterface> => {
+        const { data } = await apiClient.post<{ data: TimeLogInterface } | TimeLogInterface>(apisData.timeLogs.createStandalone, payload);
         return data;
     },
 

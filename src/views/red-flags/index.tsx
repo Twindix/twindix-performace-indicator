@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Edit, Flag, Plus, Trash2 } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
-import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shared";
 import { RedFlagsSkeleton } from "@/components/skeletons";
 import { t, useCreateRedFlag, useDeleteRedFlag, usePermissions, useRedFlagsList, useUpdateRedFlag } from "@/hooks";
 import type { RedFlagInterface, CreateRedFlagPayloadInterface } from "@/interfaces";
@@ -26,7 +26,7 @@ const severityVariant: Record<string, "error" | "warning" | "secondary" | "outli
 export const RedFlagsView = () => {
     const p = usePermissions();
     const { activeSprintId } = useSprintStore();
-    const { redFlags, isLoading, patchRedFlagLocal, removeRedFlagLocal } = useRedFlagsList(activeSprintId);
+    const { redFlags, meta, isLoading, setPage, setPerPage, patchRedFlagLocal, removeRedFlagLocal } = useRedFlagsList(activeSprintId);
     const { createHandler, isLoading: isCreating } = useCreateRedFlag();
     const { updateHandler, isLoading: isUpdating } = useUpdateRedFlag();
     const { deleteHandler, isLoading: isDeleting } = useDeleteRedFlag();
@@ -64,7 +64,7 @@ export const RedFlagsView = () => {
     };
 
     return (
-        <div>
+        <div className="flex-1 flex flex-col">
             <Header
                 title={t("Red Flags")}
                 description={t("Track and manage sprint risk indicators.")}
@@ -78,7 +78,7 @@ export const RedFlagsView = () => {
             />
 
             <QueryBoundary
-                isLoading={isLoading}
+                isLoading={isLoading && redFlags.length === 0}
                 skeleton={<RedFlagsSkeleton />}
                 empty={redFlags.length === 0}
                 emptyState={<EmptyState icon={Flag} title={t("No red flags")} description={t("No risks identified for this sprint.")} />}
@@ -123,6 +123,7 @@ export const RedFlagsView = () => {
                         </Card>
                     ))}
                 </div>
+                <Pagination meta={meta} onPageChange={setPage} onPerPageChange={setPerPage} isLoading={isLoading} />
             </QueryBoundary>
 
             <Dialog open={addOpen || !!editTarget} onOpenChange={(open) => { if (!open) closeDialogs(); }}>

@@ -9,7 +9,7 @@ import { TaskPhase, TaskPriority } from "@/enums";
 import type { TaskInterface, TaskStatsInterface } from "@/interfaces";
 import { t, useTasksList, usePipeline, usePermissions, useTaskStats, useUpdateTaskStatus, useUsersListLite, useGetTask } from "@/hooks";
 import { useAuthStore, useSprintStore } from "@/store";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/ui";
+import { Combobox, Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/ui";
 import { BoardView } from "./BoardView";
 import { PipelineView } from "./PipelineView";
 import { TaskDetailDialog } from "./TaskDetailDialog";
@@ -42,7 +42,6 @@ const TasksViewInner = () => {
         removeTaskLocal,
         addTaskLocal,
         toKanban,
-        refetch,
     } = useTasksList(activeSprintId, {
         status: statusFilter !== "all" && statusFilter !== "blocked" ? statusFilter : undefined,
         assigned_to: assigneeFilter !== "all" ? assigneeFilter : undefined,
@@ -223,17 +222,16 @@ const TasksViewInner = () => {
                                 </SelectContent>
                             </Select>
 
-                            <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-                                <SelectTrigger className="w-[150px] h-9 text-xs sm:text-sm">
-                                    <SelectValue placeholder={t("Assignee")} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">{t("All Assignees")}</SelectItem>
-                                    {users.map((u) => (
-                                        <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <Combobox
+                                value={assigneeFilter}
+                                onValueChange={setAssigneeFilter}
+                                placeholder={t("Assignee")}
+                                searchPlaceholder={t("Search assignees...")}
+                                emptyLabel={t("No matches")}
+                                allOption={{ value: "all", label: t("All Assignees") }}
+                                options={users.map((u) => ({ value: u.id, label: u.full_name }))}
+                                triggerClassName="w-[150px]"
+                            />
 
                             <Select value={typeFilter} onValueChange={setTypeFilter}>
                                 <SelectTrigger className="w-[120px] h-9 text-xs sm:text-sm">
@@ -316,10 +314,7 @@ const TasksViewInner = () => {
 
             <AddTaskDialog
                 open={addTaskDialogOpen}
-                onOpenChange={(open) => {
-                    setAddTaskDialogOpen(open);
-                    if (!open) refetch();
-                }}
+                onOpenChange={setAddTaskDialogOpen}
                 members={users}
                 sprintId={activeSprintId}
                 addTaskLocal={addTaskLocal}

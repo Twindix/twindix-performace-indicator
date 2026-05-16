@@ -4,10 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
-import { EmptyState, Header, QueryBoundary } from "@/components/shared";
+import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shared";
 import { UsersSkeleton } from "@/components/skeletons";
 import { usersConstants } from "@/constants";
 import type { RoleTier } from "@/constants/permissions";
+import { assignableRolesFor } from "@/constants/permissions";
 import { t, usePermissions } from "@/hooks";
 import type { UserInterface } from "@/interfaces";
 import { useUsersList, useUsersCreate, useUsersUpdate } from "@/hooks/users";
@@ -22,7 +23,6 @@ import { apiClient } from "@/lib/axios";
 
 interface TeamOption { id: string; name: string; }
 
-const ROLE_TIERS = usersConstants.roleTiers;
 const ROLE_TIER_LABELS = usersConstants.roleTierLabels;
 
 const emptyForm = {
@@ -41,7 +41,12 @@ type FormErrors = Partial<Record<keyof FormState, string>>;
 export const UsersView = () => {
     const navigate = useNavigate();
     const p = usePermissions();
-    const { users, isLoading, refetch, patchUserLocal } = useUsersList();
+    const { users, meta, isLoading, setPage, setPerPage, patchUserLocal, prependUserLocal } = useUsersList();
+
+    // Role tiers the current actor can assign in the create/edit dialog.
+    // Owner: admin/manager/tester/member/viewer. Admin: manager/tester/member/viewer.
+    // No one can mint a new owner from the UI.
+    const assignableRoles = p.role ? assignableRolesFor(p.role) : [];
 
     const [errors, setErrors] = useState<FormErrors>({});
     const mapFieldErrors = (fe: Record<string, string[]>) => {
@@ -100,15 +105,16 @@ export const UsersView = () => {
         });
 
         if (created) {
+            // Optimistic prepend — no need to refetch the whole list after a create.
+            prependUserLocal(created as UserInterface);
             setAddOpen(false);
             setForm(emptyForm);
             setErrors({});
-            refetch();
         }
     };
 
     return (
-        <div>
+        <div className="flex-1 flex flex-col">
             <Header title={t("User Management")} description={t("Manage team members and view individual performance analytics")} />
 
             {p.users.create() && (
@@ -121,7 +127,7 @@ export const UsersView = () => {
             )}
 
             <QueryBoundary
-                isLoading={isLoading}
+                isLoading={isLoading && users.length === 0}
                 skeleton={<UsersSkeleton />}
                 empty={users.length === 0}
                 emptyState={<EmptyState icon={UserCog} title={t("No Users")} description={t("Add team members to get started")} />}
@@ -192,6 +198,13 @@ export const UsersView = () => {
                         );
                     })}
                 </div>
+
+                <Pagination
+                    meta={meta}
+                    onPageChange={setPage}
+                    onPerPageChange={setPerPage}
+                    isLoading={isLoading}
+                />
             </QueryBoundary>
 
             {/* ── Add User Dialog ── */}
@@ -235,7 +248,7 @@ export const UsersView = () => {
                                 <Select value={form.role_tier} onValueChange={(v) => set("role_tier", v)}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        {ROLE_TIERS.map((r) => <SelectItem key={r} value={r}>{t(ROLE_TIER_LABELS[r])}</SelectItem>)}
+                                        {assignableRoles.map((r) => <SelectItem key={r} value={r}>{t(ROLE_TIER_LABELS[r])}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>

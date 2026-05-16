@@ -1,14 +1,15 @@
 // Matrix: Teams.
 // - View: all tiers.
-// - Create / edit / delete / add-remove members: admin ONLY.
+// - Create / edit / manage members: owner OR admin.
+// - Delete: OWNER ONLY (irreversible action).
 import type { Ctx } from "./helpers";
-import { inRoles } from "./helpers";
+import { isAdminOrAbove, isOwner } from "./helpers";
 
 export const teamsPolicy = {
     view:          (_: Ctx) => true,
-    create:        (ctx: Ctx) => inRoles(ctx, "admin"),
-    edit:          (ctx: Ctx) => inRoles(ctx, "admin"),
-    delete:        (ctx: Ctx) => inRoles(ctx, "admin"),
-    manageMembers: (ctx: Ctx) => inRoles(ctx, "admin"),
-    manage:        (ctx: Ctx) => inRoles(ctx, "admin"),
+    create:        (ctx: Ctx) => isAdminOrAbove(ctx),
+    edit:          (ctx: Ctx) => isAdminOrAbove(ctx),
+    delete:        (ctx: Ctx) => isOwner(ctx),
+    manageMembers: (ctx: Ctx) => isAdminOrAbove(ctx),
+    manage:        (ctx: Ctx) => isAdminOrAbove(ctx),
 };

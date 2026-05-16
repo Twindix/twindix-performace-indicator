@@ -1,4 +1,5 @@
 import type { BlockerType } from "@/enums";
+import type { PaginatedResponseInterface, PaginationParamsInterface } from "@/interfaces/common";
 
 export interface BlockerUserInterface {
     id: string;
@@ -27,17 +28,7 @@ export interface BlockerInterface {
     created_at: string;
 }
 
-export interface BlockersMetaInterface {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-}
-
-export interface BlockersListResponseInterface {
-    data: BlockerInterface[];
-    meta: BlockersMetaInterface;
-}
+export type BlockersListResponseInterface = PaginatedResponseInterface<BlockerInterface>;
 
 export interface BlockerDetailResponseInterface {
     data: BlockerInterface;
@@ -69,13 +60,12 @@ export interface UpdateBlockerPayloadInterface {
     owned_by?: string;
 }
 
-export interface BlockersListFiltersInterface {
+export interface BlockersListFiltersInterface extends PaginationParamsInterface {
     status?: string;
     type?: string;
     severity?: string;
     reporter?: string;
     owner?: string;
-    per_page?: number;
 }
 
 export interface LinkBlockerTasksPayloadInterface {

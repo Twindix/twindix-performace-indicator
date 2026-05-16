@@ -2,18 +2,13 @@ import { projectsConstants } from "@/constants";
 import type { ProjectLiteInterface } from "@/interfaces";
 import { projectsService } from "@/services";
 
-import { useQueryAction } from "../shared";
+import { useSessionCachedList } from "../shared";
 
 export const useProjectsListLite = () => {
-    const { data, isLoading, refetch } = useQueryAction<ProjectLiteInterface[]>(
+    const { data, isLoading, refetch } = useSessionCachedList<ProjectLiteInterface>(
+        "projects.lite",
         () => projectsService.listLiteHandler(),
-        [],
-        {
-            errorFallback: projectsConstants.errors.fetchFailed,
-            initialData: [],
-            context: "projects.listLite",
-        },
+        { errorFallback: projectsConstants.errors.fetchFailed, context: "projects.listLite" },
     );
-
-    return { projects: data ?? [], isLoading, refetch };
+    return { projects: data, isLoading, refetch };
 };

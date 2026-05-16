@@ -1,3 +1,5 @@
+import type { PaginatedResponseInterface, PaginationParamsInterface } from "@/interfaces/common";
+
 export interface ProjectCreatorInterface {
     id: string;
     full_name: string;
@@ -35,3 +37,20 @@ export interface ProjectLiteInterface {
     name: string;
     status: ProjectInterface["status"];
 }
+
+export type ProjectsListResponseInterface = PaginatedResponseInterface<ProjectInterface>;
+
+export interface ProjectsListFiltersInterface extends PaginationParamsInterface {
+    status?: string;
+}
+
+export type {
+    ProjectAnalyticsResponseInterface,
+    ProjectAnalyticsSummaryInterface,
+    ProjectAnalyticsStatsInterface,
+    ProjectAnalyticsContributorInterface,
+    ProjectAnalyticsVelocityPointInterface,
+    ProjectAnalyticsBurnChartInterface,
+    ProjectAnalyticsTaskStatusInterface,
+    ProjectAnalyticsBlockerSourcesInterface,
+} from "./analytics";

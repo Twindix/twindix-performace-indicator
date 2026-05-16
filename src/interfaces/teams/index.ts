@@ -1,3 +1,5 @@
+import type { PaginatedResponseInterface, PaginationParamsInterface } from "@/interfaces/common";
+
 export interface TeamMemberInterface {
     id: string;
     full_name: string;
@@ -14,9 +16,9 @@ export interface TeamInterface {
     updated_at?: string;
 }
 
-export interface TeamsListResponseInterface {
-    data: TeamInterface[];
-}
+export type TeamsListResponseInterface = PaginatedResponseInterface<TeamInterface>;
+
+export interface TeamsListFiltersInterface extends PaginationParamsInterface {}
 
 export interface TeamDetailResponseInterface {
     data: TeamInterface;
