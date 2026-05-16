@@ -3,9 +3,8 @@ import { BellPlus, X } from "lucide-react";
 
 import { Button, Input, Label, Textarea } from "@/atoms";
 import { NOTIFY_PRESETS } from "@/enums";
-import { t } from "@/hooks";
+import { t, useCreateReminder, useFormErrors, useUpdateReminder } from "@/hooks";
 import type { ReminderInterface } from "@/interfaces";
-import { useAuthStore, useRemindersStore } from "@/store";
 import { cn } from "@/utils";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
 
@@ -13,6 +12,7 @@ interface Props {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     initial?: ReminderInterface | null;
+    onSaved?: (reminder: ReminderInterface) => void;
 }
 
 const labelFor = (days: number): string => {
@@ -25,16 +25,18 @@ const labelFor = (days: number): string => {
     return `${days}d`;
 };
 
-export const AddReminderDialog = ({ open, onOpenChange, initial }: Props) => {
-    const { user } = useAuthStore();
-    const addReminder = useRemindersStore((s) => s.addReminder);
-    const updateReminder = useRemindersStore((s) => s.updateReminder);
+export const AddReminderDialog = ({ open, onOpenChange, initial, onSaved }: Props) => {
+    const { setFieldErrors, getError, clear: clearFieldErrors } = useFormErrors();
+    const { createHandler, isLoading: isCreating } = useCreateReminder({ onFieldErrors: setFieldErrors });
+    const { updateHandler, isLoading: isUpdating } = useUpdateReminder({ onFieldErrors: setFieldErrors });
 
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [expiresAt, setExpiresAt] = useState("");
     const [intervals, setIntervals] = useState<number[]>([7, 1]);
     const [customInput, setCustomInput] = useState("");
+
+    const isLoading = isCreating || isUpdating;
 
     useEffect(() => {
         if (open) {
@@ -43,8 +45,9 @@ export const AddReminderDialog = ({ open, onOpenChange, initial }: Props) => {
             setExpiresAt(initial?.expires_at ?? "");
             setIntervals(initial?.notify_before_days ?? [7, 1]);
             setCustomInput("");
+            clearFieldErrors();
         }
-    }, [open, initial]);
+    }, [open, initial, clearFieldErrors]);
 
     const toggleInterval = (d: number) => {
         setIntervals((prev) => (prev.includes(d) ? prev.filter((n) => n !== d) : [...prev, d].sort((a, b) => b - a)));
@@ -58,28 +61,25 @@ export const AddReminderDialog = ({ open, onOpenChange, initial }: Props) => {
         }
     };
 
-    const handleSubmit = () => {
-        if (!title.trim() || !expiresAt || intervals.length === 0 || !user) return;
+    const handleSubmit = async () => {
+        if (!title.trim() || !expiresAt || intervals.length === 0) return;
         const payload = {
             title: title.trim(),
             description: description.trim() || undefined,
             expires_at: expiresAt,
             notify_before_days: intervals,
         };
-        if (initial) {
-            updateReminder(initial.id, payload);
-        } else {
-            addReminder(payload, {
-                id: user.id,
-                full_name: user.full_name,
-                avatar_initials: user.avatar_initials,
-            });
+        const result = initial
+            ? await updateHandler(initial.id, payload)
+            : await createHandler(payload);
+        if (result) {
+            onSaved?.(result);
+            onOpenChange(false);
         }
-        onOpenChange(false);
     };
 
     const todayISO = new Date().toISOString().split("T")[0];
-    const canSubmit = title.trim() && expiresAt && intervals.length > 0;
+    const canSubmit = title.trim() && expiresAt && intervals.length > 0 && !isLoading;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -98,6 +98,7 @@ export const AddReminderDialog = ({ open, onOpenChange, initial }: Props) => {
                     <div className="flex flex-col gap-1.5">
                         <Label htmlFor="rem-title">{t("Title")} <span className="text-error">*</span></Label>
                         <Input id="rem-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("SSL certificate renewal")} />
+                        {getError("title") && <p className="text-[11px] text-error">{getError("title")}</p>}
                     </div>
 
                     <div className="flex flex-col gap-1.5">
@@ -114,6 +115,7 @@ export const AddReminderDialog = ({ open, onOpenChange, initial }: Props) => {
                     <div className="flex flex-col gap-1.5">
                         <Label htmlFor="rem-expires">{t("Expires on")} <span className="text-error">*</span></Label>
                         <Input id="rem-expires" type="date" min={todayISO} value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
+                        {getError("expires_at") && <p className="text-[11px] text-error">{getError("expires_at")}</p>}
                     </div>
 
                     <div className="flex flex-col gap-2">
@@ -138,7 +140,6 @@ export const AddReminderDialog = ({ open, onOpenChange, initial }: Props) => {
                                     </button>
                                 );
                             })}
-                            {/* Custom intervals not in presets */}
                             {intervals.filter((d) => !NOTIFY_PRESETS.includes(d as typeof NOTIFY_PRESETS[number])).map((d) => (
                                 <span
                                     key={d}
@@ -170,15 +171,16 @@ export const AddReminderDialog = ({ open, onOpenChange, initial }: Props) => {
                                 {intervals.length} {intervals.length === 1 ? t("interval") : t("intervals")}
                             </p>
                         </div>
+                        {getError("notify_before_days") && <p className="text-[11px] text-error">{getError("notify_before_days")}</p>}
                     </div>
                 </div>
 
                 <div className="flex justify-end gap-2 mt-4">
                     <DialogClose asChild>
-                        <Button variant="outline">{t("Cancel")}</Button>
+                        <Button variant="outline" disabled={isLoading}>{t("Cancel")}</Button>
                     </DialogClose>
                     <Button onClick={handleSubmit} disabled={!canSubmit}>
-                        {initial ? t("Save Changes") : t("Create Reminder")}
+                        {isLoading ? (initial ? t("Saving...") : t("Creating...")) : (initial ? t("Save Changes") : t("Create Reminder"))}
                     </Button>
                 </div>
             </DialogContent>

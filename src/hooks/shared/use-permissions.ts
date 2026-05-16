@@ -10,8 +10,11 @@ import {
     commentsPolicy,
     decisionsPolicy,
     featuresPolicy,
+    deploysPolicy,
     projectsPolicy,
     redFlagsPolicy,
+    reportsPolicy,
+    remindersPolicy,
     sprintsPolicy,
     tasksPolicy,
     teamsPolicy,
@@ -52,6 +55,9 @@ export interface Permissions {
     users: BoundModule<typeof usersPolicy>;
     teams: BoundModule<typeof teamsPolicy>;
     features: BoundModule<typeof featuresPolicy>;
+    reports: BoundModule<typeof reportsPolicy>;
+    deploys: BoundModule<typeof deploysPolicy>;
+    reminders: BoundModule<typeof remindersPolicy>;
 }
 
 export const usePermissions = (): Permissions => {
@@ -74,6 +80,9 @@ export const usePermissions = (): Permissions => {
             users: bindModule(usersPolicy as unknown as Module, ctx) as BoundModule<typeof usersPolicy>,
             teams: bindModule(teamsPolicy as unknown as Module, ctx) as BoundModule<typeof teamsPolicy>,
             features: bindModule(featuresPolicy as unknown as Module, ctx) as BoundModule<typeof featuresPolicy>,
+            reports: bindModule(reportsPolicy as unknown as Module, ctx) as BoundModule<typeof reportsPolicy>,
+            deploys: bindModule(deploysPolicy as unknown as Module, ctx) as BoundModule<typeof deploysPolicy>,
+            reminders: bindModule(remindersPolicy as unknown as Module, ctx) as BoundModule<typeof remindersPolicy>,
         };
     }, [user?.id, user?.role_tier]);
 };

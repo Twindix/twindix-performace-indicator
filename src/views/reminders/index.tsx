@@ -2,11 +2,18 @@ import { useMemo, useState } from "react";
 import { Bell, BellOff, BellPlus, Calendar, Filter, MoreHorizontal, Pencil, Search, Trash2, X } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input } from "@/atoms";
-import { EmptyState, Header } from "@/components/shared";
+import { EmptyState, Header, Pagination } from "@/components/shared";
 import { ReminderStatus } from "@/enums";
-import { t, usePermissions } from "@/hooks";
-import type { ReminderInterface } from "@/interfaces";
-import { useRemindersStore } from "@/store";
+import {
+    t,
+    useDeleteReminder,
+    useDismissReminder,
+    usePermissions,
+    useReactivateReminder,
+    useRemindersList,
+    useRemindersStats,
+} from "@/hooks";
+import type { ReminderInterface, ReminderUrgency } from "@/interfaces";
 import { Avatar, AvatarFallback, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsList, TabsTrigger } from "@/ui";
 import { cn, formatDate } from "@/utils";
 import { AddReminderDialog } from "./AddReminderDialog";
@@ -30,76 +37,89 @@ const formatInterval = (d: number): string => {
     return `${d}d`;
 };
 
-// ── Urgency model — drives color, label, ring intensity ───────────────────
 interface Urgency {
-    tone: "expired" | "today" | "critical" | "warning" | "soon" | "calm";
+    tone: ReminderUrgency;
     label: string;
-    color: string;        // text color class
-    ring: string;         // bg color class for badge ring
-    border: string;       // card hover border
-    progress: string;     // progress fill color
-    glow: string;         // optional shadow accent
+    color: string;
+    ring: string;
+    border: string;
+    progress: string;
+    glow: string;
 }
 
 const urgencyFor = (days: number): Urgency => {
-    if (days < 0)   return { tone: "expired",  label: "Expired",   color: "text-text-faint",      ring: "bg-text-muted",         border: "hover:border-text-muted",     progress: "bg-text-muted",       glow: "" };
-    if (days === 0) return { tone: "today",    label: "Today",     color: "text-error",           ring: "bg-error",              border: "hover:border-error/40",       progress: "bg-error",            glow: "shadow-[0_4px_20px_-8px_rgba(239,68,68,0.4)]" };
-    if (days <= 3)  return { tone: "critical", label: "Critical",  color: "text-error",           ring: "bg-error",              border: "hover:border-error/40",       progress: "bg-error",            glow: "shadow-[0_4px_20px_-8px_rgba(239,68,68,0.3)]" };
-    if (days <= 7)  return { tone: "warning",  label: "This week", color: "text-warning",         ring: "bg-warning",            border: "hover:border-warning/40",     progress: "bg-warning",          glow: "" };
-    if (days <= 30) return { tone: "soon",     label: "Soon",      color: "text-primary",         ring: "bg-primary",            border: "hover:border-primary/40",     progress: "bg-primary",          glow: "" };
-    return            { tone: "calm",     label: "Comfortable", color: "text-success",         ring: "bg-success",            border: "hover:border-success/40",     progress: "bg-success",          glow: "" };
+    if (days < 0)   return { tone: "expired",  label: "Expired",   color: "text-text-faint", ring: "bg-text-muted", border: "hover:border-text-muted", progress: "bg-text-muted", glow: "" };
+    if (days === 0) return { tone: "today",    label: "Today",     color: "text-error",      ring: "bg-error",      border: "hover:border-error/40",   progress: "bg-error",      glow: "shadow-[0_4px_20px_-8px_rgba(239,68,68,0.4)]" };
+    if (days <= 3)  return { tone: "critical", label: "Critical",  color: "text-error",      ring: "bg-error",      border: "hover:border-error/40",   progress: "bg-error",      glow: "shadow-[0_4px_20px_-8px_rgba(239,68,68,0.3)]" };
+    if (days <= 7)  return { tone: "warning",  label: "This week", color: "text-warning",    ring: "bg-warning",    border: "hover:border-warning/40", progress: "bg-warning",    glow: "" };
+    if (days <= 30) return { tone: "soon",     label: "Soon",      color: "text-primary",    ring: "bg-primary",    border: "hover:border-primary/40", progress: "bg-primary",    glow: "" };
+    return            { tone: "calm",     label: "Comfortable", color: "text-success",  ring: "bg-success",    border: "hover:border-success/40", progress: "bg-success",    glow: "" };
 };
 
-type StatusTab = "all" | "active" | "expired" | "dismissed";
+type StatusTab = "all" | ReminderStatus;
 
 export const RemindersView = () => {
     const p = usePermissions();
-    const reminders = useRemindersStore((s) => s.reminders);
-    const removeReminder = useRemindersStore((s) => s.removeReminder);
-    const setStatus = useRemindersStore((s) => s.setStatus);
+    const canCreate = p.reminders.create();
+    const canEdit = p.reminders.edit();
+    const canDismiss = p.reminders.dismiss();
 
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<ReminderInterface | null>(null);
     const [search, setSearch] = useState("");
     const [tab, setTab] = useState<StatusTab>("all");
-    const [urgencyFilter, setUrgencyFilter] = useState<string>("all");
+    const [urgencyFilter, setUrgencyFilter] = useState<ReminderUrgency | "all">("all");
     const [sortBy, setSortBy] = useState<"date-asc" | "date-desc" | "created">("date-asc");
 
-    // Auto-mark expired
-    const annotated = useMemo(() => {
-        return reminders.map((r) => {
-            const days = daysUntil(r.expires_at);
-            const isExpired = days < 0;
-            const effectiveStatus = isExpired && r.status === ReminderStatus.Active ? ReminderStatus.Expired : r.status;
-            return { ...r, _days: days, _status: effectiveStatus };
-        });
-    }, [reminders]);
+    const filters = {
+        status: tab !== "all" ? tab : undefined,
+        urgency: urgencyFilter !== "all" ? urgencyFilter : undefined,
+        search: search || undefined,
+        sort: sortBy,
+    };
 
-    const filtered = useMemo(() => {
-        const q = search.trim().toLowerCase();
-        let list = annotated.filter((r) => {
-            if (tab !== "all" && r._status !== tab) return false;
-            if (urgencyFilter !== "all") {
-                const u = urgencyFor(r._days).tone;
-                if (u !== urgencyFilter) return false;
-            }
-            if (q && !(r.title.toLowerCase().includes(q) || (r.description ?? "").toLowerCase().includes(q))) return false;
-            return true;
-        });
-        if (sortBy === "date-asc") list.sort((a, b) => a._days - b._days);
-        else if (sortBy === "date-desc") list.sort((a, b) => b._days - a._days);
-        else list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        return list;
-    }, [annotated, search, tab, urgencyFilter, sortBy]);
+    const { items, meta, isLoading, setPage, setPerPage, refetch, prependReminderLocal, patchReminderLocal, removeReminderLocal } = useRemindersList(filters);
+    const { stats, refetch: refetchStats } = useRemindersStats();
+    const { dismissHandler } = useDismissReminder();
+    const { reactivateHandler } = useReactivateReminder();
+    const { deleteHandler } = useDeleteReminder();
 
-    const counts = useMemo(() => ({
-        all: annotated.length,
-        active: annotated.filter((r) => r._status === ReminderStatus.Active).length,
-        expired: annotated.filter((r) => r._status === ReminderStatus.Expired).length,
-        dismissed: annotated.filter((r) => r._status === ReminderStatus.Dismissed).length,
-        critical: annotated.filter((r) => r._days >= 0 && r._days <= 3 && r._status === ReminderStatus.Active).length,
-        thisWeek: annotated.filter((r) => r._days >= 0 && r._days <= 7 && r._status === ReminderStatus.Active).length,
-    }), [annotated]);
+    const annotated = useMemo(() => items.map((r) => ({ ...r, _days: daysUntil(r.expires_at) })), [items]);
+
+    const handleSaved = (r: ReminderInterface) => {
+        if (editTarget) {
+            patchReminderLocal(r);
+            setEditTarget(null);
+        } else {
+            prependReminderLocal(r);
+        }
+        refetch();
+        refetchStats();
+    };
+
+    const handleDismiss = async (r: ReminderInterface) => {
+        const updated = await dismissHandler(r.id);
+        if (updated) {
+            patchReminderLocal(updated);
+            refetchStats();
+        }
+    };
+
+    const handleReactivate = async (r: ReminderInterface) => {
+        const updated = await reactivateHandler(r.id);
+        if (updated) {
+            patchReminderLocal(updated);
+            refetchStats();
+        }
+    };
+
+    const handleDelete = async (r: ReminderInterface) => {
+        const ok = await deleteHandler(r.id);
+        if (ok) {
+            removeReminderLocal(r.id);
+            refetchStats();
+        }
+    };
 
     const clearFilters = () => {
         setSearch("");
@@ -107,8 +127,6 @@ export const RemindersView = () => {
         setTab("all");
     };
     const hasFilters = search || urgencyFilter !== "all" || tab !== "all";
-
-    const canCreate = p.tasks.create();
 
     return (
         <div className="flex-1 flex flex-col">
@@ -125,23 +143,21 @@ export const RemindersView = () => {
                 }
             />
 
-            {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-                <Stat label={t("Total")}        value={counts.all}      accent="text-text-dark" />
-                <Stat label={t("Active")}       value={counts.active}   accent="text-primary" />
-                <Stat label={t("This Week")}    value={counts.thisWeek} accent="text-warning" />
-                <Stat label={t("Critical (≤3d)")} value={counts.critical} accent="text-error" />
+                <Stat label={t("Total")}        value={stats?.total ?? 0}     accent="text-text-dark" />
+                <Stat label={t("Active")}       value={stats?.active ?? 0}    accent="text-primary" />
+                <Stat label={t("This Week")}    value={stats?.this_week ?? 0} accent="text-warning" />
+                <Stat label={t("Critical (≤3d)")} value={stats?.critical ?? 0} accent="text-error" />
             </div>
 
-            {/* Tabs + filters */}
             <Card className="mb-6">
                 <CardContent className="p-4 flex flex-col gap-3">
                     <Tabs value={tab} onValueChange={(v) => setTab(v as StatusTab)}>
                         <TabsList>
-                            <TabsTrigger value="all">{t("All")} <span className="ms-1.5 text-[10px] text-text-muted tabular-nums">{counts.all}</span></TabsTrigger>
-                            <TabsTrigger value={ReminderStatus.Active}>{t("Active")} <span className="ms-1.5 text-[10px] text-text-muted tabular-nums">{counts.active}</span></TabsTrigger>
-                            <TabsTrigger value={ReminderStatus.Expired}>{t("Expired")} <span className="ms-1.5 text-[10px] text-text-muted tabular-nums">{counts.expired}</span></TabsTrigger>
-                            <TabsTrigger value={ReminderStatus.Dismissed}>{t("Dismissed")} <span className="ms-1.5 text-[10px] text-text-muted tabular-nums">{counts.dismissed}</span></TabsTrigger>
+                            <TabsTrigger value="all">{t("All")} <span className="ms-1.5 text-[10px] text-text-muted tabular-nums">{stats?.total ?? 0}</span></TabsTrigger>
+                            <TabsTrigger value={ReminderStatus.Active}>{t("Active")} <span className="ms-1.5 text-[10px] text-text-muted tabular-nums">{stats?.active ?? 0}</span></TabsTrigger>
+                            <TabsTrigger value={ReminderStatus.Expired}>{t("Expired")} <span className="ms-1.5 text-[10px] text-text-muted tabular-nums">{stats?.expired ?? 0}</span></TabsTrigger>
+                            <TabsTrigger value={ReminderStatus.Dismissed}>{t("Dismissed")} <span className="ms-1.5 text-[10px] text-text-muted tabular-nums">{stats?.dismissed ?? 0}</span></TabsTrigger>
                         </TabsList>
                     </Tabs>
 
@@ -156,7 +172,7 @@ export const RemindersView = () => {
                             />
                         </div>
                         <Filter className="h-4 w-4 text-text-muted hidden sm:block" />
-                        <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
+                        <Select value={urgencyFilter} onValueChange={(v) => setUrgencyFilter(v as ReminderUrgency | "all")}>
                             <SelectTrigger className="w-[150px] h-9 text-xs"><SelectValue placeholder={t("Urgency")} /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">{t("All Urgencies")}</SelectItem>
@@ -181,45 +197,56 @@ export const RemindersView = () => {
                             </button>
                         )}
                         <span className="ms-auto text-xs text-text-muted tabular-nums">
-                            {filtered.length} / {annotated.length}
+                            {items.length} / {meta?.total ?? items.length}
                         </span>
                     </div>
                 </CardContent>
             </Card>
 
-            {/* List */}
-            {filtered.length === 0 ? (
+            {isLoading && items.length === 0 ? (
+                <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-text-muted">
+                    {t("Loading reminders...")}
+                </div>
+            ) : items.length === 0 ? (
                 <EmptyState
                     icon={Bell}
                     title={t("No reminders match")}
                     description={hasFilters ? t("Try clearing filters.") : t("Create your first reminder to get notified before things expire.")}
                 />
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {filtered.map((r) => (
-                        <ReminderCard
-                            key={r.id}
-                            r={r}
-                            days={r._days}
-                            isExpired={r._status === ReminderStatus.Expired}
-                            isDismissed={r._status === ReminderStatus.Dismissed}
-                            canEdit={canCreate}
-                            onEdit={() => setEditTarget(r)}
-                            onDelete={() => removeReminder(r.id)}
-                            onDismiss={() => setStatus(r.id, ReminderStatus.Dismissed)}
-                            onReactivate={() => setStatus(r.id, ReminderStatus.Active)}
-                        />
-                    ))}
-                </div>
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {annotated.map((r) => (
+                            <ReminderCard
+                                key={r.id}
+                                r={r}
+                                days={r._days}
+                                isExpired={r.status === ReminderStatus.Expired}
+                                isDismissed={r.status === ReminderStatus.Dismissed}
+                                canEdit={canEdit}
+                                canDismiss={canDismiss}
+                                onEdit={() => setEditTarget(r)}
+                                onDelete={() => handleDelete(r)}
+                                onDismiss={() => handleDismiss(r)}
+                                onReactivate={() => handleReactivate(r)}
+                            />
+                        ))}
+                    </div>
+                    {meta && <div className="mt-4"><Pagination meta={meta} onPageChange={setPage} onPerPageChange={setPerPage} /></div>}
+                </>
             )}
 
-            <AddReminderDialog open={addOpen} onOpenChange={setAddOpen} />
-            <AddReminderDialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null); }} initial={editTarget} />
+            <AddReminderDialog open={addOpen} onOpenChange={setAddOpen} onSaved={handleSaved} />
+            <AddReminderDialog
+                open={!!editTarget}
+                onOpenChange={(open) => { if (!open) setEditTarget(null); }}
+                initial={editTarget}
+                onSaved={handleSaved}
+            />
         </div>
     );
 };
 
-// ── Stat tile ────────────────────────────────────────────────────────────
 const Stat = ({ label, value, accent }: { label: string; value: number; accent: string }) => (
     <Card>
         <CardContent className="p-4 text-center">
@@ -229,20 +256,20 @@ const Stat = ({ label, value, accent }: { label: string; value: number; accent: 
     </Card>
 );
 
-// ── Reminder card — countdown left + content right ───────────────────────
 interface ReminderCardProps {
     r: ReminderInterface;
     days: number;
     isExpired: boolean;
     isDismissed: boolean;
     canEdit: boolean;
+    canDismiss: boolean;
     onEdit: () => void;
     onDelete: () => void;
     onDismiss: () => void;
     onReactivate: () => void;
 }
 
-const ReminderCard = ({ r, days, isExpired, isDismissed, canEdit, onEdit, onDelete, onDismiss, onReactivate }: ReminderCardProps) => {
+const ReminderCard = ({ r, days, isExpired, isDismissed, canEdit, canDismiss, onEdit, onDelete, onDismiss, onReactivate }: ReminderCardProps) => {
     const u = urgencyFor(days);
     const displayDays = Math.abs(days);
     const isToday = days === 0;
@@ -252,7 +279,6 @@ const ReminderCard = ({ r, days, isExpired, isDismissed, canEdit, onEdit, onDele
         <Card className={cn("transition-all duration-200 overflow-hidden", u.border, u.glow, isDimmed && "opacity-60")}>
             <CardContent className="p-0">
                 <div className="flex">
-                    {/* Countdown column */}
                     <div className={cn(
                         "flex flex-col items-center justify-center px-5 py-4 shrink-0 min-w-[88px] border-e border-border/60 relative",
                         "bg-gradient-to-br from-transparent to-muted/30",
@@ -284,7 +310,6 @@ const ReminderCard = ({ r, days, isExpired, isDismissed, canEdit, onEdit, onDele
                         )}
                     </div>
 
-                    {/* Content column */}
                     <div className="flex-1 min-w-0 p-4">
                         <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
@@ -300,7 +325,7 @@ const ReminderCard = ({ r, days, isExpired, isDismissed, canEdit, onEdit, onDele
                                 )}
                             </div>
 
-                            {canEdit && (
+                            {(canEdit || canDismiss) && (
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <button className="p-1.5 -m-1.5 rounded-md text-text-muted hover:text-text-dark hover:bg-muted">
@@ -308,28 +333,33 @@ const ReminderCard = ({ r, days, isExpired, isDismissed, canEdit, onEdit, onDele
                                         </button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={onEdit} className="gap-2 cursor-pointer">
-                                            <Pencil className="h-3.5 w-3.5" /> {t("Edit")}
-                                        </DropdownMenuItem>
-                                        {!isDismissed ? (
+                                        {canEdit && (
+                                            <DropdownMenuItem onClick={onEdit} className="gap-2 cursor-pointer">
+                                                <Pencil className="h-3.5 w-3.5" /> {t("Edit")}
+                                            </DropdownMenuItem>
+                                        )}
+                                        {canDismiss && !isDismissed ? (
                                             <DropdownMenuItem onClick={onDismiss} className="gap-2 cursor-pointer">
                                                 <BellOff className="h-3.5 w-3.5" /> {t("Dismiss")}
                                             </DropdownMenuItem>
-                                        ) : (
+                                        ) : canDismiss && isDismissed ? (
                                             <DropdownMenuItem onClick={onReactivate} className="gap-2 cursor-pointer">
                                                 <Bell className="h-3.5 w-3.5" /> {t("Reactivate")}
                                             </DropdownMenuItem>
+                                        ) : null}
+                                        {canEdit && (
+                                            <>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={onDelete} className="gap-2 text-error focus:text-error cursor-pointer">
+                                                    <Trash2 className="h-3.5 w-3.5" /> {t("Delete")}
+                                                </DropdownMenuItem>
+                                            </>
                                         )}
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={onDelete} className="gap-2 text-error focus:text-error cursor-pointer">
-                                            <Trash2 className="h-3.5 w-3.5" /> {t("Delete")}
-                                        </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             )}
                         </div>
 
-                        {/* Meta + intervals */}
                         <div className="flex items-center gap-3 mt-3 flex-wrap">
                             <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
                                 <Calendar className="h-3 w-3" />
