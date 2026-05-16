@@ -138,6 +138,8 @@ export const apisData = {
         reactivate: (id: string) => `/reminders/${id}/reactivate`,
         delete: (id: string) => `/reminders/${id}`,
         stats: "/reminders/stats",
+    gantt: {
+        tasks: "/gantt/tasks",
     deliveryAnalytics: {
         composite: "/analytics/delivery",
         velocity: "/analytics/delivery/velocity",
