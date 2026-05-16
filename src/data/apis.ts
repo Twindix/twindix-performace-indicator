@@ -136,6 +136,17 @@ export const apisData = {
         download: (id: string) => `/deploys/${id}/download`,
         updateStatus: (id: string) => `/deploys/${id}/status`,
         delete: (id: string) => `/deploys/${id}`,
+    reminders: {
+        list: "/reminders",
+        create: "/reminders",
+        detail: (id: string) => `/reminders/${id}`,
+        update: (id: string) => `/reminders/${id}`,
+        dismiss: (id: string) => `/reminders/${id}/dismiss`,
+        reactivate: (id: string) => `/reminders/${id}/reactivate`,
+        delete: (id: string) => `/reminders/${id}`,
+        stats: "/reminders/stats",
+    gantt: {
+        tasks: "/gantt/tasks",
     deliveryAnalytics: {
         composite: "/analytics/delivery",
         velocity: "/analytics/delivery/velocity",

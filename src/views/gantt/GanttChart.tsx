@@ -101,15 +101,15 @@ export const GanttChart = ({ tasks, windowStart, windowEnd }: GanttChartProps) =
                     return (
                         <div key={task.id} className="contents group">
                             <div className="px-4 py-3 border-b border-r border-border">
-                                <p className="text-sm font-medium text-text-dark truncate">{task.name}</p>
+                                <p className="text-sm font-medium text-text-dark truncate">{task.title}</p>
                                 <p className="text-[11px] text-text-muted truncate">{task.project_name}</p>
                                 <div className="flex items-center gap-2 mt-1.5">
                                     <Badge variant={GANTT_STATUS_BADGE_VARIANT[task.status]} className="text-[10px]">
                                         {t(GANTT_STATUS_LABEL[task.status])}
                                     </Badge>
-                                    {task.assignee && (
+                                    {task.assignee_name && (
                                         <span className="text-[11px] text-text-muted truncate">
-                                            {task.assignee.full_name}
+                                            {task.assignee_name}
                                         </span>
                                     )}
                                 </div>
@@ -141,7 +141,7 @@ export const GanttChart = ({ tasks, windowStart, windowEnd }: GanttChartProps) =
                                         GANTT_STATUS_BAR_CLASS[task.status],
                                     )}
                                     style={{ left: `${leftPct}%`, width: `${widthPct}%`, minWidth: 8 }}
-                                    title={`${task.name} · ${formatShort(task.start_date)} → ${formatShort(task.end_date)} · ${task.progress}%`}
+                                    title={`${task.title} · ${formatShort(task.start_date)} → ${formatShort(task.end_date)} · ${task.progress}%`}
                                 >
                                     <div
                                         className={cn("h-full", GANTT_STATUS_FILL_CLASS[task.status])}

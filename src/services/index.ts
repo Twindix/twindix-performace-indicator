@@ -13,4 +13,6 @@ export { usersService } from "./users";
 export { teamsService } from "./teams";
 export { projectsService } from "./projects";
 export { deploysService } from "./deploys";
+export { remindersService } from "./reminders";
+export { ganttService } from "./gantt";
 export { deliveryAnalyticsService } from "./delivery-analytics";

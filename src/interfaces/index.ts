@@ -8,7 +8,7 @@ export type { RedFlagInterface, RedFlagReporterInterface, RedFlagsListResponseIn
 export type { AlertInterface, AlertCreatorInterface, AlertsListResponseInterface, AlertsListFiltersInterface, AlertDetailResponseInterface, AlertsCountInterface, CreateAlertPayloadInterface, UpdateAlertPayloadInterface, AlertType, AlertSourceTaskInterface } from "./alerts";
 export type { DashboardInterface, HealthScoreInterface, DashboardMetricsInterface, DashboardSubScoreInterface, DashboardActiveBlockerInterface, DashboardSummaryInterface } from "./dashboard";
 export type { TeamInterface, TeamMemberInterface, TeamsListResponseInterface, TeamsListFiltersInterface, TeamDetailResponseInterface, CreateTeamPayloadInterface, UpdateTeamPayloadInterface, TeamLiteInterface } from "./teams";
-export type { UserListParamsInterface, UserListResponseInterface, CreateUserPayloadInterface, UpdateUserPayloadInterface, UserAnalyticsInterface, UserLiteInterface } from "./users";
+export type { UserListParamsInterface, UserListResponseInterface, CreateUserPayloadInterface, UpdateUserPayloadInterface, UserAnalyticsInterface, UserLiteInterface, UsersListSortInterface } from "./users";
 export type { AttachmentInterface, AddTaskFormState, AddTaskDialogProps, RequirementDraftInterface } from "./tasks-dialog";
 export type { CommunicationInterface, CommunicationChannel, CommunicationStatus } from "./communications";
 export type { TeamMemberWorkloadInterface } from "./workload";
@@ -16,7 +16,7 @@ export type { MetricInterface, FrictionScoresInterface, SprintMetricsInterface }
 export type { OwnershipEntryInterface } from "./ownership";
 export type { HandoffInterface, CriterionInterface } from "./handoffs";
 export type { ProjectInterface, ProjectCreatorInterface, CreateProjectPayloadInterface, UpdateProjectPayloadInterface, ProjectLiteInterface, ProjectsListResponseInterface, ProjectsListFiltersInterface } from "./projects";
-export type { GanttTaskInterface, GanttProjectLiteInterface, GanttAssigneeInterface, GanttFiltersInterface, GanttSeedInterface } from "./gantt";
+export type { GanttTaskInterface, GanttSummaryInterface, GanttResponseInterface, GanttApiFiltersInterface, GanttFiltersInterface } from "./gantt";
 export type { TimeProjectInterface, TimeSprintInterface, TimeTeamInterface, TimeMemberInterface, TimeTaskInterface, TimeEntryInterface, TimeSeedInterface, TimeEntityKind, TimeLogEntryRow, CreateTimeEntryPayloadInterface } from "./time";
 export type { MeetingInterface, MeetingAttendeeInterface, MeetingTimeSlotInterface, MeetingCommentInterface, MeetingAttachmentInterface, MeetingUserInterface, MeetingSeedInterface, RequestMeetingPayloadInterface } from "./meetings";
 export type { ProjectAnalyticsInterface, SprintAnalyticsInterface, TeamAnalyticsInterface, AnalyticsSeedInterface, MetricPointInterface, DualMetricPointInterface, BreakdownSliceInterface, MemberContributionInterface, DeliveryAnalyticsResponseInterface, DeliveryAnalyticsFiltersInterface, DeliveryVelocityPointInterface, DeliveryThroughputPointInterface, DeliveryOnTimePointInterface, DeliveryFrictionSourceInterface, DeliveryBlockerTrendPointInterface, DeliveryLeaderboardEntryInterface } from "./analytics";
