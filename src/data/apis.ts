@@ -147,11 +147,13 @@ export const apisData = {
         criteriaDelete: (id: string) => `/handoffs/criteria/${id}`,
         toggleCheck: (taskId: string, criteriaId: string) => `/handoffs/checks/${taskId}/${criteriaId}`,
         taskStatus: (taskId: string) => `/handoffs/tasks/${taskId}`,
+    },
     workload: {
         byProject: "/workload/by-project",
         bySprint: "/workload/by-sprint",
         byTeam: "/workload/by-team",
         byMember: "/workload/by-member",
+    },
     ownership: {
         feed: "/ownership/feed",
         leaderboard: "/ownership/leaderboard",
@@ -165,6 +167,7 @@ export const apisData = {
         delete: (id: string) => `/features/${id}`,
         linkTasks: (id: string) => `/features/${id}/tasks`,
         unlinkTask: (id: string, taskId: string) => `/features/${id}/tasks/${taskId}`,
+    },
     reports: {
         full: (projectId: string) => `/reports/project/${projectId}`,
         overview: (projectId: string) => `/reports/project/${projectId}/overview`,
@@ -175,6 +178,7 @@ export const apisData = {
         friction: (projectId: string) => `/reports/project/${projectId}/friction`,
         recommendations: (projectId: string) => `/reports/project/${projectId}/recommendations`,
         export: (projectId: string, section: string) => `/reports/project/${projectId}/export/${section}`,
+    },
     meetings: {
         list: "/meetings",
         listLite: "/meetings/list",
@@ -191,6 +195,7 @@ export const apisData = {
         commentDelete: (id: string, commentId: string) => `/meetings/${id}/comments/${commentId}`,
         attachments: (id: string) => `/meetings/${id}/attachments`,
         attachmentDelete: (id: string, attachmentId: string) => `/meetings/${id}/attachments/${attachmentId}`,
+    },
     deploys: {
         list: "/deploys",
         create: "/deploys",
@@ -198,6 +203,7 @@ export const apisData = {
         download: (id: string) => `/deploys/${id}/download`,
         updateStatus: (id: string) => `/deploys/${id}/status`,
         delete: (id: string) => `/deploys/${id}`,
+    },
     reminders: {
         list: "/reminders",
         create: "/reminders",
@@ -207,8 +213,10 @@ export const apisData = {
         reactivate: (id: string) => `/reminders/${id}/reactivate`,
         delete: (id: string) => `/reminders/${id}`,
         stats: "/reminders/stats",
+    },
     gantt: {
         tasks: "/gantt/tasks",
+    },
     deliveryAnalytics: {
         composite: "/analytics/delivery",
         velocity: "/analytics/delivery/velocity",

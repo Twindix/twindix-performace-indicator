@@ -20,10 +20,6 @@ import {
 
 import { useSprintStore } from "@/store";
 
-import { workloadSeed } from "@/data";
-
-import type { TeamMemberWorkloadInterface } from "@/interfaces";
-
 import {
     Avatar,
     AvatarFallback,

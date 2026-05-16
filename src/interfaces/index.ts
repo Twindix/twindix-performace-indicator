@@ -165,7 +165,6 @@ export type {
 } from "./communications";
 
 export type {
-  TeamMemberWorkloadInterface,
   WorkloadByProjectRowInterface,
   WorkloadBySprintRowInterface,
   WorkloadByTeamRowInterface,
@@ -201,8 +200,16 @@ export type {
 } from "./features";
 
 export type {
-  HandoffInterface,
-  CriterionInterface,
+  HandoffCriteriaType,
+  HandoffCriterionInterface,
+  HandoffTransitionInterface,
+  HandoffsSummaryInterface,
+  HandoffsResponseInterface,
+  HandoffsFiltersInterface,
+  HandoffCriteriaSeedInterface,
+  CreateHandoffCriteriaPayloadInterface,
+  UpdateHandoffCriteriaPayloadInterface,
+  HandoffTaskStatusInterface,
 } from "./handoffs";
 
 export type {
@@ -225,11 +232,12 @@ export type {
 
 export type {
   GanttTaskInterface,
-  GanttProjectLiteInterface,
-  GanttAssigneeInterface,
+  GanttSummaryInterface,
+  GanttResponseInterface,
+  GanttApiFiltersInterface,
   GanttFiltersInterface,
-  GanttSeedInterface,
 } from "./gantt";
+
 
 export type {
   TimeSummaryInterface,
@@ -282,10 +290,29 @@ export type {
 } from "./meetings";
 
 export type {
+  DeployInterface,
+  DeployUploaderInterface,
+  UploadDeployPayloadInterface,
+  UpdateDeployStatusPayloadInterface,
+  DeploysListFiltersInterface,
+  DeploysListResponseInterface,
+} from "./deploys";
+
+export type {
+  ReminderInterface,
+  ReminderCreatorInterface,
+  ReminderUrgency,
+  CreateReminderPayloadInterface,
+  UpdateReminderPayloadInterface,
+  RemindersListFiltersInterface,
+  RemindersListResponseInterface,
+  RemindersStatsInterface,
+} from "./reminders";
+
+export type {
   ProjectAnalyticsInterface,
   SprintAnalyticsInterface,
   TeamAnalyticsInterface,
-  DeliveryAnalyticsInterface,
   AnalyticsSeedInterface,
   MetricPointInterface,
   DualMetricPointInterface,
@@ -307,12 +334,6 @@ export type {
 } from "./authorship";
 
 export type {
-  DeployInterface,
-  DeployUploaderInterface,
-  UploadDeployPayloadInterface,
-} from "./deploys";
-
-export type {
   ReportProjectSummaryInterface,
   ReportTeamSummaryInterface,
   ReportOverviewSectionInterface,
@@ -329,10 +350,3 @@ export type {
   ReportExportFormat,
   ReportExportPayloadInterface,
 } from "./reports";
-
-export type {
-  ReminderInterface,
-  ReminderCreatorInterface,
-  CreateReminderPayloadInterface,
-  UpdateReminderPayloadInterface,
-} from "./reminders";

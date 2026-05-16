@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download, FileSpreadsheet, Lightbulb, Users } from "lucide-react";
+import { Download, FileSpreadsheet, Users } from "lucide-react";
 
 import {
     Badge,
@@ -11,29 +11,9 @@ import {
 } from "@/atoms";
 
 import {
-    AnimatedNumber,
     EmptyState,
     Header,
-    ScoreGauge,
-    StatusBadge,
 } from "@/components/shared";
-
-import {
-    analyticsSeed,
-    authorshipSeed,
-    handoffsSeed,
-    timeSeed,
-    workloadSeed,
-} from "@/data";
-
-import { MetricStatus } from "@/enums";
-
-import { t } from "@/hooks";
-
-import type { BreakdownSliceInterface } from "@/interfaces";
-
-import { cn, formatDate } from "@/utils";
-import { MetricStatus } from "@/enums";
 
 import {
     t,
@@ -44,7 +24,6 @@ import {
 } from "@/hooks";
 
 import type {
-    BreakdownSliceInterface,
     ReportExportFormat,
     ReportSectionKey,
 } from "@/interfaces";
@@ -57,19 +36,7 @@ import {
     SelectValue,
 } from "@/ui";
 
-import { cn, formatDate } from "@/utils";
-
-const getScoreStatus = (score: number): MetricStatus => {
-    if (score >= 80) return MetricStatus.Healthy;
-    if (score >= 60) return MetricStatus.Warning;
-    return MetricStatus.Critical;
-};
-
-const getBarColor = (score: number): string => {
-    if (score >= 80) return "bg-success";
-    if (score >= 60) return "bg-warning";
-    return "bg-error";
-};
+import { cn } from "@/utils";
 
 interface SectionCardProps {
     title: string;

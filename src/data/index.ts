@@ -16,11 +16,5 @@ export {
 } from "./sidebar";
 
 export {
-  ganttSeed,
-  timeSeed,
-  meetingsSeed,
   analyticsSeed,
-  workloadSeed,
-  handoffsSeed,
-  authorshipSeed,
 } from "./seed";
