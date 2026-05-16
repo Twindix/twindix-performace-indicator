@@ -13,3 +13,4 @@ export { usersService } from "./users";
 export { teamsService } from "./teams";
 export { projectsService } from "./projects";
 export { meetingsService } from "./meetings";
+export { deliveryAnalyticsService } from "./delivery-analytics";

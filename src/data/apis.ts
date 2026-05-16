@@ -145,6 +145,15 @@ export const apisData = {
         commentDelete: (id: string, commentId: string) => `/meetings/${id}/comments/${commentId}`,
         attachments: (id: string) => `/meetings/${id}/attachments`,
         attachmentDelete: (id: string, attachmentId: string) => `/meetings/${id}/attachments/${attachmentId}`,
+    deliveryAnalytics: {
+        composite: "/analytics/delivery",
+        velocity: "/analytics/delivery/velocity",
+        throughput: "/analytics/delivery/throughput",
+        onTime: "/analytics/delivery/on-time",
+        health: "/analytics/delivery/health",
+        friction: "/analytics/delivery/friction",
+        blockerTrend: "/analytics/delivery/blocker-trend",
+        leaderboard: "/analytics/delivery/leaderboard",
     },
     baseUrl: import.meta.env.VITE_API_URL as string,
 };
