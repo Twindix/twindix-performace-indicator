@@ -1,5 +1,4 @@
 export { timeSeed } from "./time";
-export { meetingsSeed } from "./meetings";
 export { analyticsSeed } from "./analytics";
 export { workloadSeed } from "./workload";
 export { handoffsSeed } from "./handoffs";
