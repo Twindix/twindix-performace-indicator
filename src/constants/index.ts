@@ -14,6 +14,7 @@ export { commentsConstants } from "./comments";
 export { dashboardConstants } from "./dashboard";
 export { usersConstants } from "./users";
 export { projectsConstants } from "./projects";
+export { remindersConstants } from "./reminders";
 export { ganttConstants } from "./gantt";
 export { deliveryAnalyticsConstants } from "./delivery-analytics";
 export { permissionsConstants, ROLE_TIERS, ROLE_TIER_LABELS, roleTierOptions } from "./permissions";

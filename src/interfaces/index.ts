@@ -22,4 +22,4 @@ export type { MeetingInterface, MeetingAttendeeInterface, MeetingTimeSlotInterfa
 export type { ProjectAnalyticsInterface, SprintAnalyticsInterface, TeamAnalyticsInterface, AnalyticsSeedInterface, MetricPointInterface, DualMetricPointInterface, BreakdownSliceInterface, MemberContributionInterface, DeliveryAnalyticsResponseInterface, DeliveryAnalyticsFiltersInterface, DeliveryVelocityPointInterface, DeliveryThroughputPointInterface, DeliveryOnTimePointInterface, DeliveryFrictionSourceInterface, DeliveryBlockerTrendPointInterface, DeliveryLeaderboardEntryInterface } from "./analytics";
 export type { AuthorshipEntryInterface, AuthorshipSeedInterface } from "./authorship";
 export type { DeployInterface, DeployUploaderInterface, UploadDeployPayloadInterface } from "./deploys";
-export type { ReminderInterface, ReminderCreatorInterface, CreateReminderPayloadInterface, UpdateReminderPayloadInterface } from "./reminders";
+export type { ReminderInterface, ReminderCreatorInterface, CreateReminderPayloadInterface, UpdateReminderPayloadInterface, RemindersListFiltersInterface, RemindersListResponseInterface, RemindersStatsInterface, ReminderUrgency } from "./reminders";
