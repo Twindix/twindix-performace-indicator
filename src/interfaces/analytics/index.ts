@@ -64,27 +64,24 @@ export interface TeamAnalyticsInterface {
     focus_breakdown: BreakdownSliceInterface[];
 }
 
-export interface DeliveryAnalyticsInterface {
-    health_score: number;
-    on_time_rate: number;
-    throughput_per_sprint: number;
-    blocker_resolution_hours: number;
-    velocity_history: MetricPointInterface[];
-    throughput_history: MetricPointInterface[];
-    on_time_history: MetricPointInterface[];
-    friction_breakdown: BreakdownSliceInterface[];
-    blocker_trend: DualMetricPointInterface[];
-    project_leaderboard: { name: string; on_time_rate: number; velocity: number; completion: number }[];
-}
-
 export interface AnalyticsSeedInterface {
     projects: Record<string, ProjectAnalyticsInterface>;
     sprints: Record<string, SprintAnalyticsInterface>;
     teams: Record<string, TeamAnalyticsInterface>;
-    delivery: DeliveryAnalyticsInterface;
     fallback: {
         project: ProjectAnalyticsInterface;
         sprint: SprintAnalyticsInterface;
         team: TeamAnalyticsInterface;
     };
 }
+
+export type {
+    DeliveryAnalyticsResponseInterface,
+    DeliveryAnalyticsFiltersInterface,
+    DeliveryVelocityPointInterface,
+    DeliveryThroughputPointInterface,
+    DeliveryOnTimePointInterface,
+    DeliveryFrictionSourceInterface,
+    DeliveryBlockerTrendPointInterface,
+    DeliveryLeaderboardEntryInterface,
+} from "./delivery";

@@ -1,5 +1,5 @@
 import { apisData } from "@/data";
-import type { CreateSprintPayloadInterface, PaginationParamsInterface, SprintDetailResponseInterface, SprintSummaryInterface, SprintsListResponseInterface, UpdateSprintPayloadInterface } from "@/interfaces";
+import type { CreateSprintPayloadInterface, PaginationParamsInterface, SprintAnalyticsResponseInterface, SprintDetailResponseInterface, SprintSummaryInterface, SprintsListResponseInterface, UpdateSprintPayloadInterface } from "@/interfaces";
 import { apiClient } from "@/lib/axios";
 
 export const sprintsService = {
@@ -35,6 +35,11 @@ export const sprintsService = {
 
     activateHandler: async (id: string): Promise<SprintDetailResponseInterface> => {
         const { data } = await apiClient.patch<SprintDetailResponseInterface>(apisData.sprints.activate(id));
+        return data;
+    },
+
+    analyticsHandler: async (id: string): Promise<SprintAnalyticsResponseInterface> => {
+        const { data } = await apiClient.get<SprintAnalyticsResponseInterface>(apisData.sprints.analytics(id));
         return data;
     },
 };
