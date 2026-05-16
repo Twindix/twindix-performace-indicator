@@ -139,6 +139,15 @@ export const apisData = {
         friction: (projectId: string) => `/reports/project/${projectId}/friction`,
         recommendations: (projectId: string) => `/reports/project/${projectId}/recommendations`,
         export: (projectId: string, section: string) => `/reports/project/${projectId}/export/${section}`,
+    deliveryAnalytics: {
+        composite: "/analytics/delivery",
+        velocity: "/analytics/delivery/velocity",
+        throughput: "/analytics/delivery/throughput",
+        onTime: "/analytics/delivery/on-time",
+        health: "/analytics/delivery/health",
+        friction: "/analytics/delivery/friction",
+        blockerTrend: "/analytics/delivery/blocker-trend",
+        leaderboard: "/analytics/delivery/leaderboard",
     },
     baseUrl: import.meta.env.VITE_API_URL as string,
 };
