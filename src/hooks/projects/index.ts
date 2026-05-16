@@ -4,3 +4,4 @@ export { useCreateProject } from "./use-create-project";
 export { useUpdateProject } from "./use-update-project";
 export { useDeleteProject } from "./use-delete-project";
 export { useProjectSprints, seedProjectSprintsCache, invalidateProjectSprintsCache } from "./use-project-sprints";
+export { useProjectAnalytics } from "./use-project-analytics";
