@@ -13,6 +13,8 @@ export { usersService } from "./users";
 export { teamsService } from "./teams";
 export { projectsService } from "./projects";
 export { handoffsService } from "./handoffs";
+export { workloadService } from "./workload";
+export { timeService } from "./time";
 export { ownershipService } from "./ownership";
 export { featuresService } from "./features";
 export { reportsService } from "./reports";

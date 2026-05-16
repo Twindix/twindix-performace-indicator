@@ -15,6 +15,8 @@ export { dashboardConstants } from "./dashboard";
 export { usersConstants } from "./users";
 export { projectsConstants } from "./projects";
 export { handoffsConstants } from "./handoffs";
+export { workloadConstants } from "./workload";
+export { timeConstants } from "./time";
 export { ownershipConstants, featuresConstants } from "./ownership";
 export { reportsConstants } from "./reports";
 export { meetingsConstants } from "./meetings";

@@ -1,3 +1,5 @@
+export { ganttSeed } from "./gantt";
+export { meetingsSeed } from "./meetings";
 export { timeSeed } from "./time";
 export { analyticsSeed } from "./analytics";
 export { workloadSeed } from "./workload";

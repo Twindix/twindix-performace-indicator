@@ -31,6 +31,7 @@ export const apisData = {
         delete: (id: string) => `/sprints/${id}`,
         activate: (id: string) => `/sprints/${id}/activate`,
         summary: (id: string) => `/sprints/${id}/summary`,
+        analytics: (id: string) => `/sprints/${id}/analytics`,
     },
     projects: {
         list: "/projects",
@@ -40,6 +41,7 @@ export const apisData = {
         update: (id: string) => `/projects/${id}`,
         delete: (id: string) => `/projects/${id}`,
         sprints: (id: string) => `/projects/${id}/sprints`,
+        analytics: (id: string) => `/projects/${id}/analytics`,
     },
     tasks: {
         list: (sprintId: string) => `/sprints/${sprintId}/tasks`,
@@ -72,8 +74,16 @@ export const apisData = {
         taskList: (taskId: string) => `/tasks/${taskId}/time-logs`,
         summary: (sprintId: string) => `/sprints/${sprintId}/time-logs/summary`,
         create: (taskId: string) => `/tasks/${taskId}/time-logs`,
+        createStandalone: "/time-logs",
         update: (id: string) => `/time-logs/${id}`,
         delete: (id: string) => `/time-logs/${id}`,
+    },
+    time: {
+        byProject: "/time/by-project",
+        bySprint: "/time/by-sprint",
+        byTeam: "/time/by-team",
+        byMember: "/time/by-member",
+        summary: "/time/summary",
     },
     blockers: {
         list: (sprintId: string) => `/sprints/${sprintId}/blockers`,
@@ -137,6 +147,11 @@ export const apisData = {
         criteriaDelete: (id: string) => `/handoffs/criteria/${id}`,
         toggleCheck: (taskId: string, criteriaId: string) => `/handoffs/checks/${taskId}/${criteriaId}`,
         taskStatus: (taskId: string) => `/handoffs/tasks/${taskId}`,
+    workload: {
+        byProject: "/workload/by-project",
+        bySprint: "/workload/by-sprint",
+        byTeam: "/workload/by-team",
+        byMember: "/workload/by-member",
     ownership: {
         feed: "/ownership/feed",
         leaderboard: "/ownership/leaderboard",

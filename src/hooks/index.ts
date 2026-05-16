@@ -14,6 +14,8 @@ export * from "./users";
 export * from "./teams";
 export * from "./projects";
 export * from "./handoffs";
+export * from "./workload";
+export * from "./time";
 export * from "./ownership";
 export * from "./reports";
 export * from "./meetings";
