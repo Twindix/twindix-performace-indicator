@@ -15,5 +15,6 @@ export { dashboardConstants } from "./dashboard";
 export { usersConstants } from "./users";
 export { projectsConstants } from "./projects";
 export { handoffsConstants } from "./handoffs";
+export { deliveryAnalyticsConstants } from "./delivery-analytics";
 export { permissionsConstants, ROLE_TIERS, ROLE_TIER_LABELS, roleTierOptions } from "./permissions";
 export type { RoleTier } from "./permissions";
