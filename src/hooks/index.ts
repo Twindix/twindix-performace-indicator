@@ -14,3 +14,4 @@ export * from "./users";
 export * from "./teams";
 export * from "./projects";
 export * from "./workload";
+export * from "./delivery-analytics";
