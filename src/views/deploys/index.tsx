@@ -1,12 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Archive, ChevronDown, Download, Filter, Package, Plus, Rocket, Search, Smartphone, Trash2, X } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input } from "@/atoms";
-import { EmptyState, Header } from "@/components/shared";
+import { EmptyState, Header, Pagination } from "@/components/shared";
 import { DeployEnvironment, DeployStatus } from "@/enums";
-import { t, usePermissions } from "@/hooks";
+import { t, useDeleteDeploy, useDeploysList, useDownloadDeploy, usePermissions } from "@/hooks";
 import type { DeployInterface } from "@/interfaces";
-import { useDeployStore } from "@/store";
 import { Avatar, AvatarFallback, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 import { cn, formatDateTime } from "@/utils";
 import { UploadDeployDialog } from "./UploadDeployDialog";
@@ -53,8 +52,8 @@ const statusBadge = (status: DeployStatus) => {
 
 export const DeploysView = () => {
     const p = usePermissions();
-    const deploys = useDeployStore((s) => s.deploys);
-    const removeDeploy = useDeployStore((s) => s.removeDeploy);
+    const canUpload = p.deploys.upload();
+    const canDelete = p.deploys.delete();
 
     const [uploadOpen, setUploadOpen] = useState(false);
     const [search, setSearch] = useState("");
@@ -63,33 +62,26 @@ export const DeploysView = () => {
     const [uploaderFilter, setUploaderFilter] = useState<string>("all");
     const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-    const uploaders = useMemo(() => {
+    const filters = {
+        environment: envFilter !== "all" ? envFilter : undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+        uploaded_by: uploaderFilter !== "all" ? uploaderFilter : undefined,
+        search: search || undefined,
+    };
+
+    const { items, meta, isLoading, setPage, setPerPage, refetch, prependDeployLocal, removeDeployLocal } = useDeploysList(filters);
+    const { downloadHandler } = useDownloadDeploy();
+    const { deleteHandler } = useDeleteDeploy();
+
+    // Build uploaders list from current page
+    const uploaders = (() => {
         const map = new Map<string, { id: string; full_name: string; avatar_initials: string }>();
-        deploys.forEach((d) => map.set(d.uploaded_by.id, d.uploaded_by));
+        items.forEach((d) => map.set(d.uploaded_by.id, d.uploaded_by));
         return Array.from(map.values());
-    }, [deploys]);
+    })();
 
-    const filtered = useMemo(() => {
-        const q = search.trim().toLowerCase();
-        return deploys.filter((d) => {
-            if (envFilter !== "all" && d.environment !== envFilter) return false;
-            if (statusFilter !== "all" && d.status !== statusFilter) return false;
-            if (uploaderFilter !== "all" && d.uploaded_by.id !== uploaderFilter) return false;
-            if (q && !(d.title.toLowerCase().includes(q) || d.file_name.toLowerCase().includes(q) || (d.version ?? "").toLowerCase().includes(q))) return false;
-            return true;
-        });
-    }, [deploys, search, envFilter, statusFilter, uploaderFilter]);
-
-    // Stats
-    const stats = useMemo(() => ({
-        total: deploys.length,
-        ready: deploys.filter((d) => d.status === DeployStatus.Ready).length,
-        totalSize: deploys.reduce((s, d) => s + d.file_size, 0),
-        thisWeek: deploys.filter((d) => Date.now() - new Date(d.uploaded_at).getTime() < 7 * 86400_000).length,
-    }), [deploys]);
-
-    const latest = filtered[0];
-    const rest = filtered.slice(1);
+    const latest = items[0];
+    const rest = items.slice(1);
 
     const toggleExpanded = (id: string) =>
         setExpanded((s) => {
@@ -99,26 +91,13 @@ export const DeploysView = () => {
             return next;
         });
 
-    const handleDownload = (d: DeployInterface) => {
-        if (d.download_url) {
-            const a = document.createElement("a");
-            a.href = d.download_url;
-            a.download = d.file_name;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            return;
-        }
-        // Fallback for seeded entries with no real blob — produce a tiny placeholder file
-        const blob = new Blob([`# ${d.title} ${d.version ?? ""}\n\nDemo download — backend integration pending.\n`], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = d.file_name.replace(/\.[^.]+$/, ".txt");
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+    const handleDownload = async (d: DeployInterface) => {
+        await downloadHandler(d.id, d.file_name);
+    };
+
+    const handleDelete = async (d: DeployInterface) => {
+        const ok = await deleteHandler(d.id);
+        if (ok) removeDeployLocal(d.id);
     };
 
     const clearFilters = () => {
@@ -129,7 +108,12 @@ export const DeploysView = () => {
     };
     const hasFilters = search || envFilter !== "all" || statusFilter !== "all" || uploaderFilter !== "all";
 
-    const canCreate = p.tasks.create(); // Reuse a generic create permission — deploys are open to any team
+    const stats = {
+        total: meta?.total ?? items.length,
+        ready: items.filter((d) => d.status === DeployStatus.Ready).length,
+        totalSize: items.reduce((s, d) => s + d.file_size, 0),
+        thisWeek: items.filter((d) => Date.now() - new Date(d.uploaded_at).getTime() < 7 * 86400_000).length,
+    };
 
     return (
         <div className="flex-1 flex flex-col">
@@ -137,7 +121,7 @@ export const DeploysView = () => {
                 title={t("Deploys")}
                 description={t("Build artifacts and changelog history. Managers are notified on each upload.")}
                 actions={
-                    canCreate ? (
+                    canUpload ? (
                         <Button size="sm" className="gap-1.5" onClick={() => setUploadOpen(true)}>
                             <Plus className="h-4 w-4" />
                             {t("New Deploy")}
@@ -146,15 +130,13 @@ export const DeploysView = () => {
                 }
             />
 
-            {/* Stats row */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                 <Stat label={t("Total Deploys")} value={stats.total} accent="text-text-dark" />
-                <Stat label={t("Ready")}          value={stats.ready} accent="text-success" />
-                <Stat label={t("This Week")}      value={stats.thisWeek} accent="text-primary" />
-                <Stat label={t("Total Size")}     value={formatSize(stats.totalSize)} accent="text-text-dark" />
+                <Stat label={t("Ready (page)")}  value={stats.ready} accent="text-success" />
+                <Stat label={t("This Week")}     value={stats.thisWeek} accent="text-primary" />
+                <Stat label={t("Page Size")}     value={formatSize(stats.totalSize)} accent="text-text-dark" />
             </div>
 
-            {/* Filters */}
             <Card className="mb-6">
                 <CardContent className="p-4">
                     <div className="flex flex-wrap items-center gap-2">
@@ -194,32 +176,33 @@ export const DeploysView = () => {
                             </button>
                         )}
                         <span className="ms-auto text-xs text-text-muted tabular-nums">
-                            {filtered.length} / {deploys.length}
+                            {items.length} / {meta?.total ?? items.length}
                         </span>
                     </div>
                 </CardContent>
             </Card>
 
-            {filtered.length === 0 ? (
+            {isLoading && items.length === 0 ? (
+                <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-text-muted">
+                    {t("Loading deploys...")}
+                </div>
+            ) : items.length === 0 ? (
                 <EmptyState icon={Rocket} title={t("No deploys yet")} description={t("Upload your first build to start the changelog.")} />
             ) : (
                 <div className="flex flex-col gap-4">
-                    {/* LATEST hero card */}
                     {latest && (
                         <LatestDeployCard
                             d={latest}
                             expanded={expanded.has(latest.id)}
                             onToggle={() => toggleExpanded(latest.id)}
                             onDownload={() => handleDownload(latest)}
-                            onDelete={() => removeDeploy(latest.id)}
-                            canDelete={canCreate}
+                            onDelete={() => handleDelete(latest)}
+                            canDelete={canDelete}
                         />
                     )}
 
-                    {/* TIMELINE for older deploys */}
                     {rest.length > 0 && (
                         <div className="relative">
-                            {/* Vertical timeline rail */}
                             <span aria-hidden className="absolute top-2 bottom-2 w-px bg-border" style={{ insetInlineStart: 19 }} />
                             <div className="flex flex-col gap-3">
                                 {rest.map((d) => (
@@ -229,22 +212,26 @@ export const DeploysView = () => {
                                         expanded={expanded.has(d.id)}
                                         onToggle={() => toggleExpanded(d.id)}
                                         onDownload={() => handleDownload(d)}
-                                        onDelete={() => removeDeploy(d.id)}
-                                        canDelete={canCreate}
+                                        onDelete={() => handleDelete(d)}
+                                        canDelete={canDelete}
                                     />
                                 ))}
                             </div>
                         </div>
                     )}
+                    {meta && <div className="mt-2"><Pagination meta={meta} onPageChange={setPage} onPerPageChange={setPerPage} /></div>}
                 </div>
             )}
 
-            <UploadDeployDialog open={uploadOpen} onOpenChange={setUploadOpen} />
+            <UploadDeployDialog
+                open={uploadOpen}
+                onOpenChange={setUploadOpen}
+                onUploaded={(d) => { prependDeployLocal(d); refetch(); }}
+            />
         </div>
     );
 };
 
-// ── Stat tile ────────────────────────────────────────────────────────────
 const Stat = ({ label, value, accent }: { label: string; value: string | number; accent: string }) => (
     <Card>
         <CardContent className="p-4 text-center">
@@ -254,7 +241,6 @@ const Stat = ({ label, value, accent }: { label: string; value: string | number;
     </Card>
 );
 
-// ── Latest deploy — hero treatment ───────────────────────────────────────
 interface DeployCardProps {
     d: DeployInterface;
     expanded: boolean;
@@ -269,7 +255,6 @@ const LatestDeployCard = ({ d, expanded, onToggle, onDownload, onDelete, canDele
     const env = envConfig[d.environment];
     return (
         <Card className="relative overflow-hidden border-primary/40 bg-gradient-to-br from-primary/[0.06] via-card to-card">
-            {/* Accent rail */}
             <span aria-hidden className="absolute inset-y-0 start-0 w-1 bg-primary" />
             <CardContent className="p-5 ps-6">
                 <div className="flex items-start gap-4">
@@ -300,18 +285,13 @@ const LatestDeployCard = ({ d, expanded, onToggle, onDownload, onDelete, canDele
                             {t("Download")}
                         </Button>
                         {canDelete && (
-                            <button
-                                onClick={onDelete}
-                                className="p-2 rounded-md text-text-muted hover:text-error hover:bg-error-light"
-                                aria-label={t("Delete deploy")}
-                            >
+                            <button onClick={onDelete} className="p-2 rounded-md text-text-muted hover:text-error hover:bg-error-light" aria-label={t("Delete deploy")}>
                                 <Trash2 className="h-4 w-4" />
                             </button>
                         )}
                     </div>
                 </div>
 
-                {/* Uploader strip */}
                 <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border/60">
                     <Avatar className="h-7 w-7">
                         <AvatarFallback className="text-[10px]">{d.uploaded_by.avatar_initials}</AvatarFallback>
@@ -325,20 +305,17 @@ const LatestDeployCard = ({ d, expanded, onToggle, onDownload, onDelete, canDele
                     </span>
                 </div>
 
-                {/* Changelog */}
                 <ChangelogList changes={d.changes} expanded={expanded} onToggle={onToggle} />
             </CardContent>
         </Card>
     );
 };
 
-// ── Timeline-style card ───────────────────────────────────────────────────
 const TimelineDeployCard = ({ d, expanded, onToggle, onDownload, onDelete, canDelete }: DeployCardProps) => {
     const FileTypeIcon = iconForFile(d.file_name);
     const env = envConfig[d.environment];
     return (
         <div className="flex gap-4">
-            {/* Timeline dot */}
             <div className="relative shrink-0 z-10">
                 <div className={cn(
                     "flex h-10 w-10 items-center justify-center rounded-lg shrink-0 ring-4 ring-background",
@@ -396,7 +373,6 @@ const TimelineDeployCard = ({ d, expanded, onToggle, onDownload, onDelete, canDe
     );
 };
 
-// ── Changelog list with expand/collapse ──────────────────────────────────
 const ChangelogList = ({ changes, expanded, onToggle }: { changes: string[]; expanded: boolean; onToggle: () => void }) => {
     if (changes.length === 0) return null;
     const visible = expanded ? changes : changes.slice(0, 2);

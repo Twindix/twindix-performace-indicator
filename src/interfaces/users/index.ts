@@ -1,9 +1,15 @@
 import type { RoleTier } from "@/constants/permissions";
 import type { PaginatedResponseInterface, PaginationParamsInterface, UserInterface } from "@/interfaces/common";
 
+export type UsersListSortInterface = "name-asc" | "name-desc" | "created-asc" | "created-desc" | "role";
+
 export interface UserListParamsInterface extends PaginationParamsInterface {
+    search?: string;
     role_tier?: RoleTier;
     team_id?: string;
+    project_id?: string;
+    status?: "active" | "inactive";
+    sort?: UsersListSortInterface;
 }
 
 export type UserListResponseInterface = PaginatedResponseInterface<UserInterface>;
