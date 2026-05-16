@@ -129,6 +129,16 @@ export const apisData = {
         healthScore: (sprintId: string) => `/sprints/${sprintId}/dashboard/health-score`,
         metrics: (sprintId: string) => `/sprints/${sprintId}/dashboard/metrics`,
     },
+    reports: {
+        full: (projectId: string) => `/reports/project/${projectId}`,
+        overview: (projectId: string) => `/reports/project/${projectId}/overview`,
+        delivery: (projectId: string) => `/reports/project/${projectId}/delivery`,
+        workload: (projectId: string) => `/reports/project/${projectId}/workload`,
+        handoff: (projectId: string) => `/reports/project/${projectId}/handoff`,
+        authorship: (projectId: string) => `/reports/project/${projectId}/authorship`,
+        friction: (projectId: string) => `/reports/project/${projectId}/friction`,
+        recommendations: (projectId: string) => `/reports/project/${projectId}/recommendations`,
+        export: (projectId: string, section: string) => `/reports/project/${projectId}/export/${section}`,
     meetings: {
         list: "/meetings",
         listLite: "/meetings/list",
