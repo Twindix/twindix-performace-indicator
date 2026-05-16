@@ -13,6 +13,10 @@ export { decisionsPolicy } from "./decisions.policy";
 export { usersPolicy } from "./users.policy";
 export { teamsPolicy } from "./teams.policy";
 export { handoffsPolicy } from "./handoffs.policy";
+export { featuresPolicy } from "./features.policy";
+export { reportsPolicy } from "./reports.policy";
+export { deploysPolicy } from "./deploys.policy";
+export { remindersPolicy } from "./reminders.policy";
 
 import { authPolicy } from "./auth.policy";
 import { sprintsPolicy } from "./sprints.policy";
@@ -26,6 +30,10 @@ import { decisionsPolicy } from "./decisions.policy";
 import { usersPolicy } from "./users.policy";
 import { teamsPolicy } from "./teams.policy";
 import { handoffsPolicy } from "./handoffs.policy";
+import { featuresPolicy } from "./features.policy";
+import { reportsPolicy } from "./reports.policy";
+import { deploysPolicy } from "./deploys.policy";
+import { remindersPolicy } from "./reminders.policy";
 
 export const policies = {
     auth: authPolicy,
@@ -40,4 +48,8 @@ export const policies = {
     users: usersPolicy,
     teams: teamsPolicy,
     handoffs: handoffsPolicy,
+    features: featuresPolicy,
+    reports: reportsPolicy,
+    deploys: deploysPolicy,
+    reminders: remindersPolicy,
 } as const;

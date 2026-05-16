@@ -2,23 +2,27 @@ import { useCallback } from "react";
 
 import { usersConstants } from "@/constants";
 import type { RoleTier } from "@/constants/permissions";
-import type { UserInterface } from "@/interfaces";
+import type { UserInterface, UsersListSortInterface } from "@/interfaces";
 import { usersService } from "@/services/users";
 
 import { usePaginatedQuery } from "../shared";
 
 export interface UseUsersListOptions {
+    search?: string;
     role_tier?: RoleTier;
     team_id?: string;
+    project_id?: string;
+    status?: "active" | "inactive";
+    sort?: UsersListSortInterface;
     initialPerPage?: number;
 }
 
 export const useUsersList = (options: UseUsersListOptions = {}) => {
-    const { role_tier, team_id, initialPerPage } = options;
+    const { search, role_tier, team_id, project_id, status, sort, initialPerPage } = options;
 
     const { items, meta, page, perPage, isLoading, setPage, setPerPage, refetch, setItems } = usePaginatedQuery<UserInterface>(
-        ({ page, per_page }) => usersService.listHandler({ page, per_page, role_tier, team_id }),
-        [role_tier, team_id],
+        ({ page, per_page }) => usersService.listHandler({ page, per_page, search, role_tier, team_id, project_id, status, sort }),
+        [search, role_tier, team_id, project_id, status, sort],
         {
             errorFallback: usersConstants.errors.fetchFailed,
             context: "users.list",
