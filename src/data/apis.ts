@@ -131,6 +131,15 @@ export const apisData = {
     },
     gantt: {
         tasks: "/gantt/tasks",
+    deliveryAnalytics: {
+        composite: "/analytics/delivery",
+        velocity: "/analytics/delivery/velocity",
+        throughput: "/analytics/delivery/throughput",
+        onTime: "/analytics/delivery/on-time",
+        health: "/analytics/delivery/health",
+        friction: "/analytics/delivery/friction",
+        blockerTrend: "/analytics/delivery/blocker-trend",
+        leaderboard: "/analytics/delivery/leaderboard",
     },
     baseUrl: import.meta.env.VITE_API_URL as string,
 };
