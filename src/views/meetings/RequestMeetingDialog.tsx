@@ -2,9 +2,8 @@ import { useState } from "react";
 import { Plus, X } from "lucide-react";
 
 import { Button, Input, Label, Textarea } from "@/atoms";
-import { MeetingType } from "@/enums";
-import { t } from "@/hooks";
-import type { RequestMeetingPayloadInterface } from "@/interfaces/meetings";
+import { t, useCreateMeeting, useFormErrors, useProjectsListLite, useTeamsListLite, useUsersListLite } from "@/hooks";
+import type { CreateMeetingTimeSlotPayloadInterface, MeetingTypeApi } from "@/interfaces";
 import {
     Checkbox,
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
@@ -13,81 +12,49 @@ import {
 
 import { MEETING_TYPE_LABEL } from "./constants";
 
-interface AttendeeOption {
-    id: string;
-    full_name: string;
-}
-
-interface ProjectOption {
-    id: string;
-    name: string;
-}
-
-interface TeamOption {
-    id: string;
-    name: string;
-}
-
 interface RequestMeetingDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    attendees: AttendeeOption[];
-    projects: ProjectOption[];
-    teams: TeamOption[];
-    onSubmit: (payload: RequestMeetingPayloadInterface) => void;
+    onCreated?: () => void;
 }
 
-interface SlotDraft {
-    date: string;
-    start_time: string;
-    end_time: string;
-}
+const emptySlot = (): CreateMeetingTimeSlotPayloadInterface => ({ date: "", start_time: "", end_time: "" });
 
-const emptySlot = (): SlotDraft => ({ date: "", start_time: "", end_time: "" });
+export const RequestMeetingDialog = ({ open, onOpenChange, onCreated }: RequestMeetingDialogProps) => {
+    const { projects } = useProjectsListLite();
+    const { teams } = useTeamsListLite();
+    const { users } = useUsersListLite();
+    const { setFieldErrors, getError, clear: clearFieldErrors } = useFormErrors();
+    const { createHandler, isLoading } = useCreateMeeting({ onFieldErrors: setFieldErrors });
 
-export const RequestMeetingDialog = ({
-    open,
-    onOpenChange,
-    attendees,
-    projects,
-    teams,
-    onSubmit,
-}: RequestMeetingDialogProps) => {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-    const [agenda, setAgenda] = useState("");
+    const [notes, setNotes] = useState("");
     const [location, setLocation] = useState("");
-    const [type, setType] = useState<MeetingType | "">("");
+    const [meetingType, setMeetingType] = useState<MeetingTypeApi | "">("");
     const [projectId, setProjectId] = useState<string>("");
     const [teamId, setTeamId] = useState<string>("");
     const [attendeeIds, setAttendeeIds] = useState<string[]>([]);
-    const [suggestTimes, setSuggestTimes] = useState(false);
-    const [fixedDate, setFixedDate] = useState("");
-    const [fixedStart, setFixedStart] = useState("");
-    const [fixedEnd, setFixedEnd] = useState("");
-    const [slots, setSlots] = useState<SlotDraft[]>([emptySlot()]);
+    const [slots, setSlots] = useState<CreateMeetingTimeSlotPayloadInterface[]>([emptySlot()]);
 
     const reset = () => {
         setTitle("");
         setDescription("");
-        setAgenda("");
+        setNotes("");
         setLocation("");
-        setType("");
+        setMeetingType("");
         setProjectId("");
         setTeamId("");
         setAttendeeIds([]);
-        setSuggestTimes(false);
-        setFixedDate("");
-        setFixedStart("");
-        setFixedEnd("");
         setSlots([emptySlot()]);
+        clearFieldErrors();
     };
 
     const toggleAttendee = (id: string) => {
         setAttendeeIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
     };
 
-    const updateSlot = (index: number, patch: Partial<SlotDraft>) => {
+    const updateSlot = (index: number, patch: Partial<CreateMeetingTimeSlotPayloadInterface>) => {
         setSlots((prev) => prev.map((slot, i) => (i === index ? { ...slot, ...patch } : slot)));
     };
 
@@ -99,30 +66,29 @@ export const RequestMeetingDialog = ({
 
     const canSubmit =
         title.trim().length > 0 &&
-        type !== "" &&
+        meetingType !== "" &&
         attendeeIds.length > 0 &&
-        (suggestTimes
-            ? validSlots.length >= 2
-            : fixedDate !== "" && fixedStart !== "" && fixedEnd !== "");
+        validSlots.length >= 1 &&
+        !isLoading;
 
-    const handleSubmit = () => {
-        if (!canSubmit || !type) return;
-        onSubmit({
+    const handleSubmit = async () => {
+        if (!canSubmit || !meetingType) return;
+        const result = await createHandler({
             title: title.trim(),
             description: description.trim() || undefined,
-            agenda: agenda.trim() || undefined,
+            notes: notes.trim() || undefined,
             location: location.trim() || undefined,
-            type,
-            project_id: projectId || null,
-            team_id: teamId || null,
+            meeting_type: meetingType,
+            project_id: projectId || undefined,
+            team_id: teamId || undefined,
             attendee_ids: attendeeIds,
-            date: suggestTimes ? null : fixedDate,
-            start_time: suggestTimes ? null : fixedStart,
-            end_time: suggestTimes ? null : fixedEnd,
-            suggested_slots: suggestTimes ? validSlots : undefined,
+            time_slots: validSlots,
         });
-        reset();
-        onOpenChange(false);
+        if (result) {
+            reset();
+            onCreated?.();
+            onOpenChange(false);
+        }
     };
 
     const handleCancel = () => {
@@ -140,111 +106,47 @@ export const RequestMeetingDialog = ({
                 <div className="space-y-4 mt-2">
                     <div className="space-y-1.5">
                         <Label htmlFor="mt-title">{t("Title")}</Label>
-                        <Input
-                            id="mt-title"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder={t("Meeting title")}
-                        />
+                        <Input id="mt-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("Meeting title")} />
+                        {getError("title") && <p className="text-[11px] text-error">{getError("title")}</p>}
                     </div>
 
-                    <div className="flex items-start gap-2 p-3 rounded-lg border border-border bg-muted/30">
-                        <Checkbox
-                            id="mt-suggest"
-                            checked={suggestTimes}
-                            onCheckedChange={(next) => setSuggestTimes(next === true)}
-                            className="mt-0.5"
-                        />
-                        <div className="flex-1">
-                            <Label htmlFor="mt-suggest" className="cursor-pointer font-medium">
-                                {t("Suggest multiple times and let attendees vote")}
-                            </Label>
-                            <p className="text-[11px] text-text-muted mt-0.5">
-                                {t("Attendees pick their preferred slot. You can add more and close voting anytime.")}
-                            </p>
-                        </div>
+                    <div className="space-y-2">
+                        <Label>{t("Proposed Time Slots")}</Label>
+                        {slots.map((slot, index) => (
+                            <div key={index} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center">
+                                <Input type="date" value={slot.date} onChange={(e) => updateSlot(index, { date: e.target.value })} />
+                                <Input type="time" value={slot.start_time} onChange={(e) => updateSlot(index, { start_time: e.target.value })} className="w-28" />
+                                <Input type="time" value={slot.end_time} onChange={(e) => updateSlot(index, { end_time: e.target.value })} className="w-28" />
+                                <Button type="button" variant="ghost" size="icon" className="h-9 w-9" onClick={() => removeSlot(index)} disabled={slots.length === 1}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ))}
+                        <Button variant="outline" size="sm" className="gap-1.5" onClick={addSlot}>
+                            <Plus className="h-3.5 w-3.5" />
+                            {t("Add another slot")}
+                        </Button>
+                        <p className="text-[11px] text-text-muted">{t("Attendees vote on which slot they prefer. At least 1 slot required.")}</p>
+                        {getError("time_slots") && <p className="text-[11px] text-error">{getError("time_slots")}</p>}
                     </div>
-
-                    {suggestTimes ? (
-                        <div className="space-y-2">
-                            <Label>{t("Proposed Time Slots")}</Label>
-                            {slots.map((slot, index) => (
-                                <div key={index} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center">
-                                    <Input
-                                        type="date"
-                                        value={slot.date}
-                                        onChange={(e) => updateSlot(index, { date: e.target.value })}
-                                    />
-                                    <Input
-                                        type="time"
-                                        value={slot.start_time}
-                                        onChange={(e) => updateSlot(index, { start_time: e.target.value })}
-                                        className="w-28"
-                                    />
-                                    <Input
-                                        type="time"
-                                        value={slot.end_time}
-                                        onChange={(e) => updateSlot(index, { end_time: e.target.value })}
-                                        className="w-28"
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-9 w-9"
-                                        onClick={() => removeSlot(index)}
-                                        disabled={slots.length === 1}
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            ))}
-                            <Button variant="outline" size="sm" className="gap-1.5" onClick={addSlot}>
-                                <Plus className="h-3.5 w-3.5" />
-                                {t("Add another slot")}
-                            </Button>
-                            <p className="text-[11px] text-text-muted">{t("Add at least 2 slots for voting.")}</p>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="space-y-1.5">
-                                <Label htmlFor="mt-date">{t("Date")}</Label>
-                                <Input id="mt-date" type="date" value={fixedDate} onChange={(e) => setFixedDate(e.target.value)} />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="mt-start">{t("Start Time")}</Label>
-                                    <Input id="mt-start" type="time" value={fixedStart} onChange={(e) => setFixedStart(e.target.value)} />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="mt-end">{t("End Time")}</Label>
-                                    <Input id="mt-end" type="time" value={fixedEnd} onChange={(e) => setFixedEnd(e.target.value)} />
-                                </div>
-                            </div>
-                        </>
-                    )}
 
                     <div className="space-y-1.5">
                         <Label htmlFor="mt-location">{t("Location / Link")}</Label>
-                        <Input
-                            id="mt-location"
-                            value={location}
-                            onChange={(e) => setLocation(e.target.value)}
-                            placeholder={t("Room name or meeting link")}
-                        />
+                        <Input id="mt-location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder={t("Room name or meeting link")} />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                             <Label>{t("Meeting Type")}</Label>
-                            <Select value={type} onValueChange={(value) => setType(value as MeetingType)}>
+                            <Select value={meetingType} onValueChange={(value) => setMeetingType(value as MeetingTypeApi)}>
                                 <SelectTrigger><SelectValue placeholder={t("Select type")} /></SelectTrigger>
                                 <SelectContent>
-                                    {(Object.keys(MEETING_TYPE_LABEL) as MeetingType[]).map((key) => (
+                                    {(Object.keys(MEETING_TYPE_LABEL) as MeetingTypeApi[]).map((key) => (
                                         <SelectItem key={key} value={key}>{t(MEETING_TYPE_LABEL[key])}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
+                            {getError("meeting_type") && <p className="text-[11px] text-error">{getError("meeting_type")}</p>}
                         </div>
                         <div className="space-y-1.5">
                             <Label>{t("Team (optional)")}</Label>
@@ -274,16 +176,18 @@ export const RequestMeetingDialog = ({
                     <div className="space-y-1.5">
                         <Label>{t("Attendees")} <span className="text-error">*</span></Label>
                         <div className="rounded-lg border border-border max-h-40 overflow-y-auto p-2 space-y-1">
-                            {attendees.map((a) => (
-                                <label key={a.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer">
-                                    <Checkbox
-                                        checked={attendeeIds.includes(a.id)}
-                                        onCheckedChange={() => toggleAttendee(a.id)}
-                                    />
-                                    <span className="text-sm text-text-dark">{a.full_name}</span>
-                                </label>
-                            ))}
+                            {users.length === 0 ? (
+                                <p className="text-xs text-text-muted px-2 py-1.5">{t("No users available.")}</p>
+                            ) : (
+                                users.map((u) => (
+                                    <label key={u.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer">
+                                        <Checkbox checked={attendeeIds.includes(u.id)} onCheckedChange={() => toggleAttendee(u.id)} />
+                                        <span className="text-sm text-text-dark">{u.full_name}</span>
+                                    </label>
+                                ))
+                            )}
                         </div>
+                        {getError("attendee_ids") && <p className="text-[11px] text-error">{getError("attendee_ids")}</p>}
                     </div>
 
                     <div className="space-y-1.5">
@@ -292,16 +196,18 @@ export const RequestMeetingDialog = ({
                     </div>
 
                     <div className="space-y-1.5">
-                        <Label htmlFor="mt-agenda">{t("Notes / Agenda")}</Label>
-                        <Textarea id="mt-agenda" rows={2} value={agenda} onChange={(e) => setAgenda(e.target.value)} />
+                        <Label htmlFor="mt-notes">{t("Notes / Agenda")}</Label>
+                        <Textarea id="mt-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
                     </div>
                 </div>
 
                 <div className="flex justify-end gap-2 mt-4">
                     <DialogClose asChild>
-                        <Button variant="outline">{t("Cancel")}</Button>
+                        <Button variant="outline" disabled={isLoading}>{t("Cancel")}</Button>
                     </DialogClose>
-                    <Button onClick={handleSubmit} disabled={!canSubmit}>{t("Save")}</Button>
+                    <Button onClick={handleSubmit} disabled={!canSubmit}>
+                        {isLoading ? t("Creating...") : t("Save")}
+                    </Button>
                 </div>
             </DialogContent>
         </Dialog>
