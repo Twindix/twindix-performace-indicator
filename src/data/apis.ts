@@ -129,6 +129,19 @@ export const apisData = {
         healthScore: (sprintId: string) => `/sprints/${sprintId}/dashboard/health-score`,
         metrics: (sprintId: string) => `/sprints/${sprintId}/dashboard/metrics`,
     },
+    ownership: {
+        feed: "/ownership/feed",
+        leaderboard: "/ownership/leaderboard",
+        stats: "/ownership/stats",
+    },
+    features: {
+        list: "/features",
+        create: "/features",
+        detail: (id: string) => `/features/${id}`,
+        update: (id: string) => `/features/${id}`,
+        delete: (id: string) => `/features/${id}`,
+        linkTasks: (id: string) => `/features/${id}/tasks`,
+        unlinkTask: (id: string, taskId: string) => `/features/${id}/tasks/${taskId}`,
     reports: {
         full: (projectId: string) => `/reports/project/${projectId}`,
         overview: (projectId: string) => `/reports/project/${projectId}/overview`,

@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import { Download, FileSpreadsheet, Lightbulb, Users } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
+import { AnimatedNumber, Header, ScoreGauge, StatusBadge } from "@/components/shared";
+import { analyticsSeed, handoffsSeed, timeSeed, workloadSeed } from "@/data";
+
+interface AuthorshipStub { id: string; kind: "feature" | "task"; name: string; description: string; creator_id: string; created_at: string; updated_at: string; project_id: string; sprint_id?: string; linked_task_ids: string[]; status: "draft" | "active" | "shipped" | "archived"; tags: string[]; }
+const authorshipSeed: AuthorshipStub[] = [];
 import { AnimatedNumber, EmptyState, Header, ScoreGauge, StatusBadge } from "@/components/shared";
 import { MetricStatus } from "@/enums";
 import { t, useExportReportSection, usePermissions, useProjectReport, useProjectsListLite } from "@/hooks";

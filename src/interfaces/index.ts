@@ -13,7 +13,8 @@ export type { AttachmentInterface, AddTaskFormState, AddTaskDialogProps, Require
 export type { CommunicationInterface, CommunicationChannel, CommunicationStatus } from "./communications";
 export type { TeamMemberWorkloadInterface } from "./workload";
 export type { MetricInterface, FrictionScoresInterface, SprintMetricsInterface } from "./metrics";
-export type { OwnershipEntryInterface } from "./ownership";
+export type { OwnershipEntryInterface, OwnershipItemType, FeatureStatus, OwnershipCreatorInterface, OwnershipFeedItemInterface, OwnershipFeedFiltersInterface, OwnershipFeedResponseInterface, OwnershipLeaderboardEntryInterface, OwnershipStatsInterface } from "./ownership";
+export type { FeatureInterface, CreateFeaturePayloadInterface, UpdateFeaturePayloadInterface, FeaturesListFiltersInterface, FeaturesListResponseInterface } from "./features";
 export type { HandoffInterface, CriterionInterface } from "./handoffs";
 export type { ProjectInterface, ProjectCreatorInterface, CreateProjectPayloadInterface, UpdateProjectPayloadInterface, ProjectLiteInterface, ProjectsListResponseInterface, ProjectsListFiltersInterface } from "./projects";
 export type { GanttTaskInterface, GanttSummaryInterface, GanttResponseInterface, GanttApiFiltersInterface, GanttFiltersInterface } from "./gantt";

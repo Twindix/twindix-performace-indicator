@@ -12,6 +12,8 @@ export { dashboardService } from "./dashboard";
 export { usersService } from "./users";
 export { teamsService } from "./teams";
 export { projectsService } from "./projects";
+export { ownershipService } from "./ownership";
+export { featuresService } from "./features";
 export { reportsService } from "./reports";
 export { meetingsService } from "./meetings";
 export { deploysService } from "./deploys";
