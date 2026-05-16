@@ -1,8 +1,9 @@
 export { ganttSeed } from "./gantt";
-export { timeSeed } from "./time";
 export { meetingsSeed } from "./meetings";
+export { timeSeed } from "./time";
 export { analyticsSeed } from "./analytics";
 export { handoffsSeed } from "./handoffs";
-export { authorshipSeed } from "./authorship";
 export { seedDeploys } from "./deploys";
+export { authorshipSeed } from "./authorship";
 export { seedReminders } from "./reminders";
+export { seedDeploys } from "./deploys";

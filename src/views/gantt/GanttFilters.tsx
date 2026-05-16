@@ -3,13 +3,14 @@ import { X } from "lucide-react";
 import { Button, Input, Label } from "@/atoms";
 import { GanttStatus } from "@/enums";
 import { t } from "@/hooks";
-import type { GanttFiltersInterface, GanttProjectLiteInterface } from "@/interfaces/gantt";
+import type { GanttFiltersInterface } from "@/interfaces/gantt";
+import type { ProjectLiteInterface } from "@/interfaces";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 
 import { GANTT_STATUS_LABEL } from "./constants";
 
 interface GanttFiltersProps {
-    projects: GanttProjectLiteInterface[];
+    projects: ProjectLiteInterface[];
     filters: GanttFiltersInterface;
     onChange: (patch: Partial<GanttFiltersInterface>) => void;
     onReset: () => void;

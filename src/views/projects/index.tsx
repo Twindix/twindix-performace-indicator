@@ -4,7 +4,7 @@ import { ArrowLeft, BarChart3, Calendar, Edit, FolderKanban, LineChart, MoreHori
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shared";
 import { ProjectsSkeleton } from "@/components/skeletons";
-import { analyticsSeed } from "@/data/seed";
+const projectCardFallback = { completion_rate: 0, on_time_rate: 0, open_blockers: 0, tasks_done: 0, tasks_total: 0 };
 import { t, useCreateProject, useDeleteProject, useFormErrors, usePermissions, useProjectsList, useUpdateProject } from "@/hooks";
 import type { CreateProjectPayloadInterface, ProjectInterface } from "@/interfaces";
 import { useProjectStore } from "@/store";
@@ -155,7 +155,7 @@ export const ProjectsView = () => {
                     {projects.map((project) => {
                         const sprintCount = project.sprint_count ?? project.sprints_count ?? 0;
                         const memberCount = project.member_count ?? project.members_count ?? 0;
-                        const a = analyticsSeed.projects[project.id] ?? analyticsSeed.fallback.project;
+                        const a = projectCardFallback;
                         return (
                             <Card key={project.id} className="hover:shadow-md transition-shadow">
                                 <CardContent className="p-5">

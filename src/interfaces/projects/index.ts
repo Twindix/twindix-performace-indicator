@@ -43,3 +43,14 @@ export type ProjectsListResponseInterface = PaginatedResponseInterface<ProjectIn
 export interface ProjectsListFiltersInterface extends PaginationParamsInterface {
     status?: string;
 }
+
+export type {
+    ProjectAnalyticsResponseInterface,
+    ProjectAnalyticsSummaryInterface,
+    ProjectAnalyticsStatsInterface,
+    ProjectAnalyticsContributorInterface,
+    ProjectAnalyticsVelocityPointInterface,
+    ProjectAnalyticsBurnChartInterface,
+    ProjectAnalyticsTaskStatusInterface,
+    ProjectAnalyticsBlockerSourcesInterface,
+} from "./analytics";

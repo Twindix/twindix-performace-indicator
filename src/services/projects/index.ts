@@ -1,6 +1,7 @@
 import { apisData } from "@/data";
 import type {
     CreateProjectPayloadInterface,
+    ProjectAnalyticsResponseInterface,
     ProjectInterface,
     ProjectLiteInterface,
     ProjectsListFiltersInterface,
@@ -50,5 +51,10 @@ export const projectsService = {
     sprintsHandler: async (id: string): Promise<SprintInterface[]> => {
         const res = await apiClient.get(apisData.projects.sprints(id));
         return unwrap<SprintInterface[]>(res.data);
+    },
+
+    analyticsHandler: async (id: string): Promise<ProjectAnalyticsResponseInterface> => {
+        const res = await apiClient.get(apisData.projects.analytics(id));
+        return unwrap<ProjectAnalyticsResponseInterface>(res.data);
     },
 };

@@ -2,7 +2,12 @@ import { useState } from "react";
 import { AlertTriangle, ArrowRightLeft, BarChart3, FolderKanban, Layers, Target, Users } from "lucide-react";
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
-import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
+import {
+    AnimatedNumber,
+    EmptyState,
+    Header,
+} from "@/components/shared";
+
 import {
     t,
     useSettings,
@@ -12,10 +17,23 @@ import {
     useWorkloadBySprint,
     useWorkloadByTeam,
 } from "@/hooks";
-import { useSprintStore } from "@/store";
-import { Avatar, AvatarFallback, Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
-import { cn } from "@/utils";
 
+import { useSprintStore } from "@/store";
+
+import { workloadSeed } from "@/data";
+
+import type { TeamMemberWorkloadInterface } from "@/interfaces";
+
+import {
+    Avatar,
+    AvatarFallback,
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from "@/ui";
+
+import { cn } from "@/utils";
 const getUtilizationColor = (util: number): string => {
     if (util > 100) return "bg-error";
     if (util >= 85) return "bg-warning";
