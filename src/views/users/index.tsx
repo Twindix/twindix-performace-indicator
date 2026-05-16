@@ -8,6 +8,7 @@ import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shar
 import { UsersSkeleton } from "@/components/skeletons";
 import { usersConstants } from "@/constants";
 import type { RoleTier } from "@/constants/permissions";
+import { assignableRolesFor } from "@/constants/permissions";
 import { t, usePermissions } from "@/hooks";
 import type { UserInterface } from "@/interfaces";
 import { useUsersList, useUsersCreate, useUsersUpdate } from "@/hooks/users";
@@ -22,7 +23,6 @@ import { apiClient } from "@/lib/axios";
 
 interface TeamOption { id: string; name: string; }
 
-const ROLE_TIERS = usersConstants.roleTiers;
 const ROLE_TIER_LABELS = usersConstants.roleTierLabels;
 
 const emptyForm = {
@@ -42,6 +42,11 @@ export const UsersView = () => {
     const navigate = useNavigate();
     const p = usePermissions();
     const { users, meta, isLoading, setPage, setPerPage, patchUserLocal, prependUserLocal } = useUsersList();
+
+    // Role tiers the current actor can assign in the create/edit dialog.
+    // Owner: admin/manager/tester/member/viewer. Admin: manager/tester/member/viewer.
+    // No one can mint a new owner from the UI.
+    const assignableRoles = p.role ? assignableRolesFor(p.role) : [];
 
     const [errors, setErrors] = useState<FormErrors>({});
     const mapFieldErrors = (fe: Record<string, string[]>) => {
@@ -243,7 +248,7 @@ export const UsersView = () => {
                                 <Select value={form.role_tier} onValueChange={(v) => set("role_tier", v)}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        {ROLE_TIERS.map((r) => <SelectItem key={r} value={r}>{t(ROLE_TIER_LABELS[r])}</SelectItem>)}
+                                        {assignableRoles.map((r) => <SelectItem key={r} value={r}>{t(ROLE_TIER_LABELS[r])}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>

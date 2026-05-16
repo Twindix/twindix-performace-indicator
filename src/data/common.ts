@@ -1,6 +1,7 @@
 export const APP_NAME = "Twindix Performance Indicator";
 export const APP_DESCRIPTION = "Team performance and delivery friction tracking platform";
 export const DEMO_USERS = [
+  { role: "OWNER",   email: "owner@twindix.com",   password: "password" },
   { role: "ADMIN",   email: "admin@twindix.com",   password: "password" },
   { role: "MANAGER", email: "manager@twindix.com", password: "password" },
   { role: "TESTER",  email: "tester@twindix.com",  password: "password" },

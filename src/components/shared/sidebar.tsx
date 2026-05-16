@@ -2,7 +2,7 @@ import { Activity, ChevronLeft } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 import { cn } from "@/utils";
-import { sidebarItems } from "@/data";
+import { sidebarItems, sidebarNewItems, type SidebarItemInterface } from "@/data";
 import { t, useSettings } from "@/hooks";
 import { useSidebarStore } from "@/store";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui";
@@ -11,6 +11,50 @@ export const Sidebar = () => {
     const { pathname } = useLocation();
     const { isOpen, onToggle } = useSidebarStore();
     useSettings();
+
+    const isItemActive = (path: string) =>
+        path === "/" ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
+
+    const renderItem = ({ label, path, icon: Icon, disabled }: SidebarItemInterface) => {
+        const isActive = isItemActive(path);
+
+        if (disabled) {
+            const disabledEl = (
+                <span className={cn("flex items-center gap-3 rounded-[var(--radius-default)] px-3 py-2.5 text-sm font-medium text-text-muted cursor-not-allowed select-none bg-muted/30", !isOpen && "justify-center px-0")}>
+                    <Icon className="h-5 w-5 shrink-0" />
+                    {isOpen && <span className="truncate">{t(label)}</span>}
+                </span>
+            );
+            return (
+                <li key={path}>
+                    <Tooltip>
+                        <TooltipTrigger asChild>{disabledEl}</TooltipTrigger>
+                        <TooltipContent side="right">{t(label)} — {t("Coming soon")}</TooltipContent>
+                    </Tooltip>
+                </li>
+            );
+        }
+
+        const linkContent = (
+            <Link to={path} className={cn("flex items-center gap-3 rounded-[var(--radius-default)] px-3 py-2.5 text-sm font-medium transition-all duration-200", isActive ? "bg-primary-lighter text-primary-medium shadow-sm" : "text-text-secondary hover:bg-accent hover:text-text-dark", !isOpen && "justify-center px-0")}>
+                <Icon className="h-5 w-5 shrink-0" />
+                {isOpen && <span className="truncate">{t(label)}</span>}
+            </Link>
+        );
+
+        if (!isOpen) {
+            return (
+                <li key={path}>
+                    <Tooltip>
+                        <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+                        <TooltipContent side="right">{t(label)}</TooltipContent>
+                    </Tooltip>
+                </li>
+            );
+        }
+
+        return <li key={path}>{linkContent}</li>;
+    };
 
     return (
         <aside className={cn("fixed inset-inline-start-0 top-0 z-40 flex h-screen flex-col border-e border-border bg-surface transition-all duration-300", isOpen ? "w-[var(--spacing-sidebar)]" : "w-16", "max-lg:hidden")}>
@@ -33,46 +77,11 @@ export const Sidebar = () => {
             <nav className="flex-1 overflow-y-auto p-2 scrollbar-thin">
                 <TooltipProvider delayDuration={0}>
                     <ul className="flex flex-col gap-1">
-                        {sidebarItems.map(({ label, path, icon: Icon, disabled }) => {
-                            const isActive = path === "/" ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
-
-                            if (disabled) {
-                                const disabledEl = (
-                                    <span className={cn("flex items-center gap-3 rounded-[var(--radius-default)] px-3 py-2.5 text-sm font-medium text-text-muted cursor-not-allowed select-none bg-muted/30", !isOpen && "justify-center px-0")}>
-                                        <Icon className="h-5 w-5 shrink-0" />
-                                        {isOpen && <span className="truncate">{t(label)}</span>}
-                                    </span>
-                                );
-                                return (
-                                    <li key={path}>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>{disabledEl}</TooltipTrigger>
-                                            <TooltipContent side="right">{t(label)} — {t("Coming soon")}</TooltipContent>
-                                        </Tooltip>
-                                    </li>
-                                );
-                            }
-
-                            const linkContent = (
-                                <Link to={path} className={cn("flex items-center gap-3 rounded-[var(--radius-default)] px-3 py-2.5 text-sm font-medium transition-all duration-200", isActive ? "bg-primary-lighter text-primary-medium shadow-sm" : "text-text-secondary hover:bg-accent hover:text-text-dark", !isOpen && "justify-center px-0")}>
-                                    <Icon className="h-5 w-5 shrink-0" />
-                                    {isOpen && <span className="truncate">{t(label)}</span>}
-                                </Link>
-                            );
-
-                            if (!isOpen) {
-                                return (
-                                    <li key={path}>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-                                            <TooltipContent side="right">{t(label)}</TooltipContent>
-                                        </Tooltip>
-                                    </li>
-                                );
-                            }
-
-                            return <li key={path}>{linkContent}</li>;
-                        })}
+                        {sidebarItems.map(renderItem)}
+                    </ul>
+                    <div className="my-3 mx-2 border-t border-border" aria-hidden />
+                    <ul className="flex flex-col gap-1">
+                        {sidebarNewItems.map(renderItem)}
                     </ul>
                 </TooltipProvider>
             </nav>
