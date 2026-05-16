@@ -1,14 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button, Input, Label, Textarea } from "@/atoms";
-import { t } from "@/hooks";
-import type {
-    CreateTimeEntryPayloadInterface,
-    TimeMemberInterface,
-    TimeProjectInterface,
-    TimeSprintInterface,
-    TimeTaskInterface,
-} from "@/interfaces/time";
+import { t, useCreateStandaloneTimeLog, useFormErrors, useProjectsListLite, useSprintsList } from "@/hooks";
 import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -17,53 +10,63 @@ import {
 interface LogTimeDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    members: TimeMemberInterface[];
-    projects: TimeProjectInterface[];
-    sprints: TimeSprintInterface[];
-    tasks: TimeTaskInterface[];
-    onSubmit: (payload: CreateTimeEntryPayloadInterface) => void;
+    currentUserId: string | null;
+    onLogged?: () => void;
+}
+
+interface FormState {
+    date: string;
+    hours: number;
+    user_id: string;
+    project_id: string;
+    sprint_id: string;
+    note: string;
 }
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
-const emptyForm = (): CreateTimeEntryPayloadInterface => ({
+const emptyForm = (userId: string | null): FormState => ({
     date: todayIso(),
-    member_id: "",
-    project_id: "",
-    sprint_id: null,
-    task_id: null,
     hours: 1,
+    user_id: userId ?? "",
+    project_id: "",
+    sprint_id: "",
     note: "",
 });
 
-export const LogTimeDialog = ({ open, onOpenChange, members, projects, sprints, tasks, onSubmit }: LogTimeDialogProps) => {
-    const [form, setForm] = useState<CreateTimeEntryPayloadInterface>(emptyForm);
+export const LogTimeDialog = ({ open, onOpenChange, currentUserId, onLogged }: LogTimeDialogProps) => {
+    const { projects } = useProjectsListLite();
+    const { sprints } = useSprintsList();
+    const { setFieldErrors, clearError, getError, clear: clearFieldErrors } = useFormErrors();
+    const { createHandler, isLoading } = useCreateStandaloneTimeLog({ onFieldErrors: setFieldErrors });
 
-    const sprintOptions = useMemo(
-        () => (form.project_id ? sprints.filter((s) => s.project_id === form.project_id) : []),
-        [sprints, form.project_id],
-    );
+    const [form, setForm] = useState<FormState>(() => emptyForm(currentUserId));
 
-    const taskOptions = useMemo(() => {
-        if (!form.project_id) return [];
-        return tasks.filter((task) => {
-            if (task.project_id !== form.project_id) return false;
-            if (form.sprint_id && task.sprint_id !== form.sprint_id) return false;
-            return true;
-        });
-    }, [tasks, form.project_id, form.sprint_id]);
+    useEffect(() => {
+        if (open) setForm(emptyForm(currentUserId));
+    }, [open, currentUserId]);
 
-    const canSubmit = form.date && form.member_id && form.project_id && form.hours > 0;
+    const canSubmit = !!form.date && form.hours >= 0.25 && form.hours <= 24 && !!form.user_id && !!form.project_id;
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!canSubmit) return;
-        onSubmit(form);
-        setForm(emptyForm());
-        onOpenChange(false);
+        clearFieldErrors();
+        const result = await createHandler({
+            date: form.date,
+            hours: form.hours,
+            user_id: form.user_id,
+            project_id: form.project_id,
+            sprint_id: form.sprint_id || undefined,
+            note: form.note || undefined,
+        });
+        if (result) {
+            onLogged?.();
+            onOpenChange(false);
+        }
     };
 
     const handleCancel = () => {
-        setForm(emptyForm());
+        clearFieldErrors();
         onOpenChange(false);
     };
 
@@ -81,39 +84,30 @@ export const LogTimeDialog = ({ open, onOpenChange, members, projects, sprints, 
                                 id="tl-date"
                                 type="date"
                                 value={form.date}
-                                onChange={(e) => setForm({ ...form, date: e.target.value })}
+                                onChange={(e) => { setForm({ ...form, date: e.target.value }); clearError("date"); }}
                             />
+                            {getError("date") && <p className="text-[11px] text-error">{getError("date")}</p>}
                         </div>
                         <div className="space-y-1.5">
                             <Label htmlFor="tl-hours">{t("Hours")}</Label>
                             <Input
                                 id="tl-hours"
                                 type="number"
-                                min={0}
+                                min={0.25}
+                                max={24}
                                 step={0.25}
                                 value={form.hours}
-                                onChange={(e) => setForm({ ...form, hours: Number(e.target.value) || 0 })}
+                                onChange={(e) => { setForm({ ...form, hours: Number(e.target.value) || 0 }); clearError("hours"); }}
                             />
+                            {getError("hours") && <p className="text-[11px] text-error">{getError("hours")}</p>}
                         </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <Label>{t("Member")}</Label>
-                        <Select value={form.member_id} onValueChange={(value) => setForm({ ...form, member_id: value })}>
-                            <SelectTrigger><SelectValue placeholder={t("Select member")} /></SelectTrigger>
-                            <SelectContent>
-                                {members.map((m) => (
-                                    <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
                     </div>
 
                     <div className="space-y-1.5">
                         <Label>{t("Project")}</Label>
                         <Select
                             value={form.project_id}
-                            onValueChange={(value) => setForm({ ...form, project_id: value, sprint_id: null, task_id: null })}
+                            onValueChange={(value) => { setForm({ ...form, project_id: value, sprint_id: "" }); clearError("project_id"); }}
                         >
                             <SelectTrigger><SelectValue placeholder={t("Select project")} /></SelectTrigger>
                             <SelectContent>
@@ -122,39 +116,23 @@ export const LogTimeDialog = ({ open, onOpenChange, members, projects, sprints, 
                                 ))}
                             </SelectContent>
                         </Select>
+                        {getError("project_id") && <p className="text-[11px] text-error">{getError("project_id")}</p>}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                            <Label>{t("Sprint")}</Label>
-                            <Select
-                                value={form.sprint_id ?? ""}
-                                onValueChange={(value) => setForm({ ...form, sprint_id: value || null, task_id: null })}
-                                disabled={!form.project_id || sprintOptions.length === 0}
-                            >
-                                <SelectTrigger><SelectValue placeholder={t("Optional")} /></SelectTrigger>
-                                <SelectContent>
-                                    {sprintOptions.map((s) => (
-                                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label>{t("Task")}</Label>
-                            <Select
-                                value={form.task_id ?? ""}
-                                onValueChange={(value) => setForm({ ...form, task_id: value || null })}
-                                disabled={!form.project_id || taskOptions.length === 0}
-                            >
-                                <SelectTrigger><SelectValue placeholder={t("Optional")} /></SelectTrigger>
-                                <SelectContent>
-                                    {taskOptions.map((task) => (
-                                        <SelectItem key={task.id} value={task.id}>{task.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                    <div className="space-y-1.5">
+                        <Label>{t("Sprint")} <span className="text-text-muted">({t("optional")})</span></Label>
+                        <Select
+                            value={form.sprint_id}
+                            onValueChange={(value) => setForm({ ...form, sprint_id: value })}
+                            disabled={sprints.length === 0}
+                        >
+                            <SelectTrigger><SelectValue placeholder={t("Optional")} /></SelectTrigger>
+                            <SelectContent>
+                                {sprints.map((s) => (
+                                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div className="space-y-1.5">
@@ -162,18 +140,21 @@ export const LogTimeDialog = ({ open, onOpenChange, members, projects, sprints, 
                         <Textarea
                             id="tl-note"
                             rows={3}
-                            value={form.note ?? ""}
+                            value={form.note}
                             onChange={(e) => setForm({ ...form, note: e.target.value })}
                             placeholder={t("What did you work on?")}
                         />
+                        {getError("note") && <p className="text-[11px] text-error">{getError("note")}</p>}
                     </div>
                 </div>
 
                 <div className="flex justify-end gap-2 mt-4">
                     <DialogClose asChild>
-                        <Button variant="outline">{t("Cancel")}</Button>
+                        <Button variant="outline" disabled={isLoading}>{t("Cancel")}</Button>
                     </DialogClose>
-                    <Button onClick={handleSubmit} disabled={!canSubmit}>{t("Log Time")}</Button>
+                    <Button onClick={handleSubmit} disabled={!canSubmit || isLoading}>
+                        {isLoading ? t("Logging...") : t("Log Time")}
+                    </Button>
                 </div>
             </DialogContent>
         </Dialog>

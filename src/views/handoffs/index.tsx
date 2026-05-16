@@ -3,7 +3,12 @@ import { ArrowRight, CheckCircle2, XCircle, ArrowRightLeft, BarChart3, FolderKan
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
-import { handoffsSeed, timeSeed } from "@/data";
+import { handoffsSeed } from "@/data";
+
+const timeSeed = {
+    sprints: [] as Array<{ id: string; name: string; project_id: string; status: "active" | "planning" | "completed" | "on_hold" }>,
+    projects: [] as Array<{ id: string; name: string }>,
+};
 import { t, useSettings } from "@/hooks";
 import type { CriterionInterface, HandoffInterface } from "@/interfaces";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";

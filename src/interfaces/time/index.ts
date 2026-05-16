@@ -1,3 +1,66 @@
+// ===== New API types (V0.9) =====
+
+export interface TimeSummaryInterface {
+    total_hours: number;
+    total_entries: number;
+    active_members: number;
+}
+
+export interface TimeByProjectRowInterface {
+    project_id: string;
+    project_name: string;
+    project_status: string;
+    team_name: string;
+    total_hours: number;
+    progress: number;
+    active_members: number;
+}
+
+export interface TimeBySprintRowInterface {
+    sprint_id: string;
+    sprint_name: string;
+    sprint_status: string;
+    project_name: string;
+    start_date?: string | null;
+    end_date?: string | null;
+    total_hours: number;
+    active_members: number;
+}
+
+export interface TimeByTeamRowInterface {
+    team_id: string;
+    team_name: string;
+    department?: string | null;
+    total_hours: number;
+    active_members: number;
+}
+
+export interface TimeByMemberRowInterface {
+    member_id: string;
+    member_name: string;
+    role?: string | null;
+    avatar_initials?: string | null;
+    total_hours: number;
+    total_entries: number;
+}
+
+export interface TimeAggregationResponseInterface<T> {
+    summary: TimeSummaryInterface;
+    data: T[];
+}
+
+export interface CreateStandaloneTimeLogPayloadInterface {
+    date: string;
+    hours: number;
+    user_id: string;
+    project_id: string;
+    sprint_id?: string;
+    task_id?: string;
+    note?: string;
+}
+
+// ===== Legacy seed types (kept until consumers migrate) =====
+
 export interface TimeMemberInterface {
     id: string;
     full_name: string;

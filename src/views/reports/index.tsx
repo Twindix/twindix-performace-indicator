@@ -3,7 +3,17 @@ import { Download, FileSpreadsheet, Lightbulb, Users } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
 import { AnimatedNumber, Header, ScoreGauge, StatusBadge } from "@/components/shared";
-import { analyticsSeed, handoffsSeed, timeSeed, workloadSeed } from "@/data";
+import { analyticsSeed, authorshipSeed, handoffsSeed, workloadSeed } from "@/data";
+
+const timeSeed = {
+    projects: [] as Array<{ id: string; name: string; team_name: string; status: string; progress: number }>,
+    sprints: [] as Array<{ id: string; name: string; project_id: string; status: string; start_date: string; end_date: string }>,
+    members: [] as Array<{ id: string; full_name: string }>,
+};
+import { MetricStatus } from "@/enums";
+import { t } from "@/hooks";
+import type { BreakdownSliceInterface } from "@/interfaces";
+import { cn, formatDate } from "@/utils";
 
 interface AuthorshipStub { id: string; kind: "feature" | "task"; name: string; description: string; creator_id: string; created_at: string; updated_at: string; project_id: string; sprint_id?: string; linked_task_ids: string[]; status: "draft" | "active" | "shipped" | "archived"; tags: string[]; }
 const authorshipSeed: AuthorshipStub[] = [];
