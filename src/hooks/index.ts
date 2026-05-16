@@ -13,4 +13,5 @@ export * from "./dashboard";
 export * from "./users";
 export * from "./teams";
 export * from "./projects";
+export * from "./gantt";
 export * from "./delivery-analytics";

@@ -129,6 +129,8 @@ export const apisData = {
         healthScore: (sprintId: string) => `/sprints/${sprintId}/dashboard/health-score`,
         metrics: (sprintId: string) => `/sprints/${sprintId}/dashboard/metrics`,
     },
+    gantt: {
+        tasks: "/gantt/tasks",
     deliveryAnalytics: {
         composite: "/analytics/delivery",
         velocity: "/analytics/delivery/velocity",
