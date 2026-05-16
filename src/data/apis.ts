@@ -145,6 +145,24 @@ export const apisData = {
         commentDelete: (id: string, commentId: string) => `/meetings/${id}/comments/${commentId}`,
         attachments: (id: string) => `/meetings/${id}/attachments`,
         attachmentDelete: (id: string, attachmentId: string) => `/meetings/${id}/attachments/${attachmentId}`,
+    deploys: {
+        list: "/deploys",
+        create: "/deploys",
+        detail: (id: string) => `/deploys/${id}`,
+        download: (id: string) => `/deploys/${id}/download`,
+        updateStatus: (id: string) => `/deploys/${id}/status`,
+        delete: (id: string) => `/deploys/${id}`,
+    reminders: {
+        list: "/reminders",
+        create: "/reminders",
+        detail: (id: string) => `/reminders/${id}`,
+        update: (id: string) => `/reminders/${id}`,
+        dismiss: (id: string) => `/reminders/${id}/dismiss`,
+        reactivate: (id: string) => `/reminders/${id}/reactivate`,
+        delete: (id: string) => `/reminders/${id}`,
+        stats: "/reminders/stats",
+    gantt: {
+        tasks: "/gantt/tasks",
     deliveryAnalytics: {
         composite: "/analytics/delivery",
         velocity: "/analytics/delivery/velocity",
