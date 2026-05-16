@@ -31,6 +31,7 @@ export const apisData = {
         delete: (id: string) => `/sprints/${id}`,
         activate: (id: string) => `/sprints/${id}/activate`,
         summary: (id: string) => `/sprints/${id}/summary`,
+        analytics: (id: string) => `/sprints/${id}/analytics`,
     },
     projects: {
         list: "/projects",
