@@ -13,6 +13,7 @@ export * from "./dashboard";
 export * from "./users";
 export * from "./teams";
 export * from "./projects";
+export * from "./workload";
 export * from "./time";
 export * from "./ownership";
 export * from "./reports";

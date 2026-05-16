@@ -1,4 +1,3 @@
-```ts
 export type {
   UserInterface,
   UserTeamInterface,
@@ -167,6 +166,12 @@ export type {
 
 export type {
   TeamMemberWorkloadInterface,
+  WorkloadByProjectRowInterface,
+  WorkloadBySprintRowInterface,
+  WorkloadByTeamRowInterface,
+  WorkloadByMemberRowInterface,
+  WorkloadResponseInterface,
+  WorkloadMemberFiltersInterface,
 } from "./workload";
 
 export type {
@@ -331,4 +336,3 @@ export type {
   CreateReminderPayloadInterface,
   UpdateReminderPayloadInterface,
 } from "./reminders";
-```

@@ -139,6 +139,11 @@ export const apisData = {
         healthScore: (sprintId: string) => `/sprints/${sprintId}/dashboard/health-score`,
         metrics: (sprintId: string) => `/sprints/${sprintId}/dashboard/metrics`,
     },
+    workload: {
+        byProject: "/workload/by-project",
+        bySprint: "/workload/by-sprint",
+        byTeam: "/workload/by-team",
+        byMember: "/workload/by-member",
     ownership: {
         feed: "/ownership/feed",
         leaderboard: "/ownership/leaderboard",
