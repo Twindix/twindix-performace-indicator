@@ -12,6 +12,7 @@ export { alertsPolicy } from "./alerts.policy";
 export { decisionsPolicy } from "./decisions.policy";
 export { usersPolicy } from "./users.policy";
 export { teamsPolicy } from "./teams.policy";
+export { deploysPolicy } from "./deploys.policy";
 export { remindersPolicy } from "./reminders.policy";
 
 import { authPolicy } from "./auth.policy";
@@ -25,6 +26,7 @@ import { alertsPolicy } from "./alerts.policy";
 import { decisionsPolicy } from "./decisions.policy";
 import { usersPolicy } from "./users.policy";
 import { teamsPolicy } from "./teams.policy";
+import { deploysPolicy } from "./deploys.policy";
 import { remindersPolicy } from "./reminders.policy";
 
 export const policies = {
@@ -39,5 +41,6 @@ export const policies = {
     decisions: decisionsPolicy,
     users: usersPolicy,
     teams: teamsPolicy,
+    deploys: deploysPolicy,
     reminders: remindersPolicy,
 } as const;

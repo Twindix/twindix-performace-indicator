@@ -129,6 +129,13 @@ export const apisData = {
         healthScore: (sprintId: string) => `/sprints/${sprintId}/dashboard/health-score`,
         metrics: (sprintId: string) => `/sprints/${sprintId}/dashboard/metrics`,
     },
+    deploys: {
+        list: "/deploys",
+        create: "/deploys",
+        detail: (id: string) => `/deploys/${id}`,
+        download: (id: string) => `/deploys/${id}/download`,
+        updateStatus: (id: string) => `/deploys/${id}/status`,
+        delete: (id: string) => `/deploys/${id}`,
     reminders: {
         list: "/reminders",
         create: "/reminders",
