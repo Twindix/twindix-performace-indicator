@@ -106,8 +106,8 @@ export const tasksService = {
         return (data && typeof data === "object" && "task" in data ? data.task : data) as TaskInterface;
     },
 
-    listLiteHandler: async (params?: { sprint_id?: string; status?: string; exclude_done?: boolean }): Promise<TaskLiteInterface[]> => {
-        const { data } = await apiClient.get<TaskLiteInterface[]>(apisData.tasks.listLite, { params });
-        return data;
+    listLiteHandler: async (params?: { project_id?: string; sprint_id?: string; status?: string; exclude_done?: boolean }): Promise<TaskLiteInterface[]> => {
+        const { data } = await apiClient.get<any>(apisData.tasks.listLite, { params });
+        return Array.isArray(data) ? data : (data?.data ?? []);
     },
 };

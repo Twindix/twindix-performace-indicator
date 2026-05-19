@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useRef } from "react";
 import { Plus, X, Clock, User, AlertCircle, FileText, ListChecks, Tag, Paperclip, CalendarClock } from "lucide-react";
 
-import { Button, Input, Label, Textarea } from "@/atoms";
+import { Button, DateTimePicker, Input, Label, Textarea } from "@/atoms";
 import { TaskPriority } from "@/enums";
 import type { AddTaskDialogProps, AddTaskFormState } from "@/interfaces";
 import type { TaskInterface } from "@/interfaces";
@@ -491,11 +491,10 @@ export const AddTaskDialog = ({ open, onOpenChange, members, addTaskLocal }: Add
                                 <CalendarClock className="h-4 w-4 text-text-muted" />
                                 {t("Dead Time")}
                             </Label>
-                            <Input
+                            <DateTimePicker
                                 id="deadline"
-                                type="datetime-local"
                                 value={deadline}
-                                onChange={(e) => { setDeadline(e.target.value); clearError("dead_time"); }}
+                                onChange={(v) => { setDeadline(v); clearError("dead_time"); }}
                             />
                             {getError("dead_time") && <p className="text-xs text-error">{getError("dead_time")}</p>}
                         </div>
