@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { BellPlus, X } from "lucide-react";
 
-import { Button, Input, Label, Textarea } from "@/atoms";
+import { Button, DatePicker, Input, Label, Textarea } from "@/atoms";
 import { NOTIFY_PRESETS } from "@/enums";
-import { t, useCreateReminder, useFormErrors, useUpdateReminder } from "@/hooks";
+import { t, useCreateReminder, useFormErrors, useProjectsListLite, useUpdateReminder } from "@/hooks";
 import type { ReminderInterface } from "@/interfaces";
 import { cn } from "@/utils";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/ui";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 
 interface Props {
     open: boolean;
@@ -29,10 +29,12 @@ export const AddReminderDialog = ({ open, onOpenChange, initial, onSaved }: Prop
     const { setFieldErrors, getError, clear: clearFieldErrors } = useFormErrors();
     const { createHandler, isLoading: isCreating } = useCreateReminder({ onFieldErrors: setFieldErrors });
     const { updateHandler, isLoading: isUpdating } = useUpdateReminder({ onFieldErrors: setFieldErrors });
+    const { projects } = useProjectsListLite();
 
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [expiresAt, setExpiresAt] = useState("");
+    const [projectId, setProjectId] = useState(initial?.project_id ?? "");
     const [intervals, setIntervals] = useState<number[]>([7, 1]);
     const [customInput, setCustomInput] = useState("");
 
@@ -43,6 +45,7 @@ export const AddReminderDialog = ({ open, onOpenChange, initial, onSaved }: Prop
             setTitle(initial?.title ?? "");
             setDescription(initial?.description ?? "");
             setExpiresAt(initial?.expires_at ?? "");
+            setProjectId(initial?.project_id ?? "");
             setIntervals(initial?.notify_before_days ?? [7, 1]);
             setCustomInput("");
             clearFieldErrors();
@@ -62,12 +65,13 @@ export const AddReminderDialog = ({ open, onOpenChange, initial, onSaved }: Prop
     };
 
     const handleSubmit = async () => {
-        if (!title.trim() || !expiresAt || intervals.length === 0) return;
+        if (!title.trim() || !expiresAt || intervals.length === 0 || !projectId) return;
         const payload = {
             title: title.trim(),
             description: description.trim() || undefined,
             expires_at: expiresAt,
             notify_before_days: intervals,
+            project_id: projectId,
         };
         const result = initial
             ? await updateHandler(initial.id, payload)
@@ -79,7 +83,7 @@ export const AddReminderDialog = ({ open, onOpenChange, initial, onSaved }: Prop
     };
 
     const todayISO = new Date().toISOString().split("T")[0];
-    const canSubmit = title.trim() && expiresAt && intervals.length > 0 && !isLoading;
+    const canSubmit = title.trim() && expiresAt && intervals.length > 0 && !!projectId && !isLoading;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -95,6 +99,17 @@ export const AddReminderDialog = ({ open, onOpenChange, initial, onSaved }: Prop
                 </DialogHeader>
 
                 <div className="flex flex-col gap-4 mt-2">
+                    <div className="flex flex-col gap-1.5">
+                        <Label>{t("Project")} <span className="text-error">*</span></Label>
+                        <Select value={projectId} onValueChange={setProjectId}>
+                            <SelectTrigger><SelectValue placeholder={t("Select project")} /></SelectTrigger>
+                            <SelectContent>
+                                {projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        {getError("project_id") && <p className="text-[11px] text-error">{getError("project_id")}</p>}
+                    </div>
+
                     <div className="flex flex-col gap-1.5">
                         <Label htmlFor="rem-title">{t("Title")} <span className="text-error">*</span></Label>
                         <Input id="rem-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("SSL certificate renewal")} />
@@ -114,7 +129,7 @@ export const AddReminderDialog = ({ open, onOpenChange, initial, onSaved }: Prop
 
                     <div className="flex flex-col gap-1.5">
                         <Label htmlFor="rem-expires">{t("Expires on")} <span className="text-error">*</span></Label>
-                        <Input id="rem-expires" type="date" min={todayISO} value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
+                        <DatePicker id="rem-expires" min={todayISO} value={expiresAt} onChange={setExpiresAt} />
                         {getError("expires_at") && <p className="text-[11px] text-error">{getError("expires_at")}</p>}
                     </div>
 

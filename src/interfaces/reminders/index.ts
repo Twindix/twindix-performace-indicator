@@ -27,7 +27,7 @@ export interface CreateReminderPayloadInterface {
     description?: string;
     expires_at: string;
     notify_before_days: number[];
-    project_id?: string;
+    project_id: string;
 }
 
 export interface UpdateReminderPayloadInterface extends Partial<CreateReminderPayloadInterface> {
