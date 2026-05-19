@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { Bell, Check, CheckCheck, Clock, ExternalLink, Link2, Pencil, Plus, Search, ShieldCheck, Trash2, X } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
@@ -141,7 +142,11 @@ export const AlertsView = () => {
     });
 
     const handleAdd = async () => {
-        if (!form.title.trim() || !activeSprintId) return;
+        if (!form.title.trim()) return;
+        if (!activeSprintId) {
+            toast.error(t("Please select a sprint from the top bar first."));
+            return;
+        }
         const res = await createHandler(activeSprintId, buildPayload(form));
         if (res) { patchAlertLocal(res); setAddOpen(false); setForm(emptyForm); }
     };
