@@ -73,20 +73,22 @@ export const SprintAnalyticsView = ({ sprint, onBack, onViewTasks }: SprintAnaly
 
     const view = useMemo(() => {
         if (!analytics) return null;
-        const burnLength = Math.max(analytics.burn_chart.planned.length, analytics.burn_chart.actual.length);
+        const planned = analytics.burn_chart?.planned ?? [];
+        const actual = analytics.burn_chart?.actual ?? [];
+        const burnLength = Math.max(planned.length, actual.length);
         return {
-            stats: analytics.stats,
-            contributors: analytics.contributors,
+            stats: analytics.stats ?? { completion: 0, on_time_rate: 0, days_left: 0, tasks_done: 0, tasks_total: 0, story_points_done: 0, story_points_total: 0, open_blockers: 0, warning: null },
+            contributors: analytics.contributors ?? [],
             burn: Array.from({ length: burnLength }).map((_, i) => ({
                 label: `D${i + 1}`,
-                planned: analytics.burn_chart.planned[i] ?? 0,
-                actual: analytics.burn_chart.actual[i] ?? 0,
+                planned: planned[i] ?? 0,
+                actual: actual[i] ?? 0,
             })),
-            dailyThroughput: analytics.daily_throughput.map((d) => ({
+            dailyThroughput: (analytics.daily_throughput ?? []).map((d) => ({
                 label: d.day,
                 value: d.tasks_completed,
             })),
-            taskStatus: Object.entries(analytics.task_status)
+            taskStatus: Object.entries(analytics.task_status ?? {})
                 .filter(([, v]) => typeof v === "number" && v > 0)
                 .map(([k, v]) => ({
                     name: STATUS_LABEL_MAP[k] ?? k,

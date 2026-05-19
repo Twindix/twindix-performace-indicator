@@ -39,7 +39,15 @@ export const sprintsService = {
     },
 
     analyticsHandler: async (id: string): Promise<SprintAnalyticsResponseInterface> => {
-        const { data } = await apiClient.get<SprintAnalyticsResponseInterface>(apisData.sprints.analytics(id));
-        return data;
+        const { data } = await apiClient.get<{ data: SprintAnalyticsResponseInterface } | SprintAnalyticsResponseInterface>(apisData.sprints.analytics(id));
+        const raw: any = (data as any).data ?? data;
+        return {
+            sprint: raw.sprint ?? { id, name: raw.sprint_name ?? "", status: raw.status ?? "" },
+            stats: raw.stats ?? { completion: 0, on_time_rate: 0, days_left: 0, tasks_done: 0, tasks_total: 0, story_points_done: 0, story_points_total: 0, open_blockers: 0, warning: null },
+            contributors: raw.contributors ?? [],
+            burn_chart: raw.burn_chart ?? { planned: [], actual: [] },
+            daily_throughput: raw.daily_throughput ?? [],
+            task_status: raw.task_status ?? {},
+        };
     },
 };
