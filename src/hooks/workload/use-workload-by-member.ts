@@ -1,23 +1,19 @@
 import { workloadConstants } from "@/constants";
-import type {
-    WorkloadByMemberRowInterface,
-    WorkloadMemberFiltersInterface,
-    WorkloadResponseInterface,
-} from "@/interfaces";
+import type { WorkloadUserRowInterface } from "@/interfaces";
 import { workloadService } from "@/services";
 
 import { useQueryAction } from "../shared";
 
-export const useWorkloadByMember = (filters?: WorkloadMemberFiltersInterface) => {
-    const sprintId = filters?.sprint_id;
-    const { data, isLoading, refetch } = useQueryAction<WorkloadResponseInterface<WorkloadByMemberRowInterface> | null>(
-        () => workloadService.byMemberHandler({ sprint_id: sprintId }),
-        [sprintId],
+export const useWorkloadByUser = (userId: string) => {
+    const { data, isLoading, refetch } = useQueryAction<WorkloadUserRowInterface[] | null>(
+        () => workloadService.byUserHandler(userId),
+        [userId],
         {
+            enabled: !!userId,
             errorFallback: workloadConstants.errors.fetchFailed,
-            context: "workload.byMember",
+            context: "workload.byUser",
             initialData: null,
         },
     );
-    return { rows: data?.data ?? [], isLoading, refetch };
+    return { rows: data ?? [], isLoading, refetch };
 };

@@ -1,18 +1,19 @@
 import { workloadConstants } from "@/constants";
-import type { WorkloadByProjectRowInterface, WorkloadResponseInterface } from "@/interfaces";
+import type { WorkloadUserRowInterface } from "@/interfaces";
 import { workloadService } from "@/services";
 
 import { useQueryAction } from "../shared";
 
-export const useWorkloadByProject = () => {
-    const { data, isLoading, refetch } = useQueryAction<WorkloadResponseInterface<WorkloadByProjectRowInterface> | null>(
-        () => workloadService.byProjectHandler(),
-        [],
+export const useWorkloadByProject = (projectId: string) => {
+    const { data, isLoading, refetch } = useQueryAction<WorkloadUserRowInterface[] | null>(
+        () => workloadService.byProjectHandler(projectId),
+        [projectId],
         {
+            enabled: !!projectId,
             errorFallback: workloadConstants.errors.fetchFailed,
             context: "workload.byProject",
             initialData: null,
         },
     );
-    return { rows: data?.data ?? [], isLoading, refetch };
+    return { rows: data ?? [], isLoading, refetch };
 };
