@@ -1,18 +1,20 @@
-import { ownershipConstants } from "@/constants";
-import type { OwnershipFeedFiltersInterface, OwnershipFeedItemInterface } from "@/interfaces";
-import { ownershipService } from "@/services";
+import type { FeatureInterface } from "@/interfaces";
+import { featuresService } from "@/services";
 
-import { usePaginatedQuery } from "../shared";
+import { useQueryAction } from "../shared";
 
-export const useOwnershipFeed = (filters?: OwnershipFeedFiltersInterface) => {
-    const { type, creator, search } = filters ?? {};
-    const { items, meta, page, perPage, isLoading, setPage, setPerPage, refetch } = usePaginatedQuery<OwnershipFeedItemInterface>(
-        ({ page, per_page }) => ownershipService.feedHandler({ type, creator, search, page, per_page }),
-        [type, creator, search],
+export const useOwnershipFeed = (projectId: string) => {
+    const { data, isLoading, refetch } = useQueryAction<FeatureInterface[] | null>(
+        async () => {
+            const result = await featuresService.listHandler(projectId);
+            return result.data;
+        },
+        [projectId],
         {
-            errorFallback: ownershipConstants.errors.fetchFailed,
+            enabled: !!projectId,
             context: "ownership.feed",
+            initialData: null,
         },
     );
-    return { items, meta, page, perPage, isLoading, setPage, setPerPage, refetch };
+    return { items: data ?? [], isLoading, refetch };
 };

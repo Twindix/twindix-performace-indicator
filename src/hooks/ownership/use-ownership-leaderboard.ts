@@ -1,18 +1,19 @@
 import { ownershipConstants } from "@/constants";
-import type { OwnershipLeaderboardEntryInterface } from "@/interfaces";
+import type { FeatureInterface } from "@/interfaces";
 import { ownershipService } from "@/services";
 
 import { useQueryAction } from "../shared";
 
-export const useOwnershipLeaderboard = () => {
-    const { data, isLoading, refetch } = useQueryAction<OwnershipLeaderboardEntryInterface[] | null>(
-        () => ownershipService.leaderboardHandler(),
-        [],
+export const useOwnershipBySprint = (sprintId: string) => {
+    const { data, isLoading, refetch } = useQueryAction<FeatureInterface[] | null>(
+        () => ownershipService.bySprintHandler(sprintId),
+        [sprintId],
         {
+            enabled: !!sprintId,
             errorFallback: ownershipConstants.errors.leaderboardFailed,
-            context: "ownership.leaderboard",
+            context: "ownership.bySprint",
             initialData: null,
         },
     );
-    return { leaderboard: data ?? [], isLoading, refetch };
+    return { items: data ?? [], isLoading, refetch };
 };
