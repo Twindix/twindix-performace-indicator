@@ -4,7 +4,6 @@ import { Edit, LineChart, MoreHorizontal, Plus, Trash2, Users } from "lucide-rea
 import { Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shared";
 import { TeamsSkeleton } from "@/components/skeletons";
-import { analyticsSeed } from "@/data";
 import { t, useCreateTeam, useDeleteTeam, useFormErrors, useGetTeams, usePermissions, useUpdateTeam } from "@/hooks";
 import type { TeamInterface } from "@/interfaces";
 import {
@@ -102,8 +101,7 @@ export const TeamsView = () => {
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {teams.filter((team) => team.id !== deleteTarget?.id).map((team) => {
-                        const a = analyticsSeed.teams[team.id] ?? analyticsSeed.fallback.team;
-                        const completion = Math.round((a.tasks_done / Math.max(a.tasks_total, 1)) * 100);
+                        const memberCount = team.member_count ?? (team.members?.length ?? 0);
                         return (
                         <Card
                             key={team.id}
@@ -136,20 +134,12 @@ export const TeamsView = () => {
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-2">
-                                    <TeamCardStat label={t("Members")} value={a.members_active} tone="primary" />
-                                    <TeamCardStat label={t("On-time")} value={`${a.on_time_rate}%`} tone="success" />
-                                    <TeamCardStat label={t("Completion")} value={`${completion}%`} tone="primary" />
-                                </div>
-
-                                <div>
-                                    <div className="flex items-center justify-between text-[11px] text-text-muted mb-1">
-                                        <span>{t("Tasks")}</span>
-                                        <span>{a.tasks_done} / {a.tasks_total}</span>
-                                    </div>
-                                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                                        <div className="h-full bg-primary-medium" style={{ width: `${completion}%` }} />
-                                    </div>
+                                <div className="flex items-center gap-2 text-xs text-text-muted">
+                                    <Users className="h-3.5 w-3.5" />
+                                    <span>{memberCount} {t("members")}</span>
+                                    {team.description && (
+                                        <span className="truncate text-text-muted ml-2">{team.description}</span>
+                                    )}
                                 </div>
 
                                 <div className="flex items-center gap-2 pt-1">
@@ -233,23 +223,3 @@ export const TeamsView = () => {
     );
 };
 
-interface TeamCardStatProps {
-    label: string;
-    value: string | number;
-    tone: "primary" | "success" | "error" | "muted";
-}
-
-const TeamCardStat = ({ label, value, tone }: TeamCardStatProps) => {
-    const toneClass = {
-        primary: "text-primary-medium",
-        success: "text-success",
-        error: "text-error",
-        muted: "text-text-muted",
-    }[tone];
-    return (
-        <div className="rounded-md bg-muted/40 px-2 py-1.5 text-center">
-            <p className="text-[10px] uppercase tracking-wide text-text-muted">{label}</p>
-            <p className={`text-sm font-bold ${toneClass}`}>{value}</p>
-        </div>
-    );
-};
