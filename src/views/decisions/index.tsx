@@ -23,6 +23,7 @@ import {
     Avatar,
     AvatarFallback,
     Dialog,
+    DialogClose,
     DialogContent,
     DialogDescription,
     DialogHeader,
@@ -76,6 +77,7 @@ export const DecisionsView = () => {
     const [errors, setErrors] = useState<Partial<typeof emptyForm>>({});
 
     const [viewTarget, setViewTarget] = useState<DecisionInterface | null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
     const validate = () => {
         const e: Partial<typeof emptyForm> = {};
@@ -125,12 +127,14 @@ export const DecisionsView = () => {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        const ok = await deleteDecisionHandler(id);
+    const handleDelete = async () => {
+        if (!confirmDeleteId) return;
+        const ok = await deleteDecisionHandler(confirmDeleteId);
         if (ok) {
-            removeDecisionLocal(id);
+            removeDecisionLocal(confirmDeleteId);
             refetchAnalytics();
             setViewTarget(null);
+            setConfirmDeleteId(null);
         }
     };
 
@@ -419,7 +423,7 @@ export const DecisionsView = () => {
                                     <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border">
                                         <Button
                                             variant="outline"
-                                            onClick={() => handleDelete(viewTarget.id)}
+                                            onClick={() => setConfirmDeleteId(viewTarget.id)}
                                             className="gap-1 text-error border-error hover:bg-error-light"
                                         >
                                             <Trash2 className="h-4 w-4" /> {t("Delete")}
@@ -491,6 +495,17 @@ export const DecisionsView = () => {
                                 {t("Submit Decision")}
                             </Button>
                         </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={!!confirmDeleteId} onOpenChange={(open) => !open && setConfirmDeleteId(null)}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader><DialogTitle>{t("Delete Decision")}</DialogTitle></DialogHeader>
+                    <p className="text-sm text-text-muted mt-2">{t("This action cannot be undone.")}</p>
+                    <div className="flex justify-end gap-2 mt-4">
+                        <DialogClose asChild><Button variant="outline">{t("Cancel")}</Button></DialogClose>
+                        <Button variant="destructive" onClick={handleDelete}>{t("Delete")}</Button>
                     </div>
                 </DialogContent>
             </Dialog>

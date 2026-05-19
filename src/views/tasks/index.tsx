@@ -261,7 +261,7 @@ const TasksViewInner = () => {
                             )}
                         </div>
 
-                        <div className="flex items-center bg-muted p-1 rounded-lg ml-auto">
+                        <div className="flex items-center bg-muted p-1 rounded-lg ms-auto">
                             <Button variant={viewMode === "board" ? "default" : "ghost"} size="sm" onClick={() => setViewMode("board")} className="h-7 text-xs px-3">
                                 {t("Kanban")}
                             </Button>

@@ -1,4 +1,4 @@
-import { useTheme } from "@/hooks";
+import { t, useTheme } from "@/hooks";
 import { cn } from "@/utils";
 
 /**
@@ -148,7 +148,7 @@ export const InitLoader = () => {
                     <p className="il-sub">Performance Indicator</p>
                 </div>
 
-                <p className="il-status">Preparing your workspace</p>
+                <p className="il-status">{t("Preparing your workspace")}</p>
             </div>
         </div>
     );

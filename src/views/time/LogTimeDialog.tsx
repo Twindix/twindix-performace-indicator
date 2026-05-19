@@ -63,7 +63,7 @@ const TaskAutocomplete = ({ tasks, value, onChange, disabled, placeholder }: Tas
                             type="button"
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => { onChange(task.id); setQuery(""); setDropOpen(false); }}
-                            className={`w-full px-3 py-2 text-left text-sm hover:bg-muted cursor-pointer ${task.id === value ? "bg-muted" : ""}`}
+                            className={`w-full px-3 py-2 text-start text-sm hover:bg-muted cursor-pointer ${task.id === value ? "bg-muted" : ""}`}
                         >
                             {task.code ? `${task.code} - ${task.title}` : task.title}
                         </button>

@@ -4,7 +4,7 @@ import { AlertCircle, Calendar, CheckCircle2, Clock, Edit, Layers, ShieldAlert, 
 import { Badge, Button } from "@/atoms";
 import { t, useDeleteBlocker, useEscalateBlocker, useGetBlocker, usePermissions, useResolveBlocker } from "@/hooks";
 import type { BlockerInterface } from "@/interfaces";
-import { Avatar, AvatarFallback, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/ui";
+import { Avatar, AvatarFallback, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/ui";
 import { formatDate } from "@/utils";
 
 interface Props {
@@ -26,6 +26,7 @@ const statusVariant = (status: string | null): "error" | "success" | "warning" |
 
 export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPatch, onDelete, refetchAnalytics }: Props) => {
     const p = usePermissions();
+    const [deleteConfirm, setDeleteConfirm] = useState(false);
     const { getHandler: getBlockerHandler } = useGetBlocker();
     const { resolveHandler: resolveBlockerHandler, isLoading: isResolving } = useResolveBlocker();
     const { escalateHandler: escalateBlockerHandler, isLoading: isEscalating } = useEscalateBlocker();
@@ -72,16 +73,16 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPat
     };
 
     const handleDelete = async () => {
-        if (!confirm(t("Delete this blocker? This cannot be undone."))) return;
         const ok = await deleteBlockerHandler(current.id);
         if (ok) {
             onDelete(current.id);
             refetchAnalytics();
+            setDeleteConfirm(false);
             onOpenChange(false);
         }
     };
 
-    return (
+    return (<>
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
@@ -102,8 +103,8 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPat
                                 </Button>
                             )}
                             {p.blockers.delete() && (
-                                <Button variant="ghost" size="sm" onClick={handleDelete} loading={isDeleting} className="h-7 gap-1.5 text-xs text-error hover:text-error hover:bg-error-light">
-                                    {!isDeleting && <Trash2 className="h-3.5 w-3.5" />}
+                                <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(true)} className="h-7 gap-1.5 text-xs text-error hover:text-error hover:bg-error-light">
+                                    <Trash2 className="h-3.5 w-3.5" />
                                     {t("Delete")}
                                 </Button>
                             )}
@@ -210,5 +211,16 @@ export const BlockerDetailDialog = ({ blocker, open, onOpenChange, onEdit, onPat
                 </div>
             </DialogContent>
         </Dialog>
-    );
+
+        <Dialog open={deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(false)}>
+            <DialogContent className="max-w-sm">
+                <DialogHeader><DialogTitle>{t("Delete Blocker")}</DialogTitle></DialogHeader>
+                <p className="text-sm text-text-muted mt-2">{t("This action cannot be undone.")}</p>
+                <div className="flex justify-end gap-2 mt-4">
+                    <DialogClose asChild><Button variant="outline" disabled={isDeleting}>{t("Cancel")}</Button></DialogClose>
+                    <Button variant="destructive" onClick={handleDelete} loading={isDeleting}>{t("Delete")}</Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+    </>);
 };

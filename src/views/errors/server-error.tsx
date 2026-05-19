@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/atoms";
 import { routesData } from "@/data";
+import { t } from "@/hooks";
 
 export const ServerErrorView = () => {
     const navigate = useNavigate();
@@ -20,26 +21,26 @@ export const ServerErrorView = () => {
                     </div>
 
                     {/* Message */}
-                    <h2 className="text-xl sm:text-2xl font-bold text-text-dark mb-2">Server Error</h2>
+                    <h2 className="text-xl sm:text-2xl font-bold text-text-dark mb-2">{t("Server Error")}</h2>
                     <p className="text-sm text-text-secondary mb-8 max-w-sm mx-auto">
-                        Something went wrong on our end. Our team has been notified and is working on a fix. Please try again shortly.
+                        {t("Something went wrong on our end. Our team has been notified and is working on a fix. Please try again shortly.")}
                     </p>
 
                     {/* Actions */}
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                         <Button onClick={() => window.location.reload()} className="gap-2">
                             <RefreshCw className="h-4 w-4" />
-                            Try Again
+                            {t("Try Again")}
                         </Button>
                         <Button onClick={() => navigate(routesData.dashboard)} variant="outline" className="gap-2">
                             <Home className="h-4 w-4" />
-                            Go to Dashboard
+                            {t("Go to Dashboard")}
                         </Button>
                     </div>
 
                     {/* Footer */}
                     <p className="mt-8 text-[10px] text-text-muted">
-                        Twindix Performance Indicator v0.1
+                        {t("Twindix Performance Indicator v0.1")}
                     </p>
                 </div>
             </div>

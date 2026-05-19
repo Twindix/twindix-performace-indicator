@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 
+import { t } from "@/hooks/shared/use-settings";
 import { useNetworkErrorStore } from "@/store/network-error";
 
 import { ApiError, getErrorMessage } from "./error";
@@ -56,7 +57,7 @@ export const runAction = async <T>(
 
     try {
         const result = await fn();
-        if (successMessage && !silent) toast.success(successMessage);
+        if (successMessage && !silent) toast.success(t(successMessage));
         return result;
     } catch (err) {
         const apiError = err instanceof ApiError ? err : null;
@@ -69,7 +70,7 @@ export const runAction = async <T>(
 
         if (isNetworkError(err)) {
             useNetworkErrorStore.getState().onSetNetworkError();
-            if (!silent) toast.error(NETWORK_MESSAGE);
+            if (!silent) toast.error(t(NETWORK_MESSAGE));
             devLog(context, err);
             if (rethrow) throw err;
             return null;
@@ -94,7 +95,7 @@ export const runAction = async <T>(
             if (status === 403) statusFallback = FORBIDDEN_MESSAGE;
             else if (status === 429) statusFallback = RATE_LIMIT_MESSAGE;
             else statusFallback = errorFallback ?? GENERIC_MESSAGE;
-            toast.error(backendMessage || getErrorMessage(err, statusFallback));
+            toast.error(t(backendMessage || getErrorMessage(err, statusFallback)));
         }
 
         devLog(status === 403 ? (context ?? "permissions") : context, err);

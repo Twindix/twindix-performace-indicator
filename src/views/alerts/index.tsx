@@ -70,12 +70,12 @@ const UserMultiSelect = ({
 
             {/* Search input */}
             <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted" />
+                <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted" />
                 <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder={t("Search users...")}
-                    className="pl-8 h-8 text-xs"
+                    className="ps-8 h-8 text-xs"
                 />
             </div>
 
@@ -91,7 +91,7 @@ const UserMultiSelect = ({
                                 key={u.id}
                                 type="button"
                                 onClick={() => toggle(u.id)}
-                                className={`w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-muted transition-colors cursor-pointer ${isSelected ? "bg-primary/5" : ""}`}
+                                className={`w-full flex items-center gap-2.5 px-3 py-2 text-start hover:bg-muted transition-colors cursor-pointer ${isSelected ? "bg-primary/5" : ""}`}
                             >
                                 <Avatar className="h-6 w-6 shrink-0">
                                     <AvatarFallback className="text-[9px]">{u.avatar_initials}</AvatarFallback>
@@ -237,7 +237,7 @@ export const AlertsView = () => {
                         <span className="italic">{t("System")}</span>
                     )}
                     <Badge variant="outline" className="text-[10px]">{alert.target}</Badge>
-                    <span className="ml-auto">{formatDateTime(alert.created_at)}</span>
+                    <span className="ms-auto">{formatDateTime(alert.created_at)}</span>
                 </div>
 
                 {alert.mentioned_users.length > 0 && (

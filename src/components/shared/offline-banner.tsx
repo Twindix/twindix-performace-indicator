@@ -1,6 +1,6 @@
 import { WifiOff } from "lucide-react";
 
-import { useOnlineStatus } from "@/hooks";
+import { t, useOnlineStatus } from "@/hooks";
 import { useNetworkErrorStore } from "@/store";
 
 export const OfflineBanner = () => {
@@ -23,14 +23,14 @@ export const OfflineBanner = () => {
                 <WifiOff className="h-4 w-4 shrink-0" />
                 <span>
                     {!isOnline
-                        ? "You're offline. Some features may not be available."
-                        : "A network error occurred. Please check your connection."}
+                        ? t("You're offline. Some features may not be available.")
+                        : t("A network error occurred. Please check your connection.")}
                 </span>
                 <button
                     onClick={handleRetry}
                     className="ms-2 underline underline-offset-2 font-semibold hover:no-underline cursor-pointer"
                 >
-                    Retry
+                    {t("Retry")}
                 </button>
             </div>
         </div>

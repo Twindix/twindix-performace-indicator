@@ -203,7 +203,7 @@ export const HandoffsView = () => {
                                                     onClick={() => handleToggle(c)}
                                                     disabled={!canToggle}
                                                     className={cn(
-                                                        "flex items-center gap-2 text-left",
+                                                        "flex items-center gap-2 text-start",
                                                         canToggle ? "cursor-pointer hover:opacity-80" : "cursor-default",
                                                     )}
                                                 >
@@ -212,7 +212,7 @@ export const HandoffsView = () => {
                                                     ) : (
                                                         <XCircle className="h-4 w-4 text-text-muted shrink-0" />
                                                     )}
-                                                    <span className={cn("text-xs flex-1 text-left", c.is_checked ? "text-text-dark" : "text-text-muted")}>
+                                                    <span className={cn("text-xs flex-1 text-start", c.is_checked ? "text-text-dark" : "text-text-muted")}>
                                                         {c.title}
                                                     </span>
                                                     {c.is_required && (

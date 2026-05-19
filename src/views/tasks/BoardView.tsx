@@ -115,7 +115,7 @@ export const BoardView = ({
                                             </span>
                                         )}
                                         {task.assignee && (
-                                            <span className="ml-auto text-[10px] font-medium bg-primary/10 text-primary rounded-full px-1.5 py-0.5">
+                                            <span className="ms-auto text-[10px] font-medium bg-primary/10 text-primary rounded-full px-1.5 py-0.5">
                                                 {task.assignee.avatar_initials}
                                             </span>
                                         )}

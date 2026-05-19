@@ -80,7 +80,7 @@ export const AnalyticsView = () => {
             taskStatus: Object.entries(analytics.task_status)
                 .filter(([, v]) => typeof v === "number" && v > 0)
                 .map(([k, v]) => ({
-                    name: STATUS_LABEL_MAP[k] ?? k,
+                    name: t(STATUS_LABEL_MAP[k] ?? k),
                     value: Number(v),
                     color: STATUS_COLOR_MAP[k] ?? "var(--color-muted-foreground)",
                 })),

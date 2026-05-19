@@ -117,13 +117,13 @@ export const MeetingsView = () => {
                 <div className="space-y-1.5">
                     <Label htmlFor="mt-search">{t("Search meetings…")}</Label>
                     <div className="relative">
-                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+                        <Search className="absolute start-2 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
                         <Input
                             id="mt-search"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder={t("Search meetings…")}
-                            className="pl-8"
+                            className="ps-8"
                         />
                     </div>
                 </div>

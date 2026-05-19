@@ -1,3 +1,4 @@
+C:/Users/Basel/.claude/skills/bullet.md
 ---
 name: bullet
 description: Generate a polished GitHub Pull Request description from the current branch's changes. Use when the user says "bullet", "pr description", "write PR", or "summarize branch".

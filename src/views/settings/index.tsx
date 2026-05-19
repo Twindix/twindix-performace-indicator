@@ -4,13 +4,14 @@ import { Card, CardContent } from "@/atoms";
 import type { UserSettingsInterface } from "@/interfaces";
 import { Header } from "@/components/shared";
 import { SettingsSkeleton } from "@/components/skeletons";
-import { useAuth, useTheme, t, usePageLoader, useUpdateMe, type AppSettings } from "@/hooks";
+import { useAuth, useTheme, t, usePageLoader, useUpdateMe, useSettings, type AppSettings } from "@/hooks";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 
 export const SettingsView = () => {
     const isLoading = usePageLoader();
     const { user, onUpdateUser } = useAuth();
     const { isDarkMode, onToggleTheme } = useTheme();
+    const [, updateLocalSettings] = useSettings();
     const { updateHandler } = useUpdateMe();
 
     const updateSetting = async (patch: Partial<NonNullable<typeof user>["settings"]>) => {
@@ -83,7 +84,7 @@ export const SettingsView = () => {
                                     <p className="text-sm font-medium text-text-dark">{t("Language")}</p>
                                     <p className="text-xs text-text-muted">{t("Interface language")}</p>
                                 </div>
-                                <Select value={language ?? undefined} onValueChange={(v) => updateSetting({ language: v as "en" | "ar" })}>
+                                <Select value={language ?? undefined} onValueChange={(v) => { updateSetting({ language: v as "en" | "ar" }); updateLocalSettings({ language: v as "en" | "ar" }); }}>
                                     <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs rounded-full bg-primary-lighter text-primary-medium border-none font-medium">
                                         <SelectValue />
                                     </SelectTrigger>

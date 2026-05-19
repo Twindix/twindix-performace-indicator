@@ -6,7 +6,7 @@ import { EmptyState, Header, Pagination } from "@/components/shared";
 import { DeployEnvironment, DeployStatus } from "@/enums";
 import { t, useDeleteDeploy, useDeploysList, useDownloadDeploy, usePermissions } from "@/hooks";
 import type { DeployInterface } from "@/interfaces";
-import { Avatar, AvatarFallback, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
+import { Avatar, AvatarFallback, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 import { cn, formatDateTime } from "@/utils";
 import { UploadDeployDialog } from "./UploadDeployDialog";
 
@@ -61,6 +61,7 @@ export const DeploysView = () => {
     const [statusFilter, setStatusFilter] = useState<DeployStatus | "all">("all");
     const [uploaderFilter, setUploaderFilter] = useState<string>("all");
     const [expanded, setExpanded] = useState<Set<string>>(new Set());
+    const [deleteTarget, setDeleteTarget] = useState<DeployInterface | null>(null);
 
     const filters = {
         environment: envFilter !== "all" ? envFilter : undefined,
@@ -95,9 +96,10 @@ export const DeploysView = () => {
         await downloadHandler(d.id, d.file_name);
     };
 
-    const handleDelete = async (d: DeployInterface) => {
-        const ok = await deleteHandler(d.id);
-        if (ok) removeDeployLocal(d.id);
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
+        const ok = await deleteHandler(deleteTarget.id);
+        if (ok) { removeDeployLocal(deleteTarget.id); setDeleteTarget(null); }
     };
 
     const clearFilters = () => {
@@ -196,7 +198,7 @@ export const DeploysView = () => {
                             expanded={expanded.has(latest.id)}
                             onToggle={() => toggleExpanded(latest.id)}
                             onDownload={() => handleDownload(latest)}
-                            onDelete={() => handleDelete(latest)}
+                            onDelete={() => setDeleteTarget(latest)}
                             canDelete={canDelete}
                         />
                     )}
@@ -212,7 +214,7 @@ export const DeploysView = () => {
                                         expanded={expanded.has(d.id)}
                                         onToggle={() => toggleExpanded(d.id)}
                                         onDownload={() => handleDownload(d)}
-                                        onDelete={() => handleDelete(d)}
+                                        onDelete={() => setDeleteTarget(d)}
                                         canDelete={canDelete}
                                     />
                                 ))}
@@ -228,6 +230,19 @@ export const DeploysView = () => {
                 onOpenChange={setUploadOpen}
                 onUploaded={(d) => { prependDeployLocal(d); refetch(); }}
             />
+
+            <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader><DialogTitle>{t("Delete Deploy")}</DialogTitle></DialogHeader>
+                    <p className="text-sm text-text-muted mt-2">
+                        {t("Remove")} <strong>{deleteTarget?.file_name}</strong>? {t("This action cannot be undone.")}
+                    </p>
+                    <div className="flex justify-end gap-2 mt-4">
+                        <DialogClose asChild><Button variant="outline">{t("Cancel")}</Button></DialogClose>
+                        <Button variant="destructive" onClick={handleDelete}>{t("Delete")}</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

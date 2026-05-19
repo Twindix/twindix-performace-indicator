@@ -518,7 +518,7 @@ export const MeetingDetail = ({ meetingId, onBack }: MeetingDetailProps) => {
                                         <button
                                             type="button"
                                             onClick={() => handleCommentDelete(comment.id)}
-                                            className="ml-auto text-error hover:opacity-80 cursor-pointer"
+                                            className="ms-auto text-error hover:opacity-80 cursor-pointer"
                                             aria-label={t("Delete comment")}
                                         >
                                             <Trash2 className="h-3.5 w-3.5" />

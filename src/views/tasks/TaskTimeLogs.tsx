@@ -4,7 +4,7 @@ import { Check, Clock, Pencil, Trash2, X } from "lucide-react";
 import { Button, Input, Skeleton } from "@/atoms";
 import { t, useCreateTimeLog, useDeleteTimeLog, useGetTimeLog, usePermissions, useUpdateTimeLog } from "@/hooks";
 import type { TaskInterface, TimeLogInterface, UserLiteInterface } from "@/interfaces";
-import { Avatar, AvatarFallback } from "@/ui";
+import { Avatar, AvatarFallback, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/ui";
 import { useAuthStore } from "@/store";
 
 interface Props {
@@ -23,6 +23,7 @@ export const TaskTimeLogs = ({ task, members, patchTaskLocal }: Props) => {
 
     const { user: authUser } = useAuthStore();
     const currentUserId = authUser?.id ?? "";
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
     const [logs, setLogs] = useState<TimeLogInterface[]>([]);
     const [isFetching, setIsFetching] = useState(true);
@@ -75,12 +76,14 @@ export const TaskTimeLogs = ({ task, members, patchTaskLocal }: Props) => {
         }
     };
 
-    const deleteLog = async (id: string) => {
-        const ok = await deleteTimeLogHandler(id);
+    const deleteLog = async () => {
+        if (!confirmDeleteId) return;
+        const ok = await deleteTimeLogHandler(confirmDeleteId);
         if (ok) {
-            const next = logs.filter((l) => l.id !== id);
+            const next = logs.filter((l) => l.id !== confirmDeleteId);
             setLogs(next);
             patchTaskLocal(task.id, { timeLogs: next as unknown as TaskInterface["timeLogs"] });
+            setConfirmDeleteId(null);
         }
     };
 
@@ -150,7 +153,7 @@ export const TaskTimeLogs = ({ task, members, patchTaskLocal }: Props) => {
                                                         <button onClick={() => { setEditingId(log.id); setEditHours(String(log.hours)); setEditNote(log.description ?? ""); }} className="p-1 rounded text-text-muted hover:text-primary hover:bg-primary-lighter transition-colors cursor-pointer">
                                                             <Pencil className="h-3 w-3" />
                                                         </button>
-                                                        <button onClick={() => deleteLog(log.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light transition-colors cursor-pointer">
+                                                        <button onClick={() => setConfirmDeleteId(log.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light transition-colors cursor-pointer">
                                                             <Trash2 className="h-3 w-3" />
                                                         </button>
                                                     </>
@@ -176,6 +179,17 @@ export const TaskTimeLogs = ({ task, members, patchTaskLocal }: Props) => {
                     <Button size="sm" onClick={submitLog} loading={isCreating} disabled={!logHours || parseFloat(logHours) <= 0} className="h-8 shrink-0">{t("Log")}</Button>
                 </div>
             )}
+
+            <Dialog open={!!confirmDeleteId} onOpenChange={(open) => !open && setConfirmDeleteId(null)}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader><DialogTitle>{t("Delete Time Log")}</DialogTitle></DialogHeader>
+                    <p className="text-sm text-text-muted mt-2">{t("This action cannot be undone.")}</p>
+                    <div className="flex justify-end gap-2 mt-4">
+                        <DialogClose asChild><Button variant="outline">{t("Cancel")}</Button></DialogClose>
+                        <Button variant="destructive" onClick={deleteLog}>{t("Delete")}</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

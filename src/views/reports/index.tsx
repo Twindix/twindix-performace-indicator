@@ -200,8 +200,8 @@ export const ReportsView = () => {
                     </div>
 
                     <SectionCard
-                        title="Overview"
-                        description="Project context and attention items"
+                        title={t("Overview")}
+                        description={t("Project context and attention items")}
                         onExport={handleExport("overview")}
                         isExporting={isExporting}
                         canExport={canExport}
@@ -223,8 +223,8 @@ export const ReportsView = () => {
                     </SectionCard>
 
                     <SectionCard
-                        title="Delivery"
-                        description="Completion rate, on-time delivery, and blockers"
+                        title={t("Delivery")}
+                        description={t("Completion rate, on-time delivery, and blockers")}
                         onExport={handleExport("delivery")}
                         isExporting={isExporting}
                         canExport={canExport}
@@ -238,8 +238,8 @@ export const ReportsView = () => {
                     </SectionCard>
 
                     <SectionCard
-                        title="Workload"
-                        description="Team capacity and story point utilisation"
+                        title={t("Workload")}
+                        description={t("Team capacity and story point utilisation")}
                         onExport={handleExport("workload")}
                         isExporting={isExporting}
                         canExport={canExport}
@@ -253,8 +253,8 @@ export const ReportsView = () => {
                     </SectionCard>
 
                     <SectionCard
-                        title="Handoffs"
-                        description="Phase transition criteria completion across sprints"
+                        title={t("Handoffs")}
+                        description={t("Phase transition criteria completion across sprints")}
                         onExport={handleExport("handoff")}
                         isExporting={isExporting}
                         canExport={canExport}
@@ -268,8 +268,8 @@ export const ReportsView = () => {
                     </SectionCard>
 
                     <SectionCard
-                        title="Ownership"
-                        description="Feature and task authorship by team member"
+                        title={t("Ownership")}
+                        description={t("Feature and task authorship by team member")}
                         onExport={handleExport("authorship")}
                         isExporting={isExporting}
                         canExport={canExport}
@@ -292,8 +292,8 @@ export const ReportsView = () => {
                     </SectionCard>
 
                     <SectionCard
-                        title="Meetings"
-                        description="Meeting log for this project"
+                        title={t("Meetings")}
+                        description={t("Meeting log for this project")}
                         onExport={() => {}}
                         isExporting={false}
                         canExport={false}
@@ -324,8 +324,8 @@ export const ReportsView = () => {
                     </SectionCard>
 
                     <SectionCard
-                        title="Friction"
-                        description="Blocker categories and average resolution time"
+                        title={t("Friction")}
+                        description={t("Blocker categories and average resolution time")}
                         onExport={handleExport("friction")}
                         isExporting={isExporting}
                         canExport={canExport}
