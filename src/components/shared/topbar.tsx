@@ -41,7 +41,7 @@ const EmptyOption = ({ label }: { label: string }) => (
 export const Topbar = () => {
     const { user, onLogout } = useAuth();
     const { isDarkMode, onToggleTheme } = useTheme();
-    const [settings] = useSettings();
+    const [settings, updateSettings] = useSettings();
 
     // Subscribe with selectors so each store update only re-renders the slice that changed.
     const activeSprintId = useSprintStore((s) => s.activeSprintId);
@@ -130,6 +130,22 @@ export const Topbar = () => {
             </div>
 
             <div className="flex items-center gap-2">
+                <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => updateSettings({ language: isArabic ? "en" : "ar" })}
+                                className="h-9 px-2 text-xs font-bold tracking-wide"
+                            >
+                                {isArabic ? "EN" : "ع"}
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{isArabic ? t("English") : t("Arabic")}</TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+
                 <TooltipProvider delayDuration={300}>
                     <Tooltip>
                         <TooltipTrigger asChild>

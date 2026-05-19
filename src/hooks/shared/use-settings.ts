@@ -259,6 +259,8 @@ const translations: Record<string, Record<"en" | "ar", string>> = {
     "Help & Reports": { en: "Help & Reports", ar: "المساعدة والتقارير" },
     "Light": { en: "Light", ar: "فاتح" },
     "Dark": { en: "Dark", ar: "داكن" },
+    "English": { en: "English", ar: "الإنجليزية" },
+    "Arabic": { en: "Arabic", ar: "العربية" },
     "Developed with": { en: "Developed with", ar: "طُوّر بـ" },
     "by": { en: "by", ar: "بواسطة" },
 
