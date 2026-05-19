@@ -2,38 +2,37 @@ import type { GanttStatus } from "@/enums";
 
 export interface GanttTaskInterface {
     id: string;
+    code: string;
     title: string;
-    project_name: string;
     status: GanttStatus;
-    assignee_name: string | null;
-    start_date: string;
-    end_date: string;
+    priority: string;
+    start_date: string | null;
+    due_date: string | null;
     progress: number;
-    is_delayed: boolean;
+    assignee: string | null;
+    dependencies: string[];
+    is_blocked: boolean;
+    estimated_hours: number | null;
 }
 
-export interface GanttSummaryInterface {
-    total_tasks: number;
-    in_progress: number;
-    completed: number;
-    delayed: number;
+export interface GanttSprintInterface {
+    id: string;
+    name: string;
+    start_date: string;
+    end_date: string;
 }
 
 export interface GanttResponseInterface {
-    summary: GanttSummaryInterface;
+    sprint: GanttSprintInterface;
     tasks: GanttTaskInterface[];
 }
 
 export interface GanttApiFiltersInterface {
-    project_id?: string;
     status?: GanttStatus;
-    from?: string;
-    to?: string;
 }
 
 export interface GanttFiltersInterface {
-    projectId: string;
     status: GanttStatus | "all";
-    rangeStart: string;
-    rangeEnd: string;
+    mode: "sprint" | "project";
+    entityId: string;
 }

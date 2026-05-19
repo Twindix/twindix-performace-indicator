@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { GanttChart as GanttIcon } from "lucide-react";
 
 import { EmptyState, Header } from "@/components/shared";
 import { GanttStatus } from "@/enums";
-import { t, useGanttTasks, useProjectsListLite } from "@/hooks";
+import { t, useGanttTasks, useProjectsListLite, useSprintsList } from "@/hooks";
 import type { GanttFiltersInterface } from "@/interfaces/gantt";
+import { useSprintStore } from "@/store";
 
 import { GanttChart } from "./GanttChart";
 import { GanttFilters } from "./GanttFilters";
@@ -18,73 +19,69 @@ const parseDate = (iso: string) => {
 
 const toIso = (ts: number) => new Date(ts).toISOString().slice(0, 10);
 
-const defaultFilters: GanttFiltersInterface = {
-    projectId: "all",
-    status: "all",
-    rangeStart: "",
-    rangeEnd: "",
-};
-
 export const GanttView = () => {
-    const [filters, setFilters] = useState<GanttFiltersInterface>(defaultFilters);
+    const { activeSprintId } = useSprintStore();
+    const { sprints } = useSprintsList();
     const { projects } = useProjectsListLite();
 
-    const apiFilters = useMemo(() => ({
-        project_id: filters.projectId !== "all" ? filters.projectId : undefined,
-        status: filters.status !== "all" ? (filters.status as GanttStatus) : undefined,
-        from: filters.rangeStart || undefined,
-        to: filters.rangeEnd || undefined,
-    }), [filters]);
+    const [filters, setFilters] = useState<GanttFiltersInterface>({
+        status: "all",
+        mode: "sprint",
+        entityId: activeSprintId ?? "",
+    });
 
-    const { tasks, summary, isLoading } = useGanttTasks(apiFilters);
+    // Update entityId when activeSprintId changes
+    useEffect(() => {
+        if (activeSprintId && filters.mode === "sprint" && filters.entityId !== activeSprintId) {
+            setFilters((prev) => ({ ...prev, entityId: activeSprintId }));
+        }
+    }, [activeSprintId, filters.mode, filters.entityId]);
+
+    const apiFilters = filters.status !== "all" ? { status: filters.status as GanttStatus } : undefined;
+    const { tasks, isLoading } = useGanttTasks(filters.entityId, filters.mode, apiFilters);
 
     const { windowStart, windowEnd } = useMemo(() => {
-        if (filters.rangeStart && filters.rangeEnd) {
-            return { windowStart: filters.rangeStart, windowEnd: filters.rangeEnd };
-        }
-        if (tasks.length === 0) {
+        const datedTasks = tasks.filter((t) => t.start_date && t.due_date);
+        if (datedTasks.length === 0) {
             const now = Date.now();
             return {
                 windowStart: toIso(now - 30 * DAY_MS),
                 windowEnd: toIso(now + 60 * DAY_MS),
             };
         }
-        const minStart = Math.min(...tasks.map((task) => parseDate(task.start_date)));
-        const maxEnd = Math.max(...tasks.map((task) => parseDate(task.end_date)));
+        const minStart = Math.min(...datedTasks.map((task) => parseDate(task.start_date!)));
+        const maxEnd = Math.max(...datedTasks.map((task) => parseDate(task.due_date!)));
         return {
-            windowStart: filters.rangeStart || toIso(minStart - 3 * DAY_MS),
-            windowEnd: filters.rangeEnd || toIso(maxEnd + 3 * DAY_MS),
+            windowStart: toIso(minStart - 3 * DAY_MS),
+            windowEnd: toIso(maxEnd + 3 * DAY_MS),
         };
-    }, [tasks, filters.rangeStart, filters.rangeEnd]);
+    }, [tasks]);
 
-    const totals = summary ?? {
+    const totals = {
         total_tasks: tasks.length,
-        in_progress: 0,
-        completed: 0,
-        delayed: 0,
+        in_progress: tasks.filter((t) => t.status === GanttStatus.InProgress).length,
+        completed: tasks.filter((t) => t.status === GanttStatus.Completed).length,
+        delayed: tasks.filter((t) => t.status === GanttStatus.Delayed).length,
     };
-
-    const canReset =
-        filters.projectId !== "all" ||
-        filters.status !== "all" ||
-        filters.rangeStart !== "" ||
-        filters.rangeEnd !== "";
 
     const handleChange = (patch: Partial<GanttFiltersInterface>) =>
         setFilters((prev) => ({ ...prev, ...patch }));
 
-    const handleReset = () => setFilters(defaultFilters);
+    const handleReset = () => setFilters({ status: "all", mode: "sprint", entityId: activeSprintId ?? "" });
+
+    const canReset = filters.status !== "all";
 
     return (
         <div>
             <Header
                 title={t("Gantt")}
-                description={t("Visualize task timelines across projects. Filter by project, date range, or status.")}
+                description={t("Visualize task timelines by sprint or project.")}
             />
 
             <GanttFilters
-                projects={projects}
                 filters={filters}
+                sprints={sprints}
+                projects={projects}
                 onChange={handleChange}
                 onReset={handleReset}
                 canReset={canReset}
@@ -104,8 +101,8 @@ export const GanttView = () => {
             ) : tasks.length === 0 ? (
                 <EmptyState
                     icon={GanttIcon}
-                    title={t("No tasks match these filters")}
-                    description={t("Adjust the project, date range, or status filter to see tasks on the timeline.")}
+                    title={t("No tasks found")}
+                    description={t("Select a sprint or project and adjust filters.")}
                 />
             ) : (
                 <div className="overflow-x-auto">
