@@ -90,24 +90,26 @@ export const ProjectAnalyticsView = ({ project, onBack, onViewSprints }: Project
 
     const view = useMemo(() => {
         if (!analytics) return null;
-        const burnLength = Math.max(analytics.burn_chart.planned.length, analytics.burn_chart.actual.length);
+        const planned = analytics.burn_chart?.planned ?? [];
+        const actual = analytics.burn_chart?.actual ?? [];
+        const burnLength = Math.max(planned.length, actual.length);
         return {
-            stats: analytics.stats,
-            contributors: analytics.contributors,
-            velocity: analytics.velocity.map((p) => ({ label: p.sprint, value: p.points })),
+            stats: analytics.stats ?? {},
+            contributors: analytics.contributors ?? [],
+            velocity: (analytics.velocity ?? []).map((p) => ({ label: p.sprint, value: p.points })),
             burn: Array.from({ length: burnLength }).map((_, i) => ({
                 label: `D${i + 1}`,
-                planned: analytics.burn_chart.planned[i] ?? 0,
-                actual: analytics.burn_chart.actual[i] ?? 0,
+                planned: planned[i] ?? 0,
+                actual: actual[i] ?? 0,
             })),
-            taskStatus: Object.entries(analytics.task_status)
+            taskStatus: Object.entries(analytics.task_status ?? {})
                 .filter(([, v]) => typeof v === "number" && v > 0)
                 .map(([k, v]) => ({
                     name: STATUS_LABEL_MAP[k] ?? k,
                     value: Number(v),
                     color: STATUS_COLOR_MAP[k] ?? "var(--color-muted-foreground)",
                 })),
-            blockerSources: Object.entries(analytics.blocker_sources).map(([category, count]) => ({
+            blockerSources: Object.entries(analytics.blocker_sources ?? {}).map(([category, count]) => ({
                 name: category,
                 value: Number(count),
                 color: FRICTION_COLOR_MAP[category] ?? "var(--color-muted-foreground)",

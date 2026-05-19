@@ -49,6 +49,9 @@ export const projectsService = {
     },
 
     sprintsHandler: async (id: string): Promise<SprintInterface[]> => {
+        if (!id) {
+            throw new Error('Project ID is required');
+        }
         const res = await apiClient.get(apisData.projects.sprints(id));
         return unwrap<SprintInterface[]>(res.data);
     },

@@ -17,6 +17,8 @@ export interface ProjectInterface {
     member_count?: number;
     created_by?: ProjectCreatorInterface | null;
     created_at?: string;
+    // Inline counts — always returned by listing API
+    tasks_total?: number;
     // legacy aliases — keep for any older code paths
     sprints_count?: number;
     members_count?: number;
