@@ -1,0 +1,1 @@
+C:/Users/Basel/.claude/skills/bullet.md
