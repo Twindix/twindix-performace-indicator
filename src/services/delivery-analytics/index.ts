@@ -7,12 +7,13 @@ import { apiClient } from "@/lib/axios";
 
 export const deliveryAnalyticsService = {
     compositeHandler: async (
+        sprintId : string,
         filters?: DeliveryAnalyticsFiltersInterface,
     ): Promise<DeliveryAnalyticsResponseInterface> => {
-        const { data } = await apiClient.get<DeliveryAnalyticsResponseInterface>(
-            apisData.deliveryAnalytics.composite,
+        const { data } = await apiClient.get<{ data: DeliveryAnalyticsResponseInterface }>(
+            apisData.deliveryAnalytics.composite(sprintId),
             { params: filters },
         );
-        return data;
+        return data.data;
     },
 };
