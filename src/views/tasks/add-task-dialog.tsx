@@ -70,7 +70,7 @@ const TaskAutocomplete = ({ tasks, value, onChange, placeholder }: TaskAutocompl
                         <button key={task.id} type="button"
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => { onChange(task.id); setQuery(""); setOpen(false); }}
-                            className={`w-full px-3 py-2 text-left text-sm hover:bg-muted cursor-pointer ${task.id === value ? "bg-muted" : ""}`}>
+                            className={`w-full px-3 py-2 text-start text-sm hover:bg-muted cursor-pointer ${task.id === value ? "bg-muted" : ""}`}>
                             {task.title}
                         </button>
                     ))}
@@ -106,7 +106,7 @@ const UsersAutocomplete = ({ members, values, onChange, placeholder }: UsersAuto
             {selected.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                     {selected.map((m) => (
-                        <span key={m.id} className="flex items-center gap-1 text-xs font-medium bg-primary/10 text-primary rounded-full pl-2 pr-1 py-0.5">
+                        <span key={m.id} className="flex items-center gap-1 text-xs font-medium bg-primary/10 text-primary rounded-full ps-2 pe-1 py-0.5">
                             {m.full_name}
                             <button type="button" onClick={() => removeUser(m.id)} className="hover:text-error transition-colors">
                                 <X className="h-3 w-3" />
@@ -129,7 +129,7 @@ const UsersAutocomplete = ({ members, values, onChange, placeholder }: UsersAuto
                             <button key={m.id} type="button"
                                 onMouseDown={(e) => e.preventDefault()}
                                 onClick={() => addUser(m.id)}
-                                className="w-full px-3 py-2 text-left text-sm hover:bg-muted cursor-pointer flex items-center gap-2">
+                                className="w-full px-3 py-2 text-start text-sm hover:bg-muted cursor-pointer flex items-center gap-2">
                                 <span className="text-xs font-medium bg-muted rounded-full h-5 w-5 flex items-center justify-center shrink-0">{m.avatar_initials}</span>
                                 <span className="flex-1 truncate">{m.full_name}</span>
                                 {m.email && <span className="text-xs text-text-muted truncate">{m.email}</span>}

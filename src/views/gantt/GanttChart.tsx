@@ -176,7 +176,7 @@ export const GanttChart = ({ tasks, windowStart, windowEnd }: GanttChartProps) =
                                             title={`${task.title} · ${t("No dates set")}`}
                                         >
                                             {task.title}
-                                            <span className="ml-1 opacity-60 font-normal">({t("no dates")})</span>
+                                            <span className="ms-1 opacity-60 font-normal">({t("no dates")})</span>
                                         </div>
                                     );
                                 }

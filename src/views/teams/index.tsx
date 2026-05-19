@@ -138,7 +138,7 @@ export const TeamsView = () => {
                                     <Users className="h-3.5 w-3.5" />
                                     <span>{memberCount} {t("members")}</span>
                                     {team.description && (
-                                        <span className="truncate text-text-muted ml-2">{team.description}</span>
+                                        <span className="truncate text-text-muted ms-2">{team.description}</span>
                                     )}
                                 </div>
 

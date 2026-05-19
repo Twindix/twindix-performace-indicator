@@ -268,7 +268,7 @@ export const CommunicationView = () => {
                                                             </Badge>
                                                         </div>
                                                     </div>
-                                                    <div className="text-right shrink-0">
+                                                    <div className="text-end shrink-0">
                                                         <p className={cn("text-lg font-bold", responseColor)}>{hours}h</p>
                                                         <p className="text-xs text-text-muted">{t("response time")}</p>
                                                     </div>

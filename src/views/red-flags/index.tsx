@@ -117,7 +117,7 @@ export const RedFlagsView = () => {
                                         <AvatarFallback className="text-[8px]">{f.reporter.avatar_initials}</AvatarFallback>
                                     </Avatar>
                                     <span>{f.reporter.full_name}</span>
-                                    <span className="ml-auto">{formatDateTime(f.created_at)}</span>
+                                    <span className="ms-auto">{formatDateTime(f.created_at)}</span>
                                 </div>
                             </CardContent>
                         </Card>
