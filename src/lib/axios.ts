@@ -59,6 +59,7 @@ apiClient.interceptors.response.use(
         // so the shared runAction pipeline (toast + field-error mapping) fires.
         if (body && body.success === false) {
             const fieldErrors = body.errors && Object.keys(body.errors).length > 0 ? body.errors : undefined;
+            console.error(`[API Error] ${response.config.url} - Business error:`, body.message);
             return Promise.reject(
                 new ApiError(
                     fieldErrors ? 422 : 400,
@@ -76,6 +77,13 @@ apiClient.interceptors.response.use(
         const { message, response } = error;
         const status = response?.status;
         const data = response?.data;
+
+        // Log error responses
+        console.error(`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url} - Status: ${status || 'Network Error'}`, {
+            status,
+            message,
+            data,
+        });
 
         if (status !== undefined && status >= 200 && status < 300) {
             return Promise.resolve(response);

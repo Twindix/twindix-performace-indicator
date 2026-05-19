@@ -36,7 +36,14 @@ export const timeLogsService = {
     },
 
     createStandaloneHandler: async (payload: CreateStandaloneTimeLogPayloadInterface): Promise<{ data: TimeLogInterface } | TimeLogInterface> => {
-        const { data } = await apiClient.post<{ data: TimeLogInterface } | TimeLogInterface>(apisData.timeLogs.createStandalone, payload);
+        const endpoint = payload.task_id
+            ? apisData.timeLogs.taskList(payload.task_id)
+            : payload.sprint_id
+                ? apisData.timeLogs.sprintList(payload.sprint_id)
+                : apisData.timeLogs.createStandalone;
+        const { date, ...rest } = payload;
+        const apiPayload = { ...rest, logged_date: date };
+        const { data } = await apiClient.post<{ data: TimeLogInterface } | TimeLogInterface>(endpoint, apiPayload);
         return data;
     },
 

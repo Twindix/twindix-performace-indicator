@@ -1,45 +1,48 @@
 import { apisData } from "@/data";
 import type {
-    TimeAggregationResponseInterface,
-    TimeByMemberRowInterface,
-    TimeByProjectRowInterface,
-    TimeBySprintRowInterface,
-    TimeByTeamRowInterface,
-    TimeSummaryInterface,
+    SprintTimeTrackingResponseInterface,
+    TaskTimeTrackingResponseInterface,
+    TimeByUserInterface,
+    UserTimeTrackingResponseInterface,
 } from "@/interfaces";
 import { apiClient } from "@/lib/axios";
 
+const normalizeByUser = (u: any): TimeByUserInterface => ({
+    user_id: u.user_id,
+    name: u.name ?? u.user_name ?? "",
+    total_logged_hours: u.total_logged_hours ?? u.total_hours ?? 0,
+});
+
 export const timeService = {
-    byProjectHandler: async (): Promise<TimeAggregationResponseInterface<TimeByProjectRowInterface>> => {
-        const { data } = await apiClient.get<TimeAggregationResponseInterface<TimeByProjectRowInterface>>(
-            apisData.time.byProject,
-        );
-        return data;
+    bySprintHandler: async (sprintId: string): Promise<SprintTimeTrackingResponseInterface> => {
+        const { data } = await apiClient.get<{ data: any }>(apisData.time.bySprint(sprintId));
+        const raw = data.data;
+        return {
+            sprint_id: raw.sprint_id,
+            total_estimated_hours: raw.total_estimated_hours ?? 0,
+            total_logged_hours: raw.total_logged_hours ?? 0,
+            variance_hours: raw.variance_hours ?? 0,
+            by_user: (raw.by_user ?? []).map(normalizeByUser),
+        };
     },
 
-    bySprintHandler: async (): Promise<TimeAggregationResponseInterface<TimeBySprintRowInterface>> => {
-        const { data } = await apiClient.get<TimeAggregationResponseInterface<TimeBySprintRowInterface>>(
-            apisData.time.bySprint,
-        );
-        return data;
+    byUserHandler: async (userId: string): Promise<UserTimeTrackingResponseInterface> => {
+        const { data } = await apiClient.get<{ data: any }>(apisData.time.byUser(userId));
+        const raw = data.data;
+        return {
+            user_id: raw.user_id,
+            total_logged_hours: raw.total_logged_hours ?? 0,
+            by_day: raw.by_day ?? [],
+        };
     },
 
-    byTeamHandler: async (): Promise<TimeAggregationResponseInterface<TimeByTeamRowInterface>> => {
-        const { data } = await apiClient.get<TimeAggregationResponseInterface<TimeByTeamRowInterface>>(
-            apisData.time.byTeam,
-        );
-        return data;
-    },
-
-    byMemberHandler: async (): Promise<TimeAggregationResponseInterface<TimeByMemberRowInterface>> => {
-        const { data } = await apiClient.get<TimeAggregationResponseInterface<TimeByMemberRowInterface>>(
-            apisData.time.byMember,
-        );
-        return data;
-    },
-
-    summaryHandler: async (): Promise<TimeSummaryInterface> => {
-        const { data } = await apiClient.get<TimeSummaryInterface>(apisData.time.summary);
-        return data;
+    byTaskHandler: async (taskId: string): Promise<TaskTimeTrackingResponseInterface> => {
+        const { data } = await apiClient.get<{ data: any }>(apisData.time.byTask(taskId));
+        const raw = data.data;
+        return {
+            task_id: raw.task_id,
+            total_logged_hours: raw.total_logged_hours ?? 0,
+            by_user: (raw.by_user ?? []).map(normalizeByUser),
+        };
     },
 };

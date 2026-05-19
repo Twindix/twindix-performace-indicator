@@ -1,307 +1,248 @@
-import { useMemo, useState } from "react";
-import { ArrowRight, CheckCircle2, XCircle, ArrowRightLeft, BarChart3, FolderKanban, Layers, Settings } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowRight, CheckCircle2, Download, Settings, XCircle } from "lucide-react";
 
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/atoms";
+import { Badge, Button, Card, CardContent } from "@/atoms";
 import { AnimatedNumber, EmptyState, Header } from "@/components/shared";
 import {
     t,
+    useHandoffsOverview,
     usePermissions,
     useProjectsListLite,
-    useSprintsList,
-    useHandoffsOverview,
     useToggleHandoffCheck,
 } from "@/hooks";
-
-import type {
-    HandoffCriterionInterface,
-    HandoffTransitionInterface,
-    HandoffsResponseInterface,
-} from "@/interfaces";
-
+import { useQueryAction } from "@/hooks/shared";
+import type { HandoffCriteriaSeedInterface, SprintInterface } from "@/interfaces";
+import { projectsService } from "@/services";
 import { useSprintStore } from "@/store";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
-import { cn, td } from "@/utils";
+import { cn, downloadCsv } from "@/utils";
 
 import { ManageCriteriaDialog } from "./ManageCriteriaDialog";
 
-const getCompletionColor = (rate: number): string => {
-    if (rate >= 100) return "bg-success";
-    if (rate >= 80) return "bg-primary";
-    if (rate >= 60) return "bg-warning";
-    return "bg-error";
-};
-
-const getCompletionTextColor = (rate: number): string => {
-    if (rate >= 100) return "text-success";
-    if (rate >= 80) return "text-primary";
-    if (rate >= 60) return "text-warning";
-    return "text-error";
-};
-
-const getCompletionBgColor = (rate: number): string => {
-    if (rate >= 100) return "bg-success-light";
-    if (rate >= 80) return "bg-primary-lighter";
-    if (rate >= 60) return "bg-warning-light";
-    return "bg-error-light";
-};
-
-const CriteriaList = ({
-    title,
-    criteria,
-    taskId,
-    canToggle,
-    onToggle,
-}: {
-    title: string;
-    criteria: HandoffCriterionInterface[];
-    taskId: string;
-    canToggle: boolean;
-    onToggle: (taskId: string, criteriaId: string) => void;
-}) => (
-    <div>
-        <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">{title}</p>
-        <div className="flex flex-col gap-1.5">
-            {criteria.map((c) => (
-                <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => canToggle && onToggle(taskId, c.id)}
-                    disabled={!canToggle}
-                    className={cn(
-                        "flex items-center gap-2 text-left",
-                        canToggle ? "cursor-pointer hover:opacity-80" : "cursor-default",
-                    )}
-                >
-                    {c.checked ? (
-                        <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                    ) : (
-                        <XCircle className="h-4 w-4 text-text-muted shrink-0" />
-                    )}
-                    <span className={cn("text-xs", c.checked ? "text-text-dark" : "text-text-muted")}>{td(c.label)}</span>
-                </button>
-            ))}
-        </div>
-    </div>
-);
-
-const StatsRow = ({ stats }: { stats: HandoffsResponseInterface["summary"] }) => (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card><CardContent className="p-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-lighter"><ArrowRightLeft className="h-5 w-5 text-primary" /></div><div><p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={stats.total_handoffs} /></p><p className="text-xs text-text-muted">{t("Total Handoffs")}</p></div></div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-lighter"><BarChart3 className="h-5 w-5 text-primary" /></div><div><p className="text-2xl font-bold text-text-dark"><AnimatedNumber value={stats.avg_completion} suffix="%" /></p><p className="text-xs text-text-muted">{t("Avg Completion")}</p></div></div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-success-light"><CheckCircle2 className="h-5 w-5 text-success" /></div><div><p className="text-2xl font-bold text-success"><AnimatedNumber value={stats.fully_completed} /></p><p className="text-xs text-text-muted">{t("Fully Completed")}</p></div></div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-error-light"><XCircle className="h-5 w-5 text-error" /></div><div><p className="text-2xl font-bold text-error"><AnimatedNumber value={stats.below_threshold} /></p><p className="text-xs text-text-muted">{t("Below Threshold")}</p></div></div></CardContent></Card>
-    </div>
-);
-
-const HandoffCards = ({
-    handoffs,
-    canToggle,
-    onToggle,
-}: {
-    handoffs: HandoffTransitionInterface[];
-    canToggle: boolean;
-    onToggle: (taskId: string, criteriaId: string) => void;
-}) => (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {handoffs.map((handoff) => {
-            const rate = handoff.completion;
-            return (
-                <Card key={`${handoff.task_id}-${handoff.from_phase}-${handoff.to_phase}`} className={cn("overflow-hidden", rate < 60 && "border-error/40")}>
-                    <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-2 min-w-0">
-                                <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", getCompletionBgColor(rate))}>
-                                    <ArrowRight className={cn("h-4 w-4", getCompletionTextColor(rate))} />
-                                </div>
-                                <div className="min-w-0">
-                                    <CardTitle className="text-sm">
-                                        {t(handoff.from_phase)} <ArrowRight className="inline h-3.5 w-3.5 mx-0.5" /> {t(handoff.to_phase)}
-                                    </CardTitle>
-                                    <p className="text-xs text-text-muted mt-0.5">{t("Task")}: {handoff.task_code}</p>
-                                </div>
-                            </div>
-                            <Badge variant={rate >= 100 ? "success" : rate >= 80 ? "default" : rate >= 60 ? "warning" : "error"}>{rate}%</Badge>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="mb-4">
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs text-text-muted">{t("Completion")}</span>
-                                <span className={cn("text-xs font-bold", getCompletionTextColor(rate))}><AnimatedNumber value={rate} suffix="%" /></span>
-                            </div>
-                            <div className="h-2 rounded-full bg-muted overflow-hidden">
-                                <div className={cn("h-full rounded-full transition-all duration-500", getCompletionColor(rate))} style={{ width: `${Math.min(rate, 100)}%` }} />
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <CriteriaList title={t("Entry Criteria")} criteria={handoff.entry_criteria} taskId={handoff.task_id} canToggle={canToggle} onToggle={onToggle} />
-                            <CriteriaList title={t("Exit Criteria")} criteria={handoff.exit_criteria} taskId={handoff.task_id} canToggle={canToggle} onToggle={onToggle} />
-                        </div>
-                    </CardContent>
-                </Card>
-            );
-        })}
-    </div>
-);
-
 export const HandoffsView = () => {
     const p = usePermissions();
-    const activeSprintId = useSprintStore((s) => s.activeSprintId);
-    const { sprints } = useSprintsList();
+    const { activeSprintId } = useSprintStore();
     const { projects } = useProjectsListLite();
 
-    const [scope, setScope] = useState<"sprint" | "project">("sprint");
-    const [selectedSprintId, setSelectedSprintId] = useState<string>(activeSprintId ?? "");
     const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+    const [selectedSprintId, setSelectedSprintId] = useState<string>(activeSprintId ?? "");
+
+    const { data: sprints = [] } = useQueryAction<SprintInterface[]>(
+        () => projectsService.sprintsHandler(selectedProjectId),
+        [selectedProjectId],
+        { enabled: !!selectedProjectId, context: "handoffs.sprints", initialData: [] },
+    );
     const [manageOpen, setManageOpen] = useState(false);
 
-    const filters = useMemo(() => {
-        if (scope === "sprint") {
-            return { scope: "sprint" as const, sprint_id: selectedSprintId || undefined };
+    // Auto-select first project if none selected
+    useEffect(() => {
+        if (!selectedProjectId && projects.length > 0) {
+            setSelectedProjectId(projects[0].id);
         }
-        return { scope: "project" as const, project_id: selectedProjectId || undefined };
-    }, [scope, selectedSprintId, selectedProjectId]);
+    }, [projects, selectedProjectId]);
 
-    const { data, isLoading, refetch, setData } = useHandoffsOverview(filters);
-    const { toggleHandler, isLoading: isToggling } = useToggleHandoffCheck();
+    // Update selected sprint when active sprint changes
+    useEffect(() => {
+        if (activeSprintId && activeSprintId !== selectedSprintId) {
+            setSelectedSprintId(activeSprintId);
+        }
+    }, [activeSprintId, selectedSprintId]);
+
+    const { data, isLoading, refetch } = useHandoffsOverview(selectedProjectId, selectedSprintId);
+    const { checkHandler, uncheckHandler, isLoading: isToggling } = useToggleHandoffCheck();
+
+    console.log('[HandoffsView] State:', { 
+        selectedProjectId, 
+        selectedSprintId, 
+        isLoading, 
+        hasData: !!data,
+        data 
+    });
 
     const canToggle = p.handoffs.toggleCheck() && !isToggling;
+    const canDownload = p.reports.downloadCSV();
 
-    const onToggle = async (taskId: string, criteriaId: string) => {
-        const updated = await toggleHandler(taskId, criteriaId);
-        if (!updated || !data) return;
-        // Patch local state with updated transition completion + criteria check states
-        setData({
-            ...data,
-            transitions: data.transitions.map((tr) =>
-                tr.task_id === taskId && tr.from_phase === updated.from_phase && tr.to_phase === updated.to_phase
-                    ? {
-                        ...tr,
-                        completion: updated.completion,
-                        entry_criteria: updated.entry_criteria,
-                        exit_criteria: updated.exit_criteria,
-                    }
-                    : tr,
-            ),
-        });
-        // Recompute summary by refetching (cheap) — keeps avg/fully/below correct
+    const handleDownloadCsv = () => {
+        if (!data) return;
+        const projectName = projects.find((pr) => pr.id === selectedProjectId)?.name ?? selectedProjectId;
+        const sprintName = sprints.find((sp) => sp.id === selectedSprintId)?.name ?? selectedSprintId;
+        const header = ["Summary", "Total Criteria", "Required Criteria", "Checked", "Required Checked", "Ready for Handoff"];
+        const summary = ["", data.total_criteria, data.required_criteria, data.checked_count, data.required_checked_count, data.ready_for_handoff ? "Yes" : "No"];
+        const cols = ["Criteria ID", "Title", "Description", "From Phase", "To Phase", "Required", "Checked", "Created At"];
+        const rows = data.criteria.map((c) => [c.id, c.title, c.description ?? "", c.from_phase, c.to_phase, c.is_required ? "Yes" : "No", c.is_checked ? "Yes" : "No", c.created_at]);
+        downloadCsv(`handoffs-${projectName}-${sprintName}.csv`, [header, summary, [], cols, ...rows]);
+    };
+
+    const handleToggle = async (criterion: HandoffCriteriaSeedInterface) => {
+        if (!canToggle || !selectedSprintId) return;
+        if (criterion.is_checked) {
+            await uncheckHandler(criterion.id, selectedSprintId);
+        } else {
+            await checkHandler(criterion.id, selectedSprintId);
+        }
         refetch();
     };
 
-    const handoffs = data?.transitions ?? [];
-    const summary = data?.summary ?? { total_handoffs: 0, avg_completion: 0, fully_completed: 0, below_threshold: 0 };
-    const phases = data?.phases ?? ["Product", "Design", "Development", "Code Review", "QA", "Done"];
+    const criteria = data?.criteria ?? [];
+    const grouped = criteria.reduce<Record<string, HandoffCriteriaSeedInterface[]>>((acc, c) => {
+        const key = `${c.from_phase} → ${c.to_phase}`;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(c);
+        return acc;
+    }, {});
 
     return (
         <div>
             <Header
                 title={t("Handoff Tracker")}
-                description={t("Phase transition quality, scoped by project or sprint")}
-                actions={p.handoffs.manageCriteria() ? (
-                    <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setManageOpen(true)}>
-                        <Settings className="h-4 w-4" />
-                        {t("Manage Criteria")}
-                    </Button>
-                ) : null}
+                description={t("Phase transition criteria and handoff readiness")}
+                actions={
+                    <div className="flex items-center gap-2">
+                        {canDownload && data && (
+                            <Button size="sm" variant="outline" className="gap-1.5" onClick={handleDownloadCsv}>
+                                <Download className="h-4 w-4" />
+                                {t("Download CSV")}
+                            </Button>
+                        )}
+                        {p.handoffs.manageCriteria() && (
+                            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setManageOpen(true)}>
+                                <Settings className="h-4 w-4" />
+                                {t("Manage Criteria")}
+                            </Button>
+                        )}
+                    </div>
+                }
             />
 
-            <Card className="mb-6">
-                <CardContent className="p-4">
-                    <div className="grid grid-cols-3 sm:flex sm:items-center sm:justify-center gap-1 sm:gap-1">
-                        {phases.map((phase, i) => (
-                            <div key={phase} className="flex items-center gap-1">
-                                <div className="flex items-center justify-center rounded-lg bg-primary-lighter px-2 sm:px-3 py-2 w-full sm:w-auto">
-                                    <span className="text-[10px] sm:text-xs font-semibold text-primary whitespace-nowrap">{t(phase)}</span>
-                                </div>
-                                {i < phases.length - 1 && (
-                                    <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 text-text-muted shrink-0 hidden sm:block" />
-                                )}
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+                {projects.map((project) => (
+                    <button
+                        key={project.id}
+                        type="button"
+                        onClick={() => setSelectedProjectId(project.id)}
+                        className={cn(
+                            "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer",
+                            selectedProjectId === project.id
+                                ? "border-primary bg-primary-lighter text-primary"
+                                : "border-border text-text-muted hover:text-text-dark hover:bg-muted/40",
+                        )}
+                    >
+                        {project.name}
+                    </button>
+                ))}
+            </div>
+
+            <div className="flex items-center gap-2 mb-6 flex-wrap">
+                {sprints.map((sprint) => (
+                    <button
+                        key={sprint.id}
+                        type="button"
+                        onClick={() => setSelectedSprintId(sprint.id)}
+                        className={cn(
+                            "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer",
+                            selectedSprintId === sprint.id
+                                ? "border-primary bg-primary-lighter text-primary"
+                                : "border-border text-text-muted hover:text-text-dark hover:bg-muted/40",
+                        )}
+                    >
+                        {sprint.name}
+                    </button>
+                ))}
+            </div>
+
+            {isLoading && !data ? (
+                <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-text-muted">
+                    {t("Loading handoffs...")}
+                </div>
+            ) : !data ? (
+                <EmptyState icon={ArrowRight} title={t("No Handoff Data")} description={t("No criteria found for this project/sprint.")} />
+            ) : (
+                <>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <StatCard label={t("Total Criteria")} value={data.total_criteria} />
+                        <StatCard label={t("Required")} value={data.required_criteria} />
+                        <StatCard label={t("Checked")} value={data.checked_count} tone="success" />
+                        <div className="rounded-lg border border-border bg-card px-4 py-3 flex items-center gap-3">
+                            <div className={cn(
+                                "flex h-10 w-10 items-center justify-center rounded-full shrink-0",
+                                data.ready_for_handoff ? "bg-success-light" : "bg-error-light",
+                            )}>
+                                {data.ready_for_handoff
+                                    ? <CheckCircle2 className="h-5 w-5 text-success" />
+                                    : <XCircle className="h-5 w-5 text-error" />
+                                }
                             </div>
-                        ))}
+                            <div>
+                                <p className="text-[11px] uppercase tracking-wide text-text-muted">{t("Status")}</p>
+                                <p className={cn("text-sm font-bold", data.ready_for_handoff ? "text-success" : "text-error")}>
+                                    {data.ready_for_handoff ? t("Ready") : t("Not Ready")}
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                </CardContent>
-            </Card>
 
-            <Tabs value={scope} onValueChange={(v) => setScope(v as typeof scope)}>
-                <TabsList className="mb-4">
-                    <TabsTrigger value="sprint"><Layers className="h-4 w-4 me-1.5" />{t("By Sprint")}</TabsTrigger>
-                    <TabsTrigger value="project"><FolderKanban className="h-4 w-4 me-1.5" />{t("By Project")}</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="sprint">
-                    <div className="flex items-center gap-2 mb-4 flex-wrap">
-                        {sprints.map((sprint) => (
-                            <button
-                                key={sprint.id}
-                                onClick={() => setSelectedSprintId(sprint.id)}
-                                className={cn(
-                                    "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer",
-                                    selectedSprintId === sprint.id
-                                        ? "border-primary bg-primary-lighter text-primary"
-                                        : "border-border text-text-muted hover:text-text-dark hover:bg-muted/40",
-                                )}
-                            >
-                                {sprint.name}
-                            </button>
-                        ))}
-                    </div>
-                    {isLoading && handoffs.length === 0 ? (
-                        <LoadingTile />
+                    {criteria.length === 0 ? (
+                        <EmptyState icon={ArrowRight} title={t("No Criteria")} description={t("No handoff criteria defined for this project.")} />
                     ) : (
-                        <>
-                            <StatsRow stats={summary} />
-                            {handoffs.length > 0 ? (
-                                <HandoffCards handoffs={handoffs} canToggle={canToggle} onToggle={onToggle} />
-                            ) : (
-                                <EmptyState icon={ArrowRightLeft} title={t("No Handoffs")} description={t("No handoffs for this sprint")} />
-                            )}
-                        </>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {Object.entries(grouped).map(([transition, items]) => (
+                                <Card key={transition}>
+                                    <CardContent className="p-4">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <span className="text-xs font-semibold text-primary bg-primary-lighter px-2 py-1 rounded">
+                                                {transition}
+                                            </span>
+                                            <Badge variant={items.every((c) => c.is_checked) ? "success" : "secondary"} className="text-[10px]">
+                                                {items.filter((c) => c.is_checked).length}/{items.length}
+                                            </Badge>
+                                        </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            {items.map((c) => (
+                                                <button
+                                                    key={c.id}
+                                                    type="button"
+                                                    onClick={() => handleToggle(c)}
+                                                    disabled={!canToggle}
+                                                    className={cn(
+                                                        "flex items-center gap-2 text-left",
+                                                        canToggle ? "cursor-pointer hover:opacity-80" : "cursor-default",
+                                                    )}
+                                                >
+                                                    {c.is_checked ? (
+                                                        <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                                                    ) : (
+                                                        <XCircle className="h-4 w-4 text-text-muted shrink-0" />
+                                                    )}
+                                                    <span className={cn("text-xs flex-1 text-left", c.is_checked ? "text-text-dark" : "text-text-muted")}>
+                                                        {c.title}
+                                                    </span>
+                                                    {c.is_required && (
+                                                        <span className="text-[10px] text-error font-semibold shrink-0">{t("Required")}</span>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
                     )}
-                </TabsContent>
-
-                <TabsContent value="project">
-                    <div className="flex items-center gap-2 mb-4 flex-wrap">
-                        {projects.map((project) => (
-                            <button
-                                key={project.id}
-                                onClick={() => setSelectedProjectId(project.id)}
-                                className={cn(
-                                    "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer",
-                                    selectedProjectId === project.id
-                                        ? "border-primary bg-primary-lighter text-primary"
-                                        : "border-border text-text-muted hover:text-text-dark hover:bg-muted/40",
-                                )}
-                            >
-                                {project.name}
-                            </button>
-                        ))}
-                    </div>
-                    {isLoading && handoffs.length === 0 ? (
-                        <LoadingTile />
-                    ) : (
-                        <>
-                            <StatsRow stats={summary} />
-                            {handoffs.length > 0 ? (
-                                <HandoffCards handoffs={handoffs} canToggle={canToggle} onToggle={onToggle} />
-                            ) : (
-                                <EmptyState icon={ArrowRightLeft} title={t("No Handoffs")} description={t("No handoffs for this project")} />
-                            )}
-                        </>
-                    )}
-                </TabsContent>
-            </Tabs>
+                </>
+            )}
 
             <ManageCriteriaDialog
                 open={manageOpen}
                 onOpenChange={(next) => { setManageOpen(next); if (!next) refetch(); }}
-                phases={phases}
+                projectId={selectedProjectId}
             />
         </div>
     );
 };
 
-const LoadingTile = () => (
-    <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-text-muted">
-        {t("Loading handoffs...")}
+const StatCard = ({ label, value, tone }: { label: string; value: number; tone?: "success" }) => (
+    <div className="rounded-lg border border-border bg-card px-4 py-3">
+        <p className="text-[11px] uppercase tracking-wide text-text-muted">{label}</p>
+        <p className={cn("text-2xl font-bold mt-1", tone === "success" ? "text-success" : "text-text-dark")}>
+            <AnimatedNumber value={value} />
+        </p>
     </div>
 );

@@ -85,44 +85,42 @@ export const LoginView = () => {
                         {t("Sign In")}
                     </Button>
                 </form>
-<div className="mt-6 rounded-xl bg-muted p-4">
-  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 text-center">
-    {t("Demo Credentials")}
-  </p>
+                <div className="mt-6 rounded-xl bg-muted p-4">
+                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 text-center">
+                    {t("Demo Credentials")}
+                    <br/>
+                    <div className="mt-2 ml-4 flex justify-center items-center gap-1">
+                            password is
+                            <div>
+                                <code className="text-xs font-semibold text-primary bg-primary-lighter/50 px-2 py-1 rounded-md flex-1">
+                                    password
+                                </code>
+                            </div>
+                    </div>
+                  </p>
 
-  <div className="flex flex-col gap-3">
-    {DEMO_USERS.map((user) => (
-      <div key={user.role} className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-3">
+                    {DEMO_USERS.map((user) => (
+                      <div key={user.role} className="flex flex-col gap-2">
 
-        {/* Role */}
-        <p className="text-xs font-semibold text-primary text-center">
-          {user.role}
-        </p>
+                        {/* Role */}
+                        <p className="text-xs font-semibold text-primary text-center">
+                          {user.role}
+                        </p>
 
-        {/* Email */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-text-muted w-20">
-            {t("Email")}:
-          </span>
-          <code className="text-xs font-semibold text-primary bg-primary-lighter/50 px-2 py-1 rounded-md flex-1">
-            {user.email}
-          </code>
-        </div>
-
-        {/* Password */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-text-muted w-20">
-            {t("Password")}:
-          </span>
-          <code className="text-xs font-semibold text-primary bg-primary-lighter/50 px-2 py-1 rounded-md flex-1">
-            {user.password}
-          </code>
-        </div>
-
-      </div>
-    ))}
-  </div>
-</div>
+                        {/* Email */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-text-muted w-20">
+                            {t("Email")}:
+                          </span>
+                          <code className="text-xs font-semibold text-primary bg-primary-lighter/50 px-2 py-1 rounded-md flex-1">
+                            {user.email}
+                          </code>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
             </div>
         </div>
     );

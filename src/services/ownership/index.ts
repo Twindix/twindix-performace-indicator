@@ -1,31 +1,46 @@
 import { apisData } from "@/data";
-import type {
-    OwnershipFeedFiltersInterface,
-    OwnershipFeedResponseInterface,
-    OwnershipLeaderboardEntryInterface,
-    OwnershipStatsInterface,
-} from "@/interfaces";
+import type { FeatureInterface } from "@/interfaces";
 import { apiClient } from "@/lib/axios";
 
+const extractList = (data: unknown): FeatureInterface[] => {
+    if (data && typeof data === "object") {
+        const d = data as Record<string, unknown>;
+        if (Array.isArray(d.data)) return d.data as FeatureInterface[];
+        if (Array.isArray(data)) return data as FeatureInterface[];
+    }
+    return [];
+};
+
 export const ownershipService = {
-    feedHandler: async (filters?: OwnershipFeedFiltersInterface): Promise<OwnershipFeedResponseInterface> => {
-        const { data } = await apiClient.get<OwnershipFeedResponseInterface>(apisData.ownership.feed, {
-            params: filters,
-        });
-        return data;
+    byProjectHandler: async (projectId: string): Promise<FeatureInterface[]> => {
+        if (!projectId) {
+            throw new Error('Project ID is required');
+        }
+        const { data } = await apiClient.get(apisData.ownership.byProject(projectId));
+        return extractList(data);
     },
 
-    leaderboardHandler: async (): Promise<OwnershipLeaderboardEntryInterface[]> => {
-        const { data } = await apiClient.get<OwnershipLeaderboardEntryInterface[] | { data: OwnershipLeaderboardEntryInterface[] }>(
-            apisData.ownership.leaderboard,
-        );
-        return Array.isArray(data) ? data : (data.data ?? []);
+    bySprintHandler: async (sprintId: string): Promise<FeatureInterface[]> => {
+        if (!sprintId) {
+            throw new Error('Sprint ID is required');
+        }
+        const { data } = await apiClient.get(apisData.ownership.bySprint(sprintId));
+        return extractList(data);
     },
 
-    statsHandler: async (): Promise<OwnershipStatsInterface> => {
-        const { data } = await apiClient.get<OwnershipStatsInterface | { data: OwnershipStatsInterface }>(
-            apisData.ownership.stats,
-        );
-        return "data" in (data as object) ? (data as { data: OwnershipStatsInterface }).data : (data as OwnershipStatsInterface);
+    byUserHandler: async (userId: string): Promise<FeatureInterface[]> => {
+        if (!userId) {
+            throw new Error('User ID is required');
+        }
+        const { data } = await apiClient.get(apisData.ownership.byUser(userId));
+        return extractList(data);
+    },
+
+    byTaskHandler: async (taskId: string): Promise<FeatureInterface[]> => {
+        if (!taskId) {
+            throw new Error('Task ID is required');
+        }
+        const { data } = await apiClient.get(apisData.ownership.byTask(taskId));
+        return extractList(data);
     },
 };

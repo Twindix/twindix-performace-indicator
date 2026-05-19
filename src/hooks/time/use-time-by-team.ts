@@ -1,18 +1,19 @@
 import { timeConstants } from "@/constants";
-import type { TimeAggregationResponseInterface, TimeByTeamRowInterface } from "@/interfaces";
+import type { UserTimeTrackingResponseInterface } from "@/interfaces";
 import { timeService } from "@/services";
 
 import { useQueryAction } from "../shared";
 
-export const useTimeByTeam = () => {
-    const { data, isLoading, refetch } = useQueryAction<TimeAggregationResponseInterface<TimeByTeamRowInterface> | null>(
-        () => timeService.byTeamHandler(),
-        [],
+export const useTimeTrackingByUser = (userId: string) => {
+    const { data, isLoading, refetch } = useQueryAction<UserTimeTrackingResponseInterface | null>(
+        () => timeService.byUserHandler(userId),
+        [userId],
         {
+            enabled: !!userId,
             errorFallback: timeConstants.errors.fetchFailed,
-            context: "time.byTeam",
+            context: "time.byUser",
             initialData: null,
         },
     );
-    return { rows: data?.data ?? [], summary: data?.summary ?? null, isLoading, refetch };
+    return { data: data ?? null, isLoading, refetch };
 };

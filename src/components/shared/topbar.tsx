@@ -52,7 +52,7 @@ export const Topbar = () => {
     const { projects } = useProjectsListLite();
     // Use the cached reader — `useAppInit` seeded it on cold start, and sprint
     // mutations invalidate it. Avoids a duplicate /projects/:id/sprints fetch.
-    const { sprints } = useProjectSprints(activeProjectId);
+    const { sprints, isLoading: sprintsLoading } = useProjectSprints(activeProjectId);
     const navigate = useNavigate();
     const p = usePermissions();
     const canEditProfile = p.auth.editProfile();
@@ -61,21 +61,22 @@ export const Topbar = () => {
     // Only active sprints belong in a selector. Memoize so the next effect's dep array
     // is stable across renders that don't actually change the sprint list.
     const selectableSprints: SprintInterface[] = useMemo(
-        () => sprints.filter((s) => s.status === "active"),
+        () => sprints.filter((s) => s.status !== "completed"),
         [sprints],
     );
 
     // Reactive fallback: if the persisted sprint becomes invalid (deleted, project switch
-    // drops it from the list, etc.) jump to the first active sprint. Project resolution
-    // is owned by useAppInit on first mount; this is only a runtime safety net.
+    // drops it from the list, etc.) jump to the first active sprint. Skip while sprints
+    // are still loading — the empty list is transient and must not clear the stored sprint.
     useEffect(() => {
+        if (sprintsLoading) return;
         if (selectableSprints.length === 0) {
             if (activeSprintId) onSetActiveSprint("");
             return;
         }
         if (activeSprintId && selectableSprints.some((s) => s.id === activeSprintId)) return;
         onSetActiveSprint(selectableSprints[0].id);
-    }, [selectableSprints, activeSprintId, onSetActiveSprint]);
+    }, [selectableSprints, activeSprintId, onSetActiveSprint, sprintsLoading]);
 
     const isArabic = settings.language === "ar";
 

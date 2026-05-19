@@ -4,13 +4,14 @@ import { ganttService } from "@/services";
 
 import { useQueryAction } from "../shared";
 
-export const useGanttTasks = (filters?: GanttApiFiltersInterface) => {
-    const { project_id, status, from, to } = filters ?? {};
-
+export const useGanttTasks = (entityId: string, mode: "sprint" | "project" = "sprint", apiFilters?: GanttApiFiltersInterface) => {
     const { data, isLoading, refetch } = useQueryAction<GanttResponseInterface | null>(
-        () => ganttService.tasksHandler({ project_id, status, from, to }),
-        [project_id, status, from, to],
+        () => mode === "project"
+            ? ganttService.byProjectHandler(entityId, apiFilters)
+            : ganttService.bySprintHandler(entityId, apiFilters),
+        [entityId, mode, apiFilters?.status],
         {
+            enabled: !!entityId,
             errorFallback: ganttConstants.errors.fetchFailed,
             context: "gantt.tasks",
             initialData: null,
@@ -18,7 +19,7 @@ export const useGanttTasks = (filters?: GanttApiFiltersInterface) => {
     );
 
     return {
-        summary: data?.summary ?? null,
+        sprint: data?.sprint ?? null,
         tasks: data?.tasks ?? [],
         isLoading,
         refetch,

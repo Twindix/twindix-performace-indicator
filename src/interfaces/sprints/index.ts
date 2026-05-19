@@ -7,9 +7,17 @@ export interface SprintInterface {
     start_date: string;
     end_date: string;
     created_at: string;
+    // Inline analytics from list response
+    completion_rate?: number;
+    on_time_rate?: number;
+    open_blockers?: number;
+    tasks_done?: number;
+    tasks_total?: number;
+    story_points_done?: number;
+    story_points_total?: number;
     // Additional properties expected by the code
-    startDate?: string; // Alias for start_date
-    endDate?: string; // Alias for end_date
+    startDate?: string;
+    endDate?: string;
     goals?: string[];
     healthScore?: number;
 }

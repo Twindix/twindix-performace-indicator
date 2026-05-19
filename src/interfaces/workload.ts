@@ -1,66 +1,20 @@
-export interface WorkloadByProjectRowInterface {
-    project_id: string;
-    project_name: string;
-    project_status: string;
-    team_name: string;
-    member_count: number;
-    avg_utilization: number;
-    overloaded_count: number;
-    context_switches: number;
-    points_completed: number;
-    points_total: number;
-    progress: number;
+export interface WorkloadUserInterface {
+    id: string;
+    name: string;
 }
 
-export interface WorkloadBySprintRowInterface {
-    sprint_id: string;
-    sprint_name: string;
-    sprint_status: string;
-    project_name: string;
-    member_count: number;
-    avg_utilization: number;
-    overloaded_count: number;
-    context_switches: number;
-    points_completed: number;
-    points_total: number;
-    progress: number;
-    start_date?: string | null;
-    end_date?: string | null;
-}
-
-export interface WorkloadByTeamRowInterface {
-    team_id: string;
-    team_name: string;
-    department?: string | null;
-    member_count: number;
-    avg_utilization: number;
-    overloaded_count: number;
-    context_switches: number;
-    points_completed: number;
-    points_total: number;
-}
-
-export interface WorkloadByMemberRowInterface {
-    member_id: string;
-    member_name: string;
-    avatar_initials?: string | null;
-    role?: string | null;
-    team_name?: string | null;
-    sprint_id?: string | null;
-    sprint_name?: string | null;
-    capacity: number;
-    assigned: number;
-    completed: number;
-    utilization: number;
-    context_switches: number;
-    active_tasks: number;
-    overloaded: boolean;
+export interface WorkloadUserRowInterface {
+    user: WorkloadUserInterface;
+    total_tasks: number;
+    completed_tasks: number;
+    in_progress_tasks: number;
+    blocked_tasks: number;
+    total_story_points: number;
+    completed_story_points: number;
+    total_estimated_hours: number;
+    logged_hours: number;
 }
 
 export interface WorkloadResponseInterface<T> {
     data: T[];
-}
-
-export interface WorkloadMemberFiltersInterface {
-    sprint_id?: string;
 }

@@ -3,7 +3,7 @@ import { File as FileIcon, UploadCloud, X } from "lucide-react";
 
 import { Button, Input, Label, Textarea } from "@/atoms";
 import { DeployEnvironment } from "@/enums";
-import { t, useFormErrors, useUploadDeploy } from "@/hooks";
+import { t, useFormErrors, useProjectsListLite, useUploadDeploy } from "@/hooks";
 import type { DeployInterface } from "@/interfaces";
 import { cn } from "@/utils";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
@@ -17,11 +17,13 @@ interface Props {
 export const UploadDeployDialog = ({ open, onOpenChange, onUploaded }: Props) => {
     const { setFieldErrors, getError, clear: clearFieldErrors } = useFormErrors();
     const { uploadHandler, isLoading } = useUploadDeploy({ onFieldErrors: setFieldErrors });
+    const { projects } = useProjectsListLite();
 
     const [file, setFile] = useState<File | null>(null);
     const [title, setTitle] = useState("");
     const [version, setVersion] = useState("");
     const [changes, setChanges] = useState("");
+    const [projectId, setProjectId] = useState("");
     const [environment, setEnvironment] = useState<DeployEnvironment>(DeployEnvironment.Production);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -32,6 +34,7 @@ export const UploadDeployDialog = ({ open, onOpenChange, onUploaded }: Props) =>
             setTitle("");
             setVersion("");
             setChanges("");
+            setProjectId("");
             setEnvironment(DeployEnvironment.Production);
             setIsDragging(false);
             clearFieldErrors();
@@ -69,6 +72,7 @@ export const UploadDeployDialog = ({ open, onOpenChange, onUploaded }: Props) =>
             file,
             changes: bullets,
             environment,
+            project_id: projectId || undefined,
         });
         if (result) {
             onUploaded?.(result);
@@ -77,7 +81,7 @@ export const UploadDeployDialog = ({ open, onOpenChange, onUploaded }: Props) =>
     };
 
     const fileTooBig = file && file.size > 250 * 1024 * 1024;
-    const canSubmit = !!file && !!title.trim() && !fileTooBig && !isLoading;
+    const canSubmit = !!file && !!title.trim() && !!projectId && !fileTooBig && !isLoading;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -147,6 +151,17 @@ export const UploadDeployDialog = ({ open, onOpenChange, onUploaded }: Props) =>
                         <p className="text-xs text-error">{t("File exceeds the 250 MB demo limit.")}</p>
                     )}
                     {getError("file") && <p className="text-[11px] text-error">{getError("file")}</p>}
+
+                    <div className="flex flex-col gap-1.5">
+                        <Label>{t("Project")} <span className="text-error">*</span></Label>
+                        <Select value={projectId} onValueChange={setProjectId}>
+                            <SelectTrigger><SelectValue placeholder={t("Select project")} /></SelectTrigger>
+                            <SelectContent>
+                                {projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        {getError("project_id") && <p className="text-[11px] text-error">{getError("project_id")}</p>}
+                    </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">

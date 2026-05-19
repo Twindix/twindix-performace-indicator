@@ -1,17 +1,19 @@
 import { useRef, useState } from "react";
-import { ChevronLeft, Paperclip, Plus, Send, Trash2 } from "lucide-react";
+import { ChevronLeft, Edit2, Paperclip, Plus, Save, Send, Trash2, X } from "lucide-react";
 
-import { Badge, Button, Input, Textarea } from "@/atoms";
+import { Badge, Button, DatePicker, Input, Label, Textarea, TimePicker } from "@/atoms";
 import {
     t,
     useAuth,
     useAddMeetingSlot,
     useCreateMeetingComment,
+    useDeleteMeeting,
     useDeleteMeetingAttachment,
     useDeleteMeetingComment,
     useFinalizeMeeting,
     useMeetingDetail,
     useRemoveMeetingSlot,
+    useUpdateMeeting,
     useUpdateMeetingRsvp,
     useUploadMeetingAttachment,
     useVoteMeetingSlot,
@@ -19,15 +21,25 @@ import {
 import type {
     ApiMeetingAttendeeInterface,
     ApiMeetingTimeSlotInterface,
+    MeetingTypeApi,
     RsvpStatus,
 } from "@/interfaces";
 import { cn } from "@/utils";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 
 import { MEETING_STATUS_LABEL, MEETING_STATUS_VARIANT, MEETING_TYPE_LABEL, RSVP_LABEL, RSVP_TONE } from "./constants";
 
 interface MeetingDetailProps {
     meetingId: string;
     onBack: () => void;
+}
+
+interface EditForm {
+    title: string;
+    description: string;
+    location: string;
+    notes: string;
+    meeting_type: MeetingTypeApi;
 }
 
 const computeDuration = (start?: string | null, end?: string | null) => {
@@ -60,16 +72,21 @@ export const MeetingDetail = ({ meetingId, onBack }: MeetingDetailProps) => {
     const { meeting, isLoading, refetch, setMeeting } = useMeetingDetail(meetingId);
     const { voteHandler } = useVoteMeetingSlot();
     const { updateRsvpHandler } = useUpdateMeetingRsvp();
-    const { finalizeHandler } = useFinalizeMeeting();
+    const { selectSlotHandler } = useFinalizeMeeting();
     const { addHandler: addSlotHandler } = useAddMeetingSlot();
     const { removeHandler: removeSlotHandler } = useRemoveMeetingSlot();
     const { createHandler: createCommentHandler } = useCreateMeetingComment();
     const { deleteHandler: deleteCommentHandler } = useDeleteMeetingComment();
     const { uploadHandler: uploadAttachmentHandler } = useUploadMeetingAttachment();
     const { deleteHandler: deleteAttachmentHandler } = useDeleteMeetingAttachment();
+    const { updateHandler, isLoading: isSaving } = useUpdateMeeting();
+    const { deleteHandler: deleteMeetingHandler, isLoading: isDeleting } = useDeleteMeeting();
 
     const [commentDraft, setCommentDraft] = useState("");
     const [slotDraft, setSlotDraft] = useState({ date: "", start_time: "", end_time: "" });
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState<EditForm | null>(null);
+    const [deleteConfirm, setDeleteConfirm] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     if (isLoading && !meeting) {
@@ -110,9 +127,38 @@ export const MeetingDetail = ({ meetingId, onBack }: MeetingDetailProps) => {
     const isVoting = meeting.status === "voting";
     const isOrganizer = meeting.organizer.id === currentUserId;
 
+    const startEdit = () => {
+        setEditForm({
+            title: meeting.title,
+            description: meeting.description ?? "",
+            location: meeting.location ?? "",
+            notes: meeting.notes ?? "",
+            meeting_type: meeting.meeting_type,
+        });
+        setIsEditing(true);
+    };
+
+    const cancelEdit = () => { setIsEditing(false); setEditForm(null); };
+
+    const handleSaveEdit = async () => {
+        if (!editForm) return;
+        const updated = await updateHandler(meeting.id, {
+            title: editForm.title.trim() || undefined,
+            description: editForm.description.trim() || undefined,
+            location: editForm.location.trim() || undefined,
+            notes: editForm.notes.trim() || undefined,
+            meeting_type: editForm.meeting_type,
+        });
+        if (updated) { setMeeting(updated); setIsEditing(false); setEditForm(null); }
+    };
+
+    const handleDelete = async () => {
+        const ok = await deleteMeetingHandler(meeting.id);
+        if (ok) onBack();
+    };
+
     const handleRsvp = async (rsvp: RsvpStatus) => {
-        if (!currentUserId) return;
-        const updated = await updateRsvpHandler(meeting.id, currentUserId, rsvp);
+        const updated = await updateRsvpHandler(meeting.id, rsvp);
         if (updated) setMeeting(updated);
     };
 
@@ -124,10 +170,7 @@ export const MeetingDetail = ({ meetingId, onBack }: MeetingDetailProps) => {
     const handleSlotAdd = async () => {
         if (!slotDraft.date || !slotDraft.start_time || !slotDraft.end_time) return;
         const result = await addSlotHandler(meeting.id, slotDraft);
-        if (result) {
-            setSlotDraft({ date: "", start_time: "", end_time: "" });
-            refetch();
-        }
+        if (result) { setSlotDraft({ date: "", start_time: "", end_time: "" }); refetch(); }
     };
 
     const handleSlotRemove = async (slotId: string) => {
@@ -136,7 +179,8 @@ export const MeetingDetail = ({ meetingId, onBack }: MeetingDetailProps) => {
     };
 
     const handleFinalize = async () => {
-        const updated = await finalizeHandler(meeting.id);
+        if (!winning) return;
+        const updated = await selectSlotHandler(meeting.id, winning.id);
         if (updated) setMeeting(updated);
     };
 
@@ -144,10 +188,7 @@ export const MeetingDetail = ({ meetingId, onBack }: MeetingDetailProps) => {
         const body = commentDraft.trim();
         if (!body) return;
         const created = await createCommentHandler(meeting.id, body);
-        if (created) {
-            setCommentDraft("");
-            refetch();
-        }
+        if (created) { setCommentDraft(""); refetch(); }
     };
 
     const handleCommentDelete = async (commentId: string) => {
@@ -170,33 +211,99 @@ export const MeetingDetail = ({ meetingId, onBack }: MeetingDetailProps) => {
 
     return (
         <div>
+            {/* Header */}
             <div className="flex items-start gap-3 mb-4">
-                <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5 mt-1">
+                <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5 mt-1 shrink-0">
                     <ChevronLeft className="h-4 w-4" />
                     {t("Back")}
                 </Button>
-                <div className="flex-1">
-                    <div className="flex items-start justify-between gap-3">
-                        <div>
-                            <h2 className="text-xl font-bold text-text-dark">{meeting.title}</h2>
-                            {meeting.description && (
-                                <p className="text-sm text-text-muted mt-1">{meeting.description}</p>
-                            )}
+                <div className="flex-1 min-w-0">
+                    {isEditing && editForm ? (
+                        <div className="space-y-2">
+                            <Input
+                                value={editForm.title}
+                                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                                className="text-lg font-bold"
+                                placeholder={t("Meeting title")}
+                            />
+                            <Textarea
+                                rows={2}
+                                value={editForm.description}
+                                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                                placeholder={t("Description (optional)")}
+                            />
                         </div>
-                        <Badge variant={MEETING_STATUS_VARIANT[meeting.status]}>
-                            {t(MEETING_STATUS_LABEL[meeting.status])}
-                        </Badge>
-                    </div>
+                    ) : (
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <h2 className="text-xl font-bold text-text-dark">{meeting.title}</h2>
+                                {meeting.description && (
+                                    <p className="text-sm text-text-muted mt-1">{meeting.description}</p>
+                                )}
+                            </div>
+                            <Badge variant={MEETING_STATUS_VARIANT[meeting.status]}>
+                                {t(MEETING_STATUS_LABEL[meeting.status])}
+                            </Badge>
+                        </div>
+                    )}
                 </div>
+
+                {isOrganizer && (
+                    <div className="flex items-center gap-2 shrink-0 mt-1">
+                        {isEditing ? (
+                            <>
+                                <Button size="sm" onClick={handleSaveEdit} loading={isSaving} className="gap-1.5">
+                                    <Save className="h-3.5 w-3.5" />
+                                    {t("Save")}
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={cancelEdit} disabled={isSaving}>
+                                    <X className="h-3.5 w-3.5" />
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Button size="sm" variant="outline" onClick={startEdit} className="gap-1.5">
+                                    <Edit2 className="h-3.5 w-3.5" />
+                                    {t("Edit")}
+                                </Button>
+                                <Button size="sm" variant="destructive" onClick={() => setDeleteConfirm(true)} className="gap-1.5">
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    {t("Delete")}
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
 
+            {/* Stats bar */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-lg border border-border bg-card p-4 mb-4">
                 <Stat label={t("Date")} value={meeting.date ?? "—"} />
                 <Stat label={t("Time")} value={meeting.start_time && meeting.end_time ? `${meeting.start_time} – ${meeting.end_time}` : "—"} />
                 <Stat label={t("Duration")} value={duration ?? "—"} />
-                <Stat label={t("Type")} value={t(MEETING_TYPE_LABEL[meeting.meeting_type])} />
+                {isEditing && editForm ? (
+                    <div>
+                        <p className="text-[11px] uppercase tracking-wide text-text-muted mb-1">{t("Type")}</p>
+                        <Select
+                            value={editForm.meeting_type}
+                            onValueChange={(v) => setEditForm({ ...editForm, meeting_type: v as MeetingTypeApi })}
+                        >
+                            <SelectTrigger className="h-8 text-xs">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {(Object.keys(MEETING_TYPE_LABEL) as MeetingTypeApi[]).map((k) => (
+                                    <SelectItem key={k} value={k}>{t(MEETING_TYPE_LABEL[k])}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                ) : (
+                    <Stat label={t("Type")} value={t(MEETING_TYPE_LABEL[meeting.meeting_type])} />
+                )}
             </div>
 
+            {/* RSVP banner */}
             {myAttendance && !isVoting && meeting.status === "scheduled" && (
                 <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-4 mb-4">
                     {myAttendance.rsvp_status === "pending" ? (
@@ -207,24 +314,17 @@ export const MeetingDetail = ({ meetingId, onBack }: MeetingDetailProps) => {
                         </p>
                     )}
                     <div className="flex items-center gap-2">
-                        <Button
-                            size="sm"
-                            onClick={() => handleRsvp("accepted")}
-                            variant={myAttendance.rsvp_status === "accepted" ? "default" : "outline"}
-                        >
+                        <Button size="sm" onClick={() => handleRsvp("accepted")} variant={myAttendance.rsvp_status === "accepted" ? "default" : "outline"}>
                             {t("Accept")}
                         </Button>
-                        <Button
-                            size="sm"
-                            onClick={() => handleRsvp("declined")}
-                            variant={myAttendance.rsvp_status === "declined" ? "destructive" : "outline"}
-                        >
+                        <Button size="sm" onClick={() => handleRsvp("declined")} variant={myAttendance.rsvp_status === "declined" ? "destructive" : "outline"}>
                             {t("Decline")}
                         </Button>
                     </div>
                 </div>
             )}
 
+            {/* Voting */}
             {isVoting && (
                 <div className="rounded-lg border border-border bg-card p-4 mb-4">
                     <div className="flex items-center justify-between mb-3">
@@ -264,20 +364,11 @@ export const MeetingDetail = ({ meetingId, onBack }: MeetingDetailProps) => {
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <Button
-                                            size="sm"
-                                            variant={hasVoted ? "default" : "outline"}
-                                            onClick={() => handleVote(slot.id)}
-                                        >
+                                        <Button size="sm" variant={hasVoted ? "default" : "outline"} onClick={() => handleVote(slot.id)}>
                                             {hasVoted ? t("Voted") : t("Vote")}
                                         </Button>
                                         {isOrganizer && (
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                className="h-8 w-8"
-                                                onClick={() => handleSlotRemove(slot.id)}
-                                            >
+                                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleSlotRemove(slot.id)}>
                                                 <Trash2 className="h-4 w-4 text-error" />
                                             </Button>
                                         )}
@@ -290,25 +381,19 @@ export const MeetingDetail = ({ meetingId, onBack }: MeetingDetailProps) => {
                     {isOrganizer && (
                         <div className="mt-4 pt-4 border-t border-border">
                             <p className="text-xs font-semibold text-text-dark mb-2">{t("Add another slot")}</p>
-                            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center">
-                                <Input
-                                    type="date"
-                                    value={slotDraft.date}
-                                    onChange={(e) => setSlotDraft({ ...slotDraft, date: e.target.value })}
-                                />
-                                <Input
-                                    type="time"
-                                    value={slotDraft.start_time}
-                                    onChange={(e) => setSlotDraft({ ...slotDraft, start_time: e.target.value })}
-                                    className="w-28"
-                                />
-                                <Input
-                                    type="time"
-                                    value={slotDraft.end_time}
-                                    onChange={(e) => setSlotDraft({ ...slotDraft, end_time: e.target.value })}
-                                    className="w-28"
-                                />
-                                <Button size="sm" className="gap-1" onClick={handleSlotAdd}>
+                            <div className="space-y-2">
+                                <DatePicker value={slotDraft.date} onChange={(v) => setSlotDraft({ ...slotDraft, date: v })} />
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="space-y-1">
+                                        <p className="text-[11px] text-text-muted">{t("Start")}</p>
+                                        <TimePicker value={slotDraft.start_time} onChange={(v) => setSlotDraft({ ...slotDraft, start_time: v })} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[11px] text-text-muted">{t("End")}</p>
+                                        <TimePicker value={slotDraft.end_time} onChange={(v) => setSlotDraft({ ...slotDraft, end_time: v })} />
+                                    </div>
+                                </div>
+                                <Button size="sm" className="gap-1 w-full" onClick={handleSlotAdd}>
                                     <Plus className="h-3.5 w-3.5" />
                                     {t("Add")}
                                 </Button>
@@ -318,17 +403,45 @@ export const MeetingDetail = ({ meetingId, onBack }: MeetingDetailProps) => {
                 </div>
             )}
 
-            <div className="rounded-lg border border-border bg-card p-4 mb-4 space-y-3">
+            {/* Details */}
+            <div className="rounded-lg border border-border bg-card p-4 mb-4 space-y-4">
                 <Labelled label={t("Organizer")} value={meeting.organizer.name} />
-                {meeting.location && <Labelled label={t("Location / Link")} value={meeting.location} />}
-                {meeting.description && <Labelled label={t("Description")} value={meeting.description} />}
-                {meeting.notes && <Labelled label={t("Notes / Agenda")} value={meeting.notes} />}
+
+                {isEditing && editForm ? (
+                    <>
+                        <div className="space-y-1.5">
+                            <Label className="text-[11px] uppercase tracking-wide text-text-muted">{t("Location / Link")}</Label>
+                            <Input
+                                value={editForm.location}
+                                onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                                placeholder={t("Room name or meeting link")}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-[11px] uppercase tracking-wide text-text-muted">{t("Notes / Agenda")}</Label>
+                            <Textarea
+                                rows={3}
+                                value={editForm.notes}
+                                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                                placeholder={t("Add agenda or notes...")}
+                            />
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        {meeting.location && <Labelled label={t("Location / Link")} value={meeting.location} />}
+                        {meeting.description && <Labelled label={t("Description")} value={meeting.description} />}
+                        {meeting.notes && <Labelled label={t("Notes / Agenda")} value={meeting.notes} />}
+                    </>
+                )}
+
                 <div className="grid grid-cols-2 gap-4">
                     {meeting.project && <Labelled label={t("Project")} value={meeting.project.name} tone="primary" />}
                     {meeting.team && <Labelled label={t("Team")} value={meeting.team.name} tone="primary" />}
                 </div>
             </div>
 
+            {/* Attendees */}
             <div className="rounded-lg border border-border bg-card p-4 mb-4">
                 <h3 className="text-sm font-semibold text-text-dark mb-3">
                     {t("Attendees")} <span className="text-text-muted font-normal">({meeting.attendees.length})</span>
@@ -345,6 +458,7 @@ export const MeetingDetail = ({ meetingId, onBack }: MeetingDetailProps) => {
                 </div>
             </div>
 
+            {/* Attachments */}
             <div className="rounded-lg border border-border bg-card p-4 mb-4">
                 <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-text-dark">
@@ -372,12 +486,7 @@ export const MeetingDetail = ({ meetingId, onBack }: MeetingDetailProps) => {
                                     </div>
                                 </div>
                                 {(attachment.uploaded_by.id === currentUserId || isOrganizer) && (
-                                    <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="h-8 w-8"
-                                        onClick={() => handleAttachmentDelete(attachment.id)}
-                                    >
+                                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleAttachmentDelete(attachment.id)}>
                                         <Trash2 className="h-4 w-4 text-error" />
                                     </Button>
                                 )}
@@ -387,6 +496,7 @@ export const MeetingDetail = ({ meetingId, onBack }: MeetingDetailProps) => {
                 )}
             </div>
 
+            {/* Comments */}
             <div className="rounded-lg border border-border bg-card p-4">
                 <h3 className="text-sm font-semibold text-text-dark mb-3">
                     {t("Comments")} <span className="text-text-muted font-normal">({meeting.comments.length})</span>
@@ -434,6 +544,26 @@ export const MeetingDetail = ({ meetingId, onBack }: MeetingDetailProps) => {
                     </Button>
                 </div>
             </div>
+
+            {/* Delete confirmation dialog */}
+            <Dialog open={deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(false)}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>{t("Delete Meeting")}</DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-text-muted mt-2">
+                        {t("Are you sure you want to delete")} <strong>{meeting.title}</strong>? {t("This cannot be undone.")}
+                    </p>
+                    <div className="flex justify-end gap-2 mt-4">
+                        <DialogClose asChild>
+                            <Button variant="outline" disabled={isDeleting}>{t("Cancel")}</Button>
+                        </DialogClose>
+                        <Button variant="destructive" onClick={handleDelete} loading={isDeleting}>
+                            {t("Delete")}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

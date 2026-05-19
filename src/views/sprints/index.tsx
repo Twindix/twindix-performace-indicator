@@ -2,12 +2,11 @@ import { useState } from "react";
 import { Calendar, Edit, LineChart, ListChecks, MoreHorizontal, Plus, Target, Trash2, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import { Badge, Button, Card, CardContent, Input, Label } from "@/atoms";
+import { Badge, Button, Card, CardContent, DatePicker, Input, Label } from "@/atoms";
 import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shared";
+import { ScoreGauge } from "@/components/shared";
 import { SprintsSkeleton } from "@/components/skeletons";
 import { routesData } from "@/data";
-
-const sprintCardFallback = { completion_rate: 0, on_time_rate: 0, days_left: 0, open_blockers: 0, tasks_done: 0, tasks_total: 0, story_points_done: 0, story_points_total: 0 };
 import { t, useActivateSprint, useCreateSprint, useDeleteSprint, useFormErrors, usePermissions, useSprintsList, useUpdateSprint } from "@/hooks";
 import type { CreateSprintPayloadInterface, SprintInterface } from "@/interfaces";
 import { useProjectStore, useSprintStore } from "@/store";
@@ -122,7 +121,13 @@ export const SprintsView = () => {
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {sprints.map((s) => {
-                        const a = sprintCardFallback;
+                        const completion = s.completion_rate ?? 0;
+                        const onTime = s.on_time_rate ?? 0;
+                        const blockers = s.open_blockers ?? 0;
+                        const tasksDone = s.tasks_done ?? 0;
+                        const tasksTotal = s.tasks_total ?? 0;
+                        const tasksProgress = tasksTotal > 0 ? Math.round((tasksDone / tasksTotal) * 100) : 0;
+                        const canAnalytics = p.sprints.viewAnalytics() && s.status === "active";
                         return (
                         <Card key={s.id} className="hover:shadow-md transition-shadow">
                             <CardContent className="p-5 space-y-3">
@@ -166,27 +171,33 @@ export const SprintsView = () => {
                                     <span>{s.start_date} → {s.end_date}</span>
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-2">
-                                    <SprintCardStat label={t("Done")} value={`${a.completion_rate}%`} tone="primary" />
-                                    <SprintCardStat label={t("On-time")} value={`${a.on_time_rate}%`} tone="success" />
-                                    <SprintCardStat label={t("Blockers")} value={a.open_blockers} tone={a.open_blockers > 0 ? "error" : "muted"} />
-                                </div>
+                                {canAnalytics ? (
+                                    <div className="flex items-center gap-3">
+                                        <ScoreGauge score={completion} size="sm" label="done" />
+                                        <div className="flex-1 space-y-2">
+                                            <SprintCardStat label={t("On-time")} value={`${onTime}%`} tone="success" />
+                                            <SprintCardStat label={t("Blockers")} value={blockers} tone={blockers > 0 ? "error" : "muted"} />
+                                        </div>
+                                    </div>
+                                ) : null}
 
                                 <div>
                                     <div className="flex items-center justify-between text-[11px] text-text-muted mb-1">
                                         <span>{t("Tasks")}</span>
-                                        <span>{a.tasks_done} / {a.tasks_total}</span>
+                                        <span>{tasksDone} / {tasksTotal}</span>
                                     </div>
                                     <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                                        <div className="h-full bg-success" style={{ width: `${Math.round((a.tasks_done / Math.max(a.tasks_total, 1)) * 100)}%` }} />
+                                        <div className="h-full bg-success transition-all" style={{ width: `${tasksProgress}%` }} />
                                     </div>
                                 </div>
 
                                 <div className="flex items-center gap-2 pt-1">
-                                    <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => setAnalyticsSprint(s)}>
-                                        <LineChart className="h-3.5 w-3.5" />
-                                        {t("Analytics")}
-                                    </Button>
+                                    {canAnalytics && (
+                                        <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => setAnalyticsSprint(s)}>
+                                            <LineChart className="h-3.5 w-3.5" />
+                                            {t("Analytics")}
+                                        </Button>
+                                    )}
                                     <Button size="sm" className="flex-1 gap-1.5" onClick={() => openTasks(s)}>
                                         <ListChecks className="h-3.5 w-3.5" />
                                         {t("Tasks")}
@@ -220,12 +231,12 @@ export const SprintsView = () => {
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
                                 <Label htmlFor="start_date">{t("Start Date")} <span className="text-error">*</span></Label>
-                                <Input id="start_date" type="date" value={form.start_date} onChange={(e) => { setForm({ ...form, start_date: e.target.value }); clearError("start_date"); }} />
+                                <DatePicker id="start_date" value={form.start_date} onChange={(v) => { setForm({ ...form, start_date: v }); clearError("start_date"); }} />
                                 {getError("start_date") && <p className="text-xs text-error">{getError("start_date")}</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="end_date">{t("End Date")} <span className="text-error">*</span></Label>
-                                <Input id="end_date" type="date" value={form.end_date} onChange={(e) => { setForm({ ...form, end_date: e.target.value }); clearError("end_date"); }} />
+                                <DatePicker id="end_date" min={form.start_date} value={form.end_date} onChange={(v) => { setForm({ ...form, end_date: v }); clearError("end_date"); }} />
                                 {getError("end_date") && <p className="text-xs text-error">{getError("end_date")}</p>}
                             </div>
                         </div>
@@ -260,10 +271,10 @@ export const SprintsView = () => {
 interface SprintCardStatProps {
     label: string;
     value: string | number;
-    tone: "primary" | "success" | "error" | "muted";
+    tone?: "primary" | "success" | "error" | "muted";
 }
 
-const SprintCardStat = ({ label, value, tone }: SprintCardStatProps) => {
+const SprintCardStat = ({ label, value, tone = "primary" }: SprintCardStatProps) => {
     const toneClass = {
         primary: "text-primary-medium",
         success: "text-success",
@@ -271,7 +282,7 @@ const SprintCardStat = ({ label, value, tone }: SprintCardStatProps) => {
         muted: "text-text-muted",
     }[tone];
     return (
-        <div className="rounded-md bg-muted/40 px-2 py-1.5 text-center">
+        <div className="rounded-md bg-muted/40 px-2 py-1.5">
             <p className="text-[10px] uppercase tracking-wide text-text-muted">{label}</p>
             <p className={`text-sm font-bold ${toneClass}`}>{value}</p>
         </div>

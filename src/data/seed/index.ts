@@ -1,1 +1,0 @@
-export { analyticsSeed } from "./analytics";

@@ -22,7 +22,7 @@ interface CacheEntry {
 const TTL_MS = 60_000;
 
 let cache: CacheEntry | null = null;
-let inflight: Promise<SprintInterface[]> | null = null;
+const inflightMap = new Map<string, Promise<SprintInterface[]>>();
 const subscribers = new Set<() => void>();
 
 const notify = () => subscribers.forEach((fn) => fn());
@@ -39,7 +39,7 @@ export const seedProjectSprintsCache = (projectId: string, sprints: SprintInterf
 /** Drop the cache so the next read fetches fresh. Call after sprint mutations. */
 export const invalidateProjectSprintsCache = () => {
     cache = null;
-    inflight = null;
+    inflightMap.clear();
     notify();
 };
 
@@ -57,24 +57,24 @@ export const useProjectSprints = (projectId: string | null | undefined) => {
     useEffect(() => {
         if (!projectId) return;
         if (isFresh(projectId)) return;
-        if (inflight) return;
+        if (inflightMap.has(projectId)) return;
 
-        inflight = projectsService.sprintsHandler(projectId)
+        const req = projectsService.sprintsHandler(projectId)
             .then((arr) => {
                 cache = { projectId, sprints: arr, at: Date.now() };
-                inflight = null;
                 notify();
                 return arr;
             })
             .catch((err) => {
-                inflight = null;
                 notify();
                 throw err;
-            });
+            })
+            .finally(() => inflightMap.delete(projectId));
+        inflightMap.set(projectId, req);
     }, [projectId]);
 
     const sprints = projectId && isFresh(projectId) ? cache!.sprints : [];
-    const isLoading = !!projectId && !isFresh(projectId);
+    const isLoading = !!projectId && !isFresh(projectId) && inflightMap.has(projectId);
 
     const refetch = useCallback(() => {
         invalidateProjectSprintsCache();

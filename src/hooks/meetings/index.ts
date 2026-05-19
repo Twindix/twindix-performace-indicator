@@ -8,3 +8,4 @@ export { useFinalizeMeeting } from "./use-finalize-meeting";
 export { useCreateMeetingComment, useDeleteMeetingComment } from "./use-meeting-comments";
 export { useUploadMeetingAttachment, useDeleteMeetingAttachment } from "./use-meeting-attachments";
 export { useAddMeetingSlot, useRemoveMeetingSlot } from "./use-meeting-slots";
+export { useUpdateMeeting } from "./use-update-meeting";

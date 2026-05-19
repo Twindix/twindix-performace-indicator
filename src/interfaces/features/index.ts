@@ -1,15 +1,14 @@
 import type { PaginatedResponseInterface, PaginationParamsInterface } from "@/interfaces/common";
-import type { FeatureStatus, OwnershipCreatorInterface } from "@/interfaces/ownership";
+import type { FeatureStatus } from "@/interfaces/ownership";
 
 export interface FeatureInterface {
     id: string;
     title: string;
     description?: string | null;
     status: FeatureStatus;
+    priority?: "low" | "medium" | "high" | "critical" | null;
     project_id: string;
-    project_name?: string | null;
-    created_by?: OwnershipCreatorInterface | null;
-    tags: string[];
+    created_by?: { id: string; name: string } | string | null;
     linked_tasks_count?: number;
     created_at: string;
     updated_at: string;
@@ -19,8 +18,8 @@ export interface CreateFeaturePayloadInterface {
     title: string;
     description?: string;
     status?: FeatureStatus;
+    priority?: "low" | "medium" | "high" | "critical";
     project_id: string;
-    tags?: string[];
     task_ids?: string[];
 }
 

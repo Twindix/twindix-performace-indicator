@@ -165,12 +165,9 @@ export type {
 } from "./communications";
 
 export type {
-  WorkloadByProjectRowInterface,
-  WorkloadBySprintRowInterface,
-  WorkloadByTeamRowInterface,
-  WorkloadByMemberRowInterface,
+  WorkloadUserInterface,
+  WorkloadUserRowInterface,
   WorkloadResponseInterface,
-  WorkloadMemberFiltersInterface,
 } from "./workload";
 
 export type {
@@ -180,15 +177,8 @@ export type {
 } from "./metrics";
 
 export type {
-  OwnershipEntryInterface,
-  OwnershipItemType,
   FeatureStatus,
-  OwnershipCreatorInterface,
-  OwnershipFeedItemInterface,
-  OwnershipFeedFiltersInterface,
-  OwnershipFeedResponseInterface,
-  OwnershipLeaderboardEntryInterface,
-  OwnershipStatsInterface,
+  OwnershipResponseInterface,
 } from "./ownership";
 
 export type {
@@ -200,16 +190,11 @@ export type {
 } from "./features";
 
 export type {
-  HandoffCriteriaType,
-  HandoffCriterionInterface,
-  HandoffTransitionInterface,
-  HandoffsSummaryInterface,
-  HandoffsResponseInterface,
-  HandoffsFiltersInterface,
   HandoffCriteriaSeedInterface,
+  HandoffStatusResponseInterface,
   CreateHandoffCriteriaPayloadInterface,
   UpdateHandoffCriteriaPayloadInterface,
-  HandoffTaskStatusInterface,
+  HandoffCheckPayloadInterface,
 } from "./handoffs";
 
 export type {
@@ -232,7 +217,7 @@ export type {
 
 export type {
   GanttTaskInterface,
-  GanttSummaryInterface,
+  GanttSprintInterface,
   GanttResponseInterface,
   GanttApiFiltersInterface,
   GanttFiltersInterface,
@@ -240,21 +225,12 @@ export type {
 
 
 export type {
-  TimeSummaryInterface,
-  TimeByProjectRowInterface,
-  TimeBySprintRowInterface,
-  TimeByTeamRowInterface,
-  TimeByMemberRowInterface,
-  TimeAggregationResponseInterface,
+  TimeByUserInterface,
+  TimeByDayInterface,
+  SprintTimeTrackingResponseInterface,
+  UserTimeTrackingResponseInterface,
+  TaskTimeTrackingResponseInterface,
   CreateStandaloneTimeLogPayloadInterface,
-  TimeProjectInterface,
-  TimeSprintInterface,
-  TimeTeamInterface,
-  TimeMemberInterface,
-  TimeTaskInterface,
-  TimeEntryInterface,
-  TimeSeedInterface,
-  TimeEntityKind,
   TimeLogEntryRow,
   CreateTimeEntryPayloadInterface,
 } from "./time";

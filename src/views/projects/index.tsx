@@ -1,29 +1,31 @@
 import { useState } from "react";
 import { ArrowLeft, BarChart3, Calendar, Edit, FolderKanban, LineChart, MoreHorizontal, Plus, Trash2, Users } from "lucide-react";
 
-import { Badge, Button, Card, CardContent, Input, Label, Textarea } from "@/atoms";
+import { Badge, Button, Card, CardContent, DatePicker, Input, Label, Textarea } from "@/atoms";
 import { EmptyState, Header, Pagination, QueryBoundary } from "@/components/shared";
+import { ScoreGauge } from "@/components/shared";
 import { ProjectsSkeleton } from "@/components/skeletons";
-const projectCardFallback = { completion_rate: 0, on_time_rate: 0, open_blockers: 0, tasks_done: 0, tasks_total: 0 };
-import { t, useCreateProject, useDeleteProject, useFormErrors, usePermissions, useProjectsList, useUpdateProject } from "@/hooks";
+import { t, useCreateProject, useDeleteProject, useFormErrors, usePermissions, useProjectAnalytics, useProjectsList, useUpdateProject } from "@/hooks";
 import type { CreateProjectPayloadInterface, ProjectInterface } from "@/interfaces";
 import { useProjectStore } from "@/store";
 import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
-    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger,
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/ui";
 import { SprintsView } from "@/views/sprints";
 
 import { ProjectAnalyticsView } from "./ProjectAnalyticsView";
 
-const emptyForm: CreateProjectPayloadInterface = {
+const todayIso = () => new Date().toISOString().split("T")[0];
+
+const buildEmptyForm = (): CreateProjectPayloadInterface => ({
     name: "",
     description: "",
-    start_date: "",
+    start_date: todayIso(),
     end_date: "",
     status: "planning",
-};
+});
 
 const STATUS_VARIANT: Record<ProjectInterface["status"], "success" | "warning" | "default" | "secondary"> = {
     active: "success",
@@ -53,11 +55,11 @@ export const ProjectsView = () => {
     const [addOpen, setAddOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<ProjectInterface | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<ProjectInterface | null>(null);
-    const [form, setForm] = useState<CreateProjectPayloadInterface>(emptyForm);
+    const [form, setForm] = useState<CreateProjectPayloadInterface>(buildEmptyForm);
 
     const isSubmitting = isCreating || isUpdating;
 
-    const openAdd = () => { setForm(emptyForm); clearFieldErrors(); setAddOpen(true); };
+    const openAdd = () => { setForm(buildEmptyForm()); clearFieldErrors(); setAddOpen(true); };
 
     const openEdit = (project: ProjectInterface) => {
         setEditTarget(project);
@@ -71,7 +73,7 @@ export const ProjectsView = () => {
         });
     };
 
-    const closeDialogs = () => { setAddOpen(false); setEditTarget(null); setForm(emptyForm); clearFieldErrors(); };
+    const closeDialogs = () => { setAddOpen(false); setEditTarget(null); setForm(buildEmptyForm()); clearFieldErrors(); };
 
     const handleSave = async () => {
         if (!form.name.trim()) return;
@@ -90,13 +92,14 @@ export const ProjectsView = () => {
         if (ok) { removeProjectLocal(deleteTarget.id); setDeleteTarget(null); }
     };
 
+    const handleStatusChange = async (project: ProjectInterface, status: ProjectInterface["status"]) => {
+        const res = await updateHandler(project.id, { status });
+        if (res) patchProjectLocal(res);
+    };
+
     const enterProject = (project: ProjectInterface) => {
         onSetActiveProject(project.id);
         setOpenedProject(project);
-    };
-
-    const openAnalytics = (project: ProjectInterface) => {
-        setAnalyticsProject(project);
     };
 
     if (analyticsProject) {
@@ -152,104 +155,20 @@ export const ProjectsView = () => {
                 emptyState={<EmptyState icon={FolderKanban} title={t("No projects yet")} description={t("Create your first project to start organizing sprints.")} />}
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {projects.map((project) => {
-                        const sprintCount = project.sprint_count ?? project.sprints_count ?? 0;
-                        const memberCount = project.member_count ?? project.members_count ?? 0;
-                        const a = projectCardFallback;
-                        return (
-                            <Card key={project.id} className="hover:shadow-md transition-shadow">
-                                <CardContent className="p-5">
-                                    <div className="flex items-start justify-between gap-3 mb-3">
-                                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-lighter text-primary-medium shrink-0">
-                                                <FolderKanban className="h-5 w-5" />
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <h3 className="text-base font-semibold text-text-dark truncate">
-                                                    {project.name}
-                                                </h3>
-                                                <Badge variant={STATUS_VARIANT[project.status]} className="mt-1 text-[10px]">
-                                                    {t(STATUS_LABEL[project.status])}
-                                                </Badge>
-                                            </div>
-                                        </div>
-
-                                        {(p.projects.edit() || p.projects.delete()) && (
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    {p.projects.edit() && (
-                                                        <DropdownMenuItem onClick={() => openEdit(project)} className="gap-2 cursor-pointer">
-                                                            <Edit className="h-4 w-4" /> {t("Edit")}
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                    {p.projects.edit() && p.projects.delete() && <DropdownMenuSeparator />}
-                                                    {p.projects.delete() && (
-                                                        <DropdownMenuItem
-                                                            onClick={() => setDeleteTarget(project)}
-                                                            className="gap-2 text-error focus:text-error cursor-pointer"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" /> {t("Delete")}
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        )}
-                                    </div>
-
-                                    {project.description && (
-                                        <p className="text-xs text-text-muted line-clamp-2 mb-3">{project.description}</p>
-                                    )}
-
-                                    <div className="flex items-center gap-3 text-[11px] text-text-muted mb-3">
-                                        <span className="flex items-center gap-1">
-                                            <Calendar className="h-3 w-3" />
-                                            {project.start_date ?? "—"} → {project.end_date ?? "—"}
-                                        </span>
-                                    </div>
-
-                                    <div className="grid grid-cols-3 gap-2 mb-3">
-                                        <CardStat label={t("Done")} value={`${a.completion_rate}%`} tone="primary" />
-                                        <CardStat label={t("On-time")} value={`${a.on_time_rate}%`} tone="success" />
-                                        <CardStat label={t("Blockers")} value={a.open_blockers} tone={a.open_blockers > 0 ? "error" : "muted"} />
-                                    </div>
-
-                                    <div className="mb-3">
-                                        <div className="flex items-center justify-between text-[11px] text-text-muted mb-1">
-                                            <span>{t("Tasks")}</span>
-                                            <span>{a.tasks_done} / {a.tasks_total}</span>
-                                        </div>
-                                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                                            <div className="h-full bg-primary-medium" style={{ width: `${Math.round((a.tasks_done / Math.max(a.tasks_total, 1)) * 100)}%` }} />
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between pt-3 border-t border-border text-[11px] text-text-muted mb-3">
-                                        <span>{sprintCount} {t("sprints")}</span>
-                                        <span className="flex items-center gap-1">
-                                            <Users className="h-3 w-3" />
-                                            {memberCount}
-                                        </span>
-                                    </div>
-
-                                    <div className="flex items-center gap-2">
-                                        <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => openAnalytics(project)}>
-                                            <LineChart className="h-3.5 w-3.5" />
-                                            {t("Analytics")}
-                                        </Button>
-                                        <Button size="sm" className="flex-1 gap-1.5" onClick={() => enterProject(project)}>
-                                            <BarChart3 className="h-3.5 w-3.5" />
-                                            {t("Sprints")}
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        );
-                    })}
+                    {projects.map((project) => (
+                        <ProjectCard
+                            key={project.id}
+                            project={project}
+                            canEdit={p.projects.edit()}
+                            canDelete={p.projects.delete()}
+                            canAnalytics={p.projects.viewAnalytics()}
+                            onEdit={() => openEdit(project)}
+                            onDelete={() => setDeleteTarget(project)}
+                            onStatusChange={(status) => handleStatusChange(project, status)}
+                            onAnalytics={() => setAnalyticsProject(project)}
+                            onSprints={() => enterProject(project)}
+                        />
+                    ))}
                 </div>
 
                 <Pagination
@@ -294,21 +213,20 @@ export const ProjectsView = () => {
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
                                 <Label htmlFor="pj-start">{t("Start Date")}</Label>
-                                <Input
+                                <DatePicker
                                     id="pj-start"
-                                    type="date"
                                     value={form.start_date ?? ""}
-                                    onChange={(e) => { setForm({ ...form, start_date: e.target.value }); clearError("start_date"); }}
+                                    onChange={(v) => { setForm({ ...form, start_date: v }); clearError("start_date"); }}
                                 />
                                 {getError("start_date") && <p className="text-xs text-error">{getError("start_date")}</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="pj-end">{t("End Date")}</Label>
-                                <Input
+                                <DatePicker
                                     id="pj-end"
-                                    type="date"
+                                    min={form.start_date ?? ""}
                                     value={form.end_date ?? ""}
-                                    onChange={(e) => { setForm({ ...form, end_date: e.target.value }); clearError("end_date"); }}
+                                    onChange={(v) => { setForm({ ...form, end_date: v }); clearError("end_date"); }}
                                 />
                                 {getError("end_date") && <p className="text-xs text-error">{getError("end_date")}</p>}
                             </div>
@@ -362,23 +280,148 @@ export const ProjectsView = () => {
     );
 };
 
-interface CardStatProps {
-    label: string;
-    value: string | number;
-    tone: "primary" | "success" | "error" | "muted";
+interface ProjectCardProps {
+    project: ProjectInterface;
+    canEdit: boolean;
+    canDelete: boolean;
+    canAnalytics: boolean;
+    onEdit: () => void;
+    onDelete: () => void;
+    onStatusChange: (status: ProjectInterface["status"]) => void;
+    onAnalytics: () => void;
+    onSprints: () => void;
 }
 
-const CardStat = ({ label, value, tone }: CardStatProps) => {
-    const toneClass = {
-        primary: "text-primary-medium",
-        success: "text-success",
-        error: "text-error",
-        muted: "text-text-muted",
-    }[tone];
+const ProjectCard = ({ project, canEdit, canDelete, canAnalytics, onEdit, onDelete, onStatusChange, onAnalytics, onSprints }: ProjectCardProps) => {
+    const sprintCount = project.sprint_count ?? project.sprints_count ?? 0;
+    const memberCount = project.member_count ?? project.members_count ?? 0;
+    const hasStarted = project.status === "active";
+    const { analytics } = useProjectAnalytics(canAnalytics && hasStarted ? project.id : "");
+    const stats = analytics?.stats;
+    const tasksDone = stats?.tasks_done ?? 0;
+    const tasksTotal = project.tasks_total ?? stats?.tasks_total ?? 0;
+    const tasksProgress = tasksTotal > 0 ? Math.round((tasksDone / tasksTotal) * 100) : 0;
+    const completion = stats?.completion ?? 0;
+
     return (
-        <div className="rounded-md bg-muted/40 px-2 py-1.5 text-center">
-            <p className="text-[10px] uppercase tracking-wide text-text-muted">{label}</p>
-            <p className={`text-sm font-bold ${toneClass}`}>{value}</p>
-        </div>
+        <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-5">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-lighter text-primary-medium shrink-0">
+                            <FolderKanban className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <h3 className="text-base font-semibold text-text-dark truncate">{project.name}</h3>
+                            <Badge variant={STATUS_VARIANT[project.status]} className="mt-1 text-[10px]">
+                                {t(STATUS_LABEL[project.status])}
+                            </Badge>
+                        </div>
+                    </div>
+
+                    {(canEdit || canDelete) && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                                {canEdit && (
+                                    <DropdownMenuItem onClick={onEdit} className="gap-2">
+                                        <Edit className="h-4 w-4" /> {t("Edit")}
+                                    </DropdownMenuItem>
+                                )}
+                                {canEdit && (
+                                    <DropdownMenuSub>
+                                        <DropdownMenuSubTrigger className="gap-2">
+                                            <LineChart className="h-4 w-4" /> {t("Change Status")}
+                                        </DropdownMenuSubTrigger>
+                                        <DropdownMenuSubContent>
+                                            <DropdownMenuLabel>{t("Set Status")}</DropdownMenuLabel>
+                                            {(Object.keys(STATUS_LABEL) as ProjectInterface["status"][]).map((s) => (
+                                                <DropdownMenuItem
+                                                    key={s}
+                                                    disabled={s === project.status}
+                                                    onClick={() => onStatusChange(s)}
+                                                    className="gap-2"
+                                                >
+                                                    <Badge variant={STATUS_VARIANT[s]} className="text-[10px] pointer-events-none">
+                                                        {t(STATUS_LABEL[s])}
+                                                    </Badge>
+                                                </DropdownMenuItem>
+                                            ))}
+                                        </DropdownMenuSubContent>
+                                    </DropdownMenuSub>
+                                )}
+                                {canDelete && <DropdownMenuSeparator />}
+                                {canDelete && (
+                                    <DropdownMenuItem onClick={onDelete} className="gap-2 text-error focus:text-error">
+                                        <Trash2 className="h-4 w-4" /> {t("Delete")}
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                </div>
+
+                {project.description && (
+                    <p className="text-xs text-text-muted line-clamp-2 mb-3">{project.description}</p>
+                )}
+
+                <div className="flex items-center gap-1 text-[11px] text-text-muted mb-3">
+                    <Calendar className="h-3 w-3 shrink-0" />
+                    {project.start_date ?? "—"} → {project.end_date ?? "—"}
+                </div>
+
+                {canAnalytics && hasStarted ? (
+                    <div className="flex items-center gap-3 mb-3">
+                        <ScoreGauge score={completion} size="sm" label="done" />
+                        <div className="flex-1 grid grid-cols-2 gap-2">
+                            <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                                <p className="text-[10px] uppercase tracking-wide text-text-muted">{t("On-Time")}</p>
+                                <p className="text-sm font-bold text-success">{stats?.on_time_rate ?? 0}%</p>
+                            </div>
+                            <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                                <p className="text-[10px] uppercase tracking-wide text-text-muted">{t("Blockers")}</p>
+                                <p className={`text-sm font-bold ${(stats?.open_blockers ?? 0) > 0 ? "text-error" : "text-text-dark"}`}>{stats?.open_blockers ?? 0}</p>
+                            </div>
+                        </div>
+                    </div>
+                ) : null}
+
+                <div className="mb-3">
+                    <div className="flex items-center justify-between text-[11px] text-text-muted mb-1">
+                        <span>{t("Tasks")}</span>
+                        <span>{tasksDone} / {tasksTotal}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full bg-success transition-all" style={{ width: `${tasksProgress}%` }} />
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t border-border text-[11px] text-text-muted mb-3">
+                    <span>{sprintCount} {t("sprints")}</span>
+                    <span className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {memberCount}
+                    </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    {canAnalytics && (
+                        <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={onAnalytics}>
+                            <LineChart className="h-3.5 w-3.5" />
+                            {t("Analytics")}
+                        </Button>
+                    )}
+                    <Button size="sm" className={`gap-1.5 ${canAnalytics ? "flex-1" : "w-full"}`} onClick={onSprints}>
+                        <BarChart3 className="h-3.5 w-3.5" />
+                        {t("Sprints")}
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
     );
 };
+

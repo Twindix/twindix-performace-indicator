@@ -1,18 +1,19 @@
 import { ownershipConstants } from "@/constants";
-import type { OwnershipStatsInterface } from "@/interfaces";
+import type { FeatureInterface } from "@/interfaces";
 import { ownershipService } from "@/services";
 
 import { useQueryAction } from "../shared";
 
-export const useOwnershipStats = () => {
-    const { data, isLoading, refetch } = useQueryAction<OwnershipStatsInterface | null>(
-        () => ownershipService.statsHandler(),
-        [],
+export const useOwnershipByUser = (userId: string) => {
+    const { data, isLoading, refetch } = useQueryAction<FeatureInterface[] | null>(
+        () => ownershipService.byUserHandler(userId),
+        [userId],
         {
+            enabled: !!userId,
             errorFallback: ownershipConstants.errors.statsFailed,
-            context: "ownership.stats",
+            context: "ownership.byUser",
             initialData: null,
         },
     );
-    return { stats: data ?? null, isLoading, refetch };
+    return { items: data ?? [], isLoading, refetch };
 };

@@ -33,16 +33,18 @@ export interface DeliveryLeaderboardEntryInterface {
 }
 
 export interface DeliveryAnalyticsResponseInterface {
-    health_score: number;
-    on_time_rate: number;
-    throughput_per_sprint: number;
-    blocker_resolution_avg_hours: number;
-    velocity: DeliveryVelocityPointInterface[];
-    throughput: DeliveryThroughputPointInterface[];
-    on_time: DeliveryOnTimePointInterface[];
-    friction_sources: DeliveryFrictionSourceInterface[];
-    blocker_trend: DeliveryBlockerTrendPointInterface[];
-    leaderboard: DeliveryLeaderboardEntryInterface[];
+    sprint_id: string;
+    sprint_name: string;
+    blocked_tasks: number;
+    completed_story_points: number;
+    completed_tasks: number;
+    completion_rate: number;
+    overdue_tasks: number;
+    story_point_completion_rate: number;
+    total_story_points: number;
+    total_tasks: number;
+    by_priority: Record<string, { total: number; completed: number } | number>;
+    by_status: Record<string, { total: number; completed: number } | number>;
 }
 
 export interface DeliveryAnalyticsFiltersInterface {

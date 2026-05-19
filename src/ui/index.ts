@@ -5,5 +5,5 @@ export { Avatar, AvatarFallback } from "./avatar";
 export { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "./select";
 export { Combobox, type ComboboxOption, type ComboboxProps } from "./combobox";
 export { Checkbox } from "./checkbox";
-export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "./dropdown-menu";
+export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "./dropdown-menu";
 export { Toaster } from "./sonner";

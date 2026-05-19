@@ -1,17 +1,19 @@
 import { X } from "lucide-react";
 
-import { Button, Input, Label } from "@/atoms";
+import { Button, Label } from "@/atoms";
 import { GanttStatus } from "@/enums";
 import { t } from "@/hooks";
 import type { GanttFiltersInterface } from "@/interfaces/gantt";
-import type { ProjectLiteInterface } from "@/interfaces";
+import type { ProjectLiteInterface } from "@/interfaces/projects";
+import type { SprintInterface } from "@/interfaces/sprints";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui";
 
 import { GANTT_STATUS_LABEL } from "./constants";
 
 interface GanttFiltersProps {
-    projects: ProjectLiteInterface[];
     filters: GanttFiltersInterface;
+    sprints: SprintInterface[];
+    projects: ProjectLiteInterface[];
     onChange: (patch: Partial<GanttFiltersInterface>) => void;
     onReset: () => void;
     canReset: boolean;
@@ -25,27 +27,66 @@ const STATUS_OPTIONS: (GanttStatus | "all")[] = [
     GanttStatus.Delayed,
 ];
 
-export const GanttFilters = ({ projects, filters, onChange, onReset, canReset }: GanttFiltersProps) => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-4 p-4 rounded-lg border border-border bg-card">
+export const GanttFilters = ({ filters, sprints, projects, onChange, onReset, canReset }: GanttFiltersProps) => (
+    <div className="flex flex-wrap items-end gap-3 mb-4 p-4 rounded-lg border border-border bg-card">
         <div className="space-y-1.5">
-            <Label htmlFor="gantt-project">{t("Project")}</Label>
-            <Select
-                value={filters.projectId}
-                onValueChange={(value) => onChange({ projectId: value })}
-            >
-                <SelectTrigger id="gantt-project">
-                    <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">{t("All Projects")}</SelectItem>
-                    {projects.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            <Label>{t("View By")}</Label>
+            <div className="flex gap-1.5">
+                {(["sprint", "project"] as const).map((m) => (
+                    <button
+                        key={m}
+                        onClick={() => onChange({ mode: m, entityId: "" })}
+                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                            filters.mode === m
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted text-text-muted hover:bg-muted/80"
+                        }`}
+                    >
+                        {m === "sprint" ? t("Sprint") : t("Project")}
+                    </button>
+                ))}
+            </div>
         </div>
 
-        <div className="space-y-1.5">
+        {filters.mode === "sprint" ? (
+            <div className="space-y-1.5 min-w-[200px]">
+                <Label htmlFor="gantt-sprint">{t("Sprint")}</Label>
+                <Select
+                    value={filters.entityId || "none"}
+                    onValueChange={(v) => onChange({ entityId: v === "none" ? "" : v })}
+                >
+                    <SelectTrigger id="gantt-sprint">
+                        <SelectValue placeholder={t("Select sprint")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="none">{t("Select sprint")}</SelectItem>
+                        {sprints.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        ) : (
+            <div className="space-y-1.5 min-w-[200px]">
+                <Label htmlFor="gantt-project">{t("Project")}</Label>
+                <Select
+                    value={filters.entityId || "none"}
+                    onValueChange={(v) => onChange({ entityId: v === "none" ? "" : v })}
+                >
+                    <SelectTrigger id="gantt-project">
+                        <SelectValue placeholder={t("Select project")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="none">{t("Select project")}</SelectItem>
+                        {projects.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        )}
+
+        <div className="space-y-1.5 min-w-[160px]">
             <Label htmlFor="gantt-status">{t("Status")}</Label>
             <Select
                 value={filters.status}
@@ -64,37 +105,15 @@ export const GanttFilters = ({ projects, filters, onChange, onReset, canReset }:
             </Select>
         </div>
 
-        <div className="space-y-1.5">
-            <Label htmlFor="gantt-start">{t("From")}</Label>
-            <Input
-                id="gantt-start"
-                type="date"
-                value={filters.rangeStart}
-                onChange={(e) => onChange({ rangeStart: e.target.value })}
-            />
-        </div>
-
-        <div className="space-y-1.5">
-            <Label htmlFor="gantt-end">{t("To")}</Label>
-            <Input
-                id="gantt-end"
-                type="date"
-                value={filters.rangeEnd}
-                onChange={(e) => onChange({ rangeEnd: e.target.value })}
-            />
-        </div>
-
-        <div className="flex items-end">
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={onReset}
-                disabled={!canReset}
-                className="gap-1.5 w-full"
-            >
-                <X className="h-4 w-4" />
-                {t("Reset Filters")}
-            </Button>
-        </div>
+        <Button
+            variant="outline"
+            size="sm"
+            onClick={onReset}
+            disabled={!canReset}
+            className="gap-1.5"
+        >
+            <X className="h-4 w-4" />
+            {t("Reset")}
+        </Button>
     </div>
 );

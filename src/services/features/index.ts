@@ -15,27 +15,42 @@ const unwrap = <T,>(payload: unknown): T => {
     return payload as T;
 };
 
+const normalizeFeature = (raw: any): FeatureInterface => ({
+    id: raw.id,
+    title: raw.title,
+    description: raw.description ?? null,
+    status: raw.status,
+    priority: raw.priority ?? null,
+    project_id: raw.project_id,
+    created_by: raw.creator
+        ? { id: raw.creator.id, name: raw.creator.full_name ?? raw.creator.name ?? "" }
+        : raw.created_by ?? null,
+    linked_tasks_count: Array.isArray(raw.tasks) ? raw.tasks.length : (raw.linked_tasks_count ?? 0),
+    created_at: raw.created_at,
+    updated_at: raw.updated_at,
+});
+
 export const featuresService = {
-    listHandler: async (filters?: FeaturesListFiltersInterface): Promise<FeaturesListResponseInterface> => {
-        const { data } = await apiClient.get<FeaturesListResponseInterface>(apisData.features.list, {
-            params: filters,
-        });
-        return data;
+    listHandler: async (projectId: string, filters?: FeaturesListFiltersInterface): Promise<FeaturesListResponseInterface> => {
+        const { data } = await apiClient.get<any>(apisData.features.list(projectId), { params: filters });
+        return { ...data, data: (data.data ?? []).map(normalizeFeature) };
     },
 
     detailHandler: async (id: string): Promise<FeatureInterface> => {
         const { data } = await apiClient.get(apisData.features.detail(id));
-        return unwrap<FeatureInterface>(data);
+        return normalizeFeature(unwrap<any>(data));
     },
 
-    createHandler: async (payload: CreateFeaturePayloadInterface): Promise<FeatureInterface> => {
-        const { data } = await apiClient.post(apisData.features.create, payload);
-        return unwrap<FeatureInterface>(data);
+    createHandler: async (projectId: string, payload: CreateFeaturePayloadInterface): Promise<FeatureInterface> => {
+        const { project_id: _pid, ...body } = payload;
+        const { data } = await apiClient.post(apisData.features.create(projectId), body);
+        return normalizeFeature(unwrap<any>(data));
     },
 
     updateHandler: async (id: string, payload: UpdateFeaturePayloadInterface): Promise<FeatureInterface> => {
-        const { data } = await apiClient.put(apisData.features.update(id), payload);
-        return unwrap<FeatureInterface>(data);
+        const { project_id: _pid, ...body } = payload;
+        const { data } = await apiClient.put(apisData.features.update(id), body);
+        return normalizeFeature(unwrap<any>(data));
     },
 
     deleteHandler: async (id: string): Promise<void> => {

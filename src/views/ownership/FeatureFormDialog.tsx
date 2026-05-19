@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { Button, Input, Label, Textarea } from "@/atoms";
 import { t, useCreateFeature, useFormErrors, useProjectsListLite } from "@/hooks";
-import type { FeatureStatus } from "@/interfaces";
+import type { CreateFeaturePayloadInterface, FeatureStatus } from "@/interfaces";
 import {
     Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle,
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -14,26 +14,27 @@ interface FeatureFormDialogProps {
     onCreated?: () => void;
 }
 
-const STATUS_OPTIONS: FeatureStatus[] = ["draft", "active", "shipped", "archived"];
+const STATUS_OPTIONS: FeatureStatus[] = ["planned", "in_progress", "completed", "on_hold"];
+const PRIORITY_OPTIONS = ["low", "medium", "high", "critical"] as const;
+type Priority = typeof PRIORITY_OPTIONS[number];
 
 export const FeatureFormDialog = ({ open, onOpenChange, onCreated }: FeatureFormDialogProps) => {
     const { projects } = useProjectsListLite();
     const { setFieldErrors, getError, clear: clearFieldErrors } = useFormErrors();
-    const { createHandler, isLoading } = useCreateFeature({ onFieldErrors: setFieldErrors });
-
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [projectId, setProjectId] = useState("");
-    const [status, setStatus] = useState<FeatureStatus>("draft");
-    const [tagsInput, setTagsInput] = useState("");
+    const { createHandler, isLoading } = useCreateFeature(projectId, { onFieldErrors: setFieldErrors });
+    const [status, setStatus] = useState<FeatureStatus>("planned");
+    const [priority, setPriority] = useState<Priority | "">("");
 
     useEffect(() => {
         if (open) {
             setTitle("");
             setDescription("");
             setProjectId("");
-            setStatus("draft");
-            setTagsInput("");
+            setStatus("planned");
+            setPriority("");
             clearFieldErrors();
         }
     }, [open, clearFieldErrors]);
@@ -42,17 +43,14 @@ export const FeatureFormDialog = ({ open, onOpenChange, onCreated }: FeatureForm
 
     const handleSubmit = async () => {
         if (!canSubmit) return;
-        const tags = tagsInput
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean);
-        const result = await createHandler({
+        const payload: CreateFeaturePayloadInterface = {
             title: title.trim(),
             description: description.trim() || undefined,
             project_id: projectId,
             status,
-            tags: tags.length > 0 ? tags : undefined,
-        });
+            priority: priority || undefined,
+        };
+        const result = await createHandler(payload);
         if (result) {
             onCreated?.();
             onOpenChange(false);
@@ -85,21 +83,29 @@ export const FeatureFormDialog = ({ open, onOpenChange, onCreated }: FeatureForm
                         {getError("project_id") && <p className="text-[11px] text-error">{getError("project_id")}</p>}
                     </div>
 
-                    <div className="space-y-1.5">
-                        <Label>{t("Status")}</Label>
-                        <Select value={status} onValueChange={(v) => setStatus(v as FeatureStatus)}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                {STATUS_OPTIONS.map((s) => (
-                                    <SelectItem key={s} value={s}>{t(s)}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <Label htmlFor="ft-tags">{t("Tags")} <span className="text-text-muted">({t("comma-separated")})</span></Label>
-                        <Input id="ft-tags" value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} placeholder={t("e.g. api, payments")} />
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                            <Label>{t("Status")}</Label>
+                            <Select value={status} onValueChange={(v) => setStatus(v as FeatureStatus)}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    {STATUS_OPTIONS.map((s) => (
+                                        <SelectItem key={s} value={s}>{t(s)}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>{t("Priority")} <span className="text-text-muted">({t("optional")})</span></Label>
+                            <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
+                                <SelectTrigger><SelectValue placeholder={t("Select priority")} /></SelectTrigger>
+                                <SelectContent>
+                                    {PRIORITY_OPTIONS.map((p) => (
+                                        <SelectItem key={p} value={p}>{t(p)}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
 
                     <div className="space-y-1.5">
