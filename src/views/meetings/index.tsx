@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { Calendar, Clock, Link2, MapPin, Plus, Search, Users } from "lucide-react";
+import { Calendar, Clock, Download, Link2, MapPin, Plus, Search, Users } from "lucide-react";
 
-import { Badge, Button, Input, Label } from "@/atoms";
+import { Badge, Button, DatePicker, Input, Label } from "@/atoms";
 import { EmptyState, Header, Pagination } from "@/components/shared";
-import { t, useMeetingsList } from "@/hooks";
+import { t, useMeetingsList, usePermissions, useProjectsListLite } from "@/hooks";
 import type { MeetingApiStatus, MeetingListItemInterface } from "@/interfaces";
+import { useProjectStore } from "@/store";
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/ui";
-import { cn } from "@/utils";
+
+import { cn, downloadCsv } from "@/utils";
 
 import { MEETING_STATUS_LABEL, MEETING_STATUS_VARIANT } from "./constants";
 import { MeetingDetail } from "./MeetingDetail";
@@ -32,16 +34,20 @@ const computeDuration = (start?: string | null, end?: string | null) => {
 };
 
 export const MeetingsView = () => {
+    const p = usePermissions();
+    const canDownload = p.reports.downloadCSV();
     const [tab, setTab] = useState<MeetingTab>("upcoming");
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState<MeetingApiStatus | "all">("all");
     const [from, setFrom] = useState("");
     const [to, setTo] = useState("");
+    const [projectId, setProjectId] = useState<string>("all");
     const [activeId, setActiveId] = useState<string | null>(null);
     const [createOpen, setCreateOpen] = useState(false);
 
-    // For the Upcoming tab, fetch meetings on/after today; for Past, before today.
-    // If user supplies explicit from/to, those win.
+    const { projects } = useProjectsListLite();
+    const { activeProjectId } = useProjectStore();
+
     const today = todayIso();
     const filters = {
         status: statusFilter !== "all" ? statusFilter : undefined,
@@ -50,7 +56,8 @@ export const MeetingsView = () => {
         search: search || undefined,
     };
 
-    const { items, meta, isLoading, setPage, setPerPage, refetch } = useMeetingsList(filters);
+    const effectiveProjectId = projectId !== "all" ? projectId : activeProjectId;
+    const { items, meta, isLoading, setPage, setPerPage, refetch } = useMeetingsList(effectiveProjectId, filters);
 
     if (activeId) {
         return (
@@ -61,19 +68,52 @@ export const MeetingsView = () => {
         );
     }
 
-    const canReset = search !== "" || statusFilter !== "all" || from !== "" || to !== "";
+    const canReset = search !== "" || statusFilter !== "all" || from !== "" || to !== "" || projectId !== "all";
     const handleReset = () => {
         setSearch("");
         setStatusFilter("all");
         setFrom("");
         setTo("");
+        setProjectId("all");
+    };
+
+    const handleDownloadCsv = () => {
+        const today = new Date().toISOString().slice(0, 10);
+        const header = ["Meeting ID", "Title", "Type", "Organiser", "Status", "Location", "Description", "Date", "Start Time", "End Time", "Attendees Count", "Created At"];
+        const rows = items.map((m: MeetingListItemInterface) => [
+            m.id, m.title, m.meeting_type, m.organizer.name, m.status,
+            m.location ?? "", m.description ?? "", m.date ?? "", m.start_time ?? "", m.end_time ?? "",
+            m.attendees_count ?? 0, m.created_at,
+        ]);
+        downloadCsv(`meetings-${today}.csv`, [header, ...rows]);
     };
 
     return (
         <div>
-            <Header title={t("Meetings")} description={t("Schedule, vote on, and run meetings with your team.")} />
+            <Header
+                title={t("Meetings")}
+                description={t("Schedule, vote on, and run meetings with your team.")}
+                actions={canDownload && items.length > 0 ? (
+                    <Button size="sm" variant="outline" className="gap-1.5" onClick={handleDownloadCsv}>
+                        <Download className="h-4 w-4" />
+                        {t("Download CSV")}
+                    </Button>
+                ) : null}
+            />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr_auto] gap-3 mb-4 p-4 rounded-lg border border-border bg-card">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1.5fr_1fr_1fr_1fr_auto] gap-3 mb-4 p-4 rounded-lg border border-border bg-card">
+                <div className="space-y-1.5">
+                    <Label>{t("Project")}</Label>
+                    <Select value={projectId} onValueChange={setProjectId}>
+                        <SelectTrigger><SelectValue placeholder={t("All Projects")} /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">{t("All Projects")}</SelectItem>
+                            {projects.map((p) => (
+                                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
                 <div className="space-y-1.5">
                     <Label htmlFor="mt-search">{t("Search meetings…")}</Label>
                     <div className="relative">
@@ -101,17 +141,17 @@ export const MeetingsView = () => {
                 </div>
                 <div className="space-y-1.5">
                     <Label>{t("From")}</Label>
-                    <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+                    <DatePicker value={from} onChange={setFrom} />
                 </div>
                 <div className="space-y-1.5">
                     <Label>{t("To")}</Label>
-                    <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+                    <DatePicker value={to} onChange={setTo} />
                 </div>
-                <div className="flex items-end gap-2">
+                <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-1">
                     {canReset && (
-                        <Button variant="outline" size="sm" onClick={handleReset}>{t("Reset")}</Button>
+                        <Button variant="outline" size="sm" onClick={handleReset} className="shrink-0">{t("Reset")}</Button>
                     )}
-                    <Button size="sm" className="gap-1.5" onClick={() => setCreateOpen(true)}>
+                    <Button size="sm" className="gap-1.5 flex-1 lg:flex-none whitespace-nowrap" onClick={() => setCreateOpen(true)}>
                         <Plus className="h-4 w-4" />
                         {t("Request a Meeting")}
                     </Button>

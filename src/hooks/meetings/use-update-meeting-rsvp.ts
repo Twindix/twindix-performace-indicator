@@ -8,10 +8,10 @@ import { meetingsService } from "@/services";
 export const useUpdateMeetingRsvp = () => {
     const [isLoading, setIsLoading] = useState(false);
 
-    const updateRsvpHandler = async (meetingId: string, userId: string, rsvpStatus: RsvpStatus): Promise<MeetingDetailInterface | null> => {
+    const updateRsvpHandler = async (meetingId: string, rsvpStatus: RsvpStatus): Promise<MeetingDetailInterface | null> => {
         setIsLoading(true);
         try {
-            return await runAction(() => meetingsService.updateRsvpHandler(meetingId, userId, { rsvp_status: rsvpStatus }), {
+            return await runAction(() => meetingsService.updateRsvpHandler(meetingId, { rsvp_status: rsvpStatus }), {
                 errorFallback: meetingsConstants.errors.rsvpFailed,
                 successMessage: meetingsConstants.messages.rsvpSuccess,
                 context: "meetings.rsvp",

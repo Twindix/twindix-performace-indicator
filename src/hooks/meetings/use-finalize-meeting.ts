@@ -8,18 +8,18 @@ import { meetingsService } from "@/services";
 export const useFinalizeMeeting = () => {
     const [isLoading, setIsLoading] = useState(false);
 
-    const finalizeHandler = async (meetingId: string): Promise<MeetingDetailInterface | null> => {
+    const selectSlotHandler = async (meetingId: string, slotId: string): Promise<MeetingDetailInterface | null> => {
         setIsLoading(true);
         try {
-            return await runAction(() => meetingsService.finalizeHandler(meetingId), {
+            return await runAction(() => meetingsService.selectSlotHandler(meetingId, slotId), {
                 errorFallback: meetingsConstants.errors.finalizeFailed,
                 successMessage: meetingsConstants.messages.finalizeSuccess,
-                context: "meetings.finalize",
+                context: "meetings.selectSlot",
             });
         } finally {
             setIsLoading(false);
         }
     };
 
-    return { finalizeHandler, isLoading };
+    return { selectSlotHandler, isLoading };
 };

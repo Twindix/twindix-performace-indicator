@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
 
-import { Button, Input, Label, Textarea } from "@/atoms";
+import { Button, DatePicker, Input, Label, Textarea, TimePicker } from "@/atoms";
 import { t, useCreateMeeting, useFormErrors, useProjectsListLite, useTeamsListLite, useUsersListLite } from "@/hooks";
 import type { CreateMeetingTimeSlotPayloadInterface, MeetingTypeApi } from "@/interfaces";
 import {
@@ -25,14 +25,14 @@ export const RequestMeetingDialog = ({ open, onOpenChange, onCreated }: RequestM
     const { teams } = useTeamsListLite();
     const { users } = useUsersListLite();
     const { setFieldErrors, getError, clear: clearFieldErrors } = useFormErrors();
-    const { createHandler, isLoading } = useCreateMeeting({ onFieldErrors: setFieldErrors });
+    const [projectId, setProjectId] = useState<string>("");
+    const { createHandler, isLoading } = useCreateMeeting(projectId, { onFieldErrors: setFieldErrors });
 
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [notes, setNotes] = useState("");
     const [location, setLocation] = useState("");
     const [meetingType, setMeetingType] = useState<MeetingTypeApi | "">("");
-    const [projectId, setProjectId] = useState<string>("");
     const [teamId, setTeamId] = useState<string>("");
     const [attendeeIds, setAttendeeIds] = useState<string[]>([]);
     const [slots, setSlots] = useState<CreateMeetingTimeSlotPayloadInterface[]>([emptySlot()]);
@@ -113,13 +113,23 @@ export const RequestMeetingDialog = ({ open, onOpenChange, onCreated }: RequestM
                     <div className="space-y-2">
                         <Label>{t("Proposed Time Slots")}</Label>
                         {slots.map((slot, index) => (
-                            <div key={index} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center">
-                                <Input type="date" value={slot.date} onChange={(e) => updateSlot(index, { date: e.target.value })} />
-                                <Input type="time" value={slot.start_time} onChange={(e) => updateSlot(index, { start_time: e.target.value })} className="w-28" />
-                                <Input type="time" value={slot.end_time} onChange={(e) => updateSlot(index, { end_time: e.target.value })} className="w-28" />
-                                <Button type="button" variant="ghost" size="icon" className="h-9 w-9" onClick={() => removeSlot(index)} disabled={slots.length === 1}>
-                                    <X className="h-4 w-4" />
-                                </Button>
+                            <div key={index} className="rounded-lg border border-border p-3 space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <DatePicker value={slot.date} onChange={(v) => updateSlot(index, { date: v })} className="flex-1" />
+                                    <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => removeSlot(index)} disabled={slots.length === 1}>
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="space-y-1">
+                                        <p className="text-[11px] text-text-muted">{t("Start")}</p>
+                                        <TimePicker value={slot.start_time} onChange={(v) => updateSlot(index, { start_time: v })} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[11px] text-text-muted">{t("End")}</p>
+                                        <TimePicker value={slot.end_time} onChange={(v) => updateSlot(index, { end_time: v })} />
+                                    </div>
+                                </div>
                             </div>
                         ))}
                         <Button variant="outline" size="sm" className="gap-1.5" onClick={addSlot}>
