@@ -5,13 +5,13 @@ import type { CreateHandoffCriteriaPayloadInterface, HandoffCriteriaSeedInterfac
 import { runAction } from "@/lib/handle-action";
 import { handoffsService } from "@/services";
 
-export const useCreateHandoffCriteria = () => {
+export const useCreateHandoffCriteria = (projectId: string) => {
     const [isLoading, setIsLoading] = useState(false);
 
     const createHandler = async (payload: CreateHandoffCriteriaPayloadInterface): Promise<HandoffCriteriaSeedInterface | null> => {
         setIsLoading(true);
         try {
-            return await runAction(() => handoffsService.criteriaCreateHandler(payload), {
+            return await runAction(() => handoffsService.criteriaCreateHandler(projectId, payload), {
                 errorFallback: handoffsConstants.errors.criteriaCreateFailed,
                 successMessage: handoffsConstants.messages.criteriaCreated,
                 context: "handoffs.criteria.create",

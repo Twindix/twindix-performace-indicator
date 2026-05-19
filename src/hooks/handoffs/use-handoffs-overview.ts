@@ -1,15 +1,25 @@
 import { handoffsConstants } from "@/constants";
-import type { HandoffsFiltersInterface, HandoffsResponseInterface } from "@/interfaces";
+import type { HandoffStatusResponseInterface } from "@/interfaces";
 import { handoffsService } from "@/services";
 
 import { useQueryAction } from "../shared";
 
-export const useHandoffsOverview = (filters?: HandoffsFiltersInterface) => {
-    const { scope, sprint_id, project_id } = filters ?? {};
-    const { data, isLoading, refetch, setData } = useQueryAction<HandoffsResponseInterface | null>(
-        () => handoffsService.overviewHandler({ scope, sprint_id, project_id }),
-        [scope, sprint_id, project_id],
+export const useHandoffsOverview = (projectId: string, sprintId: string) => {
+    const { data, isLoading, refetch, setData } = useQueryAction<HandoffStatusResponseInterface | null>(
+        async () => {
+            console.log('[Handoffs] Fetching data for:', { projectId, sprintId });
+            try {
+                const result = await handoffsService.sprintStatusHandler(projectId, sprintId);
+                console.log('[Handoffs] Success:', result);
+                return result;
+            } catch (error) {
+                console.error('[Handoffs] Error:', error);
+                throw error;
+            }
+        },
+        [projectId, sprintId],
         {
+            enabled: !!projectId && !!sprintId,
             errorFallback: handoffsConstants.errors.fetchFailed,
             context: "handoffs.overview",
             initialData: null,
