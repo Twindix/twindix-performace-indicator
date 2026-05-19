@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Paperclip, Trash2 } from "lucide-react";
 
+import { Button } from "@/atoms";
 import { t, useGetTask, usePermissions, useTaskAttachments } from "@/hooks";
 import type { TaskInterface } from "@/interfaces";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/ui";
 
 interface Props {
     task: TaskInterface;
@@ -17,6 +20,7 @@ export const TaskAttachments = ({ task, patchTaskLocal }: Props) => {
     const { uploadHandler, deleteHandler } = useTaskAttachments();
     const { getHandler: getTaskHandler } = useGetTask();
     const attachments = task.attachments ?? [];
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
     const refreshAttachments = async () => {
         const fresh = await getTaskHandler(task.id);
@@ -32,9 +36,10 @@ export const TaskAttachments = ({ task, patchTaskLocal }: Props) => {
         }
     };
 
-    const handleDelete = async (attachmentId: string) => {
-        const ok = await deleteHandler(task.id, attachmentId);
-        if (ok) await refreshAttachments();
+    const handleDelete = async () => {
+        if (!confirmDeleteId) return;
+        const ok = await deleteHandler(task.id, confirmDeleteId);
+        if (ok) { await refreshAttachments(); setConfirmDeleteId(null); }
     };
 
     return (
@@ -82,7 +87,7 @@ export const TaskAttachments = ({ task, patchTaskLocal }: Props) => {
                                 <p className="text-[10px] text-text-muted">{formatSize(att.size)}</p>
                             </div>
                             {canManage && (
-                                <button onClick={() => handleDelete(att.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light transition-colors cursor-pointer">
+                                <button onClick={() => setConfirmDeleteId(att.id)} className="p-1 rounded text-text-muted hover:text-error hover:bg-error-light transition-colors cursor-pointer">
                                     <Trash2 className="h-3.5 w-3.5" />
                                 </button>
                             )}
@@ -90,6 +95,17 @@ export const TaskAttachments = ({ task, patchTaskLocal }: Props) => {
                     ))}
                 </div>
             )}
+
+            <Dialog open={!!confirmDeleteId} onOpenChange={(open) => !open && setConfirmDeleteId(null)}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader><DialogTitle>{t("Delete Attachment")}</DialogTitle></DialogHeader>
+                    <p className="text-sm text-text-muted mt-2">{t("This action cannot be undone.")}</p>
+                    <div className="flex justify-end gap-2 mt-4">
+                        <DialogClose asChild><Button variant="outline">{t("Cancel")}</Button></DialogClose>
+                        <Button variant="destructive" onClick={handleDelete}>{t("Delete")}</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

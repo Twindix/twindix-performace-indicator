@@ -47,6 +47,7 @@ export const ManageCriteriaDialog = ({ open, onOpenChange, projectId }: ManageCr
     });
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editTitle, setEditTitle] = useState("");
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
     const canCreate = draft.from_phase && draft.to_phase && draft.title.trim().length > 0 && !isCreating && !!projectId;
 
@@ -74,12 +75,13 @@ export const ManageCriteriaDialog = ({ open, onOpenChange, projectId }: ManageCr
         }
     };
 
-    const handleDelete = async (id: string) => {
-        const ok = await deleteHandler(id);
-        if (ok) refetch();
+    const handleDelete = async () => {
+        if (!confirmDeleteId) return;
+        const ok = await deleteHandler(confirmDeleteId);
+        if (ok) { refetch(); setConfirmDeleteId(null); }
     };
 
-    return (
+    return (<>
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
@@ -178,7 +180,7 @@ export const ManageCriteriaDialog = ({ open, onOpenChange, projectId }: ManageCr
                                                     <Button size="sm" variant="outline" onClick={() => { setEditingId(c.id); setEditTitle(c.title); }}>
                                                         {t("Edit")}
                                                     </Button>
-                                                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleDelete(c.id)} disabled={isDeleting}>
+                                                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setConfirmDeleteId(c.id)}>
                                                         <Trash2 className="h-4 w-4 text-error" />
                                                     </Button>
                                                 </>
@@ -198,5 +200,16 @@ export const ManageCriteriaDialog = ({ open, onOpenChange, projectId }: ManageCr
                 </div>
             </DialogContent>
         </Dialog>
-    );
+
+        <Dialog open={!!confirmDeleteId} onOpenChange={(open) => !open && setConfirmDeleteId(null)}>
+            <DialogContent className="max-w-sm">
+                <DialogHeader><DialogTitle>{t("Delete Criteria")}</DialogTitle></DialogHeader>
+                <p className="text-sm text-text-muted mt-2">{t("This action cannot be undone.")}</p>
+                <div className="flex justify-end gap-2 mt-4">
+                    <DialogClose asChild><Button variant="outline">{t("Cancel")}</Button></DialogClose>
+                    <Button variant="destructive" onClick={handleDelete} loading={isDeleting}>{t("Delete")}</Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+    </>);
 };

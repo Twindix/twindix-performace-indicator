@@ -1,7 +1,8 @@
 import { useState, useRef, useMemo } from "react";
 import { MessageCircle, Send, Trash2, Pencil, Check, X } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "@/ui";
+import { Avatar, AvatarFallback, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/ui";
+import { Button } from "@/atoms";
 import { t, useCreateTaskComment, useDeleteComment, usePermissions, useUpdateComment } from "@/hooks";
 import type { TaskInterface, TaskCommentInterface, UserLiteInterface } from "@/interfaces";
 
@@ -56,6 +57,7 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
     const { deleteHandler: deleteCommentHandler } = useDeleteComment();
 
     const [comments, setComments] = useState<TaskCommentInterface[]>(task.comments ?? []);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
     // New comment state
     const [commentText, setCommentText] = useState("");
@@ -196,12 +198,14 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
         }
     };
 
-    const deleteComment = async (id: string) => {
-        const ok = await deleteCommentHandler(id);
+    const deleteComment = async () => {
+        if (!confirmDeleteId) return;
+        const ok = await deleteCommentHandler(confirmDeleteId);
         if (ok) {
-            const next = comments.filter((c) => c.id !== id);
+            const next = comments.filter((c) => c.id !== confirmDeleteId);
             setComments(next);
             onUpdateComments?.(task.id, next);
+            setConfirmDeleteId(null);
         }
     };
 
@@ -242,7 +246,7 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
                                             </button>
                                         )}
                                         {!isEditing && p.comments.delete(c) && (
-                                            <button onClick={() => deleteComment(c.id)} className="p-1.5 rounded text-text-muted hover:text-error hover:bg-error-light transition-colors cursor-pointer">
+                                            <button onClick={() => setConfirmDeleteId(c.id)} className="p-1.5 rounded text-text-muted hover:text-error hover:bg-error-light transition-colors cursor-pointer">
                                                 <Trash2 className="h-3 w-3" />
                                             </button>
                                         )}
@@ -307,6 +311,17 @@ export const TaskComments = ({ task, members, onUpdateComments }: Props) => {
                     </button>
                 </div>
             )}
+
+            <Dialog open={!!confirmDeleteId} onOpenChange={(open) => !open && setConfirmDeleteId(null)}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader><DialogTitle>{t("Delete Comment")}</DialogTitle></DialogHeader>
+                    <p className="text-sm text-text-muted mt-2">{t("This action cannot be undone.")}</p>
+                    <div className="flex justify-end gap-2 mt-4">
+                        <DialogClose asChild><Button variant="outline">{t("Cancel")}</Button></DialogClose>
+                        <Button variant="destructive" onClick={deleteComment}>{t("Delete")}</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
