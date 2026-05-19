@@ -1,5 +1,7 @@
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
 
+import { t } from "@/hooks";
+
 const COLORS = {
     surface: "#111a2e",
     elevated: "#16223a",
@@ -255,9 +257,9 @@ export const LoadMore = ({
                     letterSpacing: 0.05,
                 }}
             >
-                You've viewed{" "}
+                {t("You've viewed")}{" "}
                 <strong style={{ color: COLORS.textPrimary, fontWeight: 600 }}>{loaded}</strong>
-                {" "}of{" "}
+                {" "}{t("of")}{" "}
                 <strong style={{ color: COLORS.textPrimary, fontWeight: 600 }}>{total}</strong>
                 {" "}{label}
             </p>
@@ -321,7 +323,7 @@ export const LoadMore = ({
                         transition: "border-color .15s ease, background-color .15s ease, color .15s ease",
                     }}
                 >
-                    Reset
+                    {t("Reset")}
                 </button>
 
                 {/* Load more / All caught up — primary CTA (pill) */}
@@ -368,10 +370,10 @@ export const LoadMore = ({
                     }}
                 >
                     {isComplete ? (
-                        <span>All caught up</span>
+                        <span>{t("All caught up")}</span>
                     ) : (
                         <>
-                            <span>Load {pageSize} more</span>
+                            <span>{t("Load")} {pageSize} {t("more")}</span>
                             <ArrowRightIcon />
                         </>
                     )}
@@ -388,7 +390,7 @@ export const LoadMore = ({
                                 fontWeight: 500,
                             }}
                         >
-                            Step
+                            {t("Step")}
                         </span>
                         <StepDropdown value={pageSize} options={pageSizes} onChange={handleStepChange} />
                     </div>

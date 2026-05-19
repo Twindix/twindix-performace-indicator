@@ -425,6 +425,39 @@ const translations: Record<string, Record<"en" | "ar", string>> = {
     "Stack Trace": { en: "Stack Trace", ar: "تتبع الخطأ" },
     "Copy": { en: "Copy", ar: "نسخ" },
     "Copied!": { en: "Copied!", ar: "تم النسخ!" },
+
+    // Error pages
+    "Page Not Found": { en: "Page Not Found", ar: "الصفحة غير موجودة" },
+    "The page you're looking for doesn't exist or has been moved. Let's get you back on track.": { en: "The page you're looking for doesn't exist or has been moved. Let's get you back on track.", ar: "الصفحة التي تبحث عنها غير موجودة أو تم نقلها. دعنا نعيدك إلى المسار الصحيح." },
+    "Go Back": { en: "Go Back", ar: "الرجوع" },
+    "Server Error": { en: "Server Error", ar: "خطأ في الخادم" },
+    "Something went wrong on our end. Our team has been notified and is working on a fix. Please try again shortly.": { en: "Something went wrong on our end. Our team has been notified and is working on a fix. Please try again shortly.", ar: "حدث خطأ من جهتنا. تم إبلاغ فريقنا وهو يعمل على إصلاحه. يرجى المحاولة مرة أخرى قريباً." },
+    "Try Again": { en: "Try Again", ar: "حاول مرة أخرى" },
+
+    // Init loader
+    "Preparing your workspace": { en: "Preparing your workspace", ar: "جارٍ تهيئة مساحة العمل" },
+
+    // Load more / pagination
+    "You've viewed": { en: "You've viewed", ar: "لقد استعرضت" },
+    "of": { en: "of", ar: "من" },
+    "Reset": { en: "Reset", ar: "إعادة تعيين" },
+    "All caught up": { en: "All caught up", ar: "تم عرض الكل" },
+    "Load": { en: "Load", ar: "تحميل" },
+    "more": { en: "more", ar: "المزيد" },
+    "Step": { en: "Step", ar: "الخطوة" },
+    "teams": { en: "teams", ar: "فريق" },
+
+    // Reports section titles
+    "Delivery": { en: "Delivery", ar: "التسليم" },
+    "Meetings": { en: "Meetings", ar: "الاجتماعات" },
+    "Friction": { en: "Friction", ar: "الاحتكاك" },
+    "Project context and attention items": { en: "Project context and attention items", ar: "سياق المشروع والعناصر التي تحتاج اهتماماً" },
+    "Completion rate, on-time delivery, and blockers": { en: "Completion rate, on-time delivery, and blockers", ar: "معدل الإنجاز والتسليم في الوقت المحدد والعوائق" },
+    "Team capacity and story point utilisation": { en: "Team capacity and story point utilisation", ar: "سعة الفريق واستخدام نقاط القصة" },
+    "Phase transition criteria completion across sprints": { en: "Phase transition criteria completion across sprints", ar: "اكتمال معايير انتقال المراحل عبر السبرنتات" },
+    "Feature and task authorship by team member": { en: "Feature and task authorship by team member", ar: "نسب الميزات والمهام لأعضاء الفريق" },
+    "Meeting log for this project": { en: "Meeting log for this project", ar: "سجل الاجتماعات لهذا المشروع" },
+    "Blocker categories and average resolution time": { en: "Blocker categories and average resolution time", ar: "فئات العوائق ومتوسط وقت الحل" },
 };
 
 export const t = (key: string): string => {

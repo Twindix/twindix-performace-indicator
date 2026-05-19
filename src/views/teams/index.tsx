@@ -163,7 +163,7 @@ export const TeamsView = () => {
                     onPageChange={setPage}
                     onPerPageChange={setPerPage}
                     isLoading={isLoading}
-                    label="teams"
+                    label={t("teams")}
                 />
             </QueryBoundary>
 

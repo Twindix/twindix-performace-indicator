@@ -376,7 +376,7 @@ const ProjectCard = ({ project, canEdit, canDelete, canAnalytics, onEdit, onDele
 
                 {canAnalytics && hasStarted ? (
                     <div className="flex items-center gap-3 mb-3">
-                        <ScoreGauge score={completion} size="sm" label="done" />
+                        <ScoreGauge score={completion} size="sm" label={t("done")} />
                         <div className="flex-1 grid grid-cols-2 gap-2">
                             <div className="rounded-md bg-muted/40 px-2 py-1.5">
                                 <p className="text-[10px] uppercase tracking-wide text-text-muted">{t("On-Time")}</p>

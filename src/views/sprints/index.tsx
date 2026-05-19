@@ -173,7 +173,7 @@ export const SprintsView = () => {
 
                                 {canAnalytics ? (
                                     <div className="flex items-center gap-3">
-                                        <ScoreGauge score={completion} size="sm" label="done" />
+                                        <ScoreGauge score={completion} size="sm" label={t("done")} />
                                         <div className="flex-1 space-y-2">
                                             <SprintCardStat label={t("On-time")} value={`${onTime}%`} tone="success" />
                                             <SprintCardStat label={t("Blockers")} value={blockers} tone={blockers > 0 ? "error" : "muted"} />
