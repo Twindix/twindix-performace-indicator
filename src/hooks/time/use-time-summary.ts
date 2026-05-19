@@ -1,18 +1,19 @@
 import { timeConstants } from "@/constants";
-import type { TimeSummaryInterface } from "@/interfaces";
+import type { SprintTimeTrackingResponseInterface } from "@/interfaces";
 import { timeService } from "@/services";
 
 import { useQueryAction } from "../shared";
 
-export const useTimeSummary = () => {
-    const { data, isLoading, refetch } = useQueryAction<TimeSummaryInterface | null>(
-        () => timeService.summaryHandler(),
-        [],
+export const useTimeTrackingBySprint = (sprintId: string) => {
+    const { data, isLoading, refetch } = useQueryAction<SprintTimeTrackingResponseInterface | null>(
+        () => timeService.bySprintHandler(sprintId),
+        [sprintId],
         {
+            enabled: !!sprintId,
             errorFallback: timeConstants.errors.fetchFailed,
-            context: "time.summary",
+            context: "time.bySprint",
             initialData: null,
         },
     );
-    return { summary: data ?? null, isLoading, refetch };
+    return { data: data ?? null, isLoading, refetch };
 };

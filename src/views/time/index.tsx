@@ -1,20 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 
-import { Badge, Button } from "@/atoms";
+import { Button, Combobox } from "@/atoms";
 import { Header } from "@/components/shared";
 import {
     t,
     useAuth,
-    useTimeByMember,
-    useTimeByProject,
-    useTimeBySprint,
-    useTimeByTeam,
-    useTimeSummary,
+    useSprintsList,
+    useTimeTrackingBySprint,
+    useTimeTrackingByTask,
+    useTimeTrackingByUser,
+    useUsersListLite,
 } from "@/hooks";
+import { tasksService } from "@/services";
+import { useSprintStore } from "@/store";
 import { cn } from "@/utils";
 
-import { TIME_STATUS_LABEL, TIME_STATUS_VARIANT, TIME_TABS, type TimeTabId } from "./constants";
+import { TIME_TABS, type TimeTabId } from "./constants";
 import { LogTimeDialog } from "./LogTimeDialog";
 
 const StatTile = ({ label, value }: { label: string; value: string | number }) => (
@@ -24,16 +26,6 @@ const StatTile = ({ label, value }: { label: string; value: string | number }) =
     </div>
 );
 
-const statusVariant = (status: string): "success" | "warning" | "secondary" | "default" => {
-    if (status === "active") return "success";
-    if (status === "planning") return "warning";
-    return TIME_STATUS_VARIANT[status as keyof typeof TIME_STATUS_VARIANT] ?? "secondary";
-};
-
-const statusLabel = (status: string): string => {
-    return TIME_STATUS_LABEL[status as keyof typeof TIME_STATUS_LABEL] ?? status;
-};
-
 const LoadingTile = () => (
     <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-text-muted">
         {t("Loading time data...")}
@@ -42,27 +34,51 @@ const LoadingTile = () => (
 
 export const TimeView = () => {
     const { user } = useAuth();
-    const [tab, setTab] = useState<TimeTabId>("projects");
+    const [tab, setTab] = useState<TimeTabId>("sprint");
     const [logOpen, setLogOpen] = useState(false);
 
-    const { summary } = useTimeSummary();
-    const { rows: projectRows, isLoading: loadingProjects, refetch: refetchProjects } = useTimeByProject();
-    const { rows: sprintRows, isLoading: loadingSprints, refetch: refetchSprints } = useTimeBySprint();
-    const { rows: teamRows, isLoading: loadingTeams, refetch: refetchTeams } = useTimeByTeam();
-    const { rows: memberRows, isLoading: loadingMembers, refetch: refetchMembers } = useTimeByMember();
+    const { activeSprintId } = useSprintStore();
+    const { sprints } = useSprintsList();
+    const { users } = useUsersListLite();
+
+    const [selectedSprintId, setSelectedSprintId] = useState<string>(activeSprintId ?? "");
+    const [selectedUserId, setSelectedUserId] = useState<string>("");
+    const [selectedTaskId, setSelectedTaskId] = useState<string>("");
+    const [allTasks, setAllTasks] = useState<{ id: string; title: string; code?: string | null }[]>([]);
+
+    useEffect(() => {
+        if (activeSprintId && activeSprintId !== selectedSprintId) setSelectedSprintId(activeSprintId);
+    }, [activeSprintId, selectedSprintId]);
+
+    useEffect(() => {
+        if (selectedUserId === "" && users.length > 0) setSelectedUserId(users[0].id);
+    }, [users, selectedUserId]);
+
+    useEffect(() => {
+        tasksService.listLiteHandler({ exclude_done: false })
+            .then((result) => {
+                const tasks = Array.isArray(result) ? result : [];
+                setAllTasks(tasks);
+                if (tasks.length > 0) setSelectedTaskId((prev) => prev || tasks[0].id);
+            })
+            .catch(() => {});
+    }, []);
+
+    const { data: sprintData, isLoading: loadingSprint, refetch: refetchSprint } = useTimeTrackingBySprint(selectedSprintId);
+    const { data: userData, isLoading: loadingUser, refetch: refetchUser } = useTimeTrackingByUser(selectedUserId);
+    const { data: taskData, isLoading: loadingTask, refetch: refetchTask } = useTimeTrackingByTask(selectedTaskId);
 
     const handleLogged = () => {
-        refetchProjects();
-        refetchSprints();
-        refetchTeams();
-        refetchMembers();
+        if (tab === "sprint") refetchSprint();
+        else if (tab === "user") refetchUser();
+        else if (tab === "task") refetchTask();
     };
 
     return (
         <div>
             <Header
                 title={t("Time")}
-                description={t("Track hours across projects, sprints, teams, and members.")}
+                description={t("Track hours across sprints, users, and tasks.")}
                 actions={
                     <Button size="sm" className="gap-1.5" onClick={() => setLogOpen(true)}>
                         <Plus className="h-4 w-4" />
@@ -89,103 +105,116 @@ export const TimeView = () => {
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-                <StatTile label={t("Total Hours")} value={summary?.total_hours ?? 0} />
-                <StatTile label={t("Entries")} value={summary?.total_entries ?? 0} />
-                <StatTile label={t("Members Active")} value={summary?.active_members ?? 0} />
-            </div>
-
-            {tab === "projects" && (
-                loadingProjects && projectRows.length === 0 ? <LoadingTile /> : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {projectRows.map((row) => (
-                            <div key={row.project_id} className="rounded-lg border border-border bg-card p-5">
-                                <div className="flex items-start justify-between gap-3 mb-3">
-                                    <h3 className="text-base font-semibold text-text-dark truncate">{row.project_name}</h3>
-                                    <Badge variant={statusVariant(row.project_status)} className="text-[10px]">
-                                        {t(statusLabel(row.project_status))}
-                                    </Badge>
-                                </div>
-                                <p className="text-xs text-text-muted mb-2">{row.team_name}</p>
-                                <p className="text-sm font-bold text-text-dark mb-3">{row.total_hours} {t("h logged")}</p>
-                                <div className="flex items-center justify-between text-[11px] text-text-muted mb-1">
-                                    <span>{t("Progress")}</span>
-                                    <span>{row.progress}%</span>
-                                </div>
-                                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                                    <div className="h-full bg-success" style={{ width: `${row.progress}%` }} />
-                                </div>
-                                <p className="mt-3 text-[11px] text-text-muted">
-                                    {row.active_members} {row.active_members === 1 ? t("member active") : t("members active")}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                )
-            )}
-
-            {tab === "sprints" && (
-                loadingSprints && sprintRows.length === 0 ? <LoadingTile /> : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {sprintRows.map((row) => (
-                            <div key={row.sprint_id} className="rounded-lg border border-border bg-card p-5">
-                                <div className="flex items-start justify-between gap-3 mb-2">
-                                    <h3 className="text-base font-semibold text-text-dark truncate">{row.sprint_name}</h3>
-                                    <Badge variant={statusVariant(row.sprint_status)} className="text-[10px]">
-                                        {t(statusLabel(row.sprint_status))}
-                                    </Badge>
-                                </div>
-                                <p className="text-xs text-text-muted">{row.project_name}</p>
-                                {row.start_date && row.end_date && (
-                                    <p className="text-xs text-text-muted mb-3">{row.start_date} → {row.end_date}</p>
+            {tab === "sprint" && (
+                <>
+                    <div className="flex items-center gap-2 mb-4 flex-wrap">
+                        {sprints.map((sprint) => (
+                            <button
+                                key={sprint.id}
+                                type="button"
+                                onClick={() => setSelectedSprintId(sprint.id)}
+                                className={cn(
+                                    "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer",
+                                    selectedSprintId === sprint.id
+                                        ? "border-primary bg-primary-lighter text-primary"
+                                        : "border-border text-text-muted hover:text-text-dark hover:bg-muted/40",
                                 )}
-                                <p className="text-sm font-bold text-success">{row.total_hours} {t("h logged")}</p>
-                                <p className="mt-2 text-[11px] text-text-muted">
-                                    {row.active_members} {row.active_members === 1 ? t("member active") : t("members active")}
-                                </p>
-                            </div>
+                            >
+                                {sprint.name}
+                            </button>
                         ))}
                     </div>
-                )
+                    {loadingSprint ? <LoadingTile /> : !sprintData ? (
+                        <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-text-muted">
+                            {t("No time tracking data for this sprint.")}
+                        </div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                                <StatTile label={t("Total Estimated")} value={`${sprintData.total_estimated_hours}h`} />
+                                <StatTile label={t("Total Logged")} value={`${sprintData.total_logged_hours}h`} />
+                                <StatTile label={t("Variance")} value={`${sprintData.variance_hours}h`} />
+                            </div>
+                            <h3 className="text-sm font-semibold text-text-dark mb-3">{t("By User")}</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {sprintData.by_user.map((u) => (
+                                    <div key={u.user_id} className="rounded-lg border border-border bg-card p-4">
+                                        <p className="text-sm font-semibold text-text-dark">{u.name}</p>
+                                        <p className="text-xs text-text-muted mt-1">{u.total_logged_hours}h {t("logged")}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </>
             )}
 
-            {tab === "teams" && (
-                loadingTeams && teamRows.length === 0 ? <LoadingTile /> : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {teamRows.map((row) => (
-                            <div key={row.team_id} className="rounded-lg border border-border bg-card p-5">
-                                <h3 className="text-base font-semibold text-text-dark">{row.team_name}</h3>
-                                {row.department && <p className="text-xs text-text-muted mb-3">{row.department}</p>}
-                                <p className="text-sm font-bold text-success">{row.total_hours} {t("h logged")}</p>
-                                <p className="mt-2 text-[11px] text-text-muted">
-                                    {row.active_members} {row.active_members === 1 ? t("member active") : t("members active")}
-                                </p>
-                            </div>
-                        ))}
+            {tab === "user" && (
+                <>
+                    <div className="mb-4 max-w-xs">
+                        <Combobox
+                            options={users.map((u) => ({ value: u.id, label: u.full_name }))}
+                            value={selectedUserId}
+                            onChange={setSelectedUserId}
+                            placeholder={t("Select user")}
+                        />
                     </div>
-                )
+                    {loadingUser ? <LoadingTile /> : !userData ? (
+                        <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-text-muted">
+                            {selectedUserId ? t("No time tracking data for this user.") : t("Select a user to view time tracking.")}
+                        </div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                                <StatTile label={t("Total Logged")} value={`${userData.total_logged_hours}h`} />
+                                <StatTile label={t("Days with Logs")} value={userData.by_day.length} />
+                            </div>
+                            <h3 className="text-sm font-semibold text-text-dark mb-3">{t("Daily Breakdown")}</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                                {userData.by_day.map((d) => (
+                                    <div key={d.date} className="rounded-lg border border-border bg-card p-3">
+                                        <p className="text-xs text-text-muted">{d.date}</p>
+                                        <p className="text-sm font-bold text-text-dark mt-0.5">{d.logged_hours}h</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </>
             )}
 
-            {tab === "members" && (
-                loadingMembers && memberRows.length === 0 ? <LoadingTile /> : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {memberRows.map((row) => (
-                            <div key={row.member_id} className="rounded-lg border border-border bg-card p-5">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-lighter text-primary-medium text-sm font-semibold">
-                                        {row.avatar_initials ?? row.member_name.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <h3 className="text-base font-semibold text-text-dark">{row.member_name}</h3>
-                                        {row.role && <p className="text-[11px] text-text-muted">{row.role}</p>}
-                                    </div>
-                                </div>
-                                <p className="text-sm font-bold text-success">{row.total_hours} {t("h logged")}</p>
-                                <p className="mt-2 text-[11px] text-text-muted">{row.total_entries} {t("entries")}</p>
-                            </div>
-                        ))}
+            {tab === "task" && (
+                <>
+                    <div className="mb-4 max-w-xs">
+                        <Combobox
+                            options={allTasks.map((task) => ({ value: task.id, label: task.code ? `${task.code} - ${task.title}` : task.title }))}
+                            value={selectedTaskId}
+                            onChange={setSelectedTaskId}
+                            placeholder={t("Select task")}
+                        />
                     </div>
-                )
+                    {loadingTask ? <LoadingTile /> : !taskData ? (
+                        <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-text-muted">
+                            {selectedTaskId ? t("No time tracking data for this task.") : t("Select a task to view time tracking.")}
+                        </div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                                <StatTile label={t("Total Logged")} value={`${taskData.total_logged_hours}h`} />
+                                <StatTile label={t("Contributors")} value={taskData.by_user.length} />
+                            </div>
+                            <h3 className="text-sm font-semibold text-text-dark mb-3">{t("By User")}</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {taskData.by_user.map((u) => (
+                                    <div key={u.user_id} className="rounded-lg border border-border bg-card p-4">
+                                        <p className="text-sm font-semibold text-text-dark">{u.name}</p>
+                                        <p className="text-xs text-text-muted mt-1">{u.total_logged_hours}h {t("logged")}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </>
             )}
 
             <LogTimeDialog
