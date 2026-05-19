@@ -15,6 +15,3 @@ export {
   type SidebarItemInterface,
 } from "./sidebar";
 
-export {
-  analyticsSeed,
-} from "./seed";
